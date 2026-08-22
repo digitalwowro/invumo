@@ -12,9 +12,8 @@ This document does not create product or technical scope by itself. It records t
 - No contradiction invalidates the approved Laravel/Inertia/React/PostgreSQL architecture.
 - The approved tenancy, exact-decimal, numbering, scheduling, UUID, authentication-scope, localization, and infrastructure decisions resolve the highest architectural risks identified earlier.
 - One documentation-sequencing conflict is resolved by the newer canonical tracker: navigation is a Phase 1 just-in-time gate, while domain migrations and business workflows wait for the four schema-shaping Phase 0 deliverables.
-- All owner choices and the two follow-up boundaries are approved. The exact financial/document state specification is also approved; the permission matrix and relational schema/snapshot-boundary specification are the two remaining Phase 0 deliverables.
-- The complete Owner/Admin/Member matrix remains a separate Phase 0 deliverable and is not improvised in this assessment.
-- PDF selection, upload rules, public-token implementation details, ZeptoMail/webhook details, and production operations remain valid just-in-time gates. They do not block the state or schema documents.
+- All owner choices and the two follow-up boundaries are approved. The exact financial/document state specification and complete Owner/Admin/Member permission matrix are also approved; the relational schema/snapshot-boundary specification is the final Phase 0 deliverable.
+- PDF selection, upload rules, public-token implementation details, ZeptoMail/webhook details, and production operations remain valid just-in-time gates. They do not block the schema document.
 
 ## Status and severity
 
@@ -163,11 +162,11 @@ Severity describes the impact of implementing the wrong behavior:
 ### RA-012 — Role authorization is intentionally incomplete
 
 - Severity: Critical
-- Status: Phase 0 specification
+- Status: Resolved
 - Evidence: Only a few role hints exist: every Company has one Owner; invitations assign Admin/Member; Owner/Admin manage Products by default; transfer is ownership-only.
 - Risk: Agent-written Policies, navigation, buttons, jobs, and destructive actions could disagree or accidentally grant Members financial/settings authority.
-- Required action: Produce one complete role-action matrix covering company settings, members/invitations, transfer, customers, products, documents, numbering, transactions, recurring templates, public links, email, reminders, audit, archive/delete, and counter realignment. Laravel Policies and UI visibility must derive from the same named abilities; RLS remains tenant isolation rather than role authorization.
-- No permission is approved by this assessment.
+- Approved resolution: The fixed Owner/Admin/Member model assigns every Company action across settings, members/invitations, transfer, Customers, Products & Services, documents, numbering, transactions, recurring templates, public links, email, reminders, audit, archive/delete, and counter realignment. Laravel Policies/application actions and UI visibility derive from the same named abilities; RLS remains tenant isolation rather than role authorization.
+- Evidence: [Approved Owner/Admin/Member Permission Matrix](role-permission-matrix.md).
 
 ## Resolved high-risk areas
 
@@ -197,7 +196,7 @@ These risks require careful implementation and tests but do not need another pro
 
 ## Just-in-time risks
 
-The canonical tracker owns these gates. This assessment confirms that none changes the core relational model enough to block the remaining Phase 0 permission/schema work.
+The canonical tracker owns these gates. This assessment confirms that none changes the core relational model enough to block the remaining Phase 0 schema work.
 
 | Area | Risk to resolve at its gate |
 | --- | --- |
@@ -226,4 +225,4 @@ The remaining documents and later implementation must continue to prove:
 
 The owner approved every product resolution in this assessment on 2026-08-22. RA-001's documentation correction has been applied. RA-011 remains a mandatory relational-schema section, and RA-012 remains the separately tracked permission-matrix deliverable rather than an authorization decision made here.
 
-The exact financial/document state specification is approved. The complete permission matrix is the next Phase 0 deliverable, followed by the relational schema/snapshot-boundary specification. Each must receive its own explicit approval before the tracker marks it complete.
+The exact financial/document state specification and complete permission matrix are approved. The relational schema/snapshot-boundary specification is the final Phase 0 deliverable and must receive its own explicit approval before the tracker marks it complete.

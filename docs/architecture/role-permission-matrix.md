@@ -1,22 +1,23 @@
 # Owner, Admin, and Member Permission Matrix
 
-Status: Draft for owner review
+Status: Approved
+Approved: 2026-08-22
 Last updated: 2026-08-22
 
 This document assigns every v1 Company action to the Owner, Admin, and Member roles. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [financial/document state contract](document-and-financial-state.md), [numbering contract](numbering-and-concurrency.md), [scheduling contract](scheduling-and-jobs.md), and [tenant-isolation contract](tenant-isolation.md) into one authorization contract for Laravel Policies, application actions, queue jobs, tests, and React UI visibility.
 
 The state, tenant, calculation, snapshot, idempotency, and deletion rules in those approved documents always apply. A role permission never bypasses a state precondition or integrity guard.
 
-Rules identified as **Already approved** below are existing owner decisions. Every other role allocation is **Proposed — owner approval required**. The canonical Phase 0 tracker task remains incomplete until the proposed matrix is approved or changed.
+Every role allocation in this matrix was explicitly approved by the owner on 2026-08-22. A later permission expansion or restriction requires its own explicit approval before this contract or the canonical tracker is changed.
 
-## 1. Proposed role model
+## 1. Role model
 
 - v1 has three fixed Company roles only: Owner, Admin, and Member. It has no custom roles, per-user permission toggles, or per-record ownership rules.
 - Permissions belong to the active Company membership. The same User may have a different role in another Company.
 - Every active Company member may see and work with ordinary Company data allowed to their role; records are not restricted to their creator.
 - The singular Owner has every Company permission.
 - Admin is the Company-management role. It has all operational and configuration permissions except authority over the owning Account, ownership transfer, permanent Company erasure, or the Owner membership.
-- Member is the ordinary day-to-day role. It can manage Customers and routine document workflows but cannot change Company configuration, control unattended automation, alter financial history, manage the product catalog, perform permanent business-record deletion, or make exceptional lifecycle/numbering decisions.
+- Member is the ordinary day-to-day role. It can manage Customers, routine document workflows, Payments/Refunds, Quote lifecycle corrections, and Invoice cancellation/reopening. It cannot change Company configuration, control unattended automation, create or mutate Adjustments, manage the product catalog, permanently delete business records, unlink Quote provenance, or make exceptional duplicate/issued-number decisions.
 - Removing a membership or accepting a role change affects authorization immediately. Existing sessions must not retain the previous Company abilities.
 
 ## 2. Matrix legend
@@ -91,7 +92,7 @@ Rules identified as **Already approved** below are existing owner decisions. Eve
 | Edit a Quote in any lifecycle state | Yes | Yes | Yes | State does not reset automatically; stale saves are rejected |
 | Send/resend a Quote and edit per-send content/recipients | Yes | Yes | Yes | Accepted/Rejected resend uses the approved warning |
 | Create, revoke, regenerate, or re-enable a Quote public link | Yes | Yes | Yes | Public-token rules remain a Phase 8 implementation gate |
-| Correct stored lifecycle among Draft/Sent/Accepted/Rejected | Guarded | Guarded | No | Confirmation, required reason, and audit; Expired remains derived |
+| Correct stored lifecycle among Draft/Sent/Accepted/Rejected | Guarded | Guarded | Guarded | Confirmation, required reason, and audit; Expired remains derived |
 | Convert an Accepted Quote to a Draft Invoice | Yes | Yes | Yes | Normal commercial path |
 | Convert a Draft, Sent, or Expired Quote to a Draft Invoice | Guarded | Guarded | No | **Already approved** intentional override; never convert Rejected directly |
 | Unlink an eligible unused Quote-derived Draft Invoice | Guarded | Guarded | No | Approved state/provenance checks, confirmation, and audit |
@@ -112,8 +113,8 @@ Customer Accept/Reject is outside this membership matrix and follows the approve
 | Send/resend an Issued Invoice and edit per-send content/recipients | Yes | Yes | Yes | Delivery safety gates are rechecked immediately before send |
 | Create, revoke, regenerate, or re-enable an Invoice public link | Yes | Yes | Yes | Invoice page remains view/download only |
 | Override Invoice-specific reminder rules | Yes | Yes | Yes | Treated as a document edit; only pending instances are recalculated |
-| Cancel an eligible Issued Invoice | Guarded | Guarded | No | Net paid must be zero; confirmation, reason, reminder suppression, and audit |
-| Reopen a Cancelled Invoice | Guarded | Guarded | No | Returns to Issued under the approved transaction/public/reminder behavior |
+| Cancel an eligible Issued Invoice | Guarded | Guarded | Guarded | Net paid must be zero; confirmation, reason, reminder suppression, and audit |
+| Reopen a Cancelled Invoice | Guarded | Guarded | Guarded | Returns to Issued under the approved transaction/public/reminder behavior |
 | Edit a Draft Invoice number to a non-duplicate value | Yes | Yes | Yes | Counter remains unchanged |
 | Confirm a duplicate Invoice number or renumber an Issued/Cancelled Invoice | Guarded | Guarded | No | Warning, reason, and audit; no silent counter change |
 | Permanently delete a transaction-free Invoice | Guarded | Guarded | No | Highest-friction confirmation if ever issued, sent, or shared; transaction rows always block |
@@ -127,9 +128,10 @@ The UI must treat deletion of an already issued, sent, or publicly shared transa
 | Search/view Invoice transactions and balances | Yes | Yes | Yes | Company-scoped operational data |
 | Record a Payment | Yes | Yes | Yes | Issued positive-total Invoice only; complete-ledger validation applies |
 | Send the optional payment-received email | Yes | Yes | Yes | Never automatic for backfilled payments |
-| Record a Refund | Guarded | Guarded | No | Actual refundable cash and net-paid bounds apply |
+| Record a Refund | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply |
 | Record a positive/negative Adjustment | Guarded | Guarded | No | Required reason and audit; never creates refundable cash |
-| Edit or delete any existing Payment, Refund, or Adjustment | Guarded | Guarded | No | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
+| Edit or delete an existing Payment or Refund | Guarded | Guarded | Guarded | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
+| Edit or delete an existing Adjustment | Guarded | Guarded | No | Adjustment creation and all later mutation remain entirely Owner/Admin-only |
 
 Invumo records financial facts but does not move money. These permissions do not authorize a bank/card refund outside Invumo.
 
@@ -176,15 +178,8 @@ Invumo records financial facts but does not move money. These permissions do not
 - Tests cover every matrix row for Owner, Admin, and Member; cross-Company access; removed/changed memberships; direct URL/action calls hidden by the UI; background/public actor boundaries; and all Guarded state/confirmation paths.
 - No future role or permission expansion is inferred from a new screen. It requires an explicit matrix update and owner approval.
 
-## 14. Owner decisions required before approval
+## 14. Approval and downstream use
 
-1. Approve or change the fixed-role model: no custom permissions or creator-only records; Company members share permitted Company data.
-2. Approve or change the Admin boundary: full Company operations and configuration except Account-plan authority, ownership transfer, and permanent Company erasure; Company erasure remains Owner-only with highest-friction confirmation, and non-Owner membership administration is decided separately in item 3.
-3. Approve or change membership administration: Admin may invite, change, or remove any non-Owner member except itself, with confirmation/audit for role changes and removal; Member may view the directory and leave.
-4. Approve or change Member daily work: create/edit/archive/restore Customers and create/edit/send Quotes and Invoices; Members may use Products or enter manual lines but cannot manage the catalog, permanently delete business records, or perform exceptional lifecycle/numbering actions.
-5. Approve or change Member financial access: view transactions, record Payments, and send receipts; Refunds, Adjustments, and every transaction correction/deletion remain Owner/Admin-only.
-6. Approve or change recurring access: Member may view and prepare/duplicate Draft templates; only Owner/Admin may activate or control unattended automation and edit Active templates.
-7. Approve or change high-risk document controls: Quote lifecycle corrections, cancellation/reopening, provenance unlinking, duplicate/issued renumbering, and permanent Quote/Invoice deletion remain Owner/Admin-only, with the stronger Invoice-deletion friction already approved.
-8. Approve or change communications/history access: Member may send documents, manage document links, set Invoice-specific reminder overrides, retry direct sends, and view document-local delivery history; automated-reminder retry, operations dashboards, and the full Company audit trail remain Owner/Admin-only.
+The owner approved the fixed shared-Company role model; the Admin governance/configuration boundary; non-Owner membership administration; Member Customer/document/catalog-use permissions; Member Payment/Refund permissions; Owner/Admin-only Adjustment control; the Draft-versus-Active recurring split; the document exception/deletion boundaries; and communications, operations, and audit visibility on 2026-08-22.
 
-After these decisions, reconcile the product/domain rules and durable decision log, mark this specification **Approved**, and complete only its corresponding Phase 0 tracker task. The relational schema/snapshot-boundary specification remains the final Phase 0 gate.
+The relational schema/snapshot-boundary specification must encode the singular Owner and membership constraints, while Laravel Policies and application actions implement every named ability here. That schema specification remains the final Phase 0 gate.

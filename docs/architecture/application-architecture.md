@@ -115,6 +115,8 @@ The following approved specifications are part of this baseline:
 - [Domain identifier policy](identifier-policy.md)
 - [Document numbering and concurrency](numbering-and-concurrency.md)
 - [Scheduling, recurrence, reminders, and downtime](scheduling-and-jobs.md)
+- [Quote, Invoice, and financial state](document-and-financial-state.md)
+- [Owner, Admin, and Member permissions](role-permission-matrix.md)
 
 The later relational-model document may refine table and column names but must preserve these behaviors.
 

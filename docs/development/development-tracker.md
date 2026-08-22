@@ -12,9 +12,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 - Current phase: Phase 0 — Architecture readiness
 - Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Complete and review the two remaining schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
+- Next gate: Complete and review the relational data model and snapshot boundaries before domain migrations, business features, or Phase 0 sign-off
 
-The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the two remaining schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
+The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the remaining relational-schema/snapshot-boundary deliverable. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -74,13 +74,13 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 - [x] Approve recurrence, reminders, timezone/DST, retry, downtime, and idempotency mechanisms.
 - [x] Review and approve the requirements contradiction assessment and risk register.
 - [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
-- [ ] Produce and review the complete Owner/Admin/Member role-action permission matrix.
+- [x] Produce and review the complete Owner/Admin/Member role-action permission matrix.
 - [x] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
 - [x] Establish this complete implementation sequence, acceptance gates, and tracking protocol.
 
 ### Acceptance gate
 
-The two remaining schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together with the approved requirements assessment and financial/document state specification, they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
+The remaining relational-schema/snapshot-boundary deliverable is reviewed, mutually consistent with the approved requirements assessment, financial/document state specification, and permission matrix, and linked from the documentation index. Together they define domain table shape, snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
 
 ### Evidence
 
@@ -92,7 +92,7 @@ The two remaining schema-shaping deliverables are reviewed, mutually consistent,
 - [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md)
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
 - [Approved Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md)
-- [Draft Owner/Admin/Member Permission Matrix](../architecture/role-permission-matrix.md) — owner review and approval remain open
+- [Approved Owner/Admin/Member Permission Matrix](../architecture/role-permission-matrix.md)
 
 ## Just-in-time design gates
 
@@ -366,6 +366,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Approved the complete fixed-role permission matrix, including Member Refund and Payment/Refund correction access, Owner/Admin-only Adjustments, Member Quote correction and Invoice cancel/reopen access, and the remaining governance/automation/audit boundaries; only the relational schema/snapshot specification still blocks Phase 0 | [Approved permission matrix](../architecture/role-permission-matrix.md) |
 | 2026-08-22 | 0 | Produced the draft complete Owner/Admin/Member permission matrix; eight grouped role decisions remain open, so its Phase 0 task is not marked complete | [Draft permission matrix](../architecture/role-permission-matrix.md) |
 | 2026-08-22 | 0 | Flagged the Phase 6 UI requirement that permanent deletion of a transaction-free Invoice already issued, sent, or shared must use materially stronger confirmation friction than an ordinary warning | [Approved state specification](../architecture/document-and-financial-state.md#flexible-document-deletion) |
 | 2026-08-22 | 0 | Approved all seven open Quote, Invoice, and financial-state decisions; promoted the exact state specification and reduced the Phase 0 gate to the permission matrix and relational schema/snapshot boundaries | [Approved state specification](../architecture/document-and-financial-state.md) |

@@ -148,7 +148,11 @@ A company can have multiple members with these roles:
 - Admin
 - Member
 
-Design a clear permission matrix around these roles.
+v1 uses only these fixed roles. There are no custom permissions, per-user overrides, creator-only records, or per-record sharing rules inside a Company. Permissions follow the active Company membership, and permitted Company records are shared regardless of who created them.
+
+The Owner has every Company permission and exclusively controls the owning Account plan, ownership transfer, and permanent Company erasure. Admin manages ordinary Company operations, settings, and non-Owner membership administration but cannot affect the Owner membership or itself through those actions. Member performs day-to-day Customer, Quote, Invoice, Payment, and Refund work; may correct Quote lifecycle and cancel/reopen Invoices; may prepare Draft recurring templates; and may use active catalog entries or manual lines. Member cannot manage Company settings/catalog entries, Adjustments, Active recurring automation, permanent deletion, Quote provenance unlinking, exceptional duplicate/issued numbering, Company-wide operations, or the full audit trail.
+
+Members may create, edit, and delete Payments and Refunds under the complete ledger rules. Creating, editing, or deleting an Adjustment remains entirely Owner/Admin-only. The exact approved action matrix and enforcement requirements are defined in [Owner, Admin, and Member Permission Matrix](../architecture/role-permission-matrix.md).
 
 Each company has exactly one owning Account and exactly one Owner membership, held by that Account's owner. Admin and Member memberships may be multiple.
 

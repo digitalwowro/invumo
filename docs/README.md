@@ -22,12 +22,12 @@ Update the tracker as work advances. Do not create or maintain phase status, tas
 - [`architecture/numbering-and-concurrency.md`](architecture/numbering-and-concurrency.md) — counter-row locking, manual overrides, resets, idempotent Draft creation, and concurrency tests
 - [`architecture/scheduling-and-jobs.md`](architecture/scheduling-and-jobs.md) — company-local scheduling, DST, queue/worker behavior, retries, downtime recovery, and duplicate suppression
 - [`architecture/document-and-financial-state.md`](architecture/document-and-financial-state.md) — exact Quote, Invoice, transaction, payment, overdue, cancellation, reopening, reminder-reaction, public-state, concurrency, and deletion contract
+- [`architecture/role-permission-matrix.md`](architecture/role-permission-matrix.md) — complete fixed-role Owner/Admin/Member authorization, guarded-action, system/public-actor, and policy-test contract
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 
 ## Phase 0 working documents
 
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream specification obligations
-- [`architecture/role-permission-matrix.md`](architecture/role-permission-matrix.md) — draft complete Owner/Admin/Member action matrix; eight owner decisions remain open
 
 Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

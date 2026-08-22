@@ -61,6 +61,14 @@ Do not implement in v1:
 - Customer SMTP
 - Subscription billing or payment collection for Invumo itself
 - Custom document title/header overrides
+- Company-uploaded signature or stamp images
+- Custom company favicons
+- Custom fonts and print-layout controls such as padding, logo size, or print scale
+- Online-payment/Pay buttons
+- Viewer-facing Share buttons on public document pages
+- A fixed-on-every-page PDF footer option
+- Company theming of the internal Invumo dashboard/application
+- Invumo-branding removal controls
 
 ## 2. Account model
 
@@ -99,6 +107,7 @@ Each company has independent:
 - Document numbering
 - Currency settings
 - Tax settings
+- Company timezone
 - Language settings
 - Payment terms
 - Quote validity
@@ -154,10 +163,16 @@ Company settings support at least:
 
 - Legal name
 - Trading name
-- Address
+- Address line 1
+- Address line 2, optional
+- City
+- State/province/region
+- Postal code
 - Country
-- VAT/tax ID
-- Registration number
+- Tax registration label, such as VAT ID, CUI, ABN, or EIN
+- Tax registration identifier
+- Business registration label
+- Business registration number
 - Email
 - Phone
 - Website
@@ -169,6 +184,8 @@ Additional sensible identity fields may be added when necessary, but avoid unnec
 Company defaults include:
 
 - Default currency
+- Currency display style: ISO code or symbol
+- Company timezone
 - Default document language
 - Payment terms
 - Terms & Conditions
@@ -186,8 +203,9 @@ Company defaults include:
 Bank accounts are part of company settings.
 
 - A company can have multiple bank accounts.
-- Design for optional currency association.
+- Each account supports a user-facing label, bank name, account holder, IBAN/account number, SWIFT/BIC, optional currency association, and optional local routing details.
 - Relevant bank information should be selectable for and displayable on invoices.
+- Historical documents must retain the bank details that were issued on them even if the company later edits or removes the source bank account.
 
 ## 8. Customers
 
@@ -364,6 +382,17 @@ For v1, use tax per line only. Do not implement invoice-wide tax.
 - Users may override defaults on individual document lines.
 - Prices are tax-exclusive.
 
+Each company maintains reusable tax-rate presets with:
+
+- Name, such as VAT, TVA, or GST
+- Percentage, including 0%
+- Optional default designation
+- Active or archived state
+
+Users can add, edit, and archive presets. A referenced preset should be archived rather than hard-deleted.
+
+When a preset is applied, copy its name and percentage onto the document line. Editing or archiving the preset later must not alter existing quotes or invoices.
+
 Do not implement:
 
 - EU reverse charge
@@ -384,6 +413,8 @@ Invumo is worldwide, but v1 offers flexible defaults rather than claiming legal 
 - Users may override currency per quote or invoice.
 - There is no foreign-exchange conversion or exchange-rate service in v1.
 - Decimal precision is user-configurable per currency.
+- Each company chooses whether monetary amounts primarily display an ISO currency code, such as `USD`, or a currency symbol, such as `$`.
+- Currency display preference never changes the stored currency code or monetary value.
 - Do not enforce ISO precision as mandatory behavior.
 - Store monetary values safely and accurately.
 
@@ -478,6 +509,10 @@ Document language inherits an applicable company/account default and is overrida
 
 Changing document language localizes system-generated terminology, date formatting, number formatting, and locale-specific presentation. User-written descriptions remain exactly as entered; do not translate user content automatically.
 
+Each company has an IANA timezone. Store timestamps in UTC and interpret company schedules, including recurring invoice execution, in the company's timezone.
+
+Do not add a separate manual date-format setting in v1. Document date formatting follows the selected document language/locale.
+
 ## 21. PDFs
 
 Quotes and invoices must generate professional downloadable PDFs.
@@ -485,6 +520,7 @@ Quotes and invoices must generate professional downloadable PDFs.
 v1 includes one excellent document template with:
 
 - Company logo and details
+- Company primary brand color
 - Customer details
 - Document metadata
 - Lines and totals
@@ -506,6 +542,8 @@ Quote and invoice emails include:
 - Editable body before sending
 
 Track Sent, Delivered, and Opened where ZeptoMail supports them. Authenticate webhooks and process provider events idempotently.
+
+The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.
 
 Do not build customer SMTP or a marketing-email system in v1.
 
@@ -610,13 +648,27 @@ Primary navigation should remain small. A possible starting point is:
 
 Analyze the UX and propose the simplest navigation. Users should create an invoice or quote with very few interactions.
 
+### Company appearance in v1
+
+Appearance settings remain intentionally small:
+
+- Company logo
+- One primary brand color
+- A small set of safe color presets
+- A custom color picker/hex value
+- A simple document/public-page preview
+
+Apply the primary brand color to outward-facing PDFs, public quote/invoice pages, and restrained transactional email accents. Do not theme the internal Invumo dashboard or application per company.
+
+Validate custom colors and maintain readable foreground/background contrast. Use a safe fallback when the chosen color cannot be used accessibly in a particular context.
+
 ## 29. Settings hierarchy
 
 Clearly separate account/user settings from company settings.
 
 Account/user settings include profile, account preferences, application language, and plan/entitlements.
 
-Company settings include legal details, tax information, bank accounts, logo, currencies, precision, numbering, document defaults, language, payment terms, quote validity, email defaults, members, and public-link defaults.
+Company settings include legal details, structured address, customizable registration labels, timezone, tax presets, bank accounts, logo, primary brand color, currencies, currency display style, precision, numbering, document defaults, language, payment terms, quote validity, email defaults, members, and public-link defaults.
 
 A user switching between companies must always understand which company is active.
 
@@ -657,6 +709,7 @@ Likely concepts include:
 - Company members
 - Company settings
 - Bank accounts
+- Company tax-rate presets
 - Customers
 - Customer contacts
 - Quotes and quote lines
@@ -683,6 +736,8 @@ Pay particular attention to:
 - Document language and currency precision
 - Duplicate scheduled execution
 - Duplicate email and webhook events
+- Historical snapshots of applied tax and bank details
+- Company-timezone scheduling across daylight-saving transitions
 
 Use transactions for business-critical operations where appropriate.
 
@@ -692,6 +747,7 @@ Create automated tests for critical calculations and workflows, especially:
 
 - Invoice line and period calculations
 - Discounts and taxes
+- Tax-preset snapshot behavior
 - Document totals and rounding
 - Partial payments
 - Invoice status transitions
@@ -699,6 +755,7 @@ Create automated tests for critical calculations and workflows, especially:
 - Next-number suggestion
 - Quote to multiple invoices
 - Recurring invoice generation
+- Recurring execution in the company timezone, including daylight-saving transitions
 - Tenant isolation
 - Role authorization
 - Public quote acceptance

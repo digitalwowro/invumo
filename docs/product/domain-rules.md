@@ -24,6 +24,22 @@ This document is a concise implementation-facing companion to the [master build 
 - v1 needs an extensible entitlement model only.
 - Billing, payment collection, and a plan-builder interface are excluded.
 
+## Company identity and locale
+
+- Store company addresses as address line 1, optional address line 2, city, state/province/region, postal code, and country.
+- Support a user-defined tax registration label and identifier.
+- Support a user-defined business registration label and number.
+- Each company has an IANA timezone.
+- Store timestamps in UTC; interpret recurring schedules and other company-timed automation in the company timezone.
+- Document date formatting derives from the selected document language/locale. v1 has no separate manual date-format setting.
+
+## Bank accounts
+
+- A company may have multiple bank accounts.
+- Bank account fields include label, bank name, account holder, IBAN/account number, SWIFT/BIC, optional currency, and optional local routing details.
+- A quote or invoice stores a snapshot of any bank details presented on the document.
+- Editing, archiving, or deleting the source bank account must not rewrite an existing document snapshot.
+
 ## Customer selection and creation
 
 - A quote or invoice editor must support selecting an existing customer.
@@ -175,12 +191,25 @@ These rules must be explicit before implementation; never use binary floating-po
 - No invoice-wide tax in v1.
 - No country-specific tax engine or electronic-invoicing compliance claim.
 
+Each company maintains reusable tax-rate presets:
+
+- Name
+- Percentage, including 0%
+- Optional default designation
+- Active or archived state
+
+Users may add, edit, and archive presets. Referenced presets should be archived rather than hard-deleted.
+
+Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
+
 ## Currency
 
 - Each customer has a default currency.
 - New customer documents inherit that currency by default.
 - Currency may be overridden per quote or invoice.
 - Currency decimal precision is user-configurable per currency.
+- The company selects ISO-code or symbol display style independently from currency precision.
+- Display style does not change the stored currency code or value.
 - There is no FX conversion or exchange-rate service.
 - Never combine amounts in different currencies into one total without a mathematically valid, explicit basis.
 
@@ -256,6 +285,7 @@ Recurring template
 - Track Sent, Delivered, and Opened where ZeptoMail supports them.
 - Authenticate webhooks and process provider events idempotently.
 - Customer SMTP is excluded from v1.
+- The company primary brand color may be used for restrained accents when email-client compatibility and contrast permit it.
 
 ## Localization
 
@@ -265,6 +295,16 @@ Recurring template
 - Document language inherits the applicable default and is overridable per quote or invoice.
 - Localize system terminology, dates, numbers, and presentation.
 - Preserve user-entered descriptions exactly; do not automatically translate them.
+
+## Company appearance
+
+- v1 supports a company logo and one primary brand color.
+- Offer safe presets and a custom color/hex input.
+- Provide a simple outward-facing document/public-page preview.
+- Apply the brand color to PDFs, public document pages, and restrained transactional email accents.
+- Do not apply company themes to the internal Invumo application.
+- Validate custom colors and choose accessible foreground colors or a safe fallback for each rendered context.
+- v1 excludes custom fonts, print padding/scale/logo-size controls, custom favicons, Pay buttons, viewer-facing Share buttons, fixed-per-page footers, signature/stamp images, and Invumo-branding removal controls.
 
 ## Audit history
 

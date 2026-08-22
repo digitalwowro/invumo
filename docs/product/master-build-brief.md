@@ -33,18 +33,18 @@ Invumo is a multi-tenant SaaS for:
 1. User registration and login
 2. Managing one or more companies
 3. Managing customers
-4. Creating quotations
-5. Creating invoices from a quotation or independently
-6. Recording payments against invoices
-7. Creating recurring invoices
-8. Sending quotes and invoices by email
-9. Generating PDFs
-10. Publishing public quote and invoice links
+4. Managing reusable products and services
+5. Creating quotations
+6. Creating invoices from a quotation or independently
+7. Recording payments against invoices
+8. Creating recurring invoices
+9. Sending quotes and invoices by email
+10. Generating PDFs
+11. Publishing public quote and invoice links
 
 Do not implement in v1:
 
-- Products or catalog
-- Inventory
+- Inventory or stock management
 - Vendors
 - Purchase orders
 - Expense management
@@ -109,6 +109,7 @@ Each company has independent:
 
 - Customers
 - Contacts
+- Products and services
 - Quotations
 - Invoices
 - Recurring invoice templates
@@ -271,7 +272,46 @@ Quotes and invoices must snapshot customer identity, address, and registration i
 
 Customer records with historical documents should normally be archived. If dependent historical data has been removed, permanent deletion should be possible so users can ultimately delete their data.
 
-## 9. Quotations
+## 9. Products & Services
+
+v1 includes a lightweight company-specific Products & Services library for reusable quote, invoice, and recurring-invoice line defaults. It is a convenience catalog, not inventory or product-management software.
+
+Each entry supports:
+
+- Required name
+- Optional description
+- Optional internal code/SKU
+- Optional default unit price
+- Required ISO currency when a default price is present
+- Optional default unit
+- Optional default company tax preset
+- Optional default billing period unit: None/N/A, Month, or Year
+- Active or archived state
+
+A missing default price means “enter the price on the document”; it is distinct from an explicit zero price.
+
+Quote, invoice, and recurring-invoice editors must provide searchable product/service selection. Search at least by name and internal code/SKU, and include description when practical. Users must also remain free to enter document lines manually without creating catalog entries.
+
+From those editors, users may create a product/service inline in a compact modal without losing the in-progress document. After a successful save, close the modal and select the new entry automatically. Validation failures retain both the modal values and document progress.
+
+Selecting an entry copies its applicable values onto the document or recurring-template line. The resulting line remains completely editable and is a self-contained snapshot, not a live link. Editing or archiving the source entry must never rewrite existing quote lines, invoice lines, recurring-template lines, or invoices later generated from already-snapshotted recurring-template lines.
+
+Copy the default price only when its currency matches the document currency. On a mismatch, copy the non-price defaults and require the user to enter or confirm the price. Never convert the price automatically because v1 has no foreign-exchange behavior.
+
+Only Owner/Admin roles should manage catalog entries by default; the permission matrix may allow Members to search and use active entries. Once used, archive entries rather than hard-deleting them by default.
+
+Do not include in v1:
+
+- Product URLs or customer-visible product hyperlinks
+- Inventory, stock counts, or stock movements
+- Tags or categories
+- Variants or bundles
+- Supplier, purchasing, cost, or margin data
+- Tiered or customer-specific price lists
+- Product images
+- CSV import/export
+
+## 10. Quotations
 
 Quote lifecycle:
 
@@ -301,7 +341,7 @@ Invoice B:   €6,000
 Remaining:   €0
 ```
 
-## 10. Invoices
+## 11. Invoices
 
 Invoice lifecycle:
 
@@ -318,7 +358,7 @@ Issued invoices remain editable. Users may edit customer, lines, quantities, pri
 
 This flexibility is intentional. Do not enforce country-specific legal or accounting restrictions in v1.
 
-## 11. Document numbering
+## 12. Document numbering
 
 Invumo should help users manage sequential quote and invoice numbers but must not enforce accounting-law numbering rules.
 
@@ -342,9 +382,9 @@ Requirements:
 - Support configurable formats such as `INV-2026-0001` and `Q-2026-0001`.
 - Avoid overengineering the numbering engine.
 
-## 12. Quote and invoice lines
+## 13. Quote and invoice lines
 
-There is no product catalog in v1. Every line is entered directly into the document.
+Lines may be entered directly or initialized from the Products & Services library. Catalog selection only copies defaults; document lines remain authoritative, editable snapshots.
 
 Line fields:
 
@@ -367,7 +407,7 @@ Quantity supports decimals.
 
 Do not support free-form header/text rows between billable lines. Free-form document text may appear before or after the line table.
 
-## 13. Period calculation
+## 14. Period calculation
 
 Period units:
 
@@ -409,7 +449,7 @@ Grand subtotal:   €10,800
 
 Avoid floating-point errors. Use appropriate fixed-precision decimal handling and define rounding behavior explicitly before implementation.
 
-## 14. Discounts
+## 15. Discounts
 
 - Support discount percentage per line.
 - Calculate discount value automatically.
@@ -417,7 +457,7 @@ Avoid floating-point errors. Use appropriate fixed-precision decimal handling an
 - If the overall discount materially complicates calculation, define the order explicitly before implementation or defer it.
 - Never silently produce ambiguous totals.
 
-## 15. Tax
+## 16. Tax
 
 For v1, use tax per line only. Do not implement invoice-wide tax.
 
@@ -452,7 +492,7 @@ Do not implement:
 
 Invumo is worldwide, but v1 offers flexible defaults rather than claiming legal compliance.
 
-## 16. Currency
+## 17. Currency
 
 - Each customer has a default currency.
 - Documents inherit the customer currency by default.
@@ -471,7 +511,7 @@ Examples:
 - JPY → 0 decimals
 - Any supported currency → user-selected precision
 
-## 17. Payment terms and Terms & Conditions
+## 18. Payment terms and Terms & Conditions
 
 Payment terms can have a company default, customer default, and document override.
 
@@ -484,7 +524,7 @@ Terms & Conditions are separate customer-visible document content, not payment-t
 - The user may override the content per quote or invoice.
 - Notes/footer, Terms & Conditions, and structured payment terms must remain distinct concepts.
 
-## 18. Transactions and payments
+## 19. Transactions and payments
 
 Keep payments simple.
 
@@ -515,7 +555,7 @@ Invoice payment status should derive appropriately from payments. Prevent paymen
 
 After recording a payment, the user may optionally send a payment-received email. Never send it automatically for historical/backfilled payments without clear user intent.
 
-## 19. Recurring invoices
+## 20. Recurring invoices
 
 Recurring invoices use a dedicated template entity:
 
@@ -554,7 +594,7 @@ Generated invoices materialize the applicable defaults and reminder schedule so 
 
 Keep scheduling infrastructure as simple as reasonably possible. Avoid queues and message brokers unless architecture analysis identifies a genuine need. Scheduled execution must be idempotent.
 
-## 20. Localization
+## 21. Localization
 
 Both the application UI and generated documents support multiple languages.
 
@@ -573,7 +613,7 @@ Each company has an IANA timezone. Store timestamps in UTC and interpret company
 
 Do not add a separate manual date-format setting in v1. Document date formatting follows the selected document language/locale.
 
-## 21. PDFs
+## 22. PDFs
 
 Quotes and invoices must generate professional downloadable PDFs.
 
@@ -590,7 +630,7 @@ v1 includes one excellent document template with:
 
 Design the PDF system so more templates can be added later without rewriting the document model. Do not build a PDF template editor in v1.
 
-## 22. Email
+## 23. Email
 
 Send transactional email through Zoho ZeptoMail. Prefer its API if the architecture assessment finds it cleaner and more reliable than SMTP.
 
@@ -665,7 +705,7 @@ Reminder processing must:
 
 The architecture phase must define the default local send time and retry policy.
 
-## 23. Public quote and invoice pages
+## 24. Public quote and invoice pages
 
 Both quotes and invoices support secure public links, such as:
 
@@ -690,7 +730,7 @@ Accepting or rejecting requires the customer's name and email address. Record th
 
 Do not add electronic signatures in v1.
 
-## 24. Quote acceptance
+## 25. Quote acceptance
 
 When a customer accepts or rejects through a public link:
 
@@ -701,7 +741,7 @@ When a customer accepts or rejects through a public link:
 
 Flexibility should generally win over rigid workflows.
 
-## 25. Dashboard
+## 26. Dashboard
 
 Keep the dashboard extremely simple. Show at least:
 
@@ -715,12 +755,13 @@ Do not build analytics or reporting dashboards in v1.
 
 Dashboard calculations must respect company and currency boundaries. Do not add amounts in different currencies together without an explicit, mathematically valid basis; Invumo has no FX system.
 
-## 26. Audit history
+## 27. Audit history
 
 Maintain an audit trail for significant business operations, including:
 
 - Invoice creation, issue, edits after issue, cancellation, deletion, and number changes
 - Quote creation, edits, acceptance, and rejection
+- Product/service creation, edits, and archiving
 - Payment creation, deletion, and changes
 - Reminder scheduling, sending, suppression, and failure where material
 - Public-link generation, revocation, and regeneration
@@ -731,13 +772,13 @@ Audit history should answer what happened, when, who caused it, and what object 
 
 Do not introduce a complex event-sourcing architecture unless independently justified.
 
-## 27. Deletion and archiving
+## 28. Deletion and archiving
 
-Customers and companies with historical dependencies should normally be archived. Permanent deletion is allowed after dependent data has been removed and deletion is valid.
+Customers, products/services, and companies with historical dependencies should normally be archived. Permanent deletion is allowed after dependent data has been removed and deletion is valid.
 
 Users must ultimately be able to delete their data. Do not impose artificial permanent-retention rules in v1 unless technically required. Use clear warnings before destructive actions.
 
-## 28. UI and UX
+## 29. UI and UX
 
 Create the initial Invumo visual identity; there is no existing design system.
 
@@ -759,6 +800,7 @@ Primary navigation should remain small. A possible starting point is:
 
 - Dashboard
 - Customers
+- Products & Services
 - Quotes
 - Invoices
 - Recurring
@@ -781,7 +823,7 @@ Apply the primary brand color to outward-facing PDFs, public quote/invoice pages
 
 Validate custom colors and maintain readable foreground/background contrast. Use a safe fallback when the chosen color cannot be used accessibly in a particular context.
 
-## 29. Settings hierarchy
+## 30. Settings hierarchy
 
 Clearly separate account/user settings from company settings.
 
@@ -791,7 +833,7 @@ Company settings include legal details, structured address, customizable registr
 
 A user switching between companies must always understand which company is active.
 
-## 30. Security
+## 31. Security
 
 Security is critical because Invumo is multi-tenant financial/business software.
 
@@ -815,7 +857,7 @@ Address at least:
 
 Never rely solely on client-side authorization. Every server-side business-data operation must verify company membership and permission.
 
-## 31. Database
+## 32. Database
 
 Use PostgreSQL from day one. Prefer a normalized, understandable relational schema and do not introduce database-per-tenant architecture without a compelling reason.
 
@@ -831,6 +873,7 @@ Likely concepts include:
 - Company tax-rate presets
 - Customers
 - Customer contacts
+- Company products and services
 - Quotes and quote lines
 - Invoices and invoice lines
 - Transactions/payments
@@ -843,7 +886,7 @@ Likely concepts include:
 
 These names are conceptual, not mandatory. Analyze the domain and choose the cleanest schema.
 
-## 32. Data integrity
+## 33. Data integrity
 
 Pay particular attention to:
 
@@ -860,11 +903,12 @@ Pay particular attention to:
 - Duplicate or stale reminder execution
 - Historical snapshots of applied tax and bank details
 - Historical snapshots of customer identity, address, and registration details
+- Product/service selection snapshots and currency-mismatch behavior
 - Company-timezone scheduling across daylight-saving transitions
 
 Use transactions for business-critical operations where appropriate.
 
-## 33. Testing
+## 34. Testing
 
 Create automated tests for critical calculations and workflows, especially:
 
@@ -872,6 +916,10 @@ Create automated tests for critical calculations and workflows, especially:
 - Discounts and taxes
 - Tax-preset snapshot behavior
 - Customer snapshot behavior
+- Searchable product/service selection in quote, invoice, and recurring-template editors
+- Product/service snapshot behavior after source edits or archiving
+- Inline product/service creation without losing document progress
+- Product-price behavior when catalog and document currencies differ
 - Document totals and rounding
 - Partial payments
 - Invoice status transitions
@@ -898,6 +946,7 @@ Implement browser-level tests for the main journey:
 Register
 → create company
 → add customer
+→ add a product or service
 → create quote
 → send quote
 → accept quote
@@ -907,7 +956,7 @@ Register
 → invoice becomes paid
 ```
 
-## 34. Development philosophy
+## 35. Development philosophy
 
 Prefer:
 
@@ -934,7 +983,7 @@ Avoid by default:
 
 If any of these become genuinely necessary, explain why before introducing them.
 
-## 35. Implementation process
+## 36. Implementation process
 
 Do not generate the application as an unstructured code dump. Work incrementally.
 
@@ -968,7 +1017,14 @@ Then build in logical stages. A sensible initial order is:
 - Contacts
 - Customer defaults
 
-### Phase 3 — Quotes
+### Phase 3 — Products & Services
+
+- Company-scoped product/service CRUD
+- Search and archive behavior
+- Inline creation from document editors
+- Editable snapshot initialization and currency-mismatch handling
+
+### Phase 4 — Quotes
 
 - Quote CRUD
 - Line calculations
@@ -976,7 +1032,7 @@ Then build in logical stages. A sensible initial order is:
 - PDF
 - Statuses
 
-### Phase 4 — Invoices
+### Phase 5 — Invoices
 
 - Invoice CRUD
 - Quote-to-invoice workflow
@@ -985,14 +1041,14 @@ Then build in logical stages. A sensible initial order is:
 - PDF
 - Statuses
 
-### Phase 5 — Payments
+### Phase 6 — Payments
 
 - Transactions
 - Partial payments and refunds
 - Invoice payment states
 - Transactions screen
 
-### Phase 6 — Public documents
+### Phase 7 — Public documents
 
 - Secure links
 - Expiry
@@ -1000,7 +1056,7 @@ Then build in logical stages. A sensible initial order is:
 - Quote acceptance/rejection
 - Invoice viewing
 
-### Phase 7 — Email
+### Phase 8 — Email
 
 - ZeptoMail integration
 - Event- and language-specific default templates
@@ -1010,7 +1066,7 @@ Then build in logical stages. A sensible initial order is:
 - Automated before/after-due reminders
 - Optional payment-received messages
 
-### Phase 8 — Recurring invoices
+### Phase 9 — Recurring invoices
 
 - Templates
 - Scheduling
@@ -1018,13 +1074,13 @@ Then build in logical stages. A sensible initial order is:
 - Automatic issue and email
 - Invoice-default and reminder inheritance
 
-### Phase 9 — Dashboard and audit
+### Phase 10 — Dashboard and audit
 
 - Dashboard
 - Audit history
 - Destructive-action handling
 
-### Phase 10 — Polish
+### Phase 11 — Polish
 
 - English and Romanian
 - UX refinement
@@ -1035,7 +1091,7 @@ Then build in logical stages. A sensible initial order is:
 
 Change the order only when a simpler or safer sequence is justified.
 
-## 36. Definition of successful v1
+## 37. Definition of successful v1
 
 A new user can:
 
@@ -1043,24 +1099,25 @@ A new user can:
 2. Create a company.
 3. Configure its basic information.
 4. Add a customer.
-5. Create a quotation.
-6. Generate a professional PDF.
-7. Email the quote.
-8. Let the customer accept it online.
-9. Generate one or multiple invoices from it.
-10. Send an invoice.
-11. Record one or multiple payments.
-12. See the invoice become partially paid or paid automatically.
-13. Find those payments under Transactions.
-14. Create an invoice without a quote.
-15. Create recurring invoice templates.
-16. Have recurring invoices generated, issued, and emailed automatically.
-17. Manage multiple completely independent companies.
-18. Invite users with appropriate roles.
-19. Transfer a company to another account owner.
-20. Work in English or Romanian.
-21. Configure automatic invoice reminders before or after due dates.
-22. Customize multilingual company email templates and preview their resolved content.
+5. Add reusable products or services and select them in document editors.
+6. Create a quotation.
+7. Generate a professional PDF.
+8. Email the quote.
+9. Let the customer accept it online.
+10. Generate one or multiple invoices from it.
+11. Send an invoice.
+12. Record one or multiple payments.
+13. See the invoice become partially paid or paid automatically.
+14. Find those payments under Transactions.
+15. Create an invoice without a quote.
+16. Create recurring invoice templates.
+17. Have recurring invoices generated, issued, and emailed automatically.
+18. Manage multiple completely independent companies.
+19. Invite users with appropriate roles.
+20. Transfer a company to another account owner.
+21. Work in English or Romanian.
+22. Configure automatic invoice reminders before or after due dates.
+23. Customize multilingual company email templates and preview their resolved content.
 
 All of this should feel substantially simpler than traditional accounting software.
 

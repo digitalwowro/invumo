@@ -62,6 +62,20 @@ This document is a concise implementation-facing companion to the [master build 
 - A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.
 - Editing or deleting the customer must not silently rewrite an existing document snapshot.
 
+## Products & Services library
+
+- v1 includes a lightweight, company-scoped Products & Services library for reusable line defaults; it is not inventory software.
+- Each entry has a required name; optional description, internal code/SKU, default unit, default tax preset, and default period unit; optional default unit price with a required ISO currency; and active/archived state.
+- A missing default price means “enter on the document” and is distinct from an explicit zero price.
+- Quote, invoice, and recurring-invoice editors provide searchable selection of active entries while still allowing fully manual lines.
+- Users may create a product/service inline from those editors without losing document progress; successful creation selects it automatically, and validation failures retain both forms.
+- Selecting an entry copies applicable values onto the line. The line remains completely editable and financially authoritative.
+- Document and recurring-template lines are snapshots, not live catalog links. Editing or archiving a product/service never rewrites existing lines or invoices generated later from already-snapshotted recurring-template lines.
+- Copy a default price only when its currency matches the document currency. On mismatch, copy non-price defaults and require manual price entry or confirmation; never perform FX conversion.
+- Owner/Admin roles manage entries by default. Members may search and use active entries subject to the approved permission matrix.
+- Archive a previously used entry rather than hard-deleting it by default.
+- v1 excludes product URLs/customer-visible product links, inventory and stock movements, tags/categories, variants, bundles, supplier/purchasing data, cost/margin tracking, tiered/customer-specific price lists, product images, and catalog CSV import/export.
+
 ## Quote workflow
 
 Statuses:
@@ -120,6 +134,8 @@ Example:
 4. The user may override the suggestion.
 
 ## Line inputs
+
+Lines may be entered manually or initialized from the Products & Services library. Catalog selection only copies defaults and never limits later line editing.
 
 Each quote or invoice line contains:
 
@@ -355,6 +371,7 @@ Audit at least:
 
 - Document creation, issue, cancellation, deletion, and significant edits
 - Quote acceptance and rejection
+- Product/service creation, edits, and archiving
 - Number changes
 - Payment/refund creation, change, and deletion
 - Reminder scheduling, sending, suppression, and material failures

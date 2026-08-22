@@ -12,9 +12,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 - Current phase: Phase 0 — Architecture readiness
 - Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Complete and review the four unresolved schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
+- Next gate: Complete and review the three remaining schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
 
-The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the four schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
+The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the three remaining schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -72,7 +72,7 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 - [x] Approve tenant isolation and forced PostgreSQL RLS mechanisms.
 - [x] Approve document-number allocation and concurrency mechanisms.
 - [x] Approve recurrence, reminders, timezone/DST, retry, downtime, and idempotency mechanisms.
-- [ ] Review and approve the drafted requirements contradiction assessment and risk register.
+- [x] Review and approve the requirements contradiction assessment and risk register.
 - [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
 - [ ] Produce and review the complete Owner/Admin/Member role-action permission matrix.
 - [ ] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
@@ -80,11 +80,11 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 
 ### Acceptance gate
 
-The four open schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
+The three remaining schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together with the approved requirements assessment, they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
 
 ### Evidence
 
-- [Draft Requirements Contradiction Assessment and Risk Register](../architecture/requirements-risk-assessment.md)
+- [Approved Requirements Contradiction Assessment and Risk Register](../architecture/requirements-risk-assessment.md)
 - [Application architecture baseline](../architecture/application-architecture.md)
 - [Calculation, Decimal Precision, and Rounding](../architecture/calculation-and-rounding.md)
 - [Domain Identifier Policy](../architecture/identifier-policy.md)
@@ -209,7 +209,7 @@ Active entries can initialize detached, editable line data with safe currency-mi
 - [ ] Implement manual lines, searchable product/service selection, and inline customer/product creation without losing editor progress.
 - [ ] Implement customer, product/service, tax, bank, Terms & Conditions, notes, currency-precision, and settings snapshots.
 - [ ] Implement locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes.
-- [ ] Implement quote CRUD, validation, lifecycle, derived expiry, and operational list controls.
+- [ ] Implement quote CRUD, non-negative day-offset validity, lifecycle, derived expiry, one mutable current public/PDF representation, and operational list controls.
 - [ ] Implement the optional customer reference / PO number, including list search and customer-facing rendering when present.
 - [ ] Build the shared outward-facing renderer and complete the pure-PHP PDF compatibility proof before committing to the renderer.
 - [ ] Add quote authorization, audit coverage, calculation vectors, concurrency tests, PDF tests, and browser workflow tests.
@@ -226,10 +226,10 @@ Quotes calculate deterministically, preserve every required snapshot, render con
 
 ### Tasks
 
-- [ ] Implement invoice CRUD.
+- [ ] Implement invoice CRUD with one mutable current public/PDF representation and immutable already-delivered email artifacts.
 - [ ] Reuse the shared editor, calculations, numbering, renderer, and PDF pipeline.
-- [ ] Implement Draft/Issued/Cancelled lifecycle, derived payment state, due-date validation, and overdue flag.
-- [ ] Implement quote-to-one-or-many-invoices with quoted/invoiced/remaining allocation and customer-reference inheritance.
+- [ ] Implement Draft/Issued/Cancelled lifecycle, zero-total Paid behavior, derived payment state, day-offset due-date validation, and overdue flag.
+- [ ] Implement quote-to-one-or-many-invoices with normal Accepted conversion, confirmed Owner/Admin Draft/Sent/Expired overrides, Rejected blocking, Draft-only unused unlinking with permanent provenance afterward, quoted/invoiced/remaining allocation, and customer-reference inheritance.
 - [ ] Implement invoice search, filtering, sorting, pagination, and operational list controls.
 - [ ] Add invoice authorization, audit coverage, state tests, calculation tests, and tenant-isolation tests.
 
@@ -246,9 +246,9 @@ Independent and quote-derived invoices produce the same authoritative calculatio
 ### Tasks
 
 - [ ] Implement invoice transaction records with explicit payment, refund, and adjustment direction.
-- [ ] Implement partial payments, refund limits, overpayment prevention, and outstanding-balance derivation.
+- [ ] Implement partial payments, cash-only refund capacity, non-refundable adjustments, overpayment prevention, and outstanding-balance derivation.
 - [ ] Implement derived invoice payment state.
-- [ ] Implement transaction-aware cancellation guards, post-cancellation transaction blocking, history retention, and deletion constraints.
+- [ ] Implement transaction-aware cancellation guards, post-cancellation transaction blocking, authorized reopening under the approved state rules, history retention, and deletion constraints.
 - [ ] Implement the company Transactions screen with operational list controls.
 - [ ] Add transaction authorization, audit coverage, precision validation, reconciliation tests, and tenant-isolation tests.
 
@@ -290,7 +290,7 @@ Public access cannot cross tenants, revoked tokens stay revoked, expired quote a
 - [ ] Implement editable direct-send composition.
 - [ ] Implement recipient/PDF-delivery precedence and valid-link handling.
 - [ ] Implement authenticated, idempotent delivery/open webhooks and email history.
-- [ ] Implement automated before/after-due reminders.
+- [ ] Implement automated before/after-due reminders, excluding zero-total Paid invoices.
 - [ ] Implement explicitly optional payment-received messages.
 - [ ] Implement company-local schedule materialization, transactional dispatch claiming, approved retries, stale/superseded downtime behavior, failure visibility, and duplicate suppression.
 - [ ] Add authorization, audit, localization, webhook-authentication, retry, idempotency, and browser tests.
@@ -307,12 +307,12 @@ Direct and automated sends are recoverable and observable, reminder links remain
 
 ### Tasks
 
-- [ ] Implement template CRUD with required internal-only searchable name, optional customer reference / PO number, line snapshots, and Draft/Active/Paused/Completed states.
+- [ ] Implement template CRUD with required internal-only searchable name, optional customer reference / PO number, line snapshots, Draft/Active/Paused/Completed states, and terminal Completed duplication.
 - [ ] Reuse shared customer/product selection, inline creation, editor, calculations, and snapshot behavior.
-- [ ] Implement local-calendar scheduling with explicit DST resolution, bounded downtime catch-up, and no implicit pause backfill.
+- [ ] Implement local-calendar scheduling with explicit DST resolution, no pre-activation backfill for past start dates, bounded Active-time downtime catch-up, and no implicit pause backfill.
 - [ ] Implement idempotent one-invoice-per-occurrence generation.
 - [ ] Implement automatic issue, optional automatic email, and visible last/next-run outcomes.
-- [ ] Implement invoice-default, customer-reference, delivery, and reminder inheritance.
+- [ ] Implement source-aware recurring inheritance for all Customer values, including currency/precision, language, payment terms, and default tax, while preserving explicit template/line overrides, the no-FX rule, customer reference, delivery, and reminder inheritance; template edits affect future occurrences only.
 - [ ] Add authorization, audit, recurrence, retry, overlap, pause/resume, downtime, and duplicate-suppression tests.
 
 ### Acceptance gate
@@ -363,6 +363,8 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Approved the requirements contradiction assessment after resolving full latest-Customer recurring inheritance and Draft-only unused Quote/Invoice unlinking; three Phase 0 schema-shaping specifications remain | [Approved assessment](../architecture/requirements-risk-assessment.md) |
+| 2026-08-22 | 0 | Recorded all nine owner-selected top-level risk resolutions; kept the recurring-Customer refresh boundary and Quote-derived Draft unlink rule explicitly open rather than inferring omitted details | [Draft assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Produced the draft requirements contradiction assessment and risk register; owner review and proposed-resolution approvals remain open | [Draft assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Explicitly deferred TOTP/recovery codes from v1 and approved Laravel as the sole authored translation source with page-scoped Inertia translation props | Product and architecture approval recorded in work and memory documentation |
 | 2026-08-22 | 0 | Reopened TOTP scope and localization-plumbing decisions that had been bundled into a documentation approval without explicit sign-off; added the explicit-approval tracking rule | Work and memory documentation |

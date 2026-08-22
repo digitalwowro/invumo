@@ -5,9 +5,12 @@ Last updated: 2026-08-22
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
+Across the domain, unusual but internally valid workflows should remain possible. Block only unsupported actions or actions that violate authorization, tenant isolation, financial/data integrity, or another approved invariant; otherwise prefer warning, confirmation, and audit history.
+
 ## Tenant and ownership boundaries
 
-- An Account belongs to an account owner and carries plan entitlements.
+- Every registered User owns exactly one personal Account in v1. Registration creates it transactionally with the default placeholder plan; the User cannot own a second Account.
+- An Account belongs to its account owner, carries plan entitlements, and may own multiple Companies.
 - A Company is an independent tenant containing all company business data and settings.
 - A CompanyMembership connects a user and company with Owner, Admin, or Member role.
 - One account owner may manage multiple companies.
@@ -98,9 +101,10 @@ This document is a concise implementation-facing companion to the [master build 
 
 ## Default resolution and snapshot timing
 
-- Resolve company/customer defaults into stored draft fields when a quote, invoice, or recurring template is created.
+- Resolve available company defaults into stored draft fields at creation and customer defaults when a customer is selected.
 - Resolve product/service defaults into a line when the entry is selected.
-- Later source changes never propagate silently to an existing document or template.
+- Later source changes never propagate silently to an existing ordinary quote or invoice.
+- A recurring template stores inheritance-versus-override intent for every Customer-derived field. At generation, explicit template/line overrides remain fixed; inherited identity, address, registration, contacts, recipients, CC/BCC, delivery, currency, language, payment terms, and default tax resolve from the current Customer, then Company fallback. Already-generated invoices never change.
 - Changing the selected customer requires confirmation of the resulting identity/default/recipient changes and must not silently replace lines or unrelated manual edits.
 - Reapplying current defaults is an explicit user action with a clear preview of what will change.
 
@@ -122,11 +126,12 @@ Rules:
 - Expired is derived after `valid_until` in the company timezone when the quote is neither Accepted nor Rejected.
 - Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes status.
 - Editing a sent/accepted quote does not reset its status automatically; significant changes are audited.
-- There is no quote versioning in v1.
-- A quote may generate multiple invoices.
+- v1 has one mutable current quote, not revisions. A successful edit updates its current public page and regenerated current PDF; already-delivered email bodies/attachments remain unchanged. There is no version-history screen.
+- A quote may generate multiple invoices. Accepted is the normal conversion state. Owner/Admin may confirm conversion from Draft, Sent, or Expired; Rejected cannot be converted until moved to an allowed state.
 - Each generated invoice initially copies the quote's customer reference / PO number without creating a live link back to the quote.
 - Linked invoices use the quote currency; there is no cross-currency allocation.
 - Quote currency cannot change after linked invoices exist unless those links are removed through a valid workflow.
+- A Quote-derived Invoice may be unlinked only while it remains Draft and has never been sent/issued, shared through a public link, or associated with a financial transaction. Unlinking is confirmed and audited, preserves the Invoice as an independent Draft, and recalculates the Quote allocation. After disqualifying activity, Issue, or Cancellation, the provenance link is immutable.
 - Invoiced amount is the sum of non-Cancelled linked invoice totals, including Draft invoices; remaining amount is quote total minus invoiced amount and may be negative.
 - Warn rather than block when generated invoices exceed the quoted amount.
 - Default validity is 30 days, configurable by company and overridable per quote.
@@ -149,12 +154,15 @@ Rules:
 - Sending a Draft invoice issues it before delivery. Dispatch failure leaves it Issued and records a retryable failed email attempt.
 - Issued invoices remain editable, including financial fields.
 - Significant edits after issue require understandable audit records, including appropriate before/after data.
+- v1 has one mutable current invoice, not revisions. A successful edit updates its current public page and regenerated current PDF; already-delivered email bodies/attachments remain unchanged. There is no version-history screen.
 - Financial edits recalculate balance and payment state. Do not reduce invoice total below net paid until the necessary refund or corrective adjustment is recorded.
 - Invoice currency cannot change while valid payment/refund/adjustment transactions exist.
 - Payment state is derived from the net total of valid payments, refunds, and explicit adjustments.
+- An Issued zero-total Invoice is immediately Paid, is never Overdue, requires no payment, and receives no payment reminders.
 - Cancellation is allowed only when net paid is exactly zero. A positive net-paid amount requires a refund or corrective adjustment before cancellation.
 - Cancellation suppresses pending reminders and blocks new payment, refund, and adjustment records while the invoice remains Cancelled.
 - Cancellation retains the invoice, every existing linked transaction, and audit history. No invoice may be permanently deleted while any linked transaction records remain, regardless of lifecycle state.
+- A Cancelled Invoice can be reopened and changed. The state and permission specifications must explicitly approve the authorized role, target state, invariant checks, transaction behavior, public-link behavior, and reminder recalculation.
 - v1 does not enforce jurisdiction-specific invoice immutability or numbering law.
 
 ## Document numbering
@@ -291,7 +299,7 @@ Render the applied tax name and percentage together on customer-visible document
 - Initial document-currency precedence is document choice, customer default, then company default.
 - Currency may be overridden per quote or invoice.
 - Currency decimal precision is user-configurable per currency from 0 through 8.
-- Every quote, invoice, and recurring template snapshots its resolved currency precision. Quote conversion and recurring generation preserve that snapshot; later company-setting changes do not alter existing documents or templates.
+- Every quote and invoice snapshots its resolved currency precision, and Quote conversion preserves it. A recurring template stores an explicit currency/precision override or inheritance intent. Inherited currency uses the current Customer currency and configured precision at generation; an explicit template override remains fixed. Generated Invoices never change afterward.
 - The company selects ISO-code or symbol display style independently from currency precision.
 - Display style does not change the stored currency code or value.
 - There is no FX conversion or exchange-rate service.
@@ -313,7 +321,7 @@ Default precedence:
 2. Customer default
 3. Company default
 
-The due date is derived from the applicable terms but remains editable.
+Payment terms and quote validity are non-negative whole calendar-day offsets from the issue date. The due date and valid-until date are derived from the applicable offset but remain editable, and neither may be before the issue date.
 
 Terms & Conditions are separate from structured payment terms and document notes:
 
@@ -333,7 +341,7 @@ Terms & Conditions are separate from structured payment terms and document notes
 - The company Transactions section is the aggregate view of invoice transactions.
 - There are no expenses, unrelated transactions, chart of accounts, or bookkeeping ledger.
 - Prevent payments from unintentionally exceeding the outstanding balance.
-- Prevent refunds from exceeding the amount available to refund.
+- Prevent refunds from exceeding actual recorded cash paid and not already refunded. Positive adjustments affect balance but never increase refundable cash.
 - Refunds may make an invoice partially or fully unpaid again; status must update accordingly.
 - Transaction fields include amount, currency, date, payment method, reference, and notes.
 - Transaction currency must be consistent with the invoice because v1 has no FX conversion.
@@ -361,11 +369,14 @@ Recurring template
 - Support weekly, monthly, quarterly, yearly, and custom intervals.
 - Support start date, optional end date, and optional maximum occurrence count.
 - Templates have Draft, Active, Paused, and Completed states; only Active templates execute.
+- Activating a template whose start date is in the past schedules the first occurrence on or after activation and never backfills pre-activation invoices.
 - Pausing prevents future occurrences. Resuming continues with the next eligible occurrence and does not backfill missed occurrences without explicit user intent.
+- Completed is terminal in v1; continuing requires duplicating it into a new Draft.
 - Inherit company invoice defaults while allowing template overrides for payment terms, due-date calculation, Terms & Conditions, notes, email delivery, and reminder rules.
 - A template may also store an optional customer reference / PO number for the recurring arrangement.
 - Generated invoices use the normal company invoice numbering sequence.
-- Generated invoices materialize the applicable defaults, customer reference / PO number, and reminder schedule; later template or company-default changes do not rewrite them.
+- Generated invoices materialize current inherited Customer values, explicit template/line overrides, customer reference / PO number, and reminder schedule. Template edits affect future occurrences only; later template/default/customer edits do not rewrite generated invoices.
+- If inherited currency changes, template line inputs keep their numeric values and the generated Invoice recalculates/rounds with the current currency precision; no FX conversion occurs. Explicit template currency remains fixed. Explicit line tax remains fixed; only a line marked to inherit Customer tax uses the current Customer default.
 - Scheduled invoices are created and issued. A per-template setting controls whether they are emailed automatically or left issued for manual sending.
 - If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.

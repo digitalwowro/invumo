@@ -1,18 +1,18 @@
 # Requirements Contradiction Assessment and Risk Register
 
-Status: Draft for owner review
+Status: Approved
 Last updated: 2026-08-22
 
 This assessment reconciles the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), existing architecture decisions, canonical [development tracker](../development/development-tracker.md), and durable decision log. It identifies contradictions, schema-shaping ambiguities, accepted risks, and decisions intentionally deferred to a just-in-time gate.
 
-This document does not approve a new product or technical decision. Every recommendation marked **Open — owner decision required** remains a proposal until the owner explicitly approves it. The Phase 0 tracker item remains incomplete until this assessment is reviewed and every open finding is resolved or deliberately deferred.
+This document does not create product or technical scope by itself. It records the owner's explicit resolutions and names the downstream Phase 0 or just-in-time specification required for details not settled here. No finding remains in **Open — owner decision required** status.
 
 ## Executive outcome
 
 - No contradiction invalidates the approved Laravel/Inertia/React/PostgreSQL architecture.
 - The approved tenancy, exact-decimal, numbering, scheduling, UUID, authentication-scope, localization, and infrastructure decisions resolve the highest architectural risks identified earlier.
-- One documentation-sequencing conflict needs correction: an older decision says navigation must be complete before any application implementation, while the newer canonical tracker explicitly makes navigation a Phase 1 just-in-time gate and permits the approved scaffold/tooling foundation during Phase 0.
-- Ten product/state ambiguities must be resolved before the state specification and relational schema can be approved. They do not add new feature areas; they define edge behavior already implied by v1 scope.
+- One documentation-sequencing conflict is resolved by the newer canonical tracker: navigation is a Phase 1 just-in-time gate, while domain migrations and business workflows wait for the four schema-shaping Phase 0 deliverables.
+- All owner choices and the two follow-up boundaries are approved. The remaining Phase 0 work is downstream specification, not unresolved scope in this assessment.
 - The complete Owner/Admin/Member matrix remains a separate Phase 0 deliverable and is not improvised in this assessment.
 - PDF selection, upload rules, public-token implementation details, ZeptoMail/webhook details, and production operations remain valid just-in-time gates. They do not block the state or schema documents.
 
@@ -21,6 +21,8 @@ This document does not approve a new product or technical decision. Every recomm
 | Label | Meaning |
 | --- | --- |
 | Open — owner decision required | The current requirements permit more than one materially different behavior; the recommendation is not approved yet |
+| Approved resolution | The owner explicitly approved the resolution; canonical product/domain/memory documents must contain it |
+| Approved direction; downstream specification | The product choice is approved, but exact mechanics must still be proposed and approved in the named Phase 0 document |
 | Phase 0 specification | The requirement is already approved in principle but needs exact rules in the named remaining Phase 0 document |
 | Documentation correction | Later approved direction is clear, but an older document must be reconciled |
 | Just-in-time gate | Must be resolved before its feature or deployment boundary, not before unrelated domain work |
@@ -40,100 +42,102 @@ Severity describes the impact of implementing the wrong behavior:
 ### RA-001 — Architecture sequencing is stated inconsistently
 
 - Severity: Medium
-- Status: Documentation correction
+- Status: Approved resolution; documentation correction applied
 - Evidence: D-018 says navigation and all architecture work precede application implementation. The canonical tracker, approved later, permits the starter scaffold/tooling foundation during Phase 0 and makes routes/navigation a just-in-time gate before the custom application shell.
 - Risk: A future agent could either begin business migrations too early or unnecessarily block safe scaffold/tooling work.
 - Existing direction: The development tracker is the single source of truth for permitted work and phase gates.
-- Required correction after review: Mark D-018 as partially superseded by the canonical Phase 0/just-in-time-gate sequencing and clarify the master brief's introductory implementation wording. Preserve the rule that domain migrations, models, and business workflows wait for the four Phase 0 schema-shaping deliverables.
+- Approved resolution: Mark D-018 as partially superseded by the canonical Phase 0/just-in-time-gate sequencing and clarify the master brief's introductory implementation wording. Preserve the rule that domain migrations, models, and business workflows wait for the four Phase 0 schema-shaping deliverables.
 
 ### RA-002 — Account ownership cardinality and registration bootstrap are undefined
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved resolution
 - Evidence: An Account has an account owner and owns plan entitlements, but the brief does not say whether one User may own multiple Accounts or when an Account is created.
 - Risk: Account, ownership-transfer, entitlements, and registration tables could be designed with incompatible cardinalities.
-- Recommendation: In v1, every registered User owns exactly one personal Account, created transactionally during registration with the default placeholder plan. That Account may own multiple Companies. A User may additionally be an Admin or Member of Companies owned by other Accounts. A User cannot own a second Account in v1.
+- Approved resolution: In v1, every registered User owns exactly one personal Account, created transactionally during registration with the default placeholder plan. That Account may own multiple Companies. A User may additionally be an Admin or Member of Companies owned by other Accounts. A User cannot own a second Account in v1.
 - Downstream specification: Relational schema and permission matrix.
 
 ### RA-003 — Draft default and snapshot timing conflicts with incomplete Draft creation
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved resolution
 - Evidence: New Quote/Invoice immediately persists an incomplete Draft, while the default rule says company/customer defaults are resolved when the Draft is created. A customer may not have been selected at that moment. Recurring templates are also described as stable snapshots, but their customer-snapshot boundary is not stated explicitly.
 - Risk: Implementations may silently refresh customer data, produce partially populated snapshots, or copy different values in quote, invoice, and recurring workflows.
-- Recommendation:
+- Approved resolution:
   1. Immediate Draft creation snapshots company-level defaults that can be resolved without a customer.
   2. Selecting or changing a customer snapshots customer identity, address, registration, currency, language, payment terms, tax, recipients, CC/BCC, and delivery preference after showing the approved replacement confirmation.
-  3. A recurring template snapshots the resolved customer identity/default/delivery data and its line data; generated invoices copy the template's stored values rather than silently refreshing the source Customer.
-  4. An explicit **Reapply current defaults** action is the only way to refresh source-derived values, with a preview of affected fields.
+  3. A recurring template records inheritance versus explicit override intent for every Customer-derived field. At each generation, explicit template or line overrides remain authoritative; every inherited value resolves again from the current Customer, then the current Company fallback.
+  4. Refreshed Customer values include identity, address, registration, contacts, recipients, CC/BCC, delivery preference, currency, document language, payment terms, and default tax. A line tax explicitly selected on the template remains fixed; a line left to inherit Customer tax uses the current Customer default.
+  5. When inherited currency changes, the generated Invoice uses the current Customer currency and its current configured precision. Stored template line inputs keep their numeric values, are recalculated and rounded for that precision, and are not foreign-exchange converted. An explicit template currency override remains fixed.
+  6. Already-generated Invoices remain unchanged. An explicit **Reapply current defaults** action remains the only way to refresh source-derived values on an ordinary Quote or Invoice, with a preview of affected fields.
 - Downstream specification: Relational schema and snapshot-boundary section.
 
 ### RA-004 — Mutable issued documents do not define PDF/public-history behavior
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved resolution
 - Evidence: Sent quotes and Issued invoices remain editable and v1 has no document revision system. PDFs must render persisted values, but the brief does not say what happens to a previously generated PDF after a significant edit.
 - Risk: The editor, current PDF, public page, email history, and a PDF already attached to an email may represent different document contents without an explicit rule.
-- Recommendation: v1 has one mutable current document, not revisions. A successful significant edit recalculates the current stored snapshots, records understandable audit before/after data, invalidates the current generated-PDF cache, and causes the next view/download/send to render a new PDF from the edited document. The current public page shows the edited document. Previously delivered email bodies or attachments cannot be recalled and remain historical delivery artifacts; v1 does not retain a user-browsable document/PDF version history.
+- Approved resolution: v1 has one mutable current document, not revisions. A successful significant edit recalculates the current stored snapshots, records understandable audit before/after data, invalidates the current generated-PDF cache, and causes the next view/download/send to render a new PDF from the edited document. The current public page shows the edited document. Previously delivered email bodies or attachments cannot be recalled and remain historical delivery artifacts; v1 does not retain a user-browsable document/PDF version history.
 - Downstream specification: Quote/invoice state rules, relational schema, and later PDF/email implementation.
 
 ### RA-005 — Zero-total document and payment-state behavior is undefined
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved direction; downstream specification
 - Evidence: Explicit zero prices and 100% discounts are allowed, but invoice payment state is only described in terms of invoice total, net paid, and outstanding balance.
 - Risk: A zero-total Issued invoice may alternate between Unpaid and Paid across list, reminder, public, and transaction code paths.
-- Recommendation: Allow a Quote or Invoice with at least one otherwise valid line whose final total is zero. An Issued zero-total Invoice is derived as Paid immediately, is never Overdue, materializes no payable reminders, and rejects payment/refund/adjustment entries because its outstanding and refundable amounts are zero. A Draft zero-total Invoice has no customer-facing payment state until issue.
+- Approved direction: Allow a Quote or Invoice with at least one otherwise valid line whose final total is zero. An Issued zero-total Invoice is derived as Paid immediately, is never Overdue, requires no payment, and receives no payment reminders. A Draft zero-total Invoice has no customer-facing payment state until issue. The exact state specification must define whether any manual financial-entry type is valid on a zero-total Invoice; no such permission is approved here.
 - Downstream specification: Financial/document state rules and calculation tests.
 
 ### RA-006 — Transaction direction, refund capacity, and adjustment bounds need one formula
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved direction; downstream specification
 - Evidence: Transactions may be Payment, Refund, or Adjustment; adjustments may be positive or negative; all stored amounts are non-negative. The phrase “amount available to refund” does not state whether a positive adjustment represents refundable cash.
 - Risk: Different code paths could calculate net paid or refundable cash differently, permitting negative balances or refunding money that was never recorded as received.
-- Recommendation:
+- Approved direction and downstream requirement:
   1. Store `type = PAYMENT | REFUND | ADJUSTMENT`; Adjustment additionally stores `direction = INCREASE_PAID | DECREASE_PAID`. Other types have no adjustment direction.
   2. `net_paid = payments + increase_adjustments − refunds − decrease_adjustments`.
   3. `cash_available_to_refund = payments − refunds`; positive adjustments do not create refundable cash.
-  4. After every create/edit/delete, require `0 ≤ net_paid ≤ invoice_total`, `0 ≤ cash_available_to_refund`, and each Refund to fit both the pre-operation cash available and the post-operation non-negative net-paid result.
-  5. Transactions are allowed only on Issued, non-Cancelled Invoices and always use the Invoice currency and precision.
+  4. A Refund cannot exceed actual recorded cash still available to refund, regardless of positive adjustments.
+  5. The exact state specification must define the complete create/edit/delete invariants, lifecycle eligibility, and interaction with invoice totals. Those mechanics were not part of this owner choice and are not approved by this assessment.
 - Downstream specification: Financial/document state rules and relational constraints.
 
 ### RA-007 — Transaction mutation and cancellation finality are incomplete
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved direction; downstream specification
 - Evidence: The brief requires audited payment changes/deletions and says cancellation preserves existing transaction history, but it does not state whether a Cancelled invoice can be restored or whether its existing transactions can still be edited/deleted.
 - Risk: A cancelled invoice could change financially after cancellation, or cancellation could be reversed inconsistently after reminder and public states were suppressed.
-- Recommendation: Before cancellation, an authorized user may edit or delete a transaction only while the Invoice remains Issued and the entire resulting ledger passes all limits; each mutation records audit before/after values. Cancellation is one-way in v1. Once Cancelled, its existing transaction rows are read-only and cannot be added, edited, or deleted. Correcting a cancellation requires a separately approved future restoration workflow rather than direct state editing.
+- Approved direction: A Cancelled Invoice may be reopened and changed in v1; cancellation is not permanently terminal. While it remains Cancelled, it preserves its existing transactions and audit history, blocks new transactions and reminders, and is not edited as though it were active. The exact authorized role, target state, invariant checks, transaction mutability, public-link behavior, and future-reminder recalculation after reopening must be proposed and approved in the exact state specification.
 - Downstream specification: Financial/document state rules and permission matrix.
 
 ### RA-008 — Quote-to-invoice eligibility and unlinking are unspecified
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved resolution
 - Evidence: A Quote may create multiple Invoices and its currency becomes locked while linked Invoices exist, “unless those links are removed through a valid workflow.” Neither eligible Quote states nor that unlink workflow are defined.
 - Risk: Quote allocations and provenance may change after invoice issue, or an agent may impose an unnecessarily rigid conversion rule.
-- Recommendation: Accepted is the normal conversion state. Owner/Admin may explicitly confirm conversion from Draft, Sent, or Expired as an intentional override; Rejected must first be moved to another allowed state. A linked Invoice may be unlinked only while it is Draft, has no transaction records, and has not been sent or exposed through a public-link action. Once Issued or Cancelled, the Quote provenance link is immutable. v1 does not support attaching an independently created Invoice to a Quote after creation.
+- Approved resolution: Accepted is the normal conversion state. Owner/Admin may explicitly confirm conversion from Draft, Sent, or Expired as an intentional override; Rejected must first be moved to another allowed state. A Quote-derived Invoice may be unlinked only while it remains Draft and has never been sent/issued, exposed through a public-link share, or associated with any financial transaction. Unlinking requires confirmation and audit, leaves the copied Invoice data intact as an independent Draft, and immediately recalculates the Quote's invoiced/remaining amounts. Once any disqualifying activity occurs—or the Invoice is Issued or Cancelled—the provenance link is immutable. v1 does not support attaching an independently created Invoice to a Quote after creation.
 - Downstream specification: Quote/invoice state rules, permission matrix, and relational schema.
 
 ### RA-009 — Payment terms, quote validity, and date validation lack a v1 shape
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved direction; downstream specification
 - Evidence: Payment terms and quote validity derive customer-visible dates, but their stored configuration is not specified. Due and valid-until dates remain editable, without explicit lower bounds.
 - Risk: Schema and UI may invent incompatible term types such as free text, fixed dates, or calendar rules.
-- Recommendation: v1 structured payment terms and quote validity are integer calendar-day offsets from the issue date, from 0 through 3650 inclusive. The resolved due date/valid-until date is stored and remains manually editable. A valid Issued Invoice requires `due_date ≥ issue_date`; a sendable Quote requires `valid_until ≥ issue_date`. Drafts may temporarily be incomplete, but may not save a populated end date earlier than a populated issue date. Terms & Conditions and notes remain unrelated text fields.
+- Approved resolution: v1 structured payment terms and quote validity are non-negative integer calendar-day offsets from the issue date. The resolved due date/valid-until date is stored and remains manually editable. A valid Issued Invoice requires `due_date ≥ issue_date`; a sendable Quote requires `valid_until ≥ issue_date`. Drafts may temporarily be incomplete, but may not save a populated end date earlier than a populated issue date. Terms & Conditions and notes remain unrelated text fields. No owner-approved maximum day offset exists yet; the state/schema specification must propose a safe validation bound without changing this simple day-offset model.
 - Downstream specification: State rules, company/customer defaults, and relational schema.
 
 ### RA-010 — Recurring-template activation and schedule-edit behavior are incomplete
 
 - Severity: High
-- Status: Open — owner decision required
+- Status: Approved resolution
 - Evidence: Only Active templates execute and pause time is not backfilled, but the brief does not define activation with a past start date, schedule edits while Active, or whether Completed is reversible.
 - Risk: Activating or editing a template could unexpectedly create historical invoices or duplicate pending occurrence records.
-- Recommendation:
+- Approved resolution:
   1. Activating a Draft with a past start date schedules the first occurrence on or after activation; it does not backfill time when the template was not Active.
   2. Editing recurrence, start/end date, maximum count, timezone-sensitive schedule inputs, customer, currency, or lines on an Active template requires confirmation and affects only not-yet-materialized occurrences.
   3. Pending dispatch rows are replaced transactionally; completed/failed historical occurrences remain unchanged.
@@ -210,18 +214,13 @@ The remaining documents and later implementation must continue to prove:
 - Every financial transition uses one authoritative decimal/state service and revalidates the complete resulting balance.
 - Saved editor, current public page, generated PDF, and email summary agree on current persisted document values.
 - Idempotency is enforced by database state, not only by queue or browser behavior.
-- Source edits never silently mutate existing document/template snapshots.
+- Source edits never silently mutate an already-created Quote, Invoice, or recurring-template line snapshot. Recurring generation deliberately refreshes every inherited Customer field for a new Invoice while preserving explicit overrides; it never rewrites an already-generated Invoice.
 - Audit records identify actor type, action, target, time, and understandable before/after values for significant changes.
 - English and Romanian key coverage, placeholders, and representative plurals are verified without a second authored catalog.
 - Archive/delete/erasure workflows cannot bypass financial-history or tenant-integrity constraints accidentally.
 
-## Review gate
+## Approval outcome
 
-This assessment is ready for owner review when:
+The owner approved every product resolution in this assessment on 2026-08-22. RA-001's documentation correction has been applied. RA-011 remains a mandatory relational-schema section, and RA-012 remains the separately tracked permission-matrix deliverable rather than an authorization decision made here.
 
-1. RA-002 through RA-010 are individually approved, changed, or explicitly deferred with a named downstream gate.
-2. RA-001's documentation correction is accepted.
-3. RA-011 is confirmed as a mandatory schema section.
-4. RA-012 remains open only as the separately tracked permission-matrix deliverable.
-
-After that review, record approved resolutions in the product/domain documents and durable decision log, mark this assessment **Approved**, and complete its Phase 0 tracker item. Then draft the exact state specification, followed by the permission matrix and relational schema.
+The next Phase 0 deliverable is the exact financial/document state specification, followed by the complete permission matrix and relational schema/snapshot-boundary specification. Each must receive its own explicit approval before the tracker marks it complete.

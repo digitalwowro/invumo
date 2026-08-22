@@ -24,10 +24,12 @@ Computed line, document, payment, refund, and adjustment amounts must be exactly
 
 Each company configures a precision from 0 through 8 for each enabled currency. ISO minor-unit conventions may supply an initial default, but the company setting is authoritative and may differ from that convention.
 
-Every quote, invoice, and recurring template stores a snapshot of its currency precision when its currency is resolved. Later edits to company currency settings do not silently recalculate or reformat an existing document or template.
+Every quote and invoice stores a snapshot of its currency precision when its currency is resolved. Later source-setting edits never recalculate or reformat that existing document.
 
 - Quote-to-invoice conversion preserves the quote's stored currency and precision.
-- A generated recurring invoice copies the recurring template's stored currency and precision.
+- A recurring template stores either an explicit currency/precision override or inheritance intent. At generation, an inherited value resolves the current Customer currency and current Company-configured precision; an explicit override remains fixed.
+- If inherited currency or precision changed, the generated Invoice retains the stored template line inputs' numeric values and recalculates every derived amount using the newly resolved precision. No FX conversion occurs.
+- Once generated, the Invoice snapshots the resolved currency/precision and later source changes never alter it.
 - Product/service prices may use all eight storage decimals. Once copied, the document line is governed by the document's stored precision.
 - Payments, refunds, and adjustments must use the linked invoice's currency and precision.
 
@@ -110,7 +112,9 @@ Maintain shared golden calculation vectors and execute them against the PHP calc
 - `NONE`, monthly, and yearly period behavior
 - Zero and 100% discounts and zero tax
 - Multiple lines whose rounded values expose document-level rerounding errors
-- Quote-to-invoice and recurring-template-to-invoice precision preservation
+- Quote-to-invoice precision preservation
+- Recurring explicit currency/precision preservation and inherited current-currency/precision refresh
+- Recurring inherited-precision recalculation without FX conversion
 - Company precision changes not affecting existing snapshots
 - Payment, refund, and adjustment precision validation
 - Identical saved, public-page, and PDF totals that reconcile from printed components

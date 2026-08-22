@@ -81,13 +81,14 @@ For an eligible occurrence:
 
 1. Lock or atomically create its occurrence record.
 2. Recheck that the template is Active and the occurrence remains within its end/count limits.
-3. Create exactly one invoice using the normal invoice-number allocator.
-4. Use the scheduled company-local occurrence date as the invoice issue date.
-5. Derive the due date from that issue date and the snapshotted payment terms.
-6. Issue the invoice and materialize its reminder schedule.
-7. Record the generated invoice on the occurrence.
-8. Queue PDF generation and, if enabled, email only after commit.
-9. Calculate the next local occurrence from the recurrence rule.
+3. Resolve every inherited Customer field from the current Customer, then Company fallback, while retaining explicit template/line overrides.
+4. Create exactly one invoice using the normal invoice-number allocator and snapshot those resolved values.
+5. Use the scheduled company-local occurrence date as the invoice issue date.
+6. Derive the due date from that issue date and the resolved current or explicitly overridden payment terms.
+7. Recalculate lines using the resolved currency precision without FX conversion, then issue the invoice and materialize its reminder schedule.
+8. Record the generated invoice on the occurrence.
+9. Queue PDF generation and, if enabled, email only after commit.
+10. Calculate the next local occurrence from the recurrence rule.
 
 An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
 

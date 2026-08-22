@@ -135,6 +135,8 @@ The UI must treat deletion of an already issued, sent, or publicly shared transa
 
 Invumo records financial facts but does not move money. These permissions do not authorize a bank/card refund outside Invumo.
 
+A Member may therefore reach a valid Invoice state where cancellation still requires an Adjustment that the Member cannot perform. Show a clear **Owner/Admin action required** state and preserve the blocked cancellation until an authorized user resolves the adjusted balance. Do not disguise the escalation as a validation failure or suggest exceeding refundable cash.
+
 ## 10. Recurring templates and automation
 
 | Action | Owner | Admin | Member | Notes |

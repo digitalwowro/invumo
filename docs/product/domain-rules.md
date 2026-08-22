@@ -32,6 +32,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Admin manages normal Company operations/settings and may invite, change, or remove non-Owner members other than itself; it cannot affect the Owner membership.
 - Member may manage Customers and routine Quotes/Invoices; send documents; manage their public links and Invoice reminder overrides; correct Quote lifecycle; cancel/reopen Invoices; record/edit/delete Payments and Refunds; and prepare Draft recurring templates.
 - Member may use active Products & Services or enter manual lines but cannot manage the catalog, Company settings, Adjustments, Active recurring automation, permanent deletion, Quote provenance unlinking, exceptional duplicate/issued numbering, Company-wide operations, or the full audit trail.
+- If a Member cannot cancel an Invoice because reaching zero net paid requires an Adjustment, keep cancellation blocked and show that Owner/Admin action is required; never suggest a Refund beyond actual refundable cash.
 - The complete approved abilities, guards, system/public actors, and policy-test requirements are defined in [`../architecture/role-permission-matrix.md`](../architecture/role-permission-matrix.md).
 
 ## Plan boundary

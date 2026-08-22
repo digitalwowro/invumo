@@ -250,7 +250,7 @@ Independent and quote-derived invoices produce the same authoritative calculatio
 - [ ] Implement invoice transaction records with explicit payment, refund, and adjustment direction.
 - [ ] Implement partial payments, cash-only refund capacity, non-refundable adjustments, overpayment prevention, and outstanding-balance derivation.
 - [ ] Implement derived invoice payment state.
-- [ ] Implement transaction-aware cancellation guards, post-cancellation transaction blocking, authorized reopening under the approved state rules, history retention, and deletion constraints.
+- [ ] Implement transaction-aware cancellation guards, post-cancellation transaction blocking, authorized reopening under the approved state rules, history retention, deletion constraints, and the expected Member-to-Owner/Admin escalation when an Adjustment is required to reach zero net paid.
 - [ ] Implement the company Transactions screen with operational list controls.
 - [ ] Add transaction authorization, audit coverage, precision validation, reconciliation tests, and tenant-isolation tests.
 
@@ -366,6 +366,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Documented the expected Member-to-Owner/Admin escalation when cancellation requires an Adjustment: keep cancellation blocked, explain the required role, and never suggest a Refund beyond actual refundable cash | [State escalation rule](../architecture/document-and-financial-state.md#permission-aware-cancellation-escalation) |
 | 2026-08-22 | 0 | Approved the complete fixed-role permission matrix, including Member Refund and Payment/Refund correction access, Owner/Admin-only Adjustments, Member Quote correction and Invoice cancel/reopen access, and the remaining governance/automation/audit boundaries; only the relational schema/snapshot specification still blocks Phase 0 | [Approved permission matrix](../architecture/role-permission-matrix.md) |
 | 2026-08-22 | 0 | Produced the draft complete Owner/Admin/Member permission matrix; eight grouped role decisions remain open, so its Phase 0 task is not marked complete | [Draft permission matrix](../architecture/role-permission-matrix.md) |
 | 2026-08-22 | 0 | Flagged the Phase 6 UI requirement that permanent deletion of a transaction-free Invoice already issued, sent, or shared must use materially stronger confirmation friction than an ordinary warning | [Approved state specification](../architecture/document-and-financial-state.md#flexible-document-deletion) |

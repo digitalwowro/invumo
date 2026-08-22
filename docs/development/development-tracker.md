@@ -209,6 +209,7 @@ Active entries can initialize detached, editable line data with safe currency-mi
 ### Tasks
 
 - [ ] Implement the shared document editor and exact-decimal line/document calculation engine.
+- [ ] Before finalizing the `document_lines` position constraint and drag-and-drop action, select and document either a deferred unique constraint or a collision-free update strategy; preserve atomic final-order uniqueness and test swaps, moves, concurrency, and stale editors.
 - [ ] Implement manual lines, searchable product/service selection, and inline customer/product creation without losing editor progress.
 - [ ] Implement customer, product/service, tax, bank, Terms & Conditions, notes, currency-precision, and settings snapshots.
 - [ ] Implement locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes.

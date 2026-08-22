@@ -357,6 +357,8 @@ The settings row stores the current document delivery mode and whether public ac
 
 Calculated columns are written only by the authoritative calculation service and are checked for scale/range and non-negative results. Issue/send validation requires at least one complete billable line. The line's source references never drive recalculation after selection.
 
+Drag-and-drop reordering must never perform naïve sequential position updates against an immediately checked unique constraint, because a valid final order can collide transiently. Before the Phase 5 migration/action is finalized, choose and document one of two PostgreSQL-safe mechanisms: make `UNIQUE (company_id, document_id, position)` deferrable and defer it inside the short reorder transaction, or use a collision-free update order/two-step temporary-position strategy. In both cases, lock the Document aggregate, apply the complete reorder atomically, retain the uniqueness constraint on the committed final order, and add swap/move/concurrent/stale-editor integration tests.
+
 ### `quote_invoice_links`
 
 - `id`, `company_id`

@@ -350,13 +350,14 @@ Do not include in v1:
 
 ## 10. Quotations
 
-Quote lifecycle:
+Stored Quote lifecycle:
 
 - Draft
 - Sent
 - Accepted
 - Rejected
-- Expired
+
+Expired is a separate derived customer-facing state.
 
 Rules:
 
@@ -364,6 +365,8 @@ Rules:
 - Draft quotes may be incomplete. Sending requires a customer, number, issue date, valid-until date, currency, language, and at least one valid billable line.
 - Sending a Draft quote changes it to Sent only after the email provider accepts the dispatch. A later delivery failure does not revert the quote; an immediate dispatch failure leaves it Draft and records the failed attempt. Resending does not create a second lifecycle state.
 - Expired is derived when the company-local date is later than `valid_until` and the quote has not been Accepted or Rejected. Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes the status.
+- Public Accept/Reject is allowed only for a non-expired Quote whose stored lifecycle is Sent. Replayed identical decisions are idempotent; an opposite later public decision is rejected.
+- An authorized internal user may correct the stored Quote lifecycle to Draft, Sent, Accepted, or Rejected in either direction after confirmation, with a required reason and audit record. Expired remains derived rather than directly selected. Resending an Accepted or Rejected Quote is allowed after warning and does not change its lifecycle.
 - Quotes remain editable after sending or acceptance. Editing does not silently reset the status; significant changes after sending or a customer decision are audited.
 - v1 keeps one mutable current quote rather than a revision history. A successful edit updates the current public page and causes the current PDF to be regenerated from the edited persisted values. Email bodies or PDF attachments already delivered remain unchanged historical delivery artifacts. There is no version-history screen in v1.
 - A quote may generate multiple invoices. Accepted is the normal conversion state. Owner/Admin may confirm an intentional override from Draft, Sent, or Expired. A Rejected quote cannot create an invoice unless its status is first changed to an allowed state.
@@ -411,7 +414,7 @@ An Issued invoice whose total is zero is immediately derived as Paid, is never O
 
 Cancelling an invoice stops pending reminders and blocks all new payment, refund, and adjustment records while the invoice remains Cancelled. Cancellation preserves the invoice, its existing transaction history, and its audit history. Allow cancellation only when net paid is exactly zero; when net paid is positive, require the necessary refund or corrective adjustment before cancellation. No invoice may be permanently deleted while any linked transaction records remain, regardless of lifecycle state.
 
-Cancelled invoices can be reopened and changed in v1. The exact authorized role, target state, financial checks, transaction behavior, public-link behavior, and reminder recalculation must be proposed and approved in the Phase 0 state and permission specifications rather than inferred here.
+Cancelled invoices can be reopened and changed in v1. Reopening returns the Invoice to Issued, preserves its number, dates, transactions, audit history, and public-link identity, and never sends email automatically. Transactions remain read-only while Cancelled and regain ordinary validated edit/delete eligibility after reopening. A valid non-revoked link remains viewable and clearly shows Cancelled until reopening. Reopening never repeats sent reminders: past before-due reminders become stale, and when already overdue only the newest currently eligible after-due reminder is scheduled for the next company automation time. It requires confirmation, a reason, audit history, and the role authorization assigned by the permission matrix.
 
 This flexibility is intentional. Do not enforce country-specific legal or accounting restrictions in v1.
 
@@ -603,6 +606,8 @@ The complete authoritative rules are defined in [Calculation, Decimal Precision,
 
 Payment terms and quote validity are stored as a non-negative whole number of calendar days after the issue date. Payment terms use document override, then customer default, then company default.
 
+There is no arbitrary v1 maximum offset. The resulting stored date must remain inside the inclusive application date range `0001-01-01` through `9999-12-31`.
+
 The invoice due date and quote valid-until date derive automatically from the applicable day offset but remain editable. Neither resolved date may be before its document's issue date.
 
 Terms & Conditions are separate customer-visible document content, not payment-term logic and not general notes.
@@ -644,6 +649,8 @@ Net paid equals payments plus positive adjustments minus refunds and negative ad
 Do not build expenses, general accounting transactions, a chart of accounts, or a bookkeeping ledger. The Transactions page is the global company-level view of invoice payment transactions.
 
 Invoice payment state derives from net valid payments, refunds, and explicit adjustments. Prevent ordinary payments from unintentionally exceeding the outstanding balance. If refunds make the balance unpaid again, update the derived state.
+
+Executable Payment, Refund, and Adjustment amounts must be strictly positive and may be created, edited, or deleted only while the Invoice is Issued. Every mutation recomputes and validates the complete ledger: net paid, refundable cash, and outstanding balance must remain non-negative, and net paid cannot exceed the Invoice total. Payments and positive adjustments cannot exceed outstanding; Refunds cannot exceed both actual refundable cash and net paid; negative adjustments cannot exceed net paid. Zero-total Invoices reject every financial row. Transaction dates may precede issue for advance or backfilled records but cannot be later than the current Company-local date. A previously sent receipt does not freeze a transaction; later corrections remain possible after warning, complete validation, and audit, while the delivered email remains historical.
 
 After recording a payment, the user may optionally send a payment-received email. Never send it automatically for historical/backfilled payments without clear user intent.
 
@@ -901,6 +908,8 @@ Do not introduce a complex event-sourcing architecture unless independently just
 
 Customers, products/services, and companies with historical dependencies should normally be archived. Permanent deletion is allowed after dependent data has been removed and deletion is valid.
 
+A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice. An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no Payment, Refund, or Adjustment rows. Prior sending, public sharing, issuing, or customer decision triggers a stronger warning but does not independently prevent deletion. Deletion revokes public access, suppresses pending reminders/jobs, performs the schema-defined delivery cleanup/retention, writes a minimal audit tombstone, and never rewinds or silently reuses its number.
+
 Users must ultimately be able to delete their data. Do not impose artificial permanent-retention rules in v1 unless technically required. Use clear warnings before destructive actions.
 
 ## 29. UI and UX
@@ -1052,8 +1061,11 @@ Pay particular attention to:
 - Quote expiry versus public-link expiry
 - Transaction direction, refund limits, and outstanding-balance derivation
 - Company-timezone scheduling across daylight-saving transitions
+- Stale Quote/Invoice editor saves and concurrent financial mutations
 
 Use transactions for business-critical operations where appropriate.
+
+Quotes and Invoices use a monotonically increasing edit version. Reject a save based on an older version with a clear reload/review message instead of silently overwriting a newer edit. Financial mutations additionally lock and recalculate the complete Invoice aggregate in one database transaction. The full approved behavior is defined in [Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md).
 
 ## 34. Testing
 

@@ -1,11 +1,12 @@
 # Quote, Invoice, and Financial State Specification
 
-Status: Draft for owner review
+Status: Approved
+Approved: 2026-08-22
 Last updated: 2026-08-22
 
 This document defines the exact v1 state model for Quotes, Invoices, payments, refunds, adjustments, overdue behavior, cancellation, reopening, reminders, public access, mutable current documents, and destructive actions. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [calculation specification](calculation-and-rounding.md), [scheduling specification](scheduling-and-jobs.md), and [requirements assessment](requirements-risk-assessment.md) into one implementation-facing state contract.
 
-Rules marked **Approved** already follow an explicit owner decision. Rules marked **Proposed — owner approval required** are recommendations only. This document and its Phase 0 tracker task remain incomplete until every proposed rule is approved or changed.
+Every rule in this specification was explicitly approved by the owner on 2026-08-22. A later product or technical change requires its own explicit approval before this contract or the canonical tracker is changed.
 
 ## 1. Modeling principles
 
@@ -19,7 +20,7 @@ Rules marked **Approved** already follow an explicit owner decision. Rules marke
 - A successful edit updates the one current persisted document, public representation, and regenerated PDF. Already-delivered email bodies and attachments remain unchanged historical artifacts.
 - Flexible but internally valid actions should use confirmation, warning, and audit rather than arbitrary blocking.
 
-### Proposed — owner approval required: stale-editor protection
+### Stale-editor protection
 
 Quotes and Invoices use optimistic concurrency through a monotonically increasing version. A save based on an older version is rejected with a clear reload/review message; Invumo never silently overwrites another tab's or user's newer edit. Financial transitions additionally lock the Invoice and its transaction aggregate inside the database transaction.
 
@@ -42,7 +43,7 @@ The valid-until/due date cannot precede the issue date. Drafts may temporarily o
 
 Payment terms and Quote validity are non-negative whole calendar-day offsets. The resolved date is stored and remains editable.
 
-### Proposed — owner approval required: date-range limit
+### Date-range limit
 
 v1 has no arbitrary maximum number of days. Validation rejects only a negative offset or a resulting date outside the inclusive application date range `0001-01-01` through `9999-12-31`. This four-digit-year range is used consistently by PostgreSQL constraints, Laravel date objects, JSON/Inertia serialization, browser inputs, and rendered documents; the relational-schema document must record the same bound.
 
@@ -73,8 +74,8 @@ Customer-facing status precedence is Accepted or Rejected first, then Expired, t
 | Create | Authorized Company context | Persist incomplete `DRAFT` with an allocated number | Audit creation; idempotent Draft creation |
 | Send a Draft | Complete, valid, non-expired Quote; valid recipient/link | Provider acceptance changes `DRAFT → SENT` | Immediate provider failure leaves Draft; later delivery failure leaves Sent; record every attempt |
 | Resend | Complete existing Quote | Lifecycle unchanged | New immutable email attempt/artifact |
-| Public Accept | Valid public action under the proposed public-state rule below | `SENT → ACCEPTED` | Required name/email, timestamp, idempotency, audit |
-| Public Reject | Valid public action under the proposed public-state rule below | `SENT → REJECTED` | Required name/email, timestamp, idempotency, audit |
+| Public Accept | Valid public action under the public-state rule below | `SENT → ACCEPTED` | Required name/email, timestamp, idempotency, audit |
+| Public Reject | Valid public action under the public-state rule below | `SENT → REJECTED` | Required name/email, timestamp, idempotency, audit |
 | Edit | Any non-deleted lifecycle state; field invariants pass | Lifecycle does not change automatically | Audit significant changes; invalidate current PDF cache |
 | Derive expiry | Current Company-local date passes `valid_until` | Display/action eligibility becomes Expired | No stored lifecycle mutation required |
 | Convert to Invoice | Accepted normally; Owner/Admin confirmation for Draft, Sent, or Expired; never Rejected | Create linked Draft Invoice | Copy approved snapshots; audit provenance |
@@ -82,7 +83,7 @@ Customer-facing status precedence is Accepted or Rejected first, then Expired, t
 
 Repeated identical public decisions are idempotent. A replay must not create another decision record or audit effect.
 
-### Proposed — owner approval required: Quote corrections and public eligibility
+### Quote corrections and public eligibility
 
 - Public Accept/Reject is allowed only while the Quote's stored lifecycle is `SENT` and it is not Expired. An opposite public decision after acceptance/rejection is rejected and requires an internal correction.
 - An authorized internal user may correct the stored lifecycle to Draft, Sent, Accepted, or Rejected in either direction after confirmation and with a required reason/audit record. Expired is never selected directly because it remains derived.
@@ -122,7 +123,7 @@ Payment state and Overdue remain derived as specified below.
 
 Sending is an external effect, not a lifecycle state beyond `ISSUED`. Provider Delivered/Opened/Failed values belong to immutable delivery attempts rather than the Invoice lifecycle.
 
-### Proposed — owner approval required: reopening a Cancelled Invoice
+### Reopening a Cancelled Invoice
 
 - Reopen always changes `CANCELLED → ISSUED`; it never returns a previously issued number to Draft.
 - The number, issue date, existing transactions, audit history, and public-link identity remain attached.
@@ -151,7 +152,7 @@ cash_available_to_refund = payment_sum - refund_sum
 outstanding              = invoice_total - net_paid
 ```
 
-### Proposed — owner approval required: complete-ledger invariants
+### Complete-ledger invariants
 
 Every financial mutation must leave the complete Invoice ledger in this state:
 
@@ -192,7 +193,7 @@ Transaction kinds are:
 
 The already-approved storage direction is a non-negative amount expressed in the linked Invoice currency/precision, with financial direction represented explicitly. Adjustment reason and audit data are required.
 
-### Proposed — owner approval required: operation limits
+### Operation limits
 
 Every executable Payment, Refund, or Adjustment uses a strictly positive amount; zero-amount transaction rows are invalid. Together with the complete-ledger invariants, apply these operation-specific limits:
 
@@ -207,13 +208,13 @@ Every executable Payment, Refund, or Adjustment uses a strictly positive amount;
 
 A positive adjustment changes balance but never refundable cash. A Refund can make a previously Paid Invoice Partially Paid or Unpaid again. Editing or deleting a Payment is rejected if retained Refunds or other rows would make the resulting ledger invalid.
 
-### Proposed — owner approval required: transaction eligibility and dates
+### Transaction eligibility and dates
 
 - Financial rows may be created, edited, or deleted only while the Invoice is `ISSUED`. Draft and Cancelled Invoices reject all financial mutations.
 - A transaction date may precede the Invoice issue date to support advance or backfilled records, but it cannot be later than the current Company-local date.
 - A previously sent payment-received email does not freeze the transaction. A later edit/delete remains possible after warning, full invariant validation, and audit; the delivered email remains an immutable historical artifact.
 
-### Proposed — owner approval required: zero-total financial rows
+### Zero-total financial rows
 
 A zero-total Invoice rejects Payment, Refund, and Adjustment rows because it has neither outstanding balance nor refundable cash. This rule is enforced explicitly even though the complete-ledger limits would also prevent any positive row from being added.
 
@@ -238,7 +239,7 @@ A zero-total Invoice rejects Payment, Refund, and Adjustment rows because it has
 - Partially Paid and Unpaid Invoices remain eligible while outstanding is positive.
 - Every send rechecks lifecycle, balance, due date, recipients, public-link eligibility, and idempotency immediately before delivery.
 
-### Proposed — owner approval required as part of the reopening/transaction rules
+### Resuming reminder eligibility
 
 When an edit, Refund, transaction correction, or reopening makes an Invoice collectible again:
 
@@ -252,8 +253,8 @@ When an edit, Refund, transaction correction, or reopening makes an Invoice coll
 - A valid Quote/Invoice public link always renders the current persisted document and current PDF.
 - Link expiry/revocation is independent from document lifecycle. Explicit revocation remains revoked until a user re-enables public access.
 - Expired Quotes remain viewable through a technically valid link but cannot receive public Accept/Reject actions.
-- Under the proposed Quote rule, only non-expired Sent Quotes may receive public decisions.
-- Under the proposed cancellation rule, Cancelled Invoices remain viewable/downloadable and visibly Cancelled; they expose no financial action.
+- Only non-expired Sent Quotes may receive public decisions.
+- Cancelled Invoices remain viewable/downloadable and visibly Cancelled; they expose no financial action.
 - Editing does not recall or mutate previously delivered email bodies or attachments.
 - Resending creates another immutable delivery attempt against current persisted values.
 - Recurring inherited-currency review suppression remains authoritative over automatic email until a provider-accepted manual send clears the latch.
@@ -267,7 +268,7 @@ When an edit, Refund, transaction correction, or reopening makes an Invoice coll
 - Cancellation never deletes an Invoice, transaction, email history, or audit history.
 - Customer/Product/Tax/Bank source deletion never rewrites document snapshots.
 
-### Proposed — owner approval required: flexible document deletion
+### Flexible document deletion
 
 - A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice.
 - An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no transaction rows.
@@ -302,14 +303,8 @@ Rejected operations log safe operational context but must not write a successful
 - Email/PDF/provider work is dispatched after commit through the approved queue/outbox boundary.
 - Public decisions, Draft creation, Quote conversion, occurrence generation, transaction mutation requests, and provider callbacks use stable idempotency identities appropriate to their action.
 
-## 13. Owner decisions required before approval
+## 13. Approval and downstream use
 
-1. Approve or change optimistic concurrency: reject a stale editor save rather than silently overwriting a newer edit.
-2. Approve or change the date rule: no arbitrary day-offset maximum; require only a non-negative offset whose resolved date stays between `0001-01-01` and `9999-12-31`.
-3. Approve or change Quote corrections: public decisions only on non-expired Sent Quotes, with authorized internal status correction in either direction.
-4. Approve or change Invoice reopening: return to Issued, keep transactions read-only while Cancelled, retain the public view, send no automatic email, and recalculate only currently eligible reminders.
-5. Approve or change the complete financial-entry rules: require a strictly positive amount, enforce the proposed whole-ledger and operation-specific bounds, permit mutations only on Issued Invoices, allow pre-issue/backfilled dates but no future dates, and allow audited corrections even after a receipt email.
-6. Approve or change zero-total behavior: reject every Payment, Refund, and Adjustment row.
-7. Approve or change flexible deletion: allow any Quote without linked Invoices and any Invoice without transactions to be deleted after the required warning/cleanup/audit behavior, regardless of prior sending or lifecycle.
+The owner approved stale-save rejection, the supported date range, Quote correction/public-decision rules, Cancelled-Invoice reopening, complete financial-entry constraints, zero-total financial-row rejection, and flexible document deletion on 2026-08-22.
 
-After these decisions, update the product/domain rules and durable decision log, mark this specification **Approved**, and complete only its corresponding Phase 0 tracker task. The permission matrix and relational schema remain separate approval gates.
+The permission matrix must assign the authorized internal roles without weakening these state preconditions. The relational schema must encode the version column, date bound, lifecycle and transaction constraints, same-Company relationships, idempotency identities, deletion guards, retention behavior, and snapshot boundaries required here.

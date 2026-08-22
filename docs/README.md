@@ -21,12 +21,12 @@ Update the tracker as work advances. Do not create or maintain phase status, tas
 - [`architecture/tenant-isolation.md`](architecture/tenant-isolation.md) — application authorization plus PostgreSQL RLS, database roles, tenant context, public-link bootstrap, and isolation tests
 - [`architecture/numbering-and-concurrency.md`](architecture/numbering-and-concurrency.md) — counter-row locking, manual overrides, resets, idempotent Draft creation, and concurrency tests
 - [`architecture/scheduling-and-jobs.md`](architecture/scheduling-and-jobs.md) — company-local scheduling, DST, queue/worker behavior, retries, downtime recovery, and duplicate suppression
+- [`architecture/document-and-financial-state.md`](architecture/document-and-financial-state.md) — exact Quote, Invoice, transaction, payment, overdue, cancellation, reopening, reminder-reaction, public-state, concurrency, and deletion contract
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 
 ## Phase 0 working documents
 
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream specification obligations
-- [`architecture/document-and-financial-state.md`](architecture/document-and-financial-state.md) — draft exact Quote, Invoice, transaction, payment, overdue, cancellation, reopening, and deletion state contract; owner review remains open
 
 Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

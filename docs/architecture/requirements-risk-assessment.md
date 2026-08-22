@@ -12,7 +12,7 @@ This document does not create product or technical scope by itself. It records t
 - No contradiction invalidates the approved Laravel/Inertia/React/PostgreSQL architecture.
 - The approved tenancy, exact-decimal, numbering, scheduling, UUID, authentication-scope, localization, and infrastructure decisions resolve the highest architectural risks identified earlier.
 - One documentation-sequencing conflict is resolved by the newer canonical tracker: navigation is a Phase 1 just-in-time gate, while domain migrations and business workflows wait for the four schema-shaping Phase 0 deliverables.
-- All owner choices and the two follow-up boundaries are approved. The remaining Phase 0 work is downstream specification, not unresolved scope in this assessment.
+- All owner choices and the two follow-up boundaries are approved. The exact financial/document state specification is also approved; the permission matrix and relational schema/snapshot-boundary specification are the two remaining Phase 0 deliverables.
 - The complete Owner/Admin/Member matrix remains a separate Phase 0 deliverable and is not improvised in this assessment.
 - PDF selection, upload rules, public-token implementation details, ZeptoMail/webhook details, and production operations remain valid just-in-time gates. They do not block the state or schema documents.
 
@@ -85,16 +85,16 @@ Severity describes the impact of implementing the wrong behavior:
 ### RA-005 — Zero-total document and payment-state behavior is undefined
 
 - Severity: High
-- Status: Approved direction; downstream specification
+- Status: Resolved
 - Evidence: Explicit zero prices and 100% discounts are allowed, but invoice payment state is only described in terms of invoice total, net paid, and outstanding balance.
 - Risk: A zero-total Issued invoice may alternate between Unpaid and Paid across list, reminder, public, and transaction code paths.
-- Approved direction: Allow a Quote or Invoice with at least one otherwise valid line whose final total is zero. An Issued zero-total Invoice is derived as Paid immediately, is never Overdue, requires no payment, and receives no payment reminders. A Draft zero-total Invoice has no customer-facing payment state until issue. The exact state specification must define whether any manual financial-entry type is valid on a zero-total Invoice; no such permission is approved here.
-- Downstream specification: Financial/document state rules and calculation tests.
+- Approved resolution: Allow a Quote or Invoice with at least one otherwise valid line whose final total is zero. An Issued zero-total Invoice is derived as Paid immediately, is never Overdue, requires no payment, receives no payment reminders, and rejects every Payment, Refund, and Adjustment row. A Draft zero-total Invoice has no customer-facing payment state until issue.
+- Evidence: [Approved financial/document state rules](document-and-financial-state.md#zero-total-financial-rows) and calculation tests required by the tracker.
 
 ### RA-006 — Transaction direction, refund capacity, and adjustment bounds need one formula
 
 - Severity: High
-- Status: Approved direction; downstream specification
+- Status: Resolved
 - Evidence: Transactions may be Payment, Refund, or Adjustment; adjustments may be positive or negative; all stored amounts are non-negative. The phrase “amount available to refund” does not state whether a positive adjustment represents refundable cash.
 - Risk: Different code paths could calculate net paid or refundable cash differently, permitting negative balances or refunding money that was never recorded as received.
 - Approved direction and downstream requirement:
@@ -102,17 +102,17 @@ Severity describes the impact of implementing the wrong behavior:
   2. `net_paid = payments + increase_adjustments − refunds − decrease_adjustments`.
   3. `cash_available_to_refund = payments − refunds`; positive adjustments do not create refundable cash.
   4. A Refund cannot exceed actual recorded cash still available to refund, regardless of positive adjustments.
-  5. The exact state specification must define the complete create/edit/delete invariants, lifecycle eligibility, and interaction with invoice totals. Those mechanics were not part of this owner choice and are not approved by this assessment.
-- Downstream specification: Financial/document state rules and relational constraints.
+  5. Every executable amount is strictly positive, mutations are allowed only while the Invoice is Issued, and every create/edit/delete must preserve the complete ledger invariants and operation-specific limits.
+- Evidence: [Approved complete-ledger and transaction rules](document-and-financial-state.md#complete-ledger-invariants); the relational schema must encode the required constraints.
 
 ### RA-007 — Transaction mutation and cancellation finality are incomplete
 
 - Severity: High
-- Status: Approved direction; downstream specification
+- Status: Resolved, with role assignment pending in the permission matrix
 - Evidence: The brief requires audited payment changes/deletions and says cancellation preserves existing transaction history, but it does not state whether a Cancelled invoice can be restored or whether its existing transactions can still be edited/deleted.
 - Risk: A cancelled invoice could change financially after cancellation, or cancellation could be reversed inconsistently after reminder and public states were suppressed.
-- Approved direction: A Cancelled Invoice may be reopened and changed in v1; cancellation is not permanently terminal. While it remains Cancelled, it preserves its existing transactions and audit history, blocks new transactions and reminders, and is not edited as though it were active. The exact authorized role, target state, invariant checks, transaction mutability, public-link behavior, and future-reminder recalculation after reopening must be proposed and approved in the exact state specification.
-- Downstream specification: Financial/document state rules and permission matrix.
+- Approved resolution: A Cancelled Invoice may be reopened and changed in v1; cancellation is not permanently terminal. While Cancelled, it preserves existing transactions/audit history and keeps transactions read-only. Reopening returns it to Issued, preserves its identity/public view, sends no automatic email, restores validated transaction mutation eligibility, and schedules only currently relevant unsent reminders without replaying history.
+- Evidence: [Approved reopening rules](document-and-financial-state.md#reopening-a-cancelled-invoice). The permission matrix must still assign the authorized internal role.
 
 ### RA-008 — Quote-to-invoice eligibility and unlinking are unspecified
 
@@ -126,11 +126,11 @@ Severity describes the impact of implementing the wrong behavior:
 ### RA-009 — Payment terms, quote validity, and date validation lack a v1 shape
 
 - Severity: High
-- Status: Approved direction; downstream specification
+- Status: Resolved
 - Evidence: Payment terms and quote validity derive customer-visible dates, but their stored configuration is not specified. Due and valid-until dates remain editable, without explicit lower bounds.
 - Risk: Schema and UI may invent incompatible term types such as free text, fixed dates, or calendar rules.
-- Approved resolution: v1 structured payment terms and quote validity are non-negative integer calendar-day offsets from the issue date. The resolved due date/valid-until date is stored and remains manually editable. A valid Issued Invoice requires `due_date ≥ issue_date`; a sendable Quote requires `valid_until ≥ issue_date`. Drafts may temporarily be incomplete, but may not save a populated end date earlier than a populated issue date. Terms & Conditions and notes remain unrelated text fields. No owner-approved maximum day offset exists yet; the state/schema specification must propose a safe validation bound without changing this simple day-offset model.
-- Downstream specification: State rules, company/customer defaults, and relational schema.
+- Approved resolution: v1 structured payment terms and quote validity are non-negative integer calendar-day offsets from the issue date. The resolved due date/valid-until date is stored and remains manually editable. A valid Issued Invoice requires `due_date ≥ issue_date`; a sendable Quote requires `valid_until ≥ issue_date`. Drafts may temporarily be incomplete, but may not save a populated end date earlier than a populated issue date. Terms & Conditions and notes remain unrelated text fields. There is no arbitrary maximum offset; the resulting date must remain within `0001-01-01` through `9999-12-31` inclusive.
+- Evidence: [Approved date-range rule](document-and-financial-state.md#date-range-limit); the relational schema must encode the same bound.
 
 ### RA-010 — Recurring-template activation and schedule-edit behavior are incomplete
 
@@ -156,6 +156,7 @@ Severity describes the impact of implementing the wrong behavior:
   - Referenced Customers, Products/Services, tax presets, and bank accounts are archived by default and hard-deleted only after blocking dependent records are removed through valid workflows.
   - Tenant-business foreign keys default to restrictive deletion, not silent cascade, except within an explicitly confirmed whole-Company erasure workflow.
   - Invoice deletion remains impossible while any transaction exists; Cancelled Invoices with transactions remain retained.
+  - A Quote without linked Invoices and an Invoice without transactions may be deleted in any lifecycle state after the approved warnings, cleanup, and minimal audit-tombstone behavior.
   - The schema document must enumerate every archive/delete rule and define the final Company/account erasure order without weakening required audit and transaction constraints before that explicit erasure.
 - Owner decision needed later only if the schema cannot satisfy both dependency safety and the approved user-erasure requirement without changing product behavior.
 
@@ -196,7 +197,7 @@ These risks require careful implementation and tests but do not need another pro
 
 ## Just-in-time risks
 
-The canonical tracker owns these gates. This assessment confirms that none changes the core relational model enough to block the remaining Phase 0 state/permission/schema work.
+The canonical tracker owns these gates. This assessment confirms that none changes the core relational model enough to block the remaining Phase 0 permission/schema work.
 
 | Area | Risk to resolve at its gate |
 | --- | --- |
@@ -225,4 +226,4 @@ The remaining documents and later implementation must continue to prove:
 
 The owner approved every product resolution in this assessment on 2026-08-22. RA-001's documentation correction has been applied. RA-011 remains a mandatory relational-schema section, and RA-012 remains the separately tracked permission-matrix deliverable rather than an authorization decision made here.
 
-The next Phase 0 deliverable is the exact financial/document state specification, followed by the complete permission matrix and relational schema/snapshot-boundary specification. Each must receive its own explicit approval before the tracker marks it complete.
+The exact financial/document state specification is approved. The complete permission matrix is the next Phase 0 deliverable, followed by the relational schema/snapshot-boundary specification. Each must receive its own explicit approval before the tracker marks it complete.

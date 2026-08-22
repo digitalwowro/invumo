@@ -110,13 +110,14 @@ Across the domain, unusual but internally valid workflows should remain possible
 
 ## Quote workflow
 
-Statuses:
+Stored lifecycle states:
 
 - Draft
 - Sent
 - Accepted
 - Rejected
-- Expired
+
+Expired is derived separately and is not stored as a lifecycle value.
 
 Rules:
 
@@ -125,6 +126,8 @@ Rules:
 - Sending requires all required fields and at least one valid billable line. A Draft quote becomes Sent after provider dispatch acceptance; immediate dispatch failure leaves it Draft and records the attempt, while later delivery failure does not revert it.
 - Expired is derived after `valid_until` in the company timezone when the quote is neither Accepted nor Rejected.
 - Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes status.
+- Public Accept/Reject is allowed only for a non-expired Sent Quote. Identical replays are idempotent; an opposite later public decision requires an internal correction.
+- An authorized internal user may correct the stored lifecycle to Draft, Sent, Accepted, or Rejected in either direction after confirmation, with a required reason and audit record. Expired is never selected directly. Resending an Accepted or Rejected Quote is allowed after warning and does not change lifecycle.
 - Editing a sent/accepted quote does not reset its status automatically; significant changes are audited.
 - v1 has one mutable current quote, not revisions. A successful edit updates its current public page and regenerated current PDF; already-delivered email bodies/attachments remain unchanged. There is no version-history screen.
 - A quote may generate multiple invoices. Accepted is the normal conversion state. Owner/Admin may confirm conversion from Draft, Sent, or Expired; Rejected cannot be converted until moved to an allowed state.
@@ -162,10 +165,14 @@ Rules:
 - Cancellation is allowed only when net paid is exactly zero. A positive net-paid amount requires a refund or corrective adjustment before cancellation.
 - Cancellation suppresses pending reminders and blocks new payment, refund, and adjustment records while the invoice remains Cancelled.
 - Cancellation retains the invoice, every existing linked transaction, and audit history. No invoice may be permanently deleted while any linked transaction records remain, regardless of lifecycle state.
-- A Cancelled Invoice can be reopened and changed. The state and permission specifications must explicitly approve the authorized role, target state, invariant checks, transaction behavior, public-link behavior, and reminder recalculation.
+- Existing transactions are read-only while the Invoice remains Cancelled.
+- Reopening a Cancelled Invoice returns it to Issued; preserves its number, dates, transactions, audit history, and public-link identity; and sends no email automatically. Transaction edits/deletions become eligible again under the complete ledger rules. A valid non-revoked public link remains viewable and visibly Cancelled until reopening.
+- Reopening never repeats sent reminders. Past before-due reminders become stale; if already overdue, schedule only the newest currently eligible unsent after-due reminder for the next Company automation time. Reopening requires confirmation, a reason, audit history, and permission-matrix authorization.
 - v1 does not enforce jurisdiction-specific invoice immutability or numbering law.
 
 ## Document numbering
+
+Quotes and Invoices carry a monotonically increasing edit version. Saving from a stale browser state is rejected with a reload/review message rather than silently overwriting a newer change. Financial mutations also lock and recalculate the complete Invoice aggregate inside one database transaction.
 
 - Suggest the next logical number based on the current relevant sequence.
 - Allow manual number entry and renumbering.
@@ -323,6 +330,8 @@ Default precedence:
 
 Payment terms and quote validity are non-negative whole calendar-day offsets from the issue date. The due date and valid-until date are derived from the applicable offset but remain editable, and neither may be before the issue date.
 
+There is no arbitrary maximum offset. A resolved date must remain within the inclusive application range `0001-01-01` through `9999-12-31`.
+
 Terms & Conditions are separate from structured payment terms and document notes:
 
 - A company may define default customer-visible Terms & Conditions.
@@ -337,6 +346,7 @@ Terms & Conditions are separate from structured payment terms and document notes
 
 - A transaction represents a payment, refund, or explicit adjustment attached to one invoice.
 - Store a non-negative amount and an explicit type/direction; do not use one signed amount to ambiguously encode transaction meaning.
+- An executable transaction amount must be strictly positive. Payment, Refund, and Adjustment rows may be created, edited, or deleted only while the Invoice is Issued; Draft and Cancelled Invoices reject those mutations.
 - An invoice may have one payment or multiple partial payments.
 - The company Transactions section is the aggregate view of invoice transactions.
 - There are no expenses, unrelated transactions, chart of accounts, or bookkeeping ledger.
@@ -346,7 +356,12 @@ Terms & Conditions are separate from structured payment terms and document notes
 - Transaction fields include amount, currency, date, payment method, reference, and notes.
 - Transaction currency must be consistent with the invoice because v1 has no FX conversion.
 - `net_paid = payments + positive adjustments − refunds − negative adjustments`; `outstanding = invoice_total − net_paid`.
+- `cash_available_to_refund = payments − refunds`. Every create/edit/delete recomputes the complete ledger and requires `0 <= net_paid <= invoice_total`, non-negative refundable cash, and non-negative outstanding.
+- A Payment or positive adjustment cannot exceed outstanding. A Refund cannot exceed both refundable cash and net paid. A negative adjustment cannot exceed net paid. Editing/deleting a row must leave all retained rows valid.
 - An adjustment requires a reason and audit entry and must not silently make net paid negative.
+- A zero-total Invoice rejects every Payment, Refund, and Adjustment row.
+- A transaction date may precede the Invoice issue date for advance or backfilled records but cannot be later than the current Company-local date.
+- A sent payment-received email does not freeze its transaction. Later edits/deletion require warning, complete invariant validation, and audit; the delivered email remains unchanged history.
 - After recording a payment, offer an optional payment-received email action.
 - Do not automatically email receipts for historical/backfilled payments without clear user intent.
 
@@ -401,6 +416,7 @@ Recurring template
 - Automated reminders may replace a naturally expired link but never recreate explicitly revoked access unless public access is re-enabled.
 - Public invoice pages support viewing and PDF download.
 - Public quote pages support viewing, PDF download, Accept, and Reject.
+- Public Accept/Reject is enabled only for non-expired Sent Quotes.
 - Accept or Reject requires customer name and email address.
 - Record the decision, timestamp, and appropriate audit metadata.
 - Duplicate/replayed actions must not create inconsistent state.
@@ -483,3 +499,13 @@ Audit at least:
 An audit record should explain what happened, when, who caused it, what object was affected, and enough before/after information to understand important edits. Do not introduce full event sourcing solely for this requirement.
 
 Audit infrastructure is established with the platform foundation and used as each feature is built. Actor types distinguish internal users, authenticated public-customer actions, provider webhooks, scheduled jobs, and other system actions.
+
+## Deletion and archiving
+
+- A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice.
+- An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no Payment, Refund, or Adjustment rows.
+- Prior sending, issuing, public sharing, or customer decision strengthens the confirmation warning but does not independently block deletion.
+- Deletion revokes public access, suppresses pending reminders/jobs, applies the approved delivery/audit retention rules, and never rewinds or silently reuses the document number.
+- Dependent Customers, products/services, tax presets, and bank accounts are archived by default; ordinary parent deletion never cascades through these guards.
+
+The complete approved Quote, Invoice, financial, reminder-reaction, concurrency, public-state, and deletion contract is defined in [`../architecture/document-and-financial-state.md`](../architecture/document-and-financial-state.md).

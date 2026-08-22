@@ -12,9 +12,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 - Current phase: Phase 0 — Architecture readiness
 - Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Complete and review the three remaining schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
+- Next gate: Complete and review the two remaining schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
 
-The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the three remaining schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
+The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the two remaining schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -75,12 +75,12 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 - [x] Review and approve the requirements contradiction assessment and risk register.
 - [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
 - [ ] Produce and review the complete Owner/Admin/Member role-action permission matrix.
-- [ ] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
+- [x] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
 - [x] Establish this complete implementation sequence, acceptance gates, and tracking protocol.
 
 ### Acceptance gate
 
-The three remaining schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together with the approved requirements assessment, they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
+The two remaining schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together with the approved requirements assessment and financial/document state specification, they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
 
 ### Evidence
 
@@ -91,7 +91,7 @@ The three remaining schema-shaping deliverables are reviewed, mutually consisten
 - [Tenant Isolation and PostgreSQL Row-Level Security](../architecture/tenant-isolation.md)
 - [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md)
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
-- [Draft Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md) — owner review and approval remain open
+- [Approved Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md)
 
 ## Just-in-time design gates
 
@@ -365,6 +365,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Approved all seven open Quote, Invoice, and financial-state decisions; promoted the exact state specification and reduced the Phase 0 gate to the permission matrix and relational schema/snapshot boundaries | [Approved state specification](../architecture/document-and-financial-state.md) |
 | 2026-08-22 | 0 | Produced the draft exact Quote, Invoice, and financial state specification; seven owner decisions remain open, so its Phase 0 task is not marked complete | [Draft state specification](../architecture/document-and-financial-state.md) |
 | 2026-08-22 | 0 | Added the approved recurring inherited-currency safety latch: generation/issue continues, automatic email stays suppressed until a reviewed Invoice is manually sent, and explicit template currency overrides remain unaffected | Product, domain, scheduling, and risk documentation |
 | 2026-08-22 | 0 | Approved the requirements contradiction assessment after resolving full latest-Customer recurring inheritance and Draft-only unused Quote/Invoice unlinking; three Phase 0 schema-shaping specifications remain | [Approved assessment](../architecture/requirements-risk-assessment.md) |

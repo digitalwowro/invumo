@@ -2,10 +2,16 @@
 
 ## Product
 
-- [`product/master-build-brief.md`](product/master-build-brief.md) — canonical v1 product and delivery brief
+- [`product/master-build-brief.md`](product/master-build-brief.md) — canonical v1 product scope and behavior brief
 - [`product/domain-rules.md`](product/domain-rules.md) — concise, implementation-facing domain invariants
 
 The master brief is the canonical statement of scope. The domain-rules document restates only invariants that implementation work must preserve. The decision log in the sibling memory repository records why decisions were made and may retain superseded history; it is not a second product specification. If these sources appear to conflict, reconcile them explicitly before implementation rather than choosing one silently.
+
+## Development tracking
+
+- [`development/development-tracker.md`](development/development-tracker.md) — the only canonical phase sequence, progress checklist, dependency map, acceptance-gate record, and implementation log
+
+Update the tracker as work advances. Do not create or maintain phase status, task completion, or a competing implementation sequence in another document.
 
 ## Approved architecture baseline
 
@@ -18,17 +24,4 @@ The master brief is the canonical statement of scope. The domain-rules document 
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 
-## Remaining architecture package
-
-The following documents still need to be produced or completed before broad application implementation:
-
-- Requirements assessment and risk register
-- Relational data model and migration/snapshot boundaries, constrained by the approved decimal and identifier policies
-- Complete role/action permission matrix
-- Route and navigation map
-- Document-state and payment-state specification
-- Remaining email, webhook, PDF, upload, and public-token integration design
-- Security, operations, migration, backup, and recovery plan
-- Implementation and verification plan with phase acceptance gates
-
-Do not treat a remaining planned document as an approved decision until it has been written and reviewed.
+Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

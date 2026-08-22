@@ -90,7 +90,7 @@ Separate these concepts:
 
 An Account belongs to an account owner. The account owner has an Invumo plan.
 
-v1 authentication must cover registration, email verification, sign-in, sign-out, password reset, and secure session invalidation. The architecture phase selects the authentication implementation and recovery mechanism; do not omit these lifecycle paths merely because a library provides basic sign-in.
+v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, rate limiting, and optional TOTP two-factor authentication with recovery codes. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
 
 Initial placeholder plans:
 
@@ -950,7 +950,7 @@ Address at least:
 
 - Tenant isolation
 - Authentication
-- Email verification, password recovery, invitation-token safety, and session revocation
+- Email verification, password recovery, optional TOTP 2FA/recovery-code safety, invitation-token safety, and session revocation
 - Authorization
 - Role-based access
 - Secure session handling
@@ -1139,176 +1139,15 @@ If any of these become genuinely necessary, explain why before introducing them.
 
 Do not generate the application as an unstructured code dump. Work incrementally.
 
-First produce:
+The only canonical development sequence, progress checklist, phase status, dependency map, and acceptance-gate record is [Invumo Development Tracker](../development/development-tracker.md). Update that file as work advances; do not duplicate its phase checklist or progress state in this product brief or another document.
 
-1. Requirements assessment, contradiction resolution, and risk register
-2. Architecture and technology-stack recommendation with trade-offs
-3. Exact calculation/rounding and identifier policies that constrain the relational schema
-4. Relational data model, migration strategy, and snapshot boundaries
-5. Tenant model and complete role/action permission matrix
-6. Main routes, navigation, operational lists, and editor composition
-7. Document-state and payment-state specification
-8. Background-job, recurring, reminder, email, webhook, PDF, upload, and public-token design
-9. Security, observability, backup/restore, deployment, and operational-recovery plan
-10. Implementation phases, acceptance gates, and verification strategy
-
-The approved application, calculation/rounding, identifier, tenant-isolation, numbering-concurrency, and scheduling specifications already satisfy those portions of this package. Complete the remaining items around them; do not recreate contradictory alternatives silently. In particular, do not begin or finalize the relational schema without applying the approved decimal types, currency-precision snapshots, and UUIDv7 rules.
-
-Then build in logical stages. A sensible initial order is:
-
-### Phase 1 — Core platform and cross-cutting foundations
-
-- Laravel/Inertia/React modular-monolith project structure and automated quality checks
-- PostgreSQL schema using UUIDv7 domain identifiers and approved exact-decimal types, separate migration/runtime roles, forced RLS foundation, migrations, and test-data strategy
-- Registration, email verification, sign-in/out, password reset, and secure sessions
-- Foundational system-email delivery for verification, recovery, and company invitations
-- Users, accounts, companies, memberships, invitations, company switching, and ownership-transfer safeguards
-- Server-side tenant isolation and authorization primitives, including transaction-local tenant context, same-company foreign keys, and restricted-role RLS tests
-- English/Romanian localization framework used by every later feature
-- Audit-event infrastructure used by every later business operation
-- Shared validation, error handling, logging, health checks, and configuration/secrets boundaries
-- Shared server-authoritative `brick/math` calculation primitives and cross-runtime golden vectors required by later document workflows
-- PostgreSQL-backed queue, one supervised PHP worker, cron-triggered scheduler, and job idempotency/observability primitives
-- File-upload foundation for validated company logos
-
-Acceptance gate: authentication recovery paths work; Laravel authorization and PostgreSQL RLS both deny cross-company access using the restricted runtime role; migrations are repeatable; queue/scheduler context cannot leak between companies; audit and localization primitives are usable by the next phase.
-
-### Phase 2 — Company configuration
-
-- Structured company identity, IANA timezone, and automation-local time
-- Currency settings and display/precision configuration
-- Tax presets
-- Payment terms, quote validity, Terms & Conditions, and quote/invoice note defaults
-- Numbering-series settings and reset-period counter records
-- Bank accounts and default selection
-- Logo and primary brand color
-- Email and public-link defaults required by later phases
-- Settings authorization and audit coverage
-
-Acceptance gate: all defaults required to create stable customer, product, and document snapshots exist and are company-scoped.
-
-### Phase 3 — Customers and contacts
-
-- Customer/contact CRUD, archive/delete rules, search, sorting, and pagination
-- Individual/company identity and structured registration/address fields
-- Primary/billing contacts and email-delivery preferences
-- Currency, language, tax, payment-term, and recipient defaults
-- Customer authorization and audit coverage
-
-Acceptance gate: customer defaults resolve predictably and customer records are ready to be snapshotted by documents. Inline creation starts with the shared document editor in Phase 5 and is reused by recurring templates in Phase 10.
-
-### Phase 4 — Products & Services
-
-- Company-scoped product/service CRUD
-- Search, sorting, pagination, and archive/delete behavior
-- Price/currency, unit, tax, period, description, and code/SKU defaults
-- Catalog permissions and audit coverage
-
-Acceptance gate: active entries can initialize detached editable line data, including safe behavior for currency mismatches. Inline creation starts with the shared document editor in Phase 5 and is reused by recurring templates in Phase 10.
-
-### Phase 5 — Shared document core and quotes
-
-- Shared document editor and exact-decimal line/document calculation engine
-- Manual lines, product/service selection, and inline customer/product creation
-- Customer, product/service, tax, bank, Terms & Conditions, notes, and settings snapshots
-- Locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes
-- Quote CRUD, validation, lifecycle, derived expiry, and list controls
-- Optional customer reference / PO number, including list search and customer-facing rendering when present
-- Shared outward-facing renderer and first PDF implementation
-- Quote audit coverage and browser-level workflow tests
-
-Acceptance gate: quotes calculate deterministically, preserve every required snapshot, render consistently, remain isolated under concurrent company activity, and receive distinct automatic numbers under overlapping creation requests.
-
-### Phase 6 — Invoices and quote conversion
-
-- Invoice CRUD
-- Reuse of the shared editor, calculations, numbering, renderer, and PDF pipeline
-- Draft/Issued/Cancelled lifecycle, derived payment state, due-date validation, and overdue flag
-- Quote-to-one-or-many-invoices workflow with quoted/invoiced/remaining allocation and customer-reference inheritance
-- Invoice list controls and audit coverage
-
-Acceptance gate: independent and quote-derived invoices produce the same calculations/snapshots, and invoice state behaves correctly around company-local due dates.
-
-### Phase 7 — Payments
-
-- Transactions
-- Explicit payment/refund/adjustment direction
-- Partial payments, refund limits, overpayment prevention, and outstanding-balance derivation
-- Derived invoice payment state
-- Transaction-aware cancellation guard, post-cancellation transaction blocking, history retention, and deletion constraint
-- Company Transactions screen with operational list controls
-- Payment/refund audit coverage
-
-Acceptance gate: transaction history reconciles to invoice balance and status under create, edit, delete, adjustment, and refund paths; cancellation cannot retain a positive net-paid balance, accept new transactions, or erase linked history.
-
-### Phase 8 — Public documents
-
-- Secure links
-- Transaction-local token-hash bootstrap into the correct RLS tenant context
-- Expiry
-- Revocation and regeneration
-- Quote acceptance/rejection
-- Invoice viewing
-- Rate limits, replay protection, lifecycle/validity rules, and public-action audit attribution
-
-Acceptance gate: public access cannot cross tenants, revoked tokens stay revoked, expired quote actions are blocked, and repeated customer actions are idempotent.
-
-### Phase 9 — Document email and reminders
-
-- Zoho ZeptoMail document-email integration, reusing the platform email transport where appropriate
-- Event- and language-specific default templates
-- Safe placeholders and preview
-- Editing before sending
-- Recipient/PDF-delivery precedence and valid-link handling
-- Authenticated, idempotent delivery/open webhooks and email history
-- Automated before/after-due reminders
-- Optional payment-received messages
-- Company-local materialization, transactional dispatch claiming, approved retry schedule, stale/superseded downtime behavior, failure visibility, and duplicate suppression
-
-Acceptance gate: direct and automated sends are recoverable and observable, reminder links are valid without overriding explicit revocation, and duplicate jobs/webhooks cannot duplicate customer-visible effects.
-
-### Phase 10 — Recurring invoices
-
-- Template CRUD with a required internal-only searchable name, optional customer reference / PO number, line snapshots, and Draft/Active/Paused/Completed states
-- Reuse of shared customer/product selection, inline creation, editor, calculations, and snapshot behavior
-- Local-calendar scheduling with explicit DST resolution, bounded downtime catch-up, and no implicit pause backfill
-- Idempotent one-invoice-per-occurrence generation
-- Automatic issue, optional automatic email, and visible last/next run outcomes
-- Invoice-default, customer-reference, delivery, and reminder inheritance
-
-Acceptance gate: templates are identifiable without customer-visible naming, generated invoices preserve the intended customer reference, and retries, overlaps, pause/resume, and missed occurrences cannot create unintended duplicate invoices or emails.
-
-### Phase 11 — Dashboard, audit UX, and data lifecycle
-
-- Currency-grouped operational dashboard
-- Searchable audit-history UI and completeness review across prior phases
-- Archive/delete flows, dependency warnings, and user-data deletion paths
-- Ownership-transfer and membership-management UX review
-
-Acceptance gate: users can understand operational state and safely complete every destructive or ownership-sensitive action.
-
-### Phase 12 — Release readiness
-
-- Complete English and Romanian translation coverage
-- Accessibility, responsive behavior, and cross-browser refinement
-- Full critical-path, edge-case, concurrency, and tenant-isolation test suite
-- Security review and abuse/rate-limit verification
-- Production migrations, backup/restore test, deployment rollback, monitoring, alerting, and operational runbooks
-- End-to-end acceptance against the successful-v1 definition
-
-Acceptance gate: the release can be deployed, observed, backed up, restored, rolled back, and operated safely; all successful-v1 journeys pass in both launch languages.
-
-### Quality gate for every phase
-
-Do not postpone quality, security, audit, localization, or tenant isolation to Phase 12. Every phase must include relevant migrations, authorization checks, audit events, localized user-facing strings, automated tests, error/empty/loading states, and operational logging. A phase is complete only when its outputs are stable prerequisites for the next phase.
-
-Change the order only when a simpler or safer sequence is justified.
+The tracker must continue to preserve the approved application, calculation/rounding, identifier, tenant-isolation, numbering-concurrency, and scheduling specifications. In particular, do not begin or finalize domain migrations or business features before their architecture prerequisites are satisfied.
 
 ## 37. Definition of successful v1
 
 A new user can:
 
-1. Register, verify their email address, sign in, and recover account access.
+1. Register, verify their email address, sign in, optionally enable TOTP two-factor authentication, and recover account access.
 2. Create a company.
 3. Configure its basic information.
 4. Add a customer.

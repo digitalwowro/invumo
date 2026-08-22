@@ -3,7 +3,7 @@
 Status: Approved architecture decision  
 Last updated: 2026-08-22
 
-This document records the approved technology and application-architecture baseline. It does not replace the remaining architecture package: the complete relational model, permission matrix, route map, document/payment-state specification, integration design, and operations/recovery plan still require review before broad implementation.
+This document records the approved technology and application-architecture baseline. It does not track implementation progress or remaining deliverables; those are maintained only in the [Invumo Development Tracker](../development/development-tracker.md).
 
 ## Decision
 
@@ -14,9 +14,18 @@ Build Invumo as one modular Laravel application with a React/TypeScript interfac
 | Backend and application runtime | Laravel 13 on PHP 8.5 |
 | Web interface | React 19 with strict TypeScript |
 | Laravel/React integration | Inertia 3 |
+| Project foundation | Official Laravel React starter kit |
+| Authentication | Built-in Laravel Fortify sessions, email verification/recovery, and optional TOTP 2FA |
+| Type-safe route integration | Laravel Wayfinder |
 | Database | PostgreSQL 18 |
 | Frontend build | Vite |
 | Styling and components | Tailwind CSS 4 and source-owned shadcn/ui components |
+| Localization | `react-i18next` for React UI; Laravel localization for validation, system messages, email, and PDFs |
+| Package management | Composer and npm with committed lockfiles |
+| Automated testing | Pest 4, Vitest, and Pest Browser backed by Playwright |
+| Code quality | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier |
+| Continuous integration | GitHub Actions |
+| Agent development support | Laravel Boost as a development-only dependency |
 | Background work | Laravel database queue with one supervised PHP worker |
 | Scheduling | Laravel scheduler invoked once per minute by cron |
 | Deployment shape | One application deployment and one PostgreSQL database |
@@ -67,6 +76,18 @@ Inertia is the bridge. Laravel routes and controllers return React page names pl
 Laravel remains authoritative. React may calculate a preview, but Laravel recalculates and validates all monetary results before persistence.
 
 Use React/Inertia for the authenticated application and customer-facing public pages. Use Blade only for the minimal Inertia root, transactional-email markup, and dedicated PDF templates. Do not mix Livewire into the interactive application.
+
+## Project bootstrap profile
+
+Create the application from Laravel's official React starter kit and retain its Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, source-owned shadcn/ui, Vite, and Wayfinder foundation.
+
+Use the starter kit's built-in Fortify authentication. Keep registration, email verification, sign-in/out, password reset, password confirmation, secure session management, rate limiting, and optional TOTP two-factor authentication with recovery codes. Do not select WorkOS AuthKit and do not enable the starter kit's Teams domain: Invumo owns its Account, Company, Membership, invitation, company-switching, and ownership-transfer model.
+
+Use Composer for PHP and npm for browser dependencies. Commit both lockfiles. Do not introduce Bun, pnpm, Yarn, or a second package manager without a demonstrated build or operational need.
+
+Use `react-i18next` for React interface translations and Laravel localization for server validation, system messages, transactional email, and PDF labels. English and Romanian exist from the first implemented phase; user-entered content is never automatically translated.
+
+Use Laravel Boost as a development-only Composer dependency. Its installed-version documentation, agent guidelines, and skills support vibe coding, but it is not application runtime infrastructure and must not override Invumo's approved architecture, product rules, or repository instructions. Keep Invumo-specific durable agent rules in source control.
 
 ## State and dependency rules
 
@@ -134,13 +155,13 @@ Only one hosted environment is needed before launch. A separate hosted developme
 
 Vibe coding increases the value of automated boundaries. The baseline requires:
 
-- PHP formatting and static analysis
-- Strict TypeScript checking and frontend linting
+- Laravel Pint formatting and Larastan/PHPStan static analysis
+- Strict TypeScript checking, ESLint, and Prettier
+- Pest 4 for PHP unit, feature, domain, authorization, restricted-role RLS, database, and integration tests
+- Vitest for isolated TypeScript calculation and React behavior tests
+- Pest Browser, using Playwright, for critical full-browser customer and administrative journeys
 - Database constraints and migrations reviewed as product behavior
-- Backend feature tests for domain rules and tenant isolation
-- Focused frontend tests for complex editor behavior
-- Browser tests for critical customer journeys
-- A continuous-integration check that runs tests, analysis, and the production asset build before deployment
+- GitHub Actions checks that run tests, analysis, formatting/linting checks, and the production asset build before deployment
 
 Tests must use the restricted PostgreSQL runtime role where RLS behavior matters. Generated code is not accepted solely because it renders or passes a happy-path browser check.
 
@@ -154,6 +175,7 @@ If a mobile application is approved later, add versioned Laravel JSON endpoints 
 
 - Livewire
 - Next.js or a separately deployed React application
+- WorkOS AuthKit and the Laravel starter-kit Teams domain
 - A REST or GraphQL API for the web interface
 - Inertia server-side rendering
 - Microservices
@@ -169,7 +191,9 @@ If a mobile application is approved later, add versioned Laravel JSON endpoints 
 
 - [Laravel 13 release and support policy](https://laravel.com/docs/13.x/releases)
 - [Laravel React starter kit](https://laravel.com/docs/13.x/starter-kits)
+- [Laravel Boost](https://laravel.com/docs/13.x/boost)
 - [Inertia request model](https://inertiajs.com/docs/v3/core-concepts/how-it-works)
+- [Pest browser testing](https://pestphp.com/docs/browser-testing)
 - [Laravel queues](https://laravel.com/docs/13.x/queues)
 - [Laravel scheduler](https://laravel.com/docs/13.x/scheduling)
 - [PostgreSQL support policy](https://www.postgresql.org/support/versioning/)

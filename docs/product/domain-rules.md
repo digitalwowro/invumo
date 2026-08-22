@@ -21,7 +21,7 @@ This document is a concise implementation-facing companion to the [master build 
 - Tenant-owned business tables also use forced PostgreSQL Row-Level Security. Every tenant-owned row, including child rows, carries `company_id`; same-company composite foreign keys prevent cross-company parent/child links.
 - The Laravel runtime database role is not the schema owner and cannot bypass RLS. Tenant context is set transaction-locally only after authorization, is required by queue jobs, and denies access when absent.
 - Control-plane, public-token, and scheduler bootstrap paths are narrow and must never grant a general tenant-data bypass. The approved mechanism is defined in [`../architecture/tenant-isolation.md`](../architecture/tenant-isolation.md).
-- Authentication covers registration, email verification, sign-in/out, password reset, and secure session invalidation.
+- Authentication uses the official Laravel React starter kit with built-in Fortify and covers registration, email verification, sign-in/out, password reset/confirmation, rate limiting, secure session invalidation, and optional TOTP two-factor authentication with recovery codes. WorkOS AuthKit and the starter kit's Teams domain are excluded.
 - Company invitations are email-addressed, expiring, revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
 - Ownership transfer requires explicit confirmation and cannot be performed as an ordinary role change.
 

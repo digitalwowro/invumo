@@ -90,7 +90,9 @@ Separate these concepts:
 
 An Account belongs to an account owner. The account owner has an Invumo plan.
 
-v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, rate limiting, and optional TOTP two-factor authentication with recovery codes. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
+v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, and rate limiting. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
+
+TOTP two-factor authentication and recovery codes are a pending scope decision, not approved v1 functionality. Do not implement or include them in acceptance criteria unless they receive explicit approval.
 
 Initial placeholder plans:
 
@@ -950,7 +952,7 @@ Address at least:
 
 - Tenant isolation
 - Authentication
-- Email verification, password recovery, optional TOTP 2FA/recovery-code safety, invitation-token safety, and session revocation
+- Email verification, password recovery, invitation-token safety, and session revocation
 - Authorization
 - Role-based access
 - Secure session handling
@@ -1147,7 +1149,7 @@ The tracker must continue to preserve the approved application, calculation/roun
 
 A new user can:
 
-1. Register, verify their email address, sign in, optionally enable TOTP two-factor authentication, and recover account access.
+1. Register, verify their email address, sign in, and recover account access.
 2. Create a company.
 3. Configure its basic information.
 4. Add a customer.

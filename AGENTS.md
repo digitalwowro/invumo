@@ -15,5 +15,6 @@ Project rules:
 - Treat authentication and invitations, tenant isolation, authorization, document snapshots, money calculations, document/payment state, numbering concurrency, recurring/reminder execution, webhooks, and public tokens as security/data-integrity boundaries.
 - Prefer a single application, one database, simple deployment, and minimal infrastructure.
 - Record meaningful approved product or architecture changes in documentation.
+- Never treat a documentation reorganization, copied text, or bundled approval as approval for a newly introduced scope or technical choice. Obtain explicit owner approval for each new decision before labeling it approved or marking its tracker item complete.
 - Treat `docs/development/development-tracker.md` as the only implementation-progress record. Update it with verified evidence when work advances; do not create competing phase checklists elsewhere.
 - Never commit credentials, tokens, production data, or environment secrets.

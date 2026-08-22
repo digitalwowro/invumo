@@ -692,7 +692,9 @@ Generated invoices materialize the current inherited Customer values, explicit t
 
 If inherited currency changes, keep the template line inputs' numeric values, recalculate and round the generated Invoice with the current currency precision, and do not perform FX conversion. An explicitly overridden template currency remains fixed. A line with an explicit tax remains fixed; only a line marked to inherit Customer tax uses the current Customer tax default.
 
-Each template has an automatic-email setting. Scheduled invoices are created and issued; when automatic email is enabled they are also delivered using the resolved customer/template settings. When disabled, the issued invoice remains available for manual sending.
+For templates with automatic email enabled, retain the last confirmed delivery currency. The first eligible occurrence establishes the initial baseline. If a later inherited currency differs, still generate and issue the Invoice but suppress its automatic email and display **Currency changed — review required** on both the Invoice and template. Later occurrences also remain issue-only until a user reviews and successfully sends one of the affected Invoices manually; provider acceptance confirms its currency as the new baseline for future automatic delivery. Explicit template currency overrides do not trigger this gate, and no FX conversion occurs.
+
+Each template has an automatic-email setting. Scheduled invoices are created and issued; when automatic email is enabled and no safety gate suppresses delivery, they are also delivered using the resolved customer/template settings. When disabled or suppressed, the issued invoice remains available for manual sending.
 
 If automatic email fails after invoice creation, retry delivery against the same generated invoice; never create a replacement invoice for the same occurrence.
 

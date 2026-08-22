@@ -377,7 +377,8 @@ Recurring template
 - Generated invoices use the normal company invoice numbering sequence.
 - Generated invoices materialize current inherited Customer values, explicit template/line overrides, customer reference / PO number, and reminder schedule. Template edits affect future occurrences only; later template/default/customer edits do not rewrite generated invoices.
 - If inherited currency changes, template line inputs keep their numeric values and the generated Invoice recalculates/rounds with the current currency precision; no FX conversion occurs. Explicit template currency remains fixed. Explicit line tax remains fixed; only a line marked to inherit Customer tax uses the current Customer default.
-- Scheduled invoices are created and issued. A per-template setting controls whether they are emailed automatically or left issued for manual sending.
+- An automatic-email template retains a last-confirmed delivery currency, established by its first eligible occurrence. If a later inherited currency differs, generate and issue the Invoice but suppress automatic email and mark the Invoice/template **Currency changed — review required**. All later occurrences remain issue-only until a reviewed Invoice is successfully sent manually; provider acceptance confirms its currency as the new baseline. Explicit template currency overrides do not trigger this gate.
+- Scheduled invoices are created and issued. A per-template setting requests automatic email, subject to the currency-review and other delivery-safety gates; otherwise the Invoice remains issued for manual sending.
 - If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.
 - Use a stable occurrence idempotency key and record last run, next run, outcome, and generated invoice.

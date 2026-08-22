@@ -313,11 +313,12 @@ Direct and automated sends are recoverable and observable, reminder links remain
 - [ ] Implement idempotent one-invoice-per-occurrence generation.
 - [ ] Implement automatic issue, optional automatic email, and visible last/next-run outcomes.
 - [ ] Implement source-aware recurring inheritance for all Customer values, including currency/precision, language, payment terms, and default tax, while preserving explicit template/line overrides, the no-FX rule, customer reference, delivery, and reminder inheritance; template edits affect future occurrences only.
-- [ ] Add authorization, audit, recurrence, retry, overlap, pause/resume, downtime, and duplicate-suppression tests.
+- [ ] Implement the inherited-currency automatic-email safety latch: issue-only generation, visible review state, continued delivery suppression, manual-send confirmation, concurrency recheck, and explicit-override bypass.
+- [ ] Add authorization, audit, recurrence, retry, overlap, pause/resume, downtime, currency-review-latch, and duplicate-suppression tests.
 
 ### Acceptance gate
 
-Templates are identifiable without customer-visible naming, generated invoices preserve the intended snapshots and customer reference, and retries, overlaps, pause/resume, and missed occurrences cannot create unintended duplicate invoices or emails.
+Templates are identifiable without customer-visible naming, generated invoices preserve the intended snapshots and customer reference, and retries, overlaps, pause/resume, missed occurrences, or unconfirmed inherited-currency changes cannot create unintended duplicate or wrong-currency emails.
 
 ## Phase 11 — Dashboard, audit UX, and data lifecycle
 
@@ -363,6 +364,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Added the approved recurring inherited-currency safety latch: generation/issue continues, automatic email stays suppressed until a reviewed Invoice is manually sent, and explicit template currency overrides remain unaffected | Product, domain, scheduling, and risk documentation |
 | 2026-08-22 | 0 | Approved the requirements contradiction assessment after resolving full latest-Customer recurring inheritance and Draft-only unused Quote/Invoice unlinking; three Phase 0 schema-shaping specifications remain | [Approved assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Recorded all nine owner-selected top-level risk resolutions; kept the recurring-Customer refresh boundary and Quote-derived Draft unlink rule explicitly open rather than inferring omitted details | [Draft assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Produced the draft requirements contradiction assessment and risk register; owner review and proposed-resolution approvals remain open | [Draft assessment](../architecture/requirements-risk-assessment.md) |

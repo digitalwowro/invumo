@@ -86,11 +86,14 @@ For an eligible occurrence:
 5. Use the scheduled company-local occurrence date as the invoice issue date.
 6. Derive the due date from that issue date and the resolved current or explicitly overridden payment terms.
 7. Recalculate lines using the resolved currency precision without FX conversion, then issue the invoice and materialize its reminder schedule.
-8. Record the generated invoice on the occurrence.
-9. Queue PDF generation and, if enabled, email only after commit.
-10. Calculate the next local occurrence from the recurrence rule.
+8. If automatic email is enabled and inherited currency differs from the template's last-confirmed delivery currency, set the currency-review latch and suppress automatic delivery. While latched, every later occurrence remains issue-only. The first eligible occurrence establishes the initial baseline; an explicit template currency override bypasses this comparison.
+9. Record the generated invoice on the occurrence.
+10. Queue PDF generation and, only when automatic email remains eligible, email after commit.
+11. Calculate the next local occurrence from the recurrence rule.
 
 An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
+
+A provider-accepted manual send of a reviewed currency-change Invoice clears the template's review latch and stores that Invoice currency as the new confirmed delivery baseline. Clearing is recorded only after provider acceptance, does not retroactively send other issue-only occurrences, and is idempotent under request retries. Jobs recheck the latch immediately before provider delivery so an overlapping run cannot bypass it.
 
 ## Recurring downtime and pause behavior
 
@@ -145,6 +148,7 @@ Record at least:
 - Attempt count and retry schedule
 - Success, skipped, superseded, or failed outcome
 - Generated invoice, PDF, email, and provider delivery identifiers where applicable
+- Confirmed recurring delivery currency, currency-review latch state, suppression reason, and confirming manual-send identifier where applicable
 - Structured failure category and safe error summary
 
 Operators must be able to distinguish no due work, intentional suppression, transient retry, permanent failure, and scheduler/worker downtime.
@@ -161,6 +165,12 @@ Operators must be able to distinguish no due work, intentional suppression, tran
 - Database rollback before occurrence completion
 - Recovery of multiple missed recurring occurrences in order and in bounded batches
 - Pause/resume without implicit backfill
+- First automatic-email occurrence establishing its currency baseline
+- Inherited currency change generating/issuing once while suppressing email and latching later occurrences
+- Provider-accepted manual send clearing the currency-review latch without retroactively sending suppressed Invoices
+- Failed/retried manual send leaving the currency-review latch intact
+- Overlapping generation/delivery rechecking the currency-review latch before provider submission
+- Explicit template currency override bypassing the inherited-currency gate
 - Reminder suppression on Paid or Cancelled invoices
 - Before-due reminders becoming stale during downtime
 - Multiple missed after-due reminders collapsing to the newest eligible send

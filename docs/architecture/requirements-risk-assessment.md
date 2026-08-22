@@ -69,7 +69,8 @@ Severity describes the impact of implementing the wrong behavior:
   3. A recurring template records inheritance versus explicit override intent for every Customer-derived field. At each generation, explicit template or line overrides remain authoritative; every inherited value resolves again from the current Customer, then the current Company fallback.
   4. Refreshed Customer values include identity, address, registration, contacts, recipients, CC/BCC, delivery preference, currency, document language, payment terms, and default tax. A line tax explicitly selected on the template remains fixed; a line left to inherit Customer tax uses the current Customer default.
   5. When inherited currency changes, the generated Invoice uses the current Customer currency and its current configured precision. Stored template line inputs keep their numeric values, are recalculated and rounded for that precision, and are not foreign-exchange converted. An explicit template currency override remains fixed.
-  6. Already-generated Invoices remain unchanged. An explicit **Reapply current defaults** action remains the only way to refresh source-derived values on an ordinary Quote or Invoice, with a preview of affected fields.
+  6. Each automatic-email template retains a last-confirmed delivery currency. If an inherited currency differs from that baseline, generation and issue continue but automatic email is suppressed, the Invoice/template show a **Currency changed — review required** state, and later occurrences remain issue-only until confirmation. A reviewed Invoice's successful manual send, after provider acceptance, confirms that Invoice's currency as the new baseline. The first eligible generation establishes the initial baseline, and explicit template currency overrides do not trigger this gate.
+  7. Already-generated Invoices remain unchanged. An explicit **Reapply current defaults** action remains the only way to refresh source-derived values on an ordinary Quote or Invoice, with a preview of affected fields.
 - Downstream specification: Relational schema and snapshot-boundary section.
 
 ### RA-004 — Mutable issued documents do not define PDF/public-history behavior
@@ -215,6 +216,7 @@ The remaining documents and later implementation must continue to prove:
 - Saved editor, current public page, generated PDF, and email summary agree on current persisted document values.
 - Idempotency is enforced by database state, not only by queue or browser behavior.
 - Source edits never silently mutate an already-created Quote, Invoice, or recurring-template line snapshot. Recurring generation deliberately refreshes every inherited Customer field for a new Invoice while preserving explicit overrides; it never rewrites an already-generated Invoice.
+- An inherited recurring currency change cannot auto-email unattended: the review latch suppresses delivery until a reviewed Invoice is successfully sent manually and establishes the new confirmed currency.
 - Audit records identify actor type, action, target, time, and understandable before/after values for significant changes.
 - English and Romanian key coverage, placeholders, and representative plurals are verified without a second authored catalog.
 - Archive/delete/erasure workflows cannot bypass financial-history or tenant-integrity constraints accidentally.

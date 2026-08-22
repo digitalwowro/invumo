@@ -28,5 +28,6 @@ These are reviewed constraints. Later architecture documents may refine names an
 ## Phase 0 working documents
 
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream specification obligations
+- [`architecture/role-permission-matrix.md`](architecture/role-permission-matrix.md) — draft complete Owner/Admin/Member action matrix; eight owner decisions remain open
 
 Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

@@ -92,6 +92,7 @@ The two remaining schema-shaping deliverables are reviewed, mutually consistent,
 - [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md)
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
 - [Approved Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md)
+- [Draft Owner/Admin/Member Permission Matrix](../architecture/role-permission-matrix.md) — owner review and approval remain open
 
 ## Just-in-time design gates
 
@@ -227,7 +228,7 @@ Quotes calculate deterministically, preserve every required snapshot, render con
 
 ### Tasks
 
-- [ ] Implement invoice CRUD with one mutable current public/PDF representation and immutable already-delivered email artifacts.
+- [ ] Implement invoice CRUD with one mutable current public/PDF representation and immutable already-delivered email artifacts; permanent deletion of a transaction-free Invoice that was already issued, sent, or shared must use the approved highest-friction confirmation pattern.
 - [ ] Reuse the shared editor, calculations, numbering, renderer, and PDF pipeline.
 - [ ] Implement Draft/Issued/Cancelled lifecycle, zero-total Paid behavior, derived payment state, day-offset due-date validation, and overdue flag.
 - [ ] Implement quote-to-one-or-many-invoices with normal Accepted conversion, confirmed Owner/Admin Draft/Sent/Expired overrides, Rejected blocking, Draft-only unused unlinking with permanent provenance afterward, quoted/invoiced/remaining allocation, and customer-reference inheritance.
@@ -365,6 +366,8 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Produced the draft complete Owner/Admin/Member permission matrix; eight grouped role decisions remain open, so its Phase 0 task is not marked complete | [Draft permission matrix](../architecture/role-permission-matrix.md) |
+| 2026-08-22 | 0 | Flagged the Phase 6 UI requirement that permanent deletion of a transaction-free Invoice already issued, sent, or shared must use materially stronger confirmation friction than an ordinary warning | [Approved state specification](../architecture/document-and-financial-state.md#flexible-document-deletion) |
 | 2026-08-22 | 0 | Approved all seven open Quote, Invoice, and financial-state decisions; promoted the exact state specification and reduced the Phase 0 gate to the permission matrix and relational schema/snapshot boundaries | [Approved state specification](../architecture/document-and-financial-state.md) |
 | 2026-08-22 | 0 | Produced the draft exact Quote, Invoice, and financial state specification; seven owner decisions remain open, so its Phase 0 task is not marked complete | [Draft state specification](../architecture/document-and-financial-state.md) |
 | 2026-08-22 | 0 | Added the approved recurring inherited-currency safety latch: generation/issue continues, automatic email stays suppressed until a reviewed Invoice is manually sent, and explicit template currency overrides remain unaffected | Product, domain, scheduling, and risk documentation |

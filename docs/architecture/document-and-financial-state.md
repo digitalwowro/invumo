@@ -272,7 +272,7 @@ When an edit, Refund, transaction correction, or reopening makes an Invoice coll
 
 - A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice.
 - An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no transaction rows.
-- Sent/decided/issued history causes a stronger warning but does not independently block deletion in v1.
+- Sent/decided/issued history causes a stronger warning but does not independently block deletion in v1. Permanently deleting a transaction-free Invoice that has already been issued, sent, or publicly shared is the highest-friction destructive document action: it requires materially stronger confirmation than an ordinary warning. The UI gate must define and test that confirmation interaction before Invoice deletion ships.
 - Deletion transactionally revokes public access, suppresses pending reminders/jobs, removes or safely detaches dependent delivery records according to the schema retention plan, and writes a minimal audit tombstone that identifies the deletion without retaining a complete customer/document copy.
 - Deletion never rewinds the automatic number counter or silently reuses the removed number.
 - No cascade from Customer, Quote, Company settings, or another ordinary parent operation may bypass these guards.
@@ -307,4 +307,4 @@ Rejected operations log safe operational context but must not write a successful
 
 The owner approved stale-save rejection, the supported date range, Quote correction/public-decision rules, Cancelled-Invoice reopening, complete financial-entry constraints, zero-total financial-row rejection, and flexible document deletion on 2026-08-22.
 
-The permission matrix must assign the authorized internal roles without weakening these state preconditions. The relational schema must encode the version column, date bound, lifecycle and transaction constraints, same-Company relationships, idempotency identities, deletion guards, retention behavior, and snapshot boundaries required here.
+The [permission matrix](role-permission-matrix.md) must assign the authorized internal roles without weakening these state preconditions. The relational schema must encode the version column, date bound, lifecycle and transaction constraints, same-Company relationships, idempotency identities, deletion guards, retention behavior, and snapshot boundaries required here.

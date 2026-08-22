@@ -9,12 +9,12 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 
 ## Current position
 
-- Current phase: Phase 0 — Architecture readiness
-- Current phase status: In progress
+- Current phase: Phase 1 — Core platform and cross-cutting foundations
+- Current phase status: Not started
 - Application implementation: Not started
-- Next gate: Complete and review the relational data model and snapshot boundaries before domain migrations, business features, or Phase 0 sign-off
+- Next gate: Begin the approved Laravel React starter-kit scaffold; complete the route/navigation/editor-composition gate before building the custom application shell
 
-The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the remaining relational-schema/snapshot-boundary deliverable. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
+Phase 0 is complete. Domain migrations, models, and business workflows may now follow the approved relational schema and phase dependencies below. Route/UI, integration, and production-operations decisions still follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -40,7 +40,7 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 
 | Phase | Name | Status | Required predecessors |
 | --- | --- | --- | --- |
-| 0 | Architecture readiness | In progress | None |
+| 0 | Architecture readiness | Complete | None |
 | 1 | Core platform and cross-cutting foundations | Not started | Phase 0 |
 | 2 | Company configuration | Not started | Phase 1 |
 | 3 | Customers and contacts | Not started | Phase 2 |
@@ -56,9 +56,9 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 
 ## Phase 0 — Architecture readiness
 
-- Status: In progress
+- Status: Complete
 - Started: 2026-08-22
-- Completed: —
+- Completed: 2026-08-22
 
 ### Tasks
 
@@ -73,14 +73,14 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 - [x] Approve document-number allocation and concurrency mechanisms.
 - [x] Approve recurrence, reminders, timezone/DST, retry, downtime, and idempotency mechanisms.
 - [x] Review and approve the requirements contradiction assessment and risk register.
-- [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
+- [x] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
 - [x] Produce and review the complete Owner/Admin/Member role-action permission matrix.
 - [x] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
 - [x] Establish this complete implementation sequence, acceptance gates, and tracking protocol.
 
 ### Acceptance gate
 
-The remaining relational-schema/snapshot-boundary deliverable is reviewed, mutually consistent with the approved requirements assessment, financial/document state specification, and permission matrix, and linked from the documentation index. Together they define domain table shape, snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
+Passed on 2026-08-22. The approved relational-schema/snapshot-boundary specification is mutually consistent with the requirements assessment, financial/document state specification, and permission matrix and is linked from the documentation index. Together they define domain table shape, snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory before their named implementation boundaries.
 
 ### Evidence
 
@@ -93,6 +93,7 @@ The remaining relational-schema/snapshot-boundary deliverable is reviewed, mutua
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
 - [Approved Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md)
 - [Approved Owner/Admin/Member Permission Matrix](../architecture/role-permission-matrix.md)
+- [Approved Relational Schema and Snapshot Boundaries](../architecture/relational-schema-and-snapshots.md)
 
 ## Just-in-time design gates
 
@@ -366,6 +367,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Approved the complete relational schema and snapshot boundaries, including all six composition/search/deletion/dispatch choices; passed the Phase 0 acceptance gate and advanced the canonical current position to Phase 1 | [Approved relational schema](../architecture/relational-schema-and-snapshots.md) |
 | 2026-08-22 | 0 | Documented the expected Member-to-Owner/Admin escalation when cancellation requires an Adjustment: keep cancellation blocked, explain the required role, and never suggest a Refund beyond actual refundable cash | [State escalation rule](../architecture/document-and-financial-state.md#permission-aware-cancellation-escalation) |
 | 2026-08-22 | 0 | Approved the complete fixed-role permission matrix, including Member Refund and Payment/Refund correction access, Owner/Admin-only Adjustments, Member Quote correction and Invoice cancel/reopen access, and the remaining governance/automation/audit boundaries; only the relational schema/snapshot specification still blocks Phase 0 | [Approved permission matrix](../architecture/role-permission-matrix.md) |
 | 2026-08-22 | 0 | Produced the draft complete Owner/Admin/Member permission matrix; eight grouped role decisions remain open, so its Phase 0 task is not marked complete | [Draft permission matrix](../architecture/role-permission-matrix.md) |

@@ -12,7 +12,7 @@ This document does not create product or technical scope by itself. It records t
 - No contradiction invalidates the approved Laravel/Inertia/React/PostgreSQL architecture.
 - The approved tenancy, exact-decimal, numbering, scheduling, UUID, authentication-scope, localization, and infrastructure decisions resolve the highest architectural risks identified earlier.
 - One documentation-sequencing conflict is resolved by the newer canonical tracker: navigation is a Phase 1 just-in-time gate, while domain migrations and business workflows wait for the four schema-shaping Phase 0 deliverables.
-- All owner choices and the two follow-up boundaries are approved. The exact financial/document state specification and complete Owner/Admin/Member permission matrix are also approved; the relational schema/snapshot-boundary specification is the final Phase 0 deliverable.
+- All owner choices and follow-up boundaries are approved. The exact financial/document state specification, complete Owner/Admin/Member permission matrix, and relational schema/snapshot-boundary specification complete the Phase 0 architecture baseline.
 - PDF selection, upload rules, public-token implementation details, ZeptoMail/webhook details, and production operations remain valid just-in-time gates. They do not block the schema document.
 
 ## Status and severity
@@ -22,7 +22,7 @@ This document does not create product or technical scope by itself. It records t
 | Open — owner decision required | The current requirements permit more than one materially different behavior; the recommendation is not approved yet |
 | Approved resolution | The owner explicitly approved the resolution; canonical product/domain/memory documents must contain it |
 | Approved direction; downstream specification | The product choice is approved, but exact mechanics must still be proposed and approved in the named Phase 0 document |
-| Phase 0 specification | The requirement is already approved in principle but needs exact rules in the named remaining Phase 0 document |
+| Phase 0 specification | The requirement was approved in principle and required exact rules in its named Phase 0 document before implementation |
 | Documentation correction | Later approved direction is clear, but an older document must be reconciled |
 | Just-in-time gate | Must be resolved before its feature or deployment boundary, not before unrelated domain work |
 | Resolved | Existing approved documentation already supplies a sufficient decision and mitigation |
@@ -147,7 +147,7 @@ Severity describes the impact of implementing the wrong behavior:
 ### RA-011 — Archive, hard-delete, and provenance references need consistent constraints
 
 - Severity: High
-- Status: Phase 0 specification
+- Status: Resolved
 - Evidence: Customers, products/services, and companies with history are normally archived, while users must ultimately be able to delete their data. Documents must retain snapshots and linked transactions block Invoice deletion.
 - Risk: Cascading foreign keys could erase history, while unrestricted references could make user-data deletion impossible.
 - Required schema direction from existing approved rules:
@@ -157,7 +157,7 @@ Severity describes the impact of implementing the wrong behavior:
   - Invoice deletion remains impossible while any transaction exists; Cancelled Invoices with transactions remain retained.
   - A Quote without linked Invoices and an Invoice without transactions may be deleted in any lifecycle state after the approved warnings, cleanup, and minimal audit-tombstone behavior.
   - The schema document must enumerate every archive/delete rule and define the final Company/account erasure order without weakening required audit and transaction constraints before that explicit erasure.
-- Owner decision needed later only if the schema cannot satisfy both dependency safety and the approved user-erasure requirement without changing product behavior.
+- Evidence: The approved [relational schema and snapshot boundaries](relational-schema-and-snapshots.md#14-delete-archive-and-retention-graph) define the restrictive dependency graph, authorized document cleanup, minimal tombstones, and Company/User/Account erasure ordering without changing product behavior.
 
 ### RA-012 — Role authorization is intentionally incomplete
 
@@ -170,7 +170,7 @@ Severity describes the impact of implementing the wrong behavior:
 
 ## Resolved high-risk areas
 
-These risks require careful implementation and tests but do not need another product decision before the remaining Phase 0 documents.
+These risks require careful implementation and tests but do not need another product decision before implementation.
 
 | Area | Resolution already approved | Evidence |
 | --- | --- | --- |
@@ -196,7 +196,7 @@ These risks require careful implementation and tests but do not need another pro
 
 ## Just-in-time risks
 
-The canonical tracker owns these gates. This assessment confirms that none changes the core relational model enough to block the remaining Phase 0 schema work.
+The canonical tracker owns these gates. This assessment confirms that none required changing the approved core relational model and that each remains due only before its named implementation boundary.
 
 | Area | Risk to resolve at its gate |
 | --- | --- |
@@ -209,7 +209,7 @@ The canonical tracker owns these gates. This assessment confirms that none chang
 
 ## Verification obligations carried forward
 
-The remaining documents and later implementation must continue to prove:
+Later implementation must continue to prove:
 
 - Every tenant-owned relationship is same-company and default-deny under the restricted database role.
 - Every financial transition uses one authoritative decimal/state service and revalidates the complete resulting balance.
@@ -223,6 +223,6 @@ The remaining documents and later implementation must continue to prove:
 
 ## Approval outcome
 
-The owner approved every product resolution in this assessment on 2026-08-22. RA-001's documentation correction has been applied. RA-011 remains a mandatory relational-schema section, and RA-012 remains the separately tracked permission-matrix deliverable rather than an authorization decision made here.
+The owner approved every product resolution in this assessment on 2026-08-22. RA-001's documentation correction has been applied, RA-011 is satisfied by the approved relational schema, and RA-012 is satisfied by the approved permission matrix.
 
-The exact financial/document state specification and complete permission matrix are approved. The relational schema/snapshot-boundary specification is the final Phase 0 deliverable and must receive its own explicit approval before the tracker marks it complete.
+The exact financial/document state specification, complete permission matrix, and relational schema/snapshot-boundary specification are approved. The canonical development tracker records Phase 0 as complete.

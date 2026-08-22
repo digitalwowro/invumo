@@ -184,4 +184,4 @@ A Member may therefore reach a valid Invoice state where cancellation still requ
 
 The owner approved the fixed shared-Company role model; the Admin governance/configuration boundary; non-Owner membership administration; Member Customer/document/catalog-use permissions; Member Payment/Refund permissions; Owner/Admin-only Adjustment control; the Draft-versus-Active recurring split; the document exception/deletion boundaries; and communications, operations, and audit visibility on 2026-08-22.
 
-The relational schema/snapshot-boundary specification must encode the singular Owner and membership constraints, while Laravel Policies and application actions implement every named ability here. That schema specification remains the final Phase 0 gate.
+The approved relational schema/snapshot-boundary specification encodes the singular Owner and membership constraints, while Laravel Policies and application actions implement every named ability here.

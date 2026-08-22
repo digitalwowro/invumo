@@ -28,7 +28,7 @@ Before implementing application code:
 
 Do not add unrequested features.
 
-The technology/application baseline, tenant-isolation mechanism, numbering concurrency, and scheduler behavior have now been approved and are recorded in [`../architecture/`](../architecture/). The canonical [development tracker](../development/development-tracker.md) defines the remaining Phase 0 blockers and each just-in-time design gate.
+The technology/application baseline, tenant-isolation mechanism, numbering concurrency, scheduler behavior, financial/document state, permission matrix, and relational schema have been approved and are recorded in [`../architecture/`](../architecture/). The canonical [development tracker](../development/development-tracker.md) defines the current implementation phase and each just-in-time design gate.
 
 ## 1. Core product
 

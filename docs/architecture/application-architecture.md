@@ -1,6 +1,6 @@
 # Invumo Application Architecture Baseline
 
-Status: Approved architecture baseline with two pending bootstrap decisions
+Status: Approved architecture decision
 Last updated: 2026-08-22
 
 This document records the approved technology and application-architecture baseline. It does not track implementation progress or remaining deliverables; those are maintained only in the [Invumo Development Tracker](../development/development-tracker.md).
@@ -20,6 +20,7 @@ Build Invumo as one modular Laravel application with a React/TypeScript interfac
 | Database | PostgreSQL 18 |
 | Frontend build | Vite |
 | Styling and components | Tailwind CSS 4 and source-owned shadcn/ui components |
+| Localization | Laravel `lang/en` and `lang/ro` files as the only authored source; resolved strings passed to React through Inertia props |
 | Package management | Composer and npm with committed lockfiles |
 | Automated testing | Pest 4, Vitest, and Pest Browser backed by Playwright |
 | Code quality | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier |
@@ -30,11 +31,6 @@ Build Invumo as one modular Laravel application with a React/TypeScript interfac
 | Deployment shape | One application deployment and one PostgreSQL database |
 
 This choice optimizes total system complexity rather than language count. PHP and TypeScript remain in one repository and one deployable application; they do not create separate backend and frontend services.
-
-## Pending bootstrap decisions
-
-- TOTP two-factor authentication and recovery codes are not approved v1 scope and must not be enabled or added to acceptance criteria until the owner explicitly approves or rejects them.
-- The proposed localization split is `react-i18next` for React-rendered interface strings and Laravel localization for validation, system messages, transactional email, and PDFs, pending explicit approval. The rationale is that React must render and switch its own interface strings without sending the full UI dictionary through every Inertia response, while Laravel must localize output produced outside React.
 
 ## Application boundary
 
@@ -85,11 +81,15 @@ Use React/Inertia for the authenticated application and customer-facing public p
 
 Create the application from Laravel's official React starter kit and retain its Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, source-owned shadcn/ui, Vite, and Wayfinder foundation.
 
-Use the starter kit's built-in Fortify authentication. Keep registration, email verification, sign-in/out, password reset, password confirmation, secure session management, and rate limiting. Do not select WorkOS AuthKit and do not enable the starter kit's Teams domain: Invumo owns its Account, Company, Membership, invitation, company-switching, and ownership-transfer model. Do not enable TOTP two-factor authentication or recovery codes unless that pending scope decision is explicitly approved.
+Use the starter kit's built-in Fortify authentication. Keep registration, email verification, sign-in/out, password reset, password confirmation, secure session management, and rate limiting. Do not select WorkOS AuthKit and do not enable the starter kit's Teams domain: Invumo owns its Account, Company, Membership, invitation, company-switching, and ownership-transfer model. TOTP two-factor authentication and recovery codes are explicitly deferred from v1.
 
 Use Composer for PHP and npm for browser dependencies. Commit both lockfiles. Do not introduce Bun, pnpm, Yarn, or a second package manager without a demonstrated build or operational need.
 
-English and Romanian exist from the first implemented phase; user-entered content is never automatically translated. Implement the localization plumbing only after the pending React/Laravel localization split receives explicit approval or is replaced by an explicitly approved alternative.
+Laravel is the only authored translation source. Store Invumo translations under `lang/en` and `lang/ro`; use the same Laravel localization system for validation, system messages, transactional email, PDFs, and strings resolved for React. Do not install `react-i18next`, maintain client-authored catalogs, or add a catalog-generation build step.
+
+Pass only a small, namespaced common translation bag through `HandleInertiaRequests::share()` and pass page-specific bags as ordinary Inertia page props, preferably through reusable typed translation-bag classes rather than repeated controller arrays. Never send the complete catalog with every response. React reads resolved strings through a small typed accessor/interpolation helper. For rare client-live plurals, Laravel supplies the required variants and React selects them with `Intl.PluralRules`; do not create an independent client translation map. Changing the application language may perform an Inertia request.
+
+English and Romanian exist from the first implemented phase; user-entered content is never automatically translated. Automated tests verify locale-key parity, required page/common bags, placeholder behavior, and representative Romanian plural selection.
 
 Use Laravel Boost as a development-only Composer dependency. Its installed-version documentation, agent guidelines, and skills support vibe coding, but it is not application runtime infrastructure and must not override Invumo's approved architecture, product rules, or repository instructions. Keep Invumo-specific durable agent rules in source control.
 

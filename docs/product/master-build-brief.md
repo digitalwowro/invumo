@@ -57,6 +57,7 @@ Do not implement in v1:
 - Country-specific fiscal compliance engines
 - Automatic translation of user-entered content
 - Customer SMTP
+- TOTP two-factor authentication and recovery codes
 - Subscription billing or payment collection for Invumo itself
 - Custom document title/header overrides
 - Company-uploaded signature or stamp images
@@ -92,7 +93,7 @@ An Account belongs to an account owner. The account owner has an Invumo plan.
 
 v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, and rate limiting. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
 
-TOTP two-factor authentication and recovery codes are a pending scope decision, not approved v1 functionality. Do not implement or include them in acceptance criteria unless they receive explicit approval.
+TOTP two-factor authentication and recovery codes are explicitly deferred from v1.
 
 Initial placeholder plans:
 

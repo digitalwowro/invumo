@@ -12,9 +12,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 - Current phase: Phase 0 — Architecture readiness
 - Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Resolve the two pending bootstrap decisions and complete the four unresolved schema-shaping deliverables before Phase 0 sign-off
+- Next gate: Complete and review the four unresolved schema-shaping Phase 0 deliverables before domain migrations, business features, or Phase 0 sign-off
 
-The Laravel project scaffold, approved development tooling, and CI foundation may be created while Phase 0 is in progress. The four schema-shaping deliverables block domain migrations, models, and business workflows. The pending TOTP decision blocks only TOTP implementation, and the pending localization decision blocks localization plumbing; both must nevertheless be resolved before Phase 0 is signed off. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
+The Laravel project scaffold, approved development tooling, CI foundation, authentication baseline, and localization plumbing may be created while Phase 0 is in progress. Domain migrations, models, and business workflows must wait for the four schema-shaping deliverables. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -65,8 +65,8 @@ The Laravel project scaffold, approved development tooling, and CI foundation ma
 - [x] Complete product discovery, v1 scope, explicit exclusions, and domain invariants.
 - [x] Approve the Laravel/Inertia/React/PostgreSQL application and deployment baseline.
 - [x] Approve the official React starter-kit foundation, built-in Fortify baseline, Wayfinder, WorkOS/Teams exclusion, Composer/npm lockfiles, testing, quality, CI, and development-only Boost profile.
-- [ ] Decide explicitly whether TOTP two-factor authentication and recovery codes belong in v1.
-- [ ] Approve the proposed `react-i18next`/Laravel localization split, or approve Laravel-resolved React UI strings via Inertia props instead.
+- [x] Explicitly defer TOTP two-factor authentication and recovery codes from v1.
+- [x] Approve Laravel language files as the only authored translation source, with resolved common and page-specific strings passed to React through Inertia props and no `react-i18next` dependency.
 - [x] Approve exact-decimal storage, currency-precision snapshots, rounding order, and cross-runtime calculation rules.
 - [x] Approve native UUIDv7 domain identifiers and foreign-key policy.
 - [x] Approve tenant isolation and forced PostgreSQL RLS mechanisms.
@@ -80,7 +80,7 @@ The Laravel project scaffold, approved development tooling, and CI foundation ma
 
 ### Acceptance gate
 
-The two pending bootstrap decisions are explicitly approved or rejected, and the four open schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. The schema-shaping documents define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
+The four open schema-shaping deliverables are reviewed, mutually consistent, and linked from the documentation index. Together they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
 
 ### Evidence
 
@@ -123,11 +123,11 @@ Security, tenant isolation, auditability, error handling, and observability are 
 - [ ] Add GitHub Actions checks for PHP tests/static analysis/formatting, TypeScript tests/type checking/linting, browser smoke tests where appropriate, and production asset builds.
 - [ ] Establish the conventional modular-monolith structure and application-action transaction boundaries.
 - [ ] Build the PostgreSQL schema foundation using UUIDv7 domain identifiers and approved exact-decimal types, separate migration/runtime roles, forced RLS, repeatable migrations, and a PostgreSQL test-data strategy.
-- [ ] Implement registration, email verification, sign-in/out, password reset, secure sessions, and session invalidation; implement TOTP only if separately approved in Phase 0.
+- [ ] Implement registration, email verification, sign-in/out, password reset, secure sessions, and session invalidation without TOTP or recovery-code scope.
 - [ ] Implement foundational system-email delivery for verification, recovery, and company invitations.
 - [ ] Implement users, accounts, companies, memberships, invitations, company switching, and ownership-transfer safeguards.
 - [ ] Implement tenant-context, authorization, same-company foreign-key, restricted-role RLS, and cross-company denial primitives.
-- [ ] Establish English/Romanian localization using the explicitly approved Phase 0 localization approach.
+- [ ] Establish English/Romanian localization with Laravel as the only authored source, small common and page-specific Inertia translation bags, a typed React accessor/interpolation helper, browser-native live plural selection, and locale/key/placeholder tests.
 - [ ] Implement audit-event infrastructure used by every later business operation.
 - [ ] Implement shared validation, error handling, logging, health checks, and configuration/secrets boundaries.
 - [ ] Implement server-authoritative `brick/math` calculation primitives, `decimal.js` preview primitives, string decimal transport, and shared golden calculation vectors.
@@ -137,7 +137,7 @@ Security, tenant isolation, auditability, error handling, and observability are 
 
 ### Acceptance gate
 
-Authentication, email verification, recovery, and secure-session paths work, plus TOTP/recovery paths if that scope is approved. Laravel authorization and PostgreSQL RLS independently deny cross-company access using the restricted runtime role. Migrations are repeatable; queue/scheduler context cannot leak between companies; CI enforces the approved quality stack; and audit, localization, exact-decimal, and file foundations are usable by Phase 2.
+Authentication, email verification, recovery, and secure-session paths work without TOTP/recovery-code scope. Laravel authorization and PostgreSQL RLS independently deny cross-company access using the restricted runtime role. Migrations are repeatable; queue/scheduler context cannot leak between companies; CI enforces the approved quality stack; and audit, localization, exact-decimal, and file foundations are usable by Phase 2.
 
 ## Phase 2 — Company configuration
 
@@ -362,6 +362,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Explicitly deferred TOTP/recovery codes from v1 and approved Laravel as the sole authored translation source with page-scoped Inertia translation props | Product and architecture approval recorded in work and memory documentation |
 | 2026-08-22 | 0 | Reopened TOTP scope and localization-plumbing decisions that had been bundled into a documentation approval without explicit sign-off; added the explicit-approval tracking rule | Work and memory documentation |
 | 2026-08-22 | 0 | Limited the Phase 0 blocking gate to the four schema-shaping specifications and moved route/UI, integration, and production-operations decisions to explicit just-in-time gates | This tracker |
 | 2026-08-22 | 0 | Created the canonical tracker, migrated all implementation phases and acceptance gates from the master brief, and recorded the approved bootstrap profile | Documentation commit recorded in repository history |

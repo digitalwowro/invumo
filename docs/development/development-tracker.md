@@ -72,7 +72,7 @@ The Laravel project scaffold, approved development tooling, CI foundation, authe
 - [x] Approve tenant isolation and forced PostgreSQL RLS mechanisms.
 - [x] Approve document-number allocation and concurrency mechanisms.
 - [x] Approve recurrence, reminders, timezone/DST, retry, downtime, and idempotency mechanisms.
-- [ ] Produce and review the requirements contradiction assessment and risk register.
+- [ ] Review and approve the drafted requirements contradiction assessment and risk register.
 - [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
 - [ ] Produce and review the complete Owner/Admin/Member role-action permission matrix.
 - [ ] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
@@ -84,6 +84,7 @@ The four open schema-shaping deliverables are reviewed, mutually consistent, and
 
 ### Evidence
 
+- [Draft Requirements Contradiction Assessment and Risk Register](../architecture/requirements-risk-assessment.md)
 - [Application architecture baseline](../architecture/application-architecture.md)
 - [Calculation, Decimal Precision, and Rounding](../architecture/calculation-and-rounding.md)
 - [Domain Identifier Policy](../architecture/identifier-policy.md)
@@ -362,6 +363,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Produced the draft requirements contradiction assessment and risk register; owner review and proposed-resolution approvals remain open | [Draft assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Explicitly deferred TOTP/recovery codes from v1 and approved Laravel as the sole authored translation source with page-scoped Inertia translation props | Product and architecture approval recorded in work and memory documentation |
 | 2026-08-22 | 0 | Reopened TOTP scope and localization-plumbing decisions that had been bundled into a documentation approval without explicit sign-off; added the explicit-approval tracking rule | Work and memory documentation |
 | 2026-08-22 | 0 | Limited the Phase 0 blocking gate to the four schema-shaping specifications and moved route/UI, integration, and production-operations decisions to explicit just-in-time gates | This tracker |

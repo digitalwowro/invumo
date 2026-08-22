@@ -24,4 +24,8 @@ Update the tracker as work advances. Do not create or maintain phase status, tas
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 
+## Phase 0 working documents
+
+- [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — draft contradiction assessment, risk register, and proposed resolutions awaiting owner review
+
 Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

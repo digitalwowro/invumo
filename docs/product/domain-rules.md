@@ -217,6 +217,8 @@ Users may add, edit, and archive presets. Referenced presets should be archived 
 
 Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
 
+Render the applied tax name and percentage together on customer-visible documents, for example `VAT 19%`. v1 has no separate tax-percentage visibility setting.
+
 ## Currency
 
 - Each customer has a default currency.
@@ -256,6 +258,8 @@ Terms & Conditions are separate from structured payment terms and from notes/foo
 - Refunds may make an invoice partially or fully unpaid again; status must update accordingly.
 - Transaction fields include amount, currency, date, payment method, reference, and notes.
 - Transaction currency must be consistent with the invoice because v1 has no FX conversion.
+- After recording a payment, offer an optional payment-received email action.
+- Do not automatically email receipts for historical/backfilled payments without clear user intent.
 
 ## Recurring invoices
 
@@ -274,6 +278,9 @@ Recurring template
 - Existing generated invoices remain unchanged.
 - Support weekly, monthly, quarterly, yearly, and custom intervals.
 - Support start date, optional end date, and optional maximum occurrence count.
+- Inherit company invoice defaults while allowing template overrides for payment terms, due-date calculation, Terms & Conditions, notes, email delivery, and reminder rules.
+- Generated invoices use the normal company invoice numbering sequence.
+- Generated invoices materialize the applicable defaults and reminder schedule; later company-default changes do not rewrite them.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.
 - Avoid a queue or separate worker unless architecture analysis proves it necessary.
 
@@ -297,6 +304,10 @@ Recurring template
 - Prefer the API if architecture analysis confirms it is cleaner and more reliable than SMTP.
 - Provide multilingual default subject and body for quotes and invoices.
 - Allow editing before sending.
+- Provide company templates per language for quote sent, invoice sent, payment reminder, and payment received events.
+- Template fields include subject, body, button label, plain-text company signature, and preview.
+- Support only allowlisted placeholders for relevant customer, company, document, amount, due-date, and public-URL values.
+- Reject or identify unknown placeholders, escape substituted values for their output context, and handle unavailable optional values safely.
 - Resolve recipients and PDF-delivery mode using per-send override, then customer preference, then company default.
 - Support one primary/default recipient and optional multiple CC and BCC recipients.
 - Show resolved recipients and secure-link-only/attach-PDF choice in the send composer before sending.
@@ -304,6 +315,19 @@ Recurring template
 - Authenticate webhooks and process provider events idempotently.
 - Customer SMTP is excluded from v1.
 - The company primary brand color may be used for restrained accents when email-client compatibility and contrast permit it.
+
+## Automated invoice reminders
+
+- A company may define multiple enabled/disabled reminder rules with an integer day offset before or after the due date.
+- An invoice may disable or override inherited reminder rules.
+- A recurring template may override the rules inherited by generated invoices.
+- Issuing an invoice materializes its reminder schedule from the applicable rules.
+- Company-default changes affect future schedules unless explicitly reapplied.
+- Pending reminders are recalculated when the due date changes.
+- Pending reminders are suppressed when an invoice becomes Paid or Cancelled.
+- Reminder jobs run in the company timezone and must be idempotent under retries or overlapping executions.
+- Record sends and failures in invoice/email history.
+- The architecture specification must define the company-local send time and retry policy.
 
 ## Localization
 
@@ -323,6 +347,7 @@ Recurring template
 - Do not apply company themes to the internal Invumo application.
 - Validate custom colors and choose accessible foreground colors or a safe fallback for each rendered context.
 - v1 excludes custom fonts, print padding/scale/logo-size controls, custom favicons, Pay buttons, viewer-facing Share buttons, fixed-per-page footers, signature/stamp images, and Invumo-branding removal controls.
+- v1 also excludes credit notes, automatic late fees, payment-processing fees, tax-inclusive pricing, user-editable system translation dictionaries, PDF QR codes, PDF invoice-status labels, and arbitrary footer-element builders.
 
 ## Audit history
 
@@ -332,6 +357,7 @@ Audit at least:
 - Quote acceptance and rejection
 - Number changes
 - Payment/refund creation, change, and deletion
+- Reminder scheduling, sending, suppression, and material failures
 - Public-link generation, revocation, and regeneration
 - Company transfer
 - Important settings and membership changes

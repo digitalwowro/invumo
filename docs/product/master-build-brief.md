@@ -71,6 +71,14 @@ Do not implement in v1:
 - Invumo-branding removal controls
 - Customer tags
 - Customer-specific manual date formats
+- Credit notes
+- Automatic late fees
+- Payment-processing fees
+- Tax-inclusive prices
+- User-editable system translation dictionaries
+- QR codes in generated PDFs
+- Invoice-status labels in generated PDFs
+- Arbitrary custom footer-element builders
 
 ## 2. Account model
 
@@ -429,6 +437,8 @@ Users can add, edit, and archive presets. A referenced preset should be archived
 
 When a preset is applied, copy its name and percentage onto the document line. Editing or archiving the preset later must not alter existing quotes or invoices.
 
+On quotes, invoices, public pages, and PDFs, display both the applied tax name and percentage, for example `VAT 19%`. Do not add a separate visibility toggle in v1.
+
 Do not implement:
 
 - EU reverse charge
@@ -503,6 +513,8 @@ Do not build expenses, general accounting transactions, a chart of accounts, or 
 
 Invoice payment status should derive appropriately from payments. Prevent payments from unintentionally exceeding the outstanding balance. If refunds make the balance unpaid again, update the invoice state.
 
+After recording a payment, the user may optionally send a payment-received email. Never send it automatically for historical/backfilled payments without clear user intent.
+
 ## 19. Recurring invoices
 
 Recurring invoices use a dedicated template entity:
@@ -527,6 +539,18 @@ Recurrence options:
 - Custom interval
 
 Support a start date, optional end date, and optional maximum occurrence count.
+
+A recurring template inherits company invoice defaults and may override:
+
+- Payment terms and due-date calculation
+- Terms & Conditions
+- Notes
+- Email delivery settings
+- Reminder rules
+
+Generated invoices use the normal company invoice numbering sequence. Do not create a separate recurring-invoice document sequence.
+
+Generated invoices materialize the applicable defaults and reminder schedule so later company-default changes do not silently rewrite already-generated invoices.
 
 Keep scheduling infrastructure as simple as reasonably possible. Avoid queues and message brokers unless architecture analysis identifies a genuine need. Scheduled execution must be idempotent.
 
@@ -577,6 +601,26 @@ Quote and invoice emails include:
 - Editable subject before sending
 - Editable body before sending
 
+Company email templates exist per event and language for:
+
+- Quote sent
+- Invoice sent
+- Payment reminder
+- Payment received
+
+Each template supports:
+
+- Subject
+- Body
+- Button label
+- Plain-text company email signature
+- Preview
+- An allowlisted set of placeholders, including relevant customer, company, document, amount, due-date, and public-URL values
+
+Provide safe multilingual system defaults. Companies may override them. Reject or clearly identify unknown placeholders, escape substituted content for its output context, and fall back safely when an optional value is unavailable.
+
+Direct quote/invoice sends remain editable per send. Automated reminder sends use the saved template for the document language.
+
 Delivery defaults follow this precedence:
 
 1. Per-send override
@@ -597,6 +641,29 @@ Track Sent, Delivered, and Opened where ZeptoMail supports them. Authenticate we
 The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.
 
 Do not build customer SMTP or a marketing-email system in v1.
+
+### Automated invoice reminders
+
+Companies may configure multiple reminder rules relative to the invoice due date:
+
+- Number of days
+- Before or after the due date
+- Enabled/disabled state
+- Associated reminder email template/language behavior
+
+Invoices may disable or override inherited reminders. Recurring templates may also override the company defaults for invoices they generate.
+
+When an invoice is issued, materialize its reminder schedule from the applicable rules. Company-default changes affect future schedules unless the user explicitly reapplies them.
+
+Reminder processing must:
+
+- Use the company timezone
+- Stop unsent reminders when an invoice becomes Paid or Cancelled
+- Recalculate pending reminders when the due date changes
+- Prevent duplicate sends under retries or overlapping scheduler runs
+- Record sends and failures in invoice/email history
+
+The architecture phase must define the default local send time and retry policy.
 
 ## 23. Public quote and invoice pages
 
@@ -655,6 +722,7 @@ Maintain an audit trail for significant business operations, including:
 - Invoice creation, issue, edits after issue, cancellation, deletion, and number changes
 - Quote creation, edits, acceptance, and rejection
 - Payment creation, deletion, and changes
+- Reminder scheduling, sending, suppression, and failure where material
 - Public-link generation, revocation, and regeneration
 - Company transfer
 - Important settings and membership changes
@@ -767,6 +835,8 @@ Likely concepts include:
 - Invoices and invoice lines
 - Transactions/payments
 - Recurring invoice templates and lines
+- Company email templates
+- Invoice reminder rules and scheduled reminder instances
 - Public document links
 - Email delivery events
 - Audit events
@@ -787,6 +857,7 @@ Pay particular attention to:
 - Document language and currency precision
 - Duplicate scheduled execution
 - Duplicate email and webhook events
+- Duplicate or stale reminder execution
 - Historical snapshots of applied tax and bank details
 - Historical snapshots of customer identity, address, and registration details
 - Company-timezone scheduling across daylight-saving transitions
@@ -815,6 +886,11 @@ Create automated tests for critical calculations and workflows, especially:
 - Public-link expiry and revocation
 - Full customer creation in the scrollable document-editor modal without losing in-progress data
 - Customer email-recipient and PDF-attachment default precedence
+- Email-template placeholder validation and language fallback
+- Reminder materialization, before/after-due scheduling, due-date changes, and duplicate suppression
+- Reminder cancellation when an invoice becomes Paid or Cancelled
+- Optional payment-received email behavior for current versus historical payments
+- Recurring-template inheritance of invoice defaults, email settings, and reminders
 
 Implement browser-level tests for the main journey:
 
@@ -927,9 +1003,12 @@ Then build in logical stages. A sensible initial order is:
 ### Phase 7 — Email
 
 - ZeptoMail integration
-- Default templates
+- Event- and language-specific default templates
+- Safe placeholders and preview
 - Editing before sending
 - Delivery/open tracking
+- Automated before/after-due reminders
+- Optional payment-received messages
 
 ### Phase 8 — Recurring invoices
 
@@ -937,6 +1016,7 @@ Then build in logical stages. A sensible initial order is:
 - Scheduling
 - Automatic invoice generation
 - Automatic issue and email
+- Invoice-default and reminder inheritance
 
 ### Phase 9 — Dashboard and audit
 
@@ -979,6 +1059,8 @@ A new user can:
 18. Invite users with appropriate roles.
 19. Transfer a company to another account owner.
 20. Work in English or Romanian.
+21. Configure automatic invoice reminders before or after due dates.
+22. Customize multilingual company email templates and preview their resolved content.
 
 All of this should feel substantially simpler than traditional accounting software.
 

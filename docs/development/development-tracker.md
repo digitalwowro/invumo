@@ -12,9 +12,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 - Current phase: Phase 0 — Architecture readiness
 - Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Complete and review every unresolved Phase 0 architecture deliverable before domain migrations or business-feature implementation
+- Next gate: Complete and review the four unresolved schema-shaping Phase 0 deliverables before domain migrations or business-feature implementation
 
-The Laravel project scaffold, development tooling, and CI foundation may be created while Phase 0 is in progress because the bootstrap profile is approved. Domain migrations, models, and business workflows must wait for the Phase 0 acceptance gate.
+The Laravel project scaffold, development tooling, and CI foundation may be created while Phase 0 is in progress because the bootstrap profile is approved. Domain migrations, models, and business workflows must wait for the Phase 0 acceptance gate. Route/UI, integration, and production-operations decisions follow the just-in-time gates below and do not block unrelated development.
 
 ## Status definitions
 
@@ -72,15 +72,12 @@ The Laravel project scaffold, development tooling, and CI foundation may be crea
 - [ ] Produce and review the requirements contradiction assessment and risk register.
 - [ ] Produce and review the relational data model, migrations strategy, same-company constraints, and snapshot boundaries.
 - [ ] Produce and review the complete Owner/Admin/Member role-action permission matrix.
-- [ ] Produce and review the route, navigation, operational-list, and shared-editor composition map.
 - [ ] Produce and review the exact quote, invoice, payment, refund, adjustment, overdue, and cancellation state specification.
-- [ ] Complete the remaining email, webhook, PDF, upload, and public-token integration design.
-- [ ] Complete the security, observability, deployment, backup/restore, rollback, and operational-recovery design.
 - [x] Establish this complete implementation sequence, acceptance gates, and tracking protocol.
 
 ### Acceptance gate
 
-Every architecture deliverable above is reviewed, mutually consistent, and linked from the documentation index. No unresolved decision can materially change domain table shape, authorization boundaries, financial history, public access, or the Phase 1 foundation.
+The four open deliverables above are reviewed, mutually consistent, and linked from the documentation index. Together they define domain table shape and snapshot boundaries, Owner/Admin/Member authorization, and financial lifecycle/history rules sufficiently to begin domain migrations and business features. The phase-specific design gates below remain mandatory, but do not delay unrelated work.
 
 ### Evidence
 
@@ -91,6 +88,21 @@ Every architecture deliverable above is reviewed, mutually consistent, and linke
 - [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md)
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
 
+## Just-in-time design gates
+
+These decisions must be completed before the named implementation boundary, not before all development begins.
+
+| Design gate | Must be complete before | Tracked in |
+| --- | --- | --- |
+| Route hierarchy, navigation, operational-list behavior, and shared-editor composition | Building the custom application shell and feature navigation beyond the starter scaffold | Phase 1 |
+| Upload validation, storage visibility, size/type limits, serving, replacement, and cleanup rules | Implementing the shared file-upload foundation | Phase 1 |
+| PDF renderer compatibility proof and final renderer selection | Committing to and implementing the shared production PDF renderer | Phase 5 |
+| Public-token hashing, tenant bootstrap, expiry, revocation, regeneration, and rate-limit design | Implementing public document access | Phase 8 |
+| ZeptoMail transport, webhook authentication, event mapping, retry, and idempotency design | Implementing document email delivery and provider webhooks | Phase 9 |
+| Scripted deployment, secret management, restricted production roles, off-server backup/restore, monitoring, worker/scheduler supervision, and rollback | The first deployment to the hosted production environment; reverified in full before v1 release | First production deployment and Phase 12 |
+
+Security, tenant isolation, auditability, error handling, and observability are designed and verified with every phase. The complete release security and operational review remains a Phase 12 gate.
+
 ## Phase 1 — Core platform and cross-cutting foundations
 
 - Status: Not started
@@ -100,6 +112,7 @@ Every architecture deliverable above is reviewed, mutually consistent, and linke
 ### Tasks
 
 - [ ] Scaffold the official Laravel React starter kit with Laravel 13, PHP 8.5, Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, Vite, and Wayfinder.
+- [ ] Before building the custom application shell and feature navigation, produce and review the route, navigation, operational-list, and shared-editor composition map.
 - [ ] Use built-in Fortify authentication; exclude WorkOS AuthKit and the starter-kit Teams domain.
 - [ ] Keep optional TOTP two-factor authentication and its recovery flow.
 - [ ] Commit Composer and npm lockfiles; do not introduce an alternative JavaScript package manager.
@@ -117,7 +130,8 @@ Every architecture deliverable above is reviewed, mutually consistent, and linke
 - [ ] Implement shared validation, error handling, logging, health checks, and configuration/secrets boundaries.
 - [ ] Implement server-authoritative `brick/math` calculation primitives, `decimal.js` preview primitives, string decimal transport, and shared golden calculation vectors.
 - [ ] Configure the PostgreSQL-backed queue, one supervised PHP worker, cron-triggered scheduler, and job idempotency/observability primitives.
-- [ ] Implement the validated file-upload foundation required for company logos.
+- [ ] Complete the upload/storage design gate, then implement the validated file-upload foundation required for company logos.
+- [ ] Before the first hosted production deployment, complete and test the deployment, secrets, restricted-role, off-server backup/restore, monitoring, worker/scheduler supervision, and rollback gate; reverify it in Phase 12.
 
 ### Acceptance gate
 
@@ -247,6 +261,7 @@ Transaction history reconciles exactly to invoice balance and state under create
 
 ### Tasks
 
+- [ ] Complete the public-token design gate before implementing public access.
 - [ ] Implement unpredictable hashed secure links.
 - [ ] Implement transaction-local token-hash bootstrap into the correct RLS tenant context.
 - [ ] Implement expiry, revocation, and regeneration.
@@ -266,6 +281,7 @@ Public access cannot cross tenants, revoked tokens stay revoked, expired quote a
 
 ### Tasks
 
+- [ ] Complete the ZeptoMail transport and webhook design gate before implementing provider integration.
 - [ ] Integrate Zoho ZeptoMail for document delivery, reusing the platform email transport where appropriate.
 - [ ] Implement event- and language-specific default templates, safe placeholders, and preview.
 - [ ] Implement editable direct-send composition.
@@ -344,4 +360,5 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Limited the Phase 0 blocking gate to the four schema-shaping specifications and moved route/UI, integration, and production-operations decisions to explicit just-in-time gates | This tracker |
 | 2026-08-22 | 0 | Created the canonical tracker, migrated all implementation phases and acceptance gates from the master brief, and recorded the approved bootstrap profile | Documentation commit recorded in repository history |

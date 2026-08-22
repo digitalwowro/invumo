@@ -18,6 +18,9 @@ This document is a concise implementation-facing companion to the [master build 
 - Other existing members remain attached during transfer by default.
 - Every server-side business-data operation must verify company scope, membership, and permission.
 - Never trust a client-provided company identifier without server-side authorization.
+- Tenant-owned business tables also use forced PostgreSQL Row-Level Security. Every tenant-owned row, including child rows, carries `company_id`; same-company composite foreign keys prevent cross-company parent/child links.
+- The Laravel runtime database role is not the schema owner and cannot bypass RLS. Tenant context is set transaction-locally only after authorization, is required by queue jobs, and denies access when absent.
+- Control-plane, public-token, and scheduler bootstrap paths are narrow and must never grant a general tenant-data bypass. The approved mechanism is defined in [`../architecture/tenant-isolation.md`](../architecture/tenant-isolation.md).
 - Authentication covers registration, email verification, sign-in/out, password reset, and secure session invalidation.
 - Company invitations are email-addressed, expiring, revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
 - Ownership transfer requires explicit confirmation and cannot be performed as an ordinary role change.
@@ -35,7 +38,9 @@ This document is a concise implementation-facing companion to the [master build 
 - Support a user-defined tax registration label and identifier.
 - Support a user-defined business registration label and number.
 - Each company has an IANA timezone.
+- Each company has one automation-local time, default `09:00`, used for recurring generation and reminders in v1.
 - Store timestamps in UTC; interpret recurring schedules and other company-timed automation in the company timezone.
+- Canonical recurrence/reminder rules remain company-local calendar values; stored UTC run timestamps are derived execution indexes.
 - Document date formatting derives from the selected document language/locale. v1 has no separate manual date-format setting.
 
 ## Bank accounts
@@ -162,8 +167,13 @@ Rules:
 - Do not silently reuse a removed number without clear user intent.
 - Keep numbering configurable without building an unnecessarily complex rules engine.
 - Quote and invoice sequences are separate per company.
-- The architecture specification defines numeric parsing, optional reset periods, manual overrides, and concurrency control.
+- v1 supports literal prefix/suffix, optional company-local year, one padded numeric component, and an explicit no-reset or annual-reset policy. A year in the format does not imply reset.
+- Clicking New creates a persisted Draft. Automatic allocation and Draft insertion share one transaction and one idempotent creation key.
+- Lock the relevant company/document-type/period counter row using `SELECT ... FOR UPDATE`, allocate the next unoccupied automatic candidate, insert the Draft, advance the counter, and commit.
+- Manual duplicates remain possible after explicit warning. Manual numbering, renumbering, and deletion do not change the counter automatically.
+- Counter continuation/realignment is an explicit authorized action under the same lock. Moving backwards requires a reuse warning and audit event.
 - A manual override must not silently move a sequence backwards.
+- The complete approved behavior and concurrency tests are defined in [`../architecture/numbering-and-concurrency.md`](../architecture/numbering-and-concurrency.md).
 
 Example:
 
@@ -357,8 +367,12 @@ Recurring template
 - If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.
 - Use a stable occurrence idempotency key and record last run, next run, outcome, and generated invoice.
-- The architecture specification defines company-local execution time, daylight-saving behavior, retry policy, and treatment of service downtime.
-- Avoid a queue or separate worker unless architecture analysis proves it necessary.
+- Calculate each occurrence from its local calendar rule at the company automation time, then resolve it through the company IANA timezone into UTC; never add a fixed UTC duration for monthly/quarterly/yearly recurrence.
+- A nonexistent spring-forward time shifts by the DST gap; a repeated fall-back time uses its first occurrence and executes once.
+- After service downtime, catch up every occurrence due while Active, oldest first and in bounded batches. Intentional pause time is not backfilled without explicit confirmation.
+- Use the approved PostgreSQL-backed Laravel queue, one supervised PHP worker, and cron-triggered scheduler. Create the occurrence and invoice transactionally; queue PDF/email only after commit.
+- After one initial attempt, retry transient failures up to five times: after 1 minute, 5 minutes, 15 minutes, 1 hour, and 6 hours. Permanent failures and exhausted retries stop visibly; an authorized retry retains the same idempotency key.
+- The complete approved behavior is defined in [`../architecture/scheduling-and-jobs.md`](../architecture/scheduling-and-jobs.md).
 
 ## Public documents
 
@@ -409,7 +423,11 @@ Recurring template
 - A Partially Paid invoice continues to receive reminders while it has a positive outstanding balance.
 - Reminder jobs run in the company timezone and must be idempotent under retries or overlapping executions.
 - Record sends and failures in invoice/email history.
-- The architecture specification must define the company-local send time and retry policy.
+- Schedule reminders at the company automation time and retain local/UTC schedule, timezone, attempts, idempotency key, and outcome.
+- After downtime, send a before-due reminder only while the due date remains in the future. If multiple after-due reminders accumulated, send only the newest eligible one and mark older instances superseded.
+- Recheck invoice state, outstanding balance, due date, recipients, and public-link eligibility immediately before sending.
+- Use the approved bounded retry schedule; permanent configuration failures do not retry indefinitely.
+- The complete approved behavior is defined in [`../architecture/scheduling-and-jobs.md`](../architecture/scheduling-and-jobs.md).
 
 ## Localization
 

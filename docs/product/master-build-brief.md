@@ -26,6 +26,8 @@ Before implementing application code:
 
 Do not add unrequested features.
 
+The technology/application baseline, tenant-isolation mechanism, numbering concurrency, and scheduler behavior have now been approved and are recorded in [`../architecture/`](../architecture/). The remaining architecture package is still required before broad application implementation.
+
 ## 1. Core product
 
 Invumo is a multi-tenant SaaS for:
@@ -131,6 +133,8 @@ Each company has independent:
 
 Use one shared PostgreSQL database unless there is a strong architectural reason not to. Every company-owned object must be scoped correctly, and protection against cross-company data access is critical.
 
+Tenant isolation uses two mandatory layers: Laravel company scoping, membership checks, and Policies; plus PostgreSQL Row-Level Security on tenant-owned business tables. Every tenant-owned row, including child rows, carries `company_id`, with same-company composite foreign keys where appropriate. The production runtime database role cannot own tenant tables or bypass RLS. Tenant context is transaction-local and fail-closed when absent. See the approved [tenant-isolation specification](../architecture/tenant-isolation.md).
+
 ## 4. Company ownership and members
 
 A company can have multiple members with these roles:
@@ -204,6 +208,7 @@ Company defaults include:
 - Default currency
 - Currency display style: ISO code or symbol
 - Company timezone
+- Company automation-local time, defaulting to `09:00`
 - Default document language
 - Payment terms
 - Terms & Conditions
@@ -420,7 +425,13 @@ Requirements:
 - Support configurable formats such as `INV-2026-0001` and `Q-2026-0001`.
 - Avoid overengineering the numbering engine.
 
-Quote and invoice sequences are separate per company. The architecture specification must define numeric-component parsing, optional reset periods, manual-override behavior, and concurrency control so two simultaneous creations cannot receive the same suggestion unintentionally. Manual changes must not silently move the sequence backwards.
+Quote and invoice sequences are separate per company. Numeric-component parsing, reset periods, manual-override behavior, and concurrency control are defined below and in the approved architecture specification. Manual changes must not silently move the sequence backwards.
+
+The approved mechanism is a per-company/per-document-type number series with a counter row per reset period. v1 supports no reset or company-local annual reset, exactly one numeric sequence component, optional year, literals, and padding. The year token does not imply a reset.
+
+Clicking New Quote or New Invoice creates a persisted Draft and allocates its number in the same PostgreSQL transaction. The allocator locks the relevant counter row with `SELECT ... FOR UPDATE`, finds the next unoccupied automatic candidate, inserts the Draft, advances the counter, and commits. A unique idempotent creation key makes a retried request return the same Draft. This is an assigned number, not an unreserved browser preview.
+
+Manual numbering and intentional duplicates remain possible after warning. Renumbering, deletion, and manual entry do not move the automatic counter by default. An explicit authorized continuation/realignment action may change it under the same lock, including moving it backwards after a clear reuse warning and audit event. See [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md).
 
 ## 13. Quote and invoice lines
 
@@ -662,7 +673,11 @@ Each template has an automatic-email setting. Scheduled invoices are created and
 
 If automatic email fails after invoice creation, retry delivery against the same generated invoice; never create a replacement invoice for the same occurrence.
 
-Keep scheduling infrastructure as simple as reasonably possible. Avoid queues and message brokers unless architecture analysis identifies a genuine need. Each occurrence needs a stable idempotency key so retries or overlapping runs create at most one invoice. Record last run, next run, success/failure, and the generated invoice. The architecture specification must define company-local execution time, daylight-saving behavior, retry policy, and treatment of service downtime.
+Use the approved PostgreSQL-backed Laravel queue with one supervised PHP worker and the Laravel scheduler invoked every minute by cron; do not add an external message broker. Each occurrence has a stable idempotency key and a database uniqueness constraint so retries or overlaps create at most one invoice. Record scheduled local/UTC time, actual execution, attempts, outcome, next run, and generated invoice.
+
+Calculate recurrences from company-local calendar rules at the company's automation time, then resolve them through its IANA timezone into UTC. Never advance monthly/quarterly/yearly schedules by adding fixed UTC durations. A nonexistent spring-forward local time shifts forward by the DST gap; an ambiguous fall-back time uses its first occurrence and executes once.
+
+After service downtime, recover every occurrence that became due while the template remained Active, oldest first and in bounded batches, preserving the scheduled local issue date. Intentional pause time is not backfilled without explicit confirmation. Transient failures use the approved bounded retry schedule; permanent configuration failures stop visibly. See [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md).
 
 ## 21. Localization
 
@@ -776,7 +791,11 @@ Reminder processing must:
 - Prevent duplicate sends under retries or overlapping scheduler runs
 - Record sends and failures in invoice/email history
 
-The architecture phase must define the default local send time and retry policy.
+Reminder instances use the company automation-local time, default `09:00`, and retain their local date/time, timezone, resolved UTC time, idempotency key, attempts, and outcome. Recheck invoice lifecycle, balance, due date, recipients, and public-link eligibility immediately before sending.
+
+After downtime, a before-due reminder sends only while the due date has not passed. An after-due reminder may send while the invoice remains overdue and outstanding; if several accumulated, send only the newest eligible instance and mark the older ones superseded. Paid/Cancelled suppression and stale/superseded outcomes remain visible rather than disappearing.
+
+After one initial attempt, transient failures retry up to five times: after 1 minute, 5 minutes, 15 minutes, 1 hour, and 6 hours. If the final retry fails, mark the operation failed, expose it for operational review, and permit an authorized retry using the same idempotency key. Permanent validation/configuration failures fail visibly without indefinite retries. See the approved [scheduling specification](../architecture/scheduling-and-jobs.md).
 
 ## 24. Public quote and invoice pages
 
@@ -912,7 +931,7 @@ Clearly separate account/user settings from company settings.
 
 Account/user settings include profile, account preferences, application language, and plan/entitlements.
 
-Company settings include legal details, structured address, customizable registration labels, timezone, tax presets, bank accounts, logo, primary brand color, currencies, currency display style, precision, numbering, document defaults, language, payment terms, quote validity, email defaults, members, and public-link defaults.
+Company settings include legal details, structured address, customizable registration labels, timezone, automation-local time, tax presets, bank accounts, logo, primary brand color, currencies, currency display style, precision, numbering, document defaults, language, payment terms, quote validity, email defaults, members, and public-link defaults.
 
 A user switching between companies must always understand which company is active.
 
@@ -941,6 +960,8 @@ Address at least:
 
 Never rely solely on client-side authorization. Every server-side business-data operation must verify company membership and permission.
 
+Do not rely solely on application query scoping either. Tenant-owned business tables use forced PostgreSQL Row-Level Security as a second layer. Use a non-owner, non-`BYPASSRLS` runtime role and a separate schema-owner/migration role. Establish `app.current_company_id` transaction-locally only after membership/permission validation; missing context denies tenant-row access. Queue jobs establish and clear the same context. Public-token and global-scheduler bootstrap use narrow, non-enumerating paths rather than a general RLS bypass. See [Tenant Isolation and PostgreSQL Row-Level Security](../architecture/tenant-isolation.md).
+
 ## 32. Database
 
 Use PostgreSQL from day one. Prefer a normalized, understandable relational schema and do not introduce database-per-tenant architecture without a compelling reason.
@@ -957,6 +978,7 @@ Likely concepts include:
 - Company settings
 - Company currency/precision settings
 - Company numbering series
+- Company numbering counters by series/reset period
 - Bank accounts
 - Company tax-rate presets
 - Customers
@@ -968,12 +990,15 @@ Likely concepts include:
 - Recurring invoice templates, including their internal names and optional customer reference / PO numbers, lines, and execution occurrences
 - Company email templates
 - Invoice reminder rules and scheduled reminder instances
+- Minimal cross-tenant scheduling-dispatch records containing no customer/financial payload
 - Public document links
 - Email delivery events
 - Audit events
 - Uploaded company assets or their storage metadata
 
 These names are conceptual, not mandatory. Analyze the domain and choose the cleanest schema.
+
+Every tenant-owned business table, including child tables, stores a non-null `company_id`. Use same-company composite foreign keys so a child cannot reference a parent belonging to another company. PostgreSQL-specific isolation and concurrency tests must run against the restricted runtime role; SQLite is not an acceptable substitute for these tests.
 
 ## 33. Data integrity
 
@@ -1025,12 +1050,15 @@ Create automated tests for critical calculations and workflows, especially:
 - Refunds
 - Transaction direction, overpayment prevention, and refund limits
 - Next-number suggestion
+- Concurrent automatic Draft creation, annual counter creation, idempotent creation retries, manual duplicates, and explicit counter realignment
 - Quote to multiple invoices
 - Customer reference / PO-number inheritance from quote to invoice and recurring template to generated invoice
 - Customer reference / PO-number search and conditional PDF/public-page rendering
 - Recurring invoice generation
 - Recurring execution in the company timezone, including daylight-saving transitions
+- Recurring downtime catch-up, overlapping workers, retry exhaustion, and pause periods that do not backfill implicitly
 - Tenant isolation
+- PostgreSQL RLS default-deny behavior, cross-company reads/writes, same-company foreign keys, queue context reset, public-token bootstrap, and restricted runtime/migration roles
 - Role authorization
 - Public quote acceptance
 - Quote validity expiry and reactivation after an authorized validity change
@@ -1041,6 +1069,7 @@ Create automated tests for critical calculations and workflows, especially:
 - Email-template placeholder validation and language fallback
 - Quote/Invoice lifecycle behavior for immediate dispatch failure, later delivery failure, and retry
 - Reminder materialization, before/after-due scheduling, due-date changes, and duplicate suppression
+- Stale before-due and superseded after-due reminder behavior after downtime
 - Reminder cancellation when an invoice becomes Paid or Cancelled
 - Invoice cancellation at zero net paid, rejection at positive net paid, blocking of new transactions, and deletion prevention while linked transactions remain
 - Optional payment-received email behavior for current versus historical payments
@@ -1068,6 +1097,10 @@ Register
 
 ## 35. Development philosophy
 
+The approved baseline is one Laravel 13 modular monolith on PHP 8.5, with React 19/strict TypeScript through Inertia 3, PostgreSQL 18, Vite, Tailwind CSS 4, and source-owned shadcn/ui components. The application uses one repository, one deployment, one database, a PostgreSQL-backed Laravel queue, one supervised PHP worker, and one cron-triggered scheduler. Node builds browser assets but does not run a production web server. See [Invumo Application Architecture Baseline](../architecture/application-architecture.md).
+
+Develop locally and deploy through a repeatable checked process to the owner's infrastructure. Initially only one hosted production environment is required; this does not authorize editing source directly on the production server. Docker, a separate frontend deployment, a web API for the Inertia application, Inertia SSR, Redis, and microservices are excluded unless later evidence justifies them.
+
 Prefer:
 
 - One application
@@ -1086,7 +1119,7 @@ Avoid by default:
 - RabbitMQ
 - Kafka
 - Elasticsearch
-- Separate worker infrastructure
+- Separate worker services or clusters beyond the approved single PHP worker
 - Kubernetes
 - Unnecessary SaaS dependencies
 - Premature abstractions
@@ -1109,30 +1142,33 @@ First produce:
 8. Security, observability, backup/restore, deployment, and operational-recovery plan
 9. Implementation phases, acceptance gates, and verification strategy
 
+The approved application baseline and the tenant-isolation, numbering-concurrency, and scheduling specifications already satisfy those portions of this package. Complete the remaining items around them; do not recreate contradictory alternatives silently.
+
 Then build in logical stages. A sensible initial order is:
 
 ### Phase 1 — Core platform and cross-cutting foundations
 
-- Project structure
-- PostgreSQL schema, migrations, and test-data strategy
+- Laravel/Inertia/React modular-monolith project structure and automated quality checks
+- PostgreSQL schema, separate migration/runtime roles, forced RLS foundation, migrations, and test-data strategy
 - Registration, email verification, sign-in/out, password reset, and secure sessions
 - Foundational system-email delivery for verification, recovery, and company invitations
 - Users, accounts, companies, memberships, invitations, company switching, and ownership-transfer safeguards
-- Server-side tenant isolation and authorization primitives
+- Server-side tenant isolation and authorization primitives, including transaction-local tenant context, same-company foreign keys, and restricted-role RLS tests
 - English/Romanian localization framework used by every later feature
 - Audit-event infrastructure used by every later business operation
 - Shared validation, error handling, logging, health checks, and configuration/secrets boundaries
+- PostgreSQL-backed queue, one supervised PHP worker, cron-triggered scheduler, and job idempotency/observability primitives
 - File-upload foundation for validated company logos
 
-Acceptance gate: authentication recovery paths work; tenant-isolation and role checks are enforced server-side; migrations are repeatable; audit and localization primitives are usable by the next phase.
+Acceptance gate: authentication recovery paths work; Laravel authorization and PostgreSQL RLS both deny cross-company access using the restricted runtime role; migrations are repeatable; queue/scheduler context cannot leak between companies; audit and localization primitives are usable by the next phase.
 
 ### Phase 2 — Company configuration
 
-- Structured company identity and timezone
+- Structured company identity, IANA timezone, and automation-local time
 - Currency settings and display/precision configuration
 - Tax presets
 - Payment terms, quote validity, Terms & Conditions, and quote/invoice note defaults
-- Numbering-series settings
+- Numbering-series settings and reset-period counter records
 - Bank accounts and default selection
 - Logo and primary brand color
 - Email and public-link defaults required by later phases
@@ -1164,13 +1200,13 @@ Acceptance gate: active entries can initialize detached editable line data, incl
 - Shared document editor and exact-decimal line/document calculation engine
 - Manual lines, product/service selection, and inline customer/product creation
 - Customer, product/service, tax, bank, Terms & Conditions, notes, and settings snapshots
-- Shared numbering/concurrency mechanism, first applied to quotes
+- Locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes
 - Quote CRUD, validation, lifecycle, derived expiry, and list controls
 - Optional customer reference / PO number, including list search and customer-facing rendering when present
 - Shared outward-facing renderer and first PDF implementation
 - Quote audit coverage and browser-level workflow tests
 
-Acceptance gate: quotes calculate deterministically, preserve every required snapshot, render consistently, and remain isolated under concurrent company activity.
+Acceptance gate: quotes calculate deterministically, preserve every required snapshot, render consistently, remain isolated under concurrent company activity, and receive distinct automatic numbers under overlapping creation requests.
 
 ### Phase 6 — Invoices and quote conversion
 
@@ -1197,6 +1233,7 @@ Acceptance gate: transaction history reconciles to invoice balance and status un
 ### Phase 8 — Public documents
 
 - Secure links
+- Transaction-local token-hash bootstrap into the correct RLS tenant context
 - Expiry
 - Revocation and regeneration
 - Quote acceptance/rejection
@@ -1215,7 +1252,7 @@ Acceptance gate: public access cannot cross tenants, revoked tokens stay revoked
 - Authenticated, idempotent delivery/open webhooks and email history
 - Automated before/after-due reminders
 - Optional payment-received messages
-- Scheduler execution records, retries, failure visibility, and duplicate suppression
+- Company-local materialization, transactional dispatch claiming, approved retry schedule, stale/superseded downtime behavior, failure visibility, and duplicate suppression
 
 Acceptance gate: direct and automated sends are recoverable and observable, reminder links are valid without overriding explicit revocation, and duplicate jobs/webhooks cannot duplicate customer-visible effects.
 
@@ -1223,7 +1260,7 @@ Acceptance gate: direct and automated sends are recoverable and observable, remi
 
 - Template CRUD with a required internal-only searchable name, optional customer reference / PO number, line snapshots, and Draft/Active/Paused/Completed states
 - Reuse of shared customer/product selection, inline creation, editor, calculations, and snapshot behavior
-- Scheduling in the company timezone with daylight-saving and downtime behavior
+- Local-calendar scheduling with explicit DST resolution, bounded downtime catch-up, and no implicit pause backfill
 - Idempotent one-invoice-per-occurrence generation
 - Automatic issue, optional automatic email, and visible last/next run outcomes
 - Invoice-default, customer-reference, delivery, and reminder inheritance

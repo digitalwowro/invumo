@@ -1,0 +1,167 @@
+# Scheduling, Recurrence, Reminders, and Downtime
+
+Status: Approved architecture decision  
+Last updated: 2026-08-22
+
+This specification defines how company-local recurring invoices and reminders map to UTC execution, survive daylight-saving transitions and service downtime, and remain idempotent under retries or overlapping workers.
+
+## Runtime shape
+
+- Laravel's scheduler is invoked once per minute by cron.
+- Due work is materialized in PostgreSQL and claimed transactionally.
+- Laravel's PostgreSQL-backed database queue carries retryable jobs.
+- One `systemd`-supervised PHP queue worker processes jobs initially.
+- Redis and an external message broker are not required.
+
+The scheduler dispatches work; it does not perform slow PDF or provider operations inside the scheduler lock.
+
+## Canonical time model
+
+Each company stores:
+
+- An IANA timezone
+- One automation-local-time setting, default `09:00`
+
+v1 uses this company time for recurring generation and reminder delivery. Per-template execution-time overrides are deferred.
+
+The canonical schedule is a company-local calendar rule, not a chain of UTC durations. For every occurrence:
+
+1. Calculate the next local calendar date from the recurrence or reminder rule.
+2. Combine it with the company's automation-local time.
+3. Resolve that local value through the company's current IANA timezone.
+4. Store the resolved UTC timestamp as the queryable `next_run_at` or `scheduled_for_at` value.
+
+Never calculate monthly, quarterly, or yearly recurrence by adding a fixed number of seconds to the prior UTC timestamp.
+
+Occurrence/reminder records retain the local date, local time, timezone identifier, resolved UTC timestamp, idempotency key, status, attempts, outcome, and related generated invoice/email where applicable. Past records do not change when timezone rules or company settings change.
+
+## Recurrence calendar rules
+
+- The start date is the first eligible occurrence date.
+- Weekly recurrence uses the start date's weekday.
+- Monthly recurrence uses the start date's day of month.
+- Quarterly recurrence advances three calendar months from the anchored start date.
+- Yearly recurrence uses the anchored start month and day.
+- Custom recurrence is a positive integer interval in days, weeks, months, or years.
+- When an anchored day does not exist in a target month, use that month's last calendar day without changing the anchor. For example, a January 31 monthly schedule runs on February 28/29 and then March 31.
+- A February 29 yearly schedule runs on February's last day in non-leap years and returns to February 29 in leap years.
+- The optional end date is inclusive in the company-local calendar.
+- Maximum occurrence count counts successfully created occurrence/invoice records; retries of the same occurrence do not increase it.
+
+Do not derive a later monthly/yearly date from a previously clamped date; always calculate from the original anchor plus the logical occurrence ordinal.
+
+## Daylight-saving behavior
+
+- If the selected local time does not exist during a forward transition, shift it forward by the size of the DST gap.
+- If the selected local time occurs twice during a backward transition, select the first occurrence.
+- A stable occurrence key and database uniqueness constraint ensure that an ambiguous local time executes once.
+- Calculate the following occurrence again from its local calendar rule so a one-time DST adjustment does not create permanent drift.
+
+Changing a company's timezone or automation time requires confirmation, is audited, and recalculates future pending executions only. Completed, sent, skipped, superseded, or failed historical records retain their original scheduling context.
+
+## Claiming due work
+
+A minimal scheduling-dispatch record contains company ID, opaque target ID, job type, due UTC timestamp, idempotency key, and processing status; it contains no customer or financial payload.
+
+The scheduler claims due dispatch records in small batches using a transaction and `FOR UPDATE SKIP LOCKED`, inserts the corresponding database-queue jobs, marks the dispatches queued, and commits those changes together before workers perform slow work. Each queued job carries its `company_id` and enters the tenant RLS context before reading business data.
+
+Business effects use database uniqueness constraints in addition to queue uniqueness:
+
+- Recurring occurrences are unique by `(template_id, occurrence_key)`.
+- Reminder instances are unique by their invoice/rule occurrence identity.
+- Email attempts use a stable delivery idempotency key.
+
+Create the occurrence and its generated invoice in one transaction. Dispatch PDF/email jobs only after commit. A retry finds and continues the existing occurrence/invoice instead of creating a replacement.
+
+## Recurring invoice calculation
+
+The recurrence rule stores a start date, interval, optional end date, optional maximum count, and occurrence cursor. Each occurrence key is stable and derived from the template plus its logical occurrence identity, not from the queue job ID.
+
+For an eligible occurrence:
+
+1. Lock or atomically create its occurrence record.
+2. Recheck that the template is Active and the occurrence remains within its end/count limits.
+3. Create exactly one invoice using the normal invoice-number allocator.
+4. Use the scheduled company-local occurrence date as the invoice issue date.
+5. Derive the due date from that issue date and the snapshotted payment terms.
+6. Issue the invoice and materialize its reminder schedule.
+7. Record the generated invoice on the occurrence.
+8. Queue PDF generation and, if enabled, email only after commit.
+9. Calculate the next local occurrence from the recurrence rule.
+
+An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
+
+## Recurring downtime and pause behavior
+
+Service downtime and an intentional template pause are different:
+
+- After service downtime, process every occurrence that became due while the template remained Active.
+- Process missed occurrences oldest first.
+- Process at most ten occurrences for one template in one scheduler pass, then continue in later passes until caught up.
+- Preserve each scheduled local issue date and due-date calculation.
+- Apply the template's automatic-email setting to each recovered occurrence.
+- Stable occurrence keys and uniqueness constraints prevent duplicates across recovery runs.
+- Record that execution occurred late and expose scheduled time, actual time, and outcome.
+
+Pausing prevents future occurrences from becoming eligible. Resuming starts with the next eligible occurrence after resume and does not backfill the paused interval unless the user explicitly requests and confirms a backfill.
+
+## Reminder execution and downtime
+
+Invoice issue materializes reminder instances using the invoice's stored due date, applicable snapshotted rules, company timezone, and automation-local time.
+
+Immediately before sending, recheck lifecycle, outstanding balance, due date, recipient, public-link state, and whether a later attempt already succeeded.
+
+- Paid or Cancelled invoices suppress unsent reminders.
+- Partially Paid invoices remain eligible while their outstanding balance is positive.
+- A delayed before-due reminder may send only while the company-local due date has not passed; afterward it is marked `Skipped: stale`.
+- A delayed after-due reminder may send while the invoice remains overdue and outstanding.
+- If multiple after-due reminders accumulated during downtime, send only the newest eligible instance and mark the older due instances `Superseded` so recovery cannot flood the customer.
+- Changing the due date recalculates only pending reminder instances; sent/suppressed historical records remain unchanged.
+- Every send records the scheduled time, actual attempt time, resolved recipients, outcome, and delivery record.
+
+## Retry policy
+
+Make one initial attempt. Retry transient database, network, and provider failures up to five times after:
+
+1. 1 minute
+2. 5 minutes
+3. 15 minutes
+4. 1 hour
+5. 6 hours
+
+If the final retry fails, mark the execution failed, expose it in the operational UI, log/alert it, and allow an authorized manual retry using the same idempotency key.
+
+Permanent validation/configuration failures do not retry indefinitely. Examples include no valid primary recipient, an inactive or invalid template, an invalid placeholder/template, a revoked public link that automation is forbidden to recreate, or business data that no longer satisfies the operation. Record a visible reason and require corrective action.
+
+## Observability
+
+Record at least:
+
+- Logical occurrence/reminder identity
+- Company and target identifiers
+- Scheduled local and UTC timestamps
+- Actual start/completion timestamps
+- Attempt count and retry schedule
+- Success, skipped, superseded, or failed outcome
+- Generated invoice, PDF, email, and provider delivery identifiers where applicable
+- Structured failure category and safe error summary
+
+Operators must be able to distinguish no due work, intentional suppression, transient retry, permanent failure, and scheduler/worker downtime.
+
+## Required tests
+
+- Weekly, monthly, quarterly, yearly, and custom interval calendar calculations
+- Leap years and end-of-month rules defined by the recurrence specification
+- Spring-forward nonexistent local times
+- Fall-back repeated local times executing once
+- Timezone and automation-time changes affecting future work only
+- Overlapping scheduler processes claiming each dispatch once
+- Queue retry after invoice creation reusing the same invoice
+- Database rollback before occurrence completion
+- Recovery of multiple missed recurring occurrences in order and in bounded batches
+- Pause/resume without implicit backfill
+- Reminder suppression on Paid or Cancelled invoices
+- Before-due reminders becoming stale during downtime
+- Multiple missed after-due reminders collapsing to the newest eligible send
+- Manual retry retaining the same idempotency key
+- Tenant context being set and cleared for every worker job

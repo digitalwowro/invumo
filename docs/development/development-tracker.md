@@ -91,6 +91,7 @@ The three remaining schema-shaping deliverables are reviewed, mutually consisten
 - [Tenant Isolation and PostgreSQL Row-Level Security](../architecture/tenant-isolation.md)
 - [Document Numbering and Concurrency](../architecture/numbering-and-concurrency.md)
 - [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md)
+- [Draft Quote, Invoice, and Financial State Specification](../architecture/document-and-financial-state.md) — owner review and approval remain open
 
 ## Just-in-time design gates
 
@@ -364,6 +365,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-22 | 0 | Produced the draft exact Quote, Invoice, and financial state specification; seven owner decisions remain open, so its Phase 0 task is not marked complete | [Draft state specification](../architecture/document-and-financial-state.md) |
 | 2026-08-22 | 0 | Added the approved recurring inherited-currency safety latch: generation/issue continues, automatic email stays suppressed until a reviewed Invoice is manually sent, and explicit template currency overrides remain unaffected | Product, domain, scheduling, and risk documentation |
 | 2026-08-22 | 0 | Approved the requirements contradiction assessment after resolving full latest-Customer recurring inheritance and Draft-only unused Quote/Invoice unlinking; three Phase 0 schema-shaping specifications remain | [Approved assessment](../architecture/requirements-risk-assessment.md) |
 | 2026-08-22 | 0 | Recorded all nine owner-selected top-level risk resolutions; kept the recurring-Customer refresh boundary and Quote-derived Draft unlink rule explicitly open rather than inferring omitted details | [Draft assessment](../architecture/requirements-risk-assessment.md) |

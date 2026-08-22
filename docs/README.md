@@ -27,5 +27,6 @@ These are reviewed constraints. Later architecture documents may refine names an
 ## Phase 0 working documents
 
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream specification obligations
+- [`architecture/document-and-financial-state.md`](architecture/document-and-financial-state.md) — draft exact Quote, Invoice, transaction, payment, overdue, cancellation, reopening, and deletion state contract; owner review remains open
 
 Current work, unresolved architecture gates, and later implementation status are recorded only in the development tracker. Do not treat a planned document as an approved decision until it has been written and reviewed.

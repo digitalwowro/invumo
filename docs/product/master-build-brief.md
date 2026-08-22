@@ -475,16 +475,18 @@ If period is N/A, its multiplier is 1.
 Calculation:
 
 ```text
-items subtotal = item price × quantity
+let p = the document's stored currency precision
+
+items subtotal = round(item price × quantity, p, HALF_UP)
 
 if period exists:
-    items total = items subtotal × period quantity
+    items total = round(items subtotal × period quantity, p, HALF_UP)
 else:
     items total = items subtotal
 
-discount value = items total × discount percentage
+discount value = round(items total × discount percentage ÷ 100, p, HALF_UP)
 grand subtotal = items total − discount value
-tax value = grand subtotal × line tax rate
+tax value = round(grand subtotal × line tax rate ÷ 100, p, HALF_UP)
 final line total = grand subtotal + tax value
 ```
 
@@ -502,7 +504,7 @@ Tax at 20%:       €2,160
 Final line total: €12,960
 ```
 
-Avoid floating-point errors. Use appropriate fixed-precision decimal handling and define rounding behavior explicitly before implementation.
+Laravel is authoritative and uses `brick/math` with `BigDecimal::toScale($scale, RoundingMode::HALF_UP)` at every specified rounding step. Rounding each specified step instead of only the final total is intentional so printed PDF amounts reconcile when customers check the calculation by hand. React uses equivalent exact-decimal preview behavior; financial values cross the browser boundary as decimal strings, never binary floating-point numbers.
 
 Document totals aggregate line snapshots only:
 
@@ -511,6 +513,8 @@ document_subtotal = sum(line.grand_subtotal)
 document_tax_total = sum(line.tax_value)
 document_total = sum(line.final_line_total)
 ```
+
+Do not reround document totals or allocate residual cents in v1. The approved storage types, precision snapshots, validations, and cross-runtime verification rules are defined in [Calculation, Decimal Precision, and Rounding](../architecture/calculation-and-rounding.md).
 
 v1 has no overall document discount, invoice-wide tax, or document-level fee. These may be considered later only with an explicit ordering and rounding specification.
 
@@ -565,11 +569,12 @@ Invumo is worldwide, but v1 offers flexible defaults rather than claiming legal 
 - Initial document-currency precedence is document choice, customer default, then company default.
 - Users may override currency per quote or invoice.
 - There is no foreign-exchange conversion or exchange-rate service in v1.
-- Decimal precision is user-configurable per currency.
+- Decimal precision is user-configurable per currency from 0 through 8.
+- Every quote, invoice, and recurring template snapshots its resolved precision. Quote-to-invoice conversion and recurring generation preserve that snapshot; later company-setting changes do not alter existing documents or templates.
 - Each company chooses whether monetary amounts primarily display an ISO currency code, such as `USD`, or a currency symbol, such as `$`.
 - Currency display preference never changes the stored currency code or monetary value.
 - Do not enforce ISO precision as mandatory behavior.
-- Store monetary values safely and accurately.
+- Store unit prices and monetary values in PostgreSQL `numeric(30,8)`, quantities in `numeric(20,6)`, and percentage-point rates in `numeric(12,6)`, with stored calculated amounts quantized to the document precision.
 
 Examples:
 
@@ -577,6 +582,8 @@ Examples:
 - USD → 2 decimals
 - JPY → 0 decimals
 - Any supported currency → user-selected precision
+
+The complete authoritative rules are defined in [Calculation, Decimal Precision, and Rounding](../architecture/calculation-and-rounding.md).
 
 ## 18. Payment terms and Terms & Conditions
 
@@ -966,6 +973,8 @@ Do not rely solely on application query scoping either. Tenant-owned business ta
 
 Use PostgreSQL from day one. Prefer a normalized, understandable relational schema and do not introduce database-per-tenant architecture without a compelling reason.
 
+Every domain entity uses a PostgreSQL-native `uuid` primary key generated as UUIDv7 by Laravel before insertion. All domain foreign keys, including `company_id`, use native `uuid` columns. Framework infrastructure tables may retain framework-native identifiers, and a pure identity-free join may use a composite key. UUIDs are never authorization credentials, public-link tokens, or substitutes for human-facing document numbers. See [Domain Identifier Policy](../architecture/identifier-policy.md).
+
 Likely concepts include:
 
 - Users
@@ -998,7 +1007,7 @@ Likely concepts include:
 
 These names are conceptual, not mandatory. Analyze the domain and choose the cleanest schema.
 
-Every tenant-owned business table, including child tables, stores a non-null `company_id`. Use same-company composite foreign keys so a child cannot reference a parent belonging to another company. PostgreSQL-specific isolation and concurrency tests must run against the restricted runtime role; SQLite is not an acceptable substitute for these tests.
+Every tenant-owned business table, including child tables, stores a non-null UUID `company_id`. Use same-company composite UUID foreign keys so a child cannot reference a parent belonging to another company. PostgreSQL-specific isolation and concurrency tests must run against the restricted runtime role; SQLite is not an acceptable substitute for these tests.
 
 ## 33. Data integrity
 
@@ -1134,22 +1143,23 @@ First produce:
 
 1. Requirements assessment, contradiction resolution, and risk register
 2. Architecture and technology-stack recommendation with trade-offs
-3. Relational data model, migration strategy, and snapshot boundaries
-4. Tenant model and complete role/action permission matrix
-5. Main routes, navigation, operational lists, and editor composition
-6. Exact calculation, rounding, document-state, payment-state, numbering, and concurrency specification
-7. Background-job, recurring, reminder, email, webhook, PDF, upload, and public-token design
-8. Security, observability, backup/restore, deployment, and operational-recovery plan
-9. Implementation phases, acceptance gates, and verification strategy
+3. Exact calculation/rounding and identifier policies that constrain the relational schema
+4. Relational data model, migration strategy, and snapshot boundaries
+5. Tenant model and complete role/action permission matrix
+6. Main routes, navigation, operational lists, and editor composition
+7. Document-state and payment-state specification
+8. Background-job, recurring, reminder, email, webhook, PDF, upload, and public-token design
+9. Security, observability, backup/restore, deployment, and operational-recovery plan
+10. Implementation phases, acceptance gates, and verification strategy
 
-The approved application baseline and the tenant-isolation, numbering-concurrency, and scheduling specifications already satisfy those portions of this package. Complete the remaining items around them; do not recreate contradictory alternatives silently.
+The approved application, calculation/rounding, identifier, tenant-isolation, numbering-concurrency, and scheduling specifications already satisfy those portions of this package. Complete the remaining items around them; do not recreate contradictory alternatives silently. In particular, do not begin or finalize the relational schema without applying the approved decimal types, currency-precision snapshots, and UUIDv7 rules.
 
 Then build in logical stages. A sensible initial order is:
 
 ### Phase 1 — Core platform and cross-cutting foundations
 
 - Laravel/Inertia/React modular-monolith project structure and automated quality checks
-- PostgreSQL schema, separate migration/runtime roles, forced RLS foundation, migrations, and test-data strategy
+- PostgreSQL schema using UUIDv7 domain identifiers and approved exact-decimal types, separate migration/runtime roles, forced RLS foundation, migrations, and test-data strategy
 - Registration, email verification, sign-in/out, password reset, and secure sessions
 - Foundational system-email delivery for verification, recovery, and company invitations
 - Users, accounts, companies, memberships, invitations, company switching, and ownership-transfer safeguards
@@ -1157,6 +1167,7 @@ Then build in logical stages. A sensible initial order is:
 - English/Romanian localization framework used by every later feature
 - Audit-event infrastructure used by every later business operation
 - Shared validation, error handling, logging, health checks, and configuration/secrets boundaries
+- Shared server-authoritative `brick/math` calculation primitives and cross-runtime golden vectors required by later document workflows
 - PostgreSQL-backed queue, one supervised PHP worker, cron-triggered scheduler, and job idempotency/observability primitives
 - File-upload foundation for validated company logos
 

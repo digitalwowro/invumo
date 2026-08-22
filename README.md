@@ -16,6 +16,6 @@ Durable cross-session context for agents is stored separately in [`digitalwowro/
 
 ## Current phase
 
-The next deliverable is an architecture package covering requirements risks; stack recommendation; relational data and snapshot boundaries; tenant and permission model; routes, lists, and editor composition; exact calculation, state, numbering, and concurrency rules; jobs and external integrations; security and operations; and phase acceptance/verification strategy.
+The project has approved its Laravel/Inertia/React/PostgreSQL application baseline together with tenant isolation, UUIDv7 identifiers, decimal precision and rounding, document numbering, and scheduling rules. The next deliverables complete the requirements risks, relational data and snapshot boundaries, permission model, routes and editor composition, document/payment states, integrations, operations, and verification strategy around those constraints.
 
-PostgreSQL is required from day one. No other application stack has been approved yet.
+The relational schema must preserve the approved calculation and identifier policies rather than rediscovering them during migration design.

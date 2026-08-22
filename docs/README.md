@@ -10,6 +10,8 @@ The master brief is the canonical statement of scope. The domain-rules document 
 ## Approved architecture baseline
 
 - [`architecture/application-architecture.md`](architecture/application-architecture.md) — approved stack, modular-monolith boundary, runtime, deployment shape, and future mobile path
+- [`architecture/calculation-and-rounding.md`](architecture/calculation-and-rounding.md) — exact decimal storage, currency-precision snapshots, step rounding, authoritative libraries, and reconciliation tests
+- [`architecture/identifier-policy.md`](architecture/identifier-policy.md) — native UUIDv7 domain identifiers, UUID foreign keys, exceptions, and security boundaries
 - [`architecture/tenant-isolation.md`](architecture/tenant-isolation.md) — application authorization plus PostgreSQL RLS, database roles, tenant context, public-link bootstrap, and isolation tests
 - [`architecture/numbering-and-concurrency.md`](architecture/numbering-and-concurrency.md) — counter-row locking, manual overrides, resets, idempotent Draft creation, and concurrency tests
 - [`architecture/scheduling-and-jobs.md`](architecture/scheduling-and-jobs.md) — company-local scheduling, DST, queue/worker behavior, retries, downtime recovery, and duplicate suppression
@@ -21,10 +23,10 @@ These are reviewed constraints. Later architecture documents may refine names an
 The following documents still need to be produced or completed before broad application implementation:
 
 - Requirements assessment and risk register
-- Relational data model
+- Relational data model and migration/snapshot boundaries, constrained by the approved decimal and identifier policies
 - Complete role/action permission matrix
 - Route and navigation map
-- Calculation, rounding, document-state, and payment-state specification
+- Document-state and payment-state specification
 - Remaining email, webhook, PDF, upload, and public-token integration design
 - Security, operations, migration, backup, and recovery plan
 - Implementation and verification plan with phase acceptance gates

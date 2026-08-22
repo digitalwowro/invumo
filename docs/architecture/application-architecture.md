@@ -3,7 +3,7 @@
 Status: Approved architecture decision  
 Last updated: 2026-08-22
 
-This document records the approved technology and application-architecture baseline. It does not replace the remaining architecture package: the complete relational model, permission matrix, route map, calculation/rounding specification, integration design, and operations/recovery plan still require review before broad implementation.
+This document records the approved technology and application-architecture baseline. It does not replace the remaining architecture package: the complete relational model, permission matrix, route map, document/payment-state specification, integration design, and operations/recovery plan still require review before broad implementation.
 
 ## Decision
 
@@ -81,9 +81,13 @@ Use React/Inertia for the authenticated application and customer-facing public p
 
 PostgreSQL is authoritative. Use exact decimal arithmetic and never binary floating point for money. Important multi-record operations use explicit database transactions, constraints, and idempotency keys.
 
+All domain entities use native PostgreSQL UUIDv7 primary keys, and all domain foreign keys, including `company_id`, use the native `uuid` type. Framework infrastructure tables and identity-free pure joins retain the narrow exceptions defined in the identifier policy.
+
 The following approved specifications are part of this baseline:
 
 - [Tenant isolation and Row-Level Security](tenant-isolation.md)
+- [Calculation, decimal precision, and rounding](calculation-and-rounding.md)
+- [Domain identifier policy](identifier-policy.md)
 - [Document numbering and concurrency](numbering-and-concurrency.md)
 - [Scheduling, recurrence, reminders, and downtime](scheduling-and-jobs.md)
 
@@ -169,4 +173,3 @@ If a mobile application is approved later, add versioned Laravel JSON endpoints 
 - [Laravel queues](https://laravel.com/docs/13.x/queues)
 - [Laravel scheduler](https://laravel.com/docs/13.x/scheduling)
 - [PostgreSQL support policy](https://www.postgresql.org/support/versioning/)
-

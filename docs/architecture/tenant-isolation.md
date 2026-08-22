@@ -37,7 +37,7 @@ RLS applies to every company-owned business table, including the eventual equiva
 - Audit events
 - Uploaded/generated asset metadata
 
-Every tenant-owned row carries a non-null `company_id`, including child tables. Parent tables expose a unique key suitable for `(company_id, id)` references, and composite foreign keys enforce that a child cannot reference a parent in another company.
+Every tenant-owned row carries a non-null native UUID `company_id`, including child tables. Parent tables expose a unique key suitable for `(company_id, id)` UUID references, and composite foreign keys enforce that a child cannot reference a parent in another company. These types follow the approved [Domain Identifier Policy](identifier-policy.md).
 
 ## Database roles
 
@@ -70,6 +70,8 @@ WITH CHECK (
 ```
 
 This restricts reads, updates, and deletes and prevents inserts or updates from writing another company's `company_id`.
+
+The `::uuid` cast is intentional: company IDs and all domain foreign keys are PostgreSQL-native UUIDs, not text values inferred merely from this policy example.
 
 ## Request and job context
 
@@ -152,4 +154,3 @@ Run these tests in continuous integration against PostgreSQL. SQLite is not an a
 ## Reference
 
 - [PostgreSQL Row-Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
-

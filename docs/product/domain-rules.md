@@ -43,9 +43,24 @@ This document is a concise implementation-facing companion to the [master build 
 ## Customer selection and creation
 
 - A quote or invoice editor must support selecting an existing customer.
-- The user may create a customer from the editor in a modal without losing the in-progress document.
+- The user may create a customer from the editor in a vertically scrollable modal containing the complete customer form without losing the in-progress document.
 - After a successful modal save, close the modal and select the new customer automatically.
 - Validation failure must retain both the customer form values and the in-progress document.
+
+## Customer identity and defaults
+
+- Customer type is `INDIVIDUAL` or `COMPANY`.
+- Individual customers use first and last name.
+- Company customers use a company/legal name and may have multiple contacts.
+- Contacts may be designated as primary contact and billing contact/default recipient.
+- Each customer has one structured billing/legal address: address line 1, optional address line 2, city, state/province/region, postal code, and country.
+- Customer identity supports phone, primary/billing email, optional external reference/code, tax registration label and identifier, and business registration label and number.
+- Customer defaults include currency, document language, payment terms, tax settings, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
+- PDF email-delivery mode is secure link only or attach PDF.
+- Internal customer notes are never rendered automatically on documents, public pages, or email.
+- v1 excludes separate shipping/service addresses, customer tags, customer-specific manual date formats, and an ambiguous free-form legal-info field.
+- A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.
+- Editing or deleting the customer must not silently rewrite an existing document snapshot.
 
 ## Quote workflow
 
@@ -282,6 +297,9 @@ Recurring template
 - Prefer the API if architecture analysis confirms it is cleaner and more reliable than SMTP.
 - Provide multilingual default subject and body for quotes and invoices.
 - Allow editing before sending.
+- Resolve recipients and PDF-delivery mode using per-send override, then customer preference, then company default.
+- Support one primary/default recipient and optional multiple CC and BCC recipients.
+- Show resolved recipients and secure-link-only/attach-PDF choice in the send composer before sending.
 - Track Sent, Delivered, and Opened where ZeptoMail supports them.
 - Authenticate webhooks and process provider events idempotently.
 - Customer SMTP is excluded from v1.

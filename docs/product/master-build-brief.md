@@ -69,6 +69,8 @@ Do not implement in v1:
 - A fixed-on-every-page PDF footer option
 - Company theming of the internal Invumo dashboard/application
 - Invumo-branding removal controls
+- Customer tags
+- Customer-specific manual date formats
 
 ## 2. Account model
 
@@ -211,9 +213,32 @@ Bank accounts are part of company settings.
 
 Support both company and individual customers.
 
-Keep customer v1 information simple and include normal identity and contact information. A customer may have multiple contacts.
+Customer type is explicit:
 
-From the quote or invoice editor, the user must be able to create a new customer without abandoning the document. Open customer creation in a modal, preserve the in-progress document, and automatically select the newly created customer after a successful save.
+- Individual: first name and last name
+- Company: company/legal name with one or more contacts
+
+A customer may have multiple contacts. Support primary-contact and billing-contact/default-recipient designation.
+
+Each customer has one structured billing/legal address:
+
+- Address line 1
+- Address line 2, optional
+- City
+- State/province/region
+- Postal code
+- Country
+
+Customer identity also supports:
+
+- Phone number
+- Primary email/billing email
+- Optional external customer reference/code
+- Tax registration label and identifier
+- Business registration label and number
+- Internal customer notes
+
+From the quote or invoice editor, the user must be able to create a new customer without abandoning the document. Open the complete customer form in a vertically scrollable modal, preserve the in-progress document, and automatically select the newly created customer after a successful save.
 
 Customer-level defaults:
 
@@ -222,8 +247,19 @@ Customer-level defaults:
 - Payment terms
 - Tax settings
 - Billing email
+- Default CC recipients
+- Default BCC recipients
+- PDF email-delivery preference: secure link only or attach PDF
 
 Do not build separate billing, service, or delivery addresses in v1.
+
+Do not add an ambiguous free-form `legal info` field. Use structured registration fields and internal notes.
+
+Do not add customer tags or a customer-specific date-format preference in v1. Document date formatting follows document language/locale.
+
+Internal customer notes must never appear automatically on quotes, invoices, PDFs, public pages, or emails.
+
+Quotes and invoices must snapshot customer identity, address, and registration information used on the document. Later customer edits must not silently rewrite existing documents.
 
 Customer records with historical documents should normally be archived. If dependent historical data has been removed, permanent deletion should be possible so users can ultimately delete their data.
 
@@ -541,6 +577,21 @@ Quote and invoice emails include:
 - Editable subject before sending
 - Editable body before sending
 
+Delivery defaults follow this precedence:
+
+1. Per-send override
+2. Customer preference
+3. Company default
+
+Delivery preferences include:
+
+- Primary/default recipient
+- Optional multiple CC recipients
+- Optional multiple BCC recipients
+- Secure-link-only or attach-PDF mode
+
+The send composer must display the resolved recipients and attachment choice before sending and allow the user to override them for that send.
+
 Track Sent, Delivered, and Opened where ZeptoMail supports them. Authenticate webhooks and process provider events idempotently.
 
 The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.
@@ -737,6 +788,7 @@ Pay particular attention to:
 - Duplicate scheduled execution
 - Duplicate email and webhook events
 - Historical snapshots of applied tax and bank details
+- Historical snapshots of customer identity, address, and registration details
 - Company-timezone scheduling across daylight-saving transitions
 
 Use transactions for business-critical operations where appropriate.
@@ -748,6 +800,7 @@ Create automated tests for critical calculations and workflows, especially:
 - Invoice line and period calculations
 - Discounts and taxes
 - Tax-preset snapshot behavior
+- Customer snapshot behavior
 - Document totals and rounding
 - Partial payments
 - Invoice status transitions
@@ -760,6 +813,8 @@ Create automated tests for critical calculations and workflows, especially:
 - Role authorization
 - Public quote acceptance
 - Public-link expiry and revocation
+- Full customer creation in the scrollable document-editor modal without losing in-progress data
+- Customer email-recipient and PDF-attachment default precedence
 
 Implement browser-level tests for the main journey:
 

@@ -60,6 +60,7 @@ Do not implement in v1:
 - Automatic translation of user-entered content
 - Customer SMTP
 - Subscription billing or payment collection for Invumo itself
+- Custom document title/header overrides
 
 ## 2. Account model
 
@@ -170,6 +171,7 @@ Company defaults include:
 - Default currency
 - Default document language
 - Payment terms
+- Terms & Conditions
 - Default tax rate/settings
 - Default quote validity
 - Invoice notes/footer
@@ -192,6 +194,8 @@ Bank accounts are part of company settings.
 Support both company and individual customers.
 
 Keep customer v1 information simple and include normal identity and contact information. A customer may have multiple contacts.
+
+From the quote or invoice editor, the user must be able to create a new customer without abandoning the document. Open customer creation in a modal, preserve the in-progress document, and automatically select the newly created customer after a successful save.
 
 Customer-level defaults:
 
@@ -286,6 +290,7 @@ Line fields:
 - Description
 - Item price
 - Quantity
+- Unit (optional)
 - Items subtotal
 - Period quantity
 - Period unit
@@ -389,11 +394,18 @@ Examples:
 - JPY → 0 decimals
 - Any supported currency → user-selected precision
 
-## 17. Payment terms
+## 17. Payment terms and Terms & Conditions
 
 Payment terms can have a company default, customer default, and document override.
 
 The invoice due date derives automatically from the applicable terms but remains editable.
+
+Terms & Conditions are separate customer-visible document content, not payment-term logic and not general notes.
+
+- A company may define default Terms & Conditions.
+- Each quote or invoice inherits the company default.
+- The user may override the content per quote or invoice.
+- Notes/footer, Terms & Conditions, and structured payment terms must remain distinct concepts.
 
 ## 18. Transactions and payments
 
@@ -477,6 +489,7 @@ v1 includes one excellent document template with:
 - Document metadata
 - Lines and totals
 - Relevant bank information
+- Terms & Conditions
 - Notes/footer
 
 Design the PDF system so more templates can be added later without rewriting the document model. Do not build a PDF template editor in v1.
@@ -858,4 +871,3 @@ A new user can:
 All of this should feel substantially simpler than traditional accounting software.
 
 Invumo is quotation and invoicing software, not an accounting suite.
-

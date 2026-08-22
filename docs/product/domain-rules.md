@@ -24,6 +24,13 @@ This document is a concise implementation-facing companion to the [master build 
 - v1 needs an extensible entitlement model only.
 - Billing, payment collection, and a plan-builder interface are excluded.
 
+## Customer selection and creation
+
+- A quote or invoice editor must support selecting an existing customer.
+- The user may create a customer from the editor in a modal without losing the in-progress document.
+- After a successful modal save, close the modal and select the new customer automatically.
+- Validation failure must retain both the customer form values and the in-progress document.
+
 ## Quote workflow
 
 Statuses:
@@ -89,6 +96,7 @@ Each quote or invoice line contains:
 - Description
 - Item price
 - Quantity
+- Optional unit
 - Items subtotal
 - Period quantity
 - Period unit
@@ -100,6 +108,8 @@ Each quote or invoice line contains:
 - Final line total
 
 Quantity and period quantity may be decimal where valid.
+
+The unit describes what the quantity measures, such as hours, days, seats, pieces, or another user-entered label. It is independent of the recurring period unit used in price calculation.
 
 Billable lines do not support interspersed free-form headings or text. Free-form document text may appear before or after the line table.
 
@@ -174,7 +184,7 @@ These rules must be explicit before implementation; never use binary floating-po
 - There is no FX conversion or exchange-rate service.
 - Never combine amounts in different currencies into one total without a mathematically valid, explicit basis.
 
-## Payment terms
+## Payment terms and Terms & Conditions
 
 Default precedence:
 
@@ -183,6 +193,14 @@ Default precedence:
 3. Company default
 
 The due date is derived from the applicable terms but remains editable.
+
+Terms & Conditions are separate from structured payment terms and from notes/footer:
+
+- A company may define default customer-visible Terms & Conditions.
+- New quotes and invoices inherit that default.
+- The user may override Terms & Conditions per document.
+- Changing the company default affects new documents, not already-created documents.
+- Generated public pages and PDFs display the document's stored Terms & Conditions.
 
 ## Payments and refunds
 
@@ -261,4 +279,3 @@ Audit at least:
 - Important settings and membership changes
 
 An audit record should explain what happened, when, who caused it, what object was affected, and enough before/after information to understand important edits. Do not introduce full event sourcing solely for this requirement.
-

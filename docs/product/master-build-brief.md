@@ -45,7 +45,7 @@ Invumo is a multi-tenant SaaS for:
 Do not implement in v1:
 
 - Inventory or stock management
-- Vendors, purchasing, or purchase orders
+- Vendors, purchasing, or purchase-order entities and workflows; the optional customer reference / PO number on sales documents is metadata only
 - Expenses, bookkeeping, a general ledger, or full accounting
 - CRM
 - Currency conversion or exchange-rate services
@@ -287,6 +287,14 @@ Quotes and invoices must snapshot customer identity, address, and registration i
 
 Customer records with historical documents should normally be archived. If dependent historical data has been removed, permanent deletion should be possible so users can ultimately delete their data.
 
+### Document customer reference / PO number
+
+Quotes, invoices, and recurring-invoice templates may contain an optional customer reference / PO number. This document-level field is distinct from the customer's permanent external reference/code: it identifies the customer's reference for a particular commercial document or recurring arrangement.
+
+Copy the field from a quote to each invoice created from that quote and from a recurring template to each generated invoice. The copied value remains independently editable. Include it in relevant quote, invoice, and recurring-template list searches and display it on customer-facing PDFs and public pages when present.
+
+This field does not create a Purchase Order entity, vendor workflow, approval process, fulfilment state, PO matching, or purchasing module in v1.
+
 ## 9. Products & Services
 
 v1 includes a lightweight company-specific Products & Services library for reusable quote, invoice, and recurring-invoice line defaults. It is a convenience catalog, not inventory or product-management software.
@@ -340,13 +348,14 @@ Quote lifecycle:
 
 Rules:
 
-- A quote contains at least its company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a selected bank-details snapshot.
+- A quote contains at least its company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a customer reference / PO number and selected bank-details snapshot.
 - Draft quotes may be incomplete. Sending requires a customer, number, issue date, valid-until date, currency, language, and at least one valid billable line.
 - Sending a Draft quote changes it to Sent only after the email provider accepts the dispatch. A later delivery failure does not revert the quote; an immediate dispatch failure leaves it Draft and records the failed attempt. Resending does not create a second lifecycle state.
 - Expired is derived when the company-local date is later than `valid_until` and the quote has not been Accepted or Rejected. Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes the status.
 - Quotes remain editable after sending or acceptance. Editing does not silently reset the status; significant changes after sending or a customer decision are audited.
 - No quote revision/versioning system in v1.
 - A quote may generate multiple invoices.
+- Each invoice created from a quote initially copies the quote's customer reference / PO number; editing the invoice value later does not rewrite the quote or sibling invoices.
 - Linked invoices use the quote currency; v1 does not compare or allocate quote value across currencies.
 - After a quote has linked invoices, its currency cannot change unless those links are removed through a valid workflow.
 - Track quoted amount, invoiced amount as the sum of non-Cancelled linked invoice totals (including Draft invoices), and remaining amount as quote total minus invoiced amount.
@@ -375,13 +384,15 @@ Customer-facing invoice state may display Draft, Issued/Unpaid, Partially Paid, 
 
 Invoices may be created from quotations or independently. One quote may generate multiple invoices.
 
-An invoice contains at least its company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a selected bank-details snapshot. Draft invoices may be incomplete, but issue/send requires all required fields and at least one valid billable line. Sending a Draft invoice must issue it before delivery; if dispatch fails, the invoice remains Issued and the failed email attempt is visible for retry.
+An invoice contains at least its company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a customer reference / PO number and selected bank-details snapshot. Draft invoices may be incomplete, but issue/send requires all required fields and at least one valid billable line. Sending a Draft invoice must issue it before delivery; if dispatch fails, the invoice remains Issued and the failed email attempt is visible for retry.
 
 Issued invoices remain editable. Users may edit customer, lines, quantities, prices, discounts, tax, currency, dates, and document metadata. Significant changes must be captured in the audit history.
 
 Financial edits recalculate payment state and outstanding balance. Do not allow an edit to reduce the invoice total below net paid without first recording the necessary refund or corrective adjustment; v1 must not silently create customer credit or an overpayment balance.
 
 Do not allow invoice currency to change while valid payment/refund/adjustment transactions exist, because v1 has no FX conversion or transaction-currency migration.
+
+Cancelling an invoice stops pending reminders and blocks all new payment, refund, and adjustment records while the invoice remains Cancelled. Cancellation preserves the invoice, its existing transaction history, and its audit history. Allow cancellation only when net paid is exactly zero; when net paid is positive, require the necessary refund or corrective adjustment before cancellation. No invoice may be permanently deleted while any linked transaction records remain, regardless of lifecycle state.
 
 This flexibility is intentional. Do not enforce country-specific legal or accounting restrictions in v1.
 
@@ -619,6 +630,8 @@ Recurring invoice template
 
 The template itself is not an invoice. Editing it affects only future invoices; previously generated invoices remain unchanged.
 
+Every recurring template has a required internal name, such as `ACME monthly hosting`. It is used in internal lists, search, selection, and audit history, does not need to be unique, and is never copied to generated invoices or exposed in PDFs, public pages, or customer email.
+
 Recurrence options:
 
 - Weekly
@@ -639,9 +652,11 @@ A recurring template inherits company invoice defaults and may override:
 - Email delivery settings
 - Reminder rules
 
+The template may also store an optional customer reference / PO number for the recurring arrangement.
+
 Generated invoices use the normal company invoice numbering sequence. Do not create a separate recurring-invoice document sequence.
 
-Generated invoices materialize the applicable defaults and reminder schedule so later company-default changes do not silently rewrite already-generated invoices.
+Generated invoices materialize the applicable defaults, customer reference / PO number, and reminder schedule so later template or company-default changes do not silently rewrite already-generated invoices.
 
 Each template has an automatic-email setting. Scheduled invoices are created and issued; when automatic email is enabled they are also delivered using the resolved customer/template settings. When disabled, the issued invoice remains available for manual sending.
 
@@ -677,7 +692,7 @@ v1 includes one excellent document template with:
 - Company logo and details
 - Company primary brand color
 - Customer details
-- Document metadata
+- Document metadata, including the customer reference / PO number when present
 - Lines and totals
 - Relevant bank information
 - Terms & Conditions
@@ -875,7 +890,7 @@ Primary navigation should remain small. A possible starting point is:
 
 Analyze the UX and propose the simplest navigation. Users should create an invoice or quote with very few interactions.
 
-Customer, product/service, quote, invoice, recurring-template, and transaction lists need basic company-scoped search, relevant status filters, stable sorting, pagination, and clear empty states. These are operational list controls, not analytics/reporting.
+Customer, product/service, quote, invoice, recurring-template, and transaction lists need basic company-scoped search, relevant status filters, stable sorting, pagination, and clear empty states. Quote and invoice search includes document number, customer, and customer reference / PO number. Recurring-template search includes its internal name, customer, and customer reference / PO number. These are operational list controls, not analytics/reporting.
 
 ### Company appearance in v1
 
@@ -950,7 +965,7 @@ Likely concepts include:
 - Quotes and quote lines
 - Invoices and invoice lines
 - Transactions/payments
-- Recurring invoice templates, lines, and execution occurrences
+- Recurring invoice templates, including their internal names and optional customer reference / PO numbers, lines, and execution occurrences
 - Company email templates
 - Invoice reminder rules and scheduled reminder instances
 - Public document links
@@ -978,7 +993,10 @@ Pay particular attention to:
 - Historical snapshots of applied tax and bank details
 - Historical snapshots of customer identity, address, and registration details
 - Product/service selection snapshots and currency-mismatch behavior
+- Customer reference / PO-number inheritance and search behavior without a Purchase Order entity
+- Internal recurring-template names remaining non-customer-visible
 - Derived invoice payment/overdue state and company-local date boundaries
+- Invoice cancellation guards and retention of linked transaction history
 - Quote expiry versus public-link expiry
 - Transaction direction, refund limits, and outstanding-balance derivation
 - Company-timezone scheduling across daylight-saving transitions
@@ -1008,6 +1026,8 @@ Create automated tests for critical calculations and workflows, especially:
 - Transaction direction, overpayment prevention, and refund limits
 - Next-number suggestion
 - Quote to multiple invoices
+- Customer reference / PO-number inheritance from quote to invoice and recurring template to generated invoice
+- Customer reference / PO-number search and conditional PDF/public-page rendering
 - Recurring invoice generation
 - Recurring execution in the company timezone, including daylight-saving transitions
 - Tenant isolation
@@ -1022,8 +1042,10 @@ Create automated tests for critical calculations and workflows, especially:
 - Quote/Invoice lifecycle behavior for immediate dispatch failure, later delivery failure, and retry
 - Reminder materialization, before/after-due scheduling, due-date changes, and duplicate suppression
 - Reminder cancellation when an invoice becomes Paid or Cancelled
+- Invoice cancellation at zero net paid, rejection at positive net paid, blocking of new transactions, and deletion prevention while linked transactions remain
 - Optional payment-received email behavior for current versus historical payments
 - Recurring-template inheritance of invoice defaults, email settings, and reminders
+- Required recurring-template internal name, internal searchability, and exclusion from customer-facing output
 - Recurring pause/resume, optional automatic email, missed-run behavior, and one-invoice-per-occurrence idempotency
 - Expired versus explicitly revoked public-link behavior during direct and automated email
 - Audit attribution for user, public-customer, webhook, scheduled-job, and system actors
@@ -1144,6 +1166,7 @@ Acceptance gate: active entries can initialize detached editable line data, incl
 - Customer, product/service, tax, bank, Terms & Conditions, notes, and settings snapshots
 - Shared numbering/concurrency mechanism, first applied to quotes
 - Quote CRUD, validation, lifecycle, derived expiry, and list controls
+- Optional customer reference / PO number, including list search and customer-facing rendering when present
 - Shared outward-facing renderer and first PDF implementation
 - Quote audit coverage and browser-level workflow tests
 
@@ -1154,7 +1177,7 @@ Acceptance gate: quotes calculate deterministically, preserve every required sna
 - Invoice CRUD
 - Reuse of the shared editor, calculations, numbering, renderer, and PDF pipeline
 - Draft/Issued/Cancelled lifecycle, derived payment state, due-date validation, and overdue flag
-- Quote-to-one-or-many-invoices workflow with quoted/invoiced/remaining allocation
+- Quote-to-one-or-many-invoices workflow with quoted/invoiced/remaining allocation and customer-reference inheritance
 - Invoice list controls and audit coverage
 
 Acceptance gate: independent and quote-derived invoices produce the same calculations/snapshots, and invoice state behaves correctly around company-local due dates.
@@ -1165,10 +1188,11 @@ Acceptance gate: independent and quote-derived invoices produce the same calcula
 - Explicit payment/refund/adjustment direction
 - Partial payments, refund limits, overpayment prevention, and outstanding-balance derivation
 - Derived invoice payment state
+- Transaction-aware cancellation guard, post-cancellation transaction blocking, history retention, and deletion constraint
 - Company Transactions screen with operational list controls
 - Payment/refund audit coverage
 
-Acceptance gate: transaction history reconciles to invoice balance and status under create, edit, delete, adjustment, and refund paths.
+Acceptance gate: transaction history reconciles to invoice balance and status under create, edit, delete, adjustment, and refund paths; cancellation cannot retain a positive net-paid balance, accept new transactions, or erase linked history.
 
 ### Phase 8 — Public documents
 
@@ -1197,14 +1221,14 @@ Acceptance gate: direct and automated sends are recoverable and observable, remi
 
 ### Phase 10 — Recurring invoices
 
-- Template CRUD, line snapshots, and Draft/Active/Paused/Completed states
+- Template CRUD with a required internal-only searchable name, optional customer reference / PO number, line snapshots, and Draft/Active/Paused/Completed states
 - Reuse of shared customer/product selection, inline creation, editor, calculations, and snapshot behavior
 - Scheduling in the company timezone with daylight-saving and downtime behavior
 - Idempotent one-invoice-per-occurrence generation
 - Automatic issue, optional automatic email, and visible last/next run outcomes
-- Invoice-default, delivery, and reminder inheritance
+- Invoice-default, customer-reference, delivery, and reminder inheritance
 
-Acceptance gate: retries, overlaps, pause/resume, and missed occurrences cannot create unintended duplicate invoices or emails.
+Acceptance gate: templates are identifiable without customer-visible naming, generated invoices preserve the intended customer reference, and retries, overlaps, pause/resume, and missed occurrences cannot create unintended duplicate invoices or emails.
 
 ### Phase 11 — Dashboard, audit UX, and data lifecycle
 

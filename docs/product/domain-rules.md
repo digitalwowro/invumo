@@ -68,6 +68,14 @@ This document is a concise implementation-facing companion to the [master build 
 - A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.
 - Editing or deleting the customer must not silently rewrite an existing document snapshot.
 
+## Document customer reference / PO number
+
+- A quote, invoice, or recurring-invoice template may have an optional customer reference / PO number.
+- This document-level value is distinct from the customer's permanent external reference/code.
+- Creating an invoice from a quote copies the quote value; generating an invoice from a recurring template copies the template value. Each destination snapshot remains independently editable.
+- Include the field in relevant quote, invoice, and recurring-template searches and render it on PDFs and public pages when present.
+- The field is metadata only. v1 has no Purchase Order entity, purchasing workflow, vendor approval, fulfilment state, or PO matching.
+
 ## Products & Services library
 
 - v1 includes a lightweight, company-scoped Products & Services library for reusable line defaults; it is not inventory software.
@@ -104,13 +112,14 @@ Statuses:
 Rules:
 
 - Quotes remain editable after sending or acceptance.
-- A quote stores company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, notes, and any displayed bank-details snapshot.
+- A quote stores company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, notes, optional customer reference / PO number, and any displayed bank-details snapshot.
 - Sending requires all required fields and at least one valid billable line. A Draft quote becomes Sent after provider dispatch acceptance; immediate dispatch failure leaves it Draft and records the attempt, while later delivery failure does not revert it.
 - Expired is derived after `valid_until` in the company timezone when the quote is neither Accepted nor Rejected.
 - Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes status.
 - Editing a sent/accepted quote does not reset its status automatically; significant changes are audited.
 - There is no quote versioning in v1.
 - A quote may generate multiple invoices.
+- Each generated invoice initially copies the quote's customer reference / PO number without creating a live link back to the quote.
 - Linked invoices use the quote currency; there is no cross-currency allocation.
 - Quote currency cannot change after linked invoices exist unless those links are removed through a valid workflow.
 - Invoiced amount is the sum of non-Cancelled linked invoice totals, including Draft invoices; remaining amount is quote total minus invoiced amount and may be negative.
@@ -130,7 +139,7 @@ State model:
 Rules:
 
 - Invoices may be created from a quote or independently.
-- An invoice stores company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, notes, and any displayed bank-details snapshot.
+- An invoice stores company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, notes, optional customer reference / PO number, and any displayed bank-details snapshot.
 - Drafts may be incomplete; issue/send requires all required fields and at least one valid billable line.
 - Sending a Draft invoice issues it before delivery. Dispatch failure leaves it Issued and records a retryable failed email attempt.
 - Issued invoices remain editable, including financial fields.
@@ -138,6 +147,9 @@ Rules:
 - Financial edits recalculate balance and payment state. Do not reduce invoice total below net paid until the necessary refund or corrective adjustment is recorded.
 - Invoice currency cannot change while valid payment/refund/adjustment transactions exist.
 - Payment state is derived from the net total of valid payments, refunds, and explicit adjustments.
+- Cancellation is allowed only when net paid is exactly zero. A positive net-paid amount requires a refund or corrective adjustment before cancellation.
+- Cancellation suppresses pending reminders and blocks new payment, refund, and adjustment records while the invoice remains Cancelled.
+- Cancellation retains the invoice, every existing linked transaction, and audit history. No invoice may be permanently deleted while any linked transaction records remain, regardless of lifecycle state.
 - v1 does not enforce jurisdiction-specific invoice immutability or numbering law.
 
 ## Document numbering
@@ -332,13 +344,15 @@ Recurring template
 
 - Editing a template affects only future invoices.
 - Existing generated invoices remain unchanged.
+- Every template has a required internal name used for internal lists, search, selection, and audit history. It does not need to be unique and is never copied into generated invoices or exposed in PDFs, public pages, or customer email.
 - Support weekly, monthly, quarterly, yearly, and custom intervals.
 - Support start date, optional end date, and optional maximum occurrence count.
 - Templates have Draft, Active, Paused, and Completed states; only Active templates execute.
 - Pausing prevents future occurrences. Resuming continues with the next eligible occurrence and does not backfill missed occurrences without explicit user intent.
 - Inherit company invoice defaults while allowing template overrides for payment terms, due-date calculation, Terms & Conditions, notes, email delivery, and reminder rules.
+- A template may also store an optional customer reference / PO number for the recurring arrangement.
 - Generated invoices use the normal company invoice numbering sequence.
-- Generated invoices materialize the applicable defaults and reminder schedule; later company-default changes do not rewrite them.
+- Generated invoices materialize the applicable defaults, customer reference / PO number, and reminder schedule; later template or company-default changes do not rewrite them.
 - Scheduled invoices are created and issued. A per-template setting controls whether they are emailed automatically or left issued for manual sending.
 - If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.

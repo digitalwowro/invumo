@@ -45,15 +45,11 @@ Invumo is a multi-tenant SaaS for:
 Do not implement in v1:
 
 - Inventory or stock management
-- Vendors
-- Purchase orders
-- Expense management
-- Full accounting
-- General ledger
+- Vendors, purchasing, or purchase orders
+- Expenses, bookkeeping, a general ledger, or full accounting
 - CRM
-- Currency conversion
-- Exchange rates
-- Reports
+- Currency conversion or exchange-rate services
+- Analytics or reports beyond the small operational dashboard
 - CSV import/export
 - Electronic invoicing standards
 - Country-specific fiscal compliance engines
@@ -72,6 +68,7 @@ Do not implement in v1:
 - Customer tags
 - Customer-specific manual date formats
 - Credit notes
+- Overall document discounts
 - Automatic late fees
 - Payment-processing fees
 - Tax-inclusive prices
@@ -90,6 +87,8 @@ Separate these concepts:
 - Company membership
 
 An Account belongs to an account owner. The account owner has an Invumo plan.
+
+v1 authentication must cover registration, email verification, sign-in, sign-out, password reset, and secure session invalidation. The architecture phase selects the authentication implementation and recovery mechanism; do not omit these lifecycle paths merely because a library provides basic sign-in.
 
 Initial placeholder plans:
 
@@ -115,6 +114,9 @@ Each company has independent:
 - Recurring invoice templates
 - Transactions
 - Bank accounts
+- Email templates and delivery history
+- Reminder rules and scheduled reminder instances
+- Public document links
 - Document numbering
 - Currency settings
 - Tax settings
@@ -139,12 +141,19 @@ A company can have multiple members with these roles:
 
 Design a clear permission matrix around these roles.
 
+Each company has exactly one owning Account and exactly one Owner membership, held by that Account's owner. Admin and Member memberships may be multiple.
+
+Company invitations must be email-addressed, expiring, revocable, single-use, and safe for both existing and newly registered users. Acceptance must attach the intended user to the intended company only. Invitations assign Admin or Member; Owner is assigned only through the explicit ownership-transfer workflow and must not be achievable through an ordinary invitation or membership-role change.
+
 Company ownership must be transferable. A company should be movable from one account owner/account to another without rewriting or duplicating its business data.
 
 During transfer:
 
 - Existing company data remains intact.
 - Existing company members remain attached by default.
+- The destination account owner becomes the sole company Owner.
+- The former Owner remains attached as Admin by default unless the confirmed transfer explicitly removes them.
+- Destination-plan entitlements and limits are validated before the transfer commits.
 - Historical business data must not remain tightly bound to the original account owner.
 
 ## 5. User and account settings
@@ -190,8 +199,6 @@ Company settings support at least:
 - Logo
 - Multiple bank accounts
 
-Additional sensible identity fields may be added when necessary, but avoid unnecessary complexity.
-
 Company defaults include:
 
 - Default currency
@@ -201,13 +208,20 @@ Company defaults include:
 - Payment terms
 - Terms & Conditions
 - Default tax rate/settings
+- Default bank account
 - Default quote validity
-- Invoice notes/footer
-- Quote notes/footer
+- Default invoice notes
+- Default quote notes
 - Document numbering settings
 - Currency precision settings
 - Email defaults
 - Public-link defaults
+
+### Default resolution and snapshot timing
+
+Resolve company/customer defaults into stored draft fields when a quote, invoice, or recurring template is created. Selecting a product/service resolves its defaults into the line at selection time. Later edits to any source default, customer, product/service, tax preset, or bank account never propagate silently to an existing document or template.
+
+Changing the selected customer on an in-progress document must show the resulting default/snapshot changes and require confirmation before replacing customer identity, currency, language, payment terms, tax defaults, recipients, or delivery choices. Users may explicitly reapply current defaults; existing lines and other manual edits remain unchanged unless the action clearly says otherwise.
 
 ## 7. Bank accounts
 
@@ -215,7 +229,8 @@ Bank accounts are part of company settings.
 
 - A company can have multiple bank accounts.
 - Each account supports a user-facing label, bank name, account holder, IBAN/account number, SWIFT/BIC, optional currency association, and optional local routing details.
-- Relevant bank information should be selectable for and displayable on invoices.
+- A company may designate one default bank account. A quote or invoice may select a different account or omit bank details.
+- Relevant bank information must be selectable for and displayable on quotes and invoices.
 - Historical documents must retain the bank details that were issued on them even if the company later edits or removes the source bank account.
 
 ## 8. Customers
@@ -241,21 +256,21 @@ Each customer has one structured billing/legal address:
 Customer identity also supports:
 
 - Phone number
-- Primary email/billing email
+- Optional general/primary email; for an Individual this may be the default recipient
 - Optional external customer reference/code
 - Tax registration label and identifier
 - Business registration label and number
 - Internal customer notes
 
-From the quote or invoice editor, the user must be able to create a new customer without abandoning the document. Open the complete customer form in a vertically scrollable modal, preserve the in-progress document, and automatically select the newly created customer after a successful save.
+From the quote, invoice, or recurring-invoice-template editor, the user must be able to create a new customer without abandoning the document/template. Open the complete customer form in a vertically scrollable modal, preserve the in-progress work, and automatically select the newly created customer after a successful save.
 
 Customer-level defaults:
 
 - Currency
-- Language when needed
+- Default document language
 - Payment terms
 - Tax settings
-- Billing email
+- Billing/default recipient selected from the customer's valid contact/email options
 - Default CC recipients
 - Default BCC recipients
 - PDF email-delivery preference: secure link only or attach PDF
@@ -296,6 +311,8 @@ From those editors, users may create a product/service inline in a compact modal
 
 Selecting an entry copies its applicable values onto the document or recurring-template line. The resulting line remains completely editable and is a self-contained snapshot, not a live link. Editing or archiving the source entry must never rewrite existing quote lines, invoice lines, recurring-template lines, or invoices later generated from already-snapshotted recurring-template lines.
 
+When selected, the product/service name and optional description initialize the line's customer-visible description, while price, unit, period unit, and tax initialize their corresponding line fields. Every copied value remains editable.
+
 Copy the default price only when its currency matches the document currency. On a mismatch, copy the non-price defaults and require the user to enter or confirm the price. Never convert the price automatically because v1 has no foreign-exchange behavior.
 
 Only Owner/Admin roles should manage catalog entries by default; the permission matrix may allow Members to search and use active entries. Once used, archive entries rather than hard-deleting them by default.
@@ -323,10 +340,16 @@ Quote lifecycle:
 
 Rules:
 
-- Quotes remain editable after acceptance.
+- A quote contains at least its company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a selected bank-details snapshot.
+- Draft quotes may be incomplete. Sending requires a customer, number, issue date, valid-until date, currency, language, and at least one valid billable line.
+- Sending a Draft quote changes it to Sent only after the email provider accepts the dispatch. A later delivery failure does not revert the quote; an immediate dispatch failure leaves it Draft and records the failed attempt. Resending does not create a second lifecycle state.
+- Expired is derived when the company-local date is later than `valid_until` and the quote has not been Accepted or Rejected. Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes the status.
+- Quotes remain editable after sending or acceptance. Editing does not silently reset the status; significant changes after sending or a customer decision are audited.
 - No quote revision/versioning system in v1.
 - A quote may generate multiple invoices.
-- Track the quoted amount, amount already invoiced, and remaining amount.
+- Linked invoices use the quote currency; v1 does not compare or allocate quote value across currencies.
+- After a quote has linked invoices, its currency cannot change unless those links are removed through a valid workflow.
+- Track quoted amount, invoiced amount as the sum of non-Cancelled linked invoice totals (including Draft invoices), and remaining amount as quote total minus invoiced amount.
 - Warn rather than block if generated invoices exceed the quotation total.
 - Default validity is 30 days.
 - Validity is configurable at company level and overridable per quote.
@@ -343,18 +366,22 @@ Remaining:   €0
 
 ## 11. Invoices
 
-Invoice lifecycle:
+Customer-facing invoice state may display Draft, Issued/Unpaid, Partially Paid, Paid, Overdue, and Cancelled, but these must not be forced into one ambiguous stored enum.
 
-- Draft
-- Issued
-- Partially Paid
-- Paid
-- Overdue
-- Cancelled
+- Lifecycle state is Draft, Issued, or Cancelled.
+- Payment state is derived as Unpaid, Partially Paid, or Paid from the invoice total and net valid transactions.
+- Overdue is a derived flag when an Issued, non-Cancelled invoice has a positive outstanding balance and its due date is earlier than the current date in the company timezone.
+- An invoice may therefore be both Partially Paid and Overdue; the UI must preserve both facts.
 
 Invoices may be created from quotations or independently. One quote may generate multiple invoices.
 
+An invoice contains at least its company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, and notes. It may also contain a selected bank-details snapshot. Draft invoices may be incomplete, but issue/send requires all required fields and at least one valid billable line. Sending a Draft invoice must issue it before delivery; if dispatch fails, the invoice remains Issued and the failed email attempt is visible for retry.
+
 Issued invoices remain editable. Users may edit customer, lines, quantities, prices, discounts, tax, currency, dates, and document metadata. Significant changes must be captured in the audit history.
+
+Financial edits recalculate payment state and outstanding balance. Do not allow an edit to reduce the invoice total below net paid without first recording the necessary refund or corrective adjustment; v1 must not silently create customer credit or an overpayment balance.
+
+Do not allow invoice currency to change while valid payment/refund/adjustment transactions exist, because v1 has no FX conversion or transaction-currency migration.
 
 This flexibility is intentional. Do not enforce country-specific legal or accounting restrictions in v1.
 
@@ -378,9 +405,11 @@ Requirements:
 - Allow deletion where permitted by the application.
 - Record meaningful numbering changes in audit history.
 - Do not silently reuse numbers without clear user intent.
-- Warn about duplicate numbers where appropriate.
+- Warn whenever a quote or invoice number duplicates another non-deleted document in the same company and document type; do not silently block an intentional override.
 - Support configurable formats such as `INV-2026-0001` and `Q-2026-0001`.
 - Avoid overengineering the numbering engine.
+
+Quote and invoice sequences are separate per company. The architecture specification must define numeric-component parsing, optional reset periods, manual-override behavior, and concurrency control so two simultaneous creations cannot receive the same suggestion unintentionally. Manual changes must not silently move the sequence backwards.
 
 ## 13. Quote and invoice lines
 
@@ -389,7 +418,7 @@ Lines may be entered directly or initialized from the Products & Services librar
 Line fields:
 
 - Line number/order
-- Description
+- Customer-visible description, initialized from a selected product/service name and optional description when applicable
 - Item price
 - Quantity
 - Unit (optional)
@@ -433,6 +462,8 @@ else:
 
 discount value = items total × discount percentage
 grand subtotal = items total − discount value
+tax value = grand subtotal × line tax rate
+final line total = grand subtotal + tax value
 ```
 
 Example:
@@ -445,16 +476,27 @@ Items subtotal:   €1,000
 Items total:      €12,000
 Discount:         10% = €1,200
 Grand subtotal:   €10,800
+Tax at 20%:       €2,160
+Final line total: €12,960
 ```
 
 Avoid floating-point errors. Use appropriate fixed-precision decimal handling and define rounding behavior explicitly before implementation.
+
+Document totals aggregate line snapshots only:
+
+```text
+document_subtotal = sum(line.grand_subtotal)
+document_tax_total = sum(line.tax_value)
+document_total = sum(line.final_line_total)
+```
+
+v1 has no overall document discount, invoice-wide tax, or document-level fee. These may be considered later only with an explicit ordering and rounding specification.
 
 ## 15. Discounts
 
 - Support discount percentage per line.
 - Calculate discount value automatically.
-- Support an overall document discount only if it can be implemented without ambiguous calculation or tax ordering.
-- If the overall discount materially complicates calculation, define the order explicitly before implementation or defer it.
+- Do not support an overall document discount in v1.
 - Never silently produce ambiguous totals.
 
 ## 16. Tax
@@ -463,6 +505,7 @@ For v1, use tax per line only. Do not implement invoice-wide tax.
 
 - Each line may have its own tax rate.
 - Company and customer settings may provide defaults.
+- A selected product/service may provide a default.
 - Users may override defaults on individual document lines.
 - Prices are tax-exclusive.
 
@@ -476,6 +519,8 @@ Each company maintains reusable tax-rate presets with:
 Users can add, edit, and archive presets. A referenced preset should be archived rather than hard-deleted.
 
 When a preset is applied, copy its name and percentage onto the document line. Editing or archiving the preset later must not alter existing quotes or invoices.
+
+Initial line-tax precedence is: explicit line choice, selected product/service default, customer default, then company default. Once copied, the line snapshot is authoritative.
 
 On quotes, invoices, public pages, and PDFs, display both the applied tax name and percentage, for example `VAT 19%`. Do not add a separate visibility toggle in v1.
 
@@ -494,8 +539,8 @@ Invumo is worldwide, but v1 offers flexible defaults rather than claiming legal 
 
 ## 17. Currency
 
-- Each customer has a default currency.
-- Documents inherit the customer currency by default.
+- Each company has a default currency, and each customer may override it.
+- Initial document-currency precedence is document choice, customer default, then company default.
 - Users may override currency per quote or invoice.
 - There is no foreign-exchange conversion or exchange-rate service in v1.
 - Decimal precision is user-configurable per currency.
@@ -513,7 +558,7 @@ Examples:
 
 ## 18. Payment terms and Terms & Conditions
 
-Payment terms can have a company default, customer default, and document override.
+Payment terms use document override, then customer default, then company default.
 
 The invoice due date derives automatically from the applicable terms but remains editable.
 
@@ -522,7 +567,8 @@ Terms & Conditions are separate customer-visible document content, not payment-t
 - A company may define default Terms & Conditions.
 - Each quote or invoice inherits the company default.
 - The user may override the content per quote or invoice.
-- Notes/footer, Terms & Conditions, and structured payment terms must remain distinct concepts.
+- Quote and invoice notes use their respective company default and remain overridable per document.
+- Notes, Terms & Conditions, and structured payment terms must remain distinct concepts. Notes are an ordinary customer-visible document block, not a fixed PDF footer or arbitrary footer builder.
 
 ## 19. Transactions and payments
 
@@ -540,6 +586,7 @@ One invoice may have one payment or multiple partial payments.
 
 Transaction fields:
 
+- Type/direction: payment, refund, or explicit adjustment
 - Amount
 - Currency
 - Date
@@ -547,11 +594,13 @@ Transaction fields:
 - Reference
 - Notes
 
-Support refunds and negative payment adjustments where needed.
+Store transaction amounts as non-negative values and represent financial direction explicitly. Do not overload a negative amount to mean both refund and correction.
+
+Net paid equals payments plus positive adjustments minus refunds and negative adjustments. Outstanding balance equals invoice total minus net paid. Prevent ordinary payments from making net paid exceed the invoice total, and prevent refunds from exceeding the amount available to refund. An explicit adjustment requires a reason and audit entry and must not silently produce a negative net-paid amount.
 
 Do not build expenses, general accounting transactions, a chart of accounts, or a bookkeeping ledger. The Transactions page is the global company-level view of invoice payment transactions.
 
-Invoice payment status should derive appropriately from payments. Prevent payments from unintentionally exceeding the outstanding balance. If refunds make the balance unpaid again, update the invoice state.
+Invoice payment state derives from net valid payments, refunds, and explicit adjustments. Prevent ordinary payments from unintentionally exceeding the outstanding balance. If refunds make the balance unpaid again, update the derived state.
 
 After recording a payment, the user may optionally send a payment-received email. Never send it automatically for historical/backfilled payments without clear user intent.
 
@@ -580,6 +629,8 @@ Recurrence options:
 
 Support a start date, optional end date, and optional maximum occurrence count.
 
+Templates have Draft, Active, Paused, and Completed states. Only Active templates execute. Pausing prevents future executions; resuming continues from the next eligible occurrence and does not backfill missed occurrences unless the user explicitly requests it.
+
 A recurring template inherits company invoice defaults and may override:
 
 - Payment terms and due-date calculation
@@ -592,7 +643,11 @@ Generated invoices use the normal company invoice numbering sequence. Do not cre
 
 Generated invoices materialize the applicable defaults and reminder schedule so later company-default changes do not silently rewrite already-generated invoices.
 
-Keep scheduling infrastructure as simple as reasonably possible. Avoid queues and message brokers unless architecture analysis identifies a genuine need. Scheduled execution must be idempotent.
+Each template has an automatic-email setting. Scheduled invoices are created and issued; when automatic email is enabled they are also delivered using the resolved customer/template settings. When disabled, the issued invoice remains available for manual sending.
+
+If automatic email fails after invoice creation, retry delivery against the same generated invoice; never create a replacement invoice for the same occurrence.
+
+Keep scheduling infrastructure as simple as reasonably possible. Avoid queues and message brokers unless architecture analysis identifies a genuine need. Each occurrence needs a stable idempotency key so retries or overlapping runs create at most one invoice. Record last run, next run, success/failure, and the generated invoice. The architecture specification must define company-local execution time, daylight-saving behavior, retry policy, and treatment of service downtime.
 
 ## 21. Localization
 
@@ -605,7 +660,7 @@ Launch languages:
 
 Adding languages later should be straightforward.
 
-Document language inherits an applicable company/account default and is overridable per quote or invoice.
+Initial document-language precedence is document choice, customer default, then company default. The signed-in user's application language affects the internal UI only and never silently changes a customer document's language.
 
 Changing document language localizes system-generated terminology, date formatting, number formatting, and locale-specific presentation. User-written descriptions remain exactly as entered; do not translate user content automatically.
 
@@ -626,7 +681,7 @@ v1 includes one excellent document template with:
 - Lines and totals
 - Relevant bank information
 - Terms & Conditions
-- Notes/footer
+- Notes
 
 Design the PDF system so more templates can be added later without rewriting the document model. Do not build a PDF template editor in v1.
 
@@ -676,6 +731,8 @@ Delivery preferences include:
 
 The send composer must display the resolved recipients and attachment choice before sending and allow the user to override them for that send.
 
+Sending requires at least one valid primary recipient. Validate and deduplicate To/CC/BCC addresses. An automated send with no valid recipient must fail visibly and record the reason rather than retrying indefinitely or silently succeeding.
+
 Track Sent, Delivered, and Opened where ZeptoMail supports them. Authenticate webhooks and process provider events idempotently.
 
 The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.
@@ -699,6 +756,7 @@ Reminder processing must:
 
 - Use the company timezone
 - Stop unsent reminders when an invoice becomes Paid or Cancelled
+- Continue for a Partially Paid invoice while a positive outstanding balance remains
 - Recalculate pending reminders when the due date changes
 - Prevent duplicate sends under retries or overlapping scheduler runs
 - Record sends and failures in invoice/email history
@@ -721,6 +779,10 @@ Public links are:
 - Configurable by the user
 - Revocable
 - Regeneratable
+
+Quote validity and public-link expiry are separate concepts. A link may be technically valid while the quote is commercially expired; public actions still follow quote validity rules.
+
+Email delivery must not include an expired token. A direct send must create or confirm a valid link. An automated reminder may replace a naturally expired link, but it must never recreate access that a user explicitly revoked without re-enabling public access.
 
 Public invoice pages support viewing and PDF download without a customer account.
 
@@ -755,6 +817,8 @@ Do not build analytics or reporting dashboards in v1.
 
 Dashboard calculations must respect company and currency boundaries. Do not add amounts in different currencies together without an explicit, mathematically valid basis; Invumo has no FX system.
 
+When a company has multiple document currencies, show operational totals grouped by currency rather than a misleading combined total.
+
 ## 27. Audit history
 
 Maintain an audit trail for significant business operations, including:
@@ -769,6 +833,8 @@ Maintain an audit trail for significant business operations, including:
 - Important settings and membership changes
 
 Audit history should answer what happened, when, who caused it, and what object was affected. Retain enough before/after information to make important edits understandable.
+
+Audit infrastructure is a foundation capability, not a final-phase retrofit. Records must distinguish user actions, authenticated public-customer actions, provider webhooks, scheduled jobs, and other system actions.
 
 Do not introduce a complex event-sourcing architecture unless independently justified.
 
@@ -809,6 +875,8 @@ Primary navigation should remain small. A possible starting point is:
 
 Analyze the UX and propose the simplest navigation. Users should create an invoice or quote with very few interactions.
 
+Customer, product/service, quote, invoice, recurring-template, and transaction lists need basic company-scoped search, relevant status filters, stable sorting, pagination, and clear empty states. These are operational list controls, not analytics/reporting.
+
 ### Company appearance in v1
 
 Appearance settings remain intentionally small:
@@ -841,6 +909,7 @@ Address at least:
 
 - Tenant isolation
 - Authentication
+- Email verification, password recovery, invitation-token safety, and session revocation
 - Authorization
 - Role-based access
 - Secure session handling
@@ -864,11 +933,15 @@ Use PostgreSQL from day one. Prefer a normalized, understandable relational sche
 Likely concepts include:
 
 - Users
+- Authentication/session/recovery records or provider mappings
 - Accounts
 - Plans/entitlements
 - Companies
 - Company members
+- Company invitations
 - Company settings
+- Company currency/precision settings
+- Company numbering series
 - Bank accounts
 - Company tax-rate presets
 - Customers
@@ -877,12 +950,13 @@ Likely concepts include:
 - Quotes and quote lines
 - Invoices and invoice lines
 - Transactions/payments
-- Recurring invoice templates and lines
+- Recurring invoice templates, lines, and execution occurrences
 - Company email templates
 - Invoice reminder rules and scheduled reminder instances
 - Public document links
 - Email delivery events
 - Audit events
+- Uploaded company assets or their storage metadata
 
 These names are conceptual, not mandatory. Analyze the domain and choose the cleanest schema.
 
@@ -904,6 +978,9 @@ Pay particular attention to:
 - Historical snapshots of applied tax and bank details
 - Historical snapshots of customer identity, address, and registration details
 - Product/service selection snapshots and currency-mismatch behavior
+- Derived invoice payment/overdue state and company-local date boundaries
+- Quote expiry versus public-link expiry
+- Transaction direction, refund limits, and outstanding-balance derivation
 - Company-timezone scheduling across daylight-saving transitions
 
 Use transactions for business-critical operations where appropriate.
@@ -912,6 +989,8 @@ Use transactions for business-critical operations where appropriate.
 
 Create automated tests for critical calculations and workflows, especially:
 
+- Registration verification, password recovery, session invalidation, and invitation expiry/revocation/single use
+- Company switching, ownership transfer, and cross-company access denial
 - Invoice line and period calculations
 - Discounts and taxes
 - Tax-preset snapshot behavior
@@ -920,10 +999,13 @@ Create automated tests for critical calculations and workflows, especially:
 - Product/service snapshot behavior after source edits or archiving
 - Inline product/service creation without losing document progress
 - Product-price behavior when catalog and document currencies differ
+- Default precedence for currency, language, tax, payment terms, notes, bank accounts, and delivery settings
 - Document totals and rounding
 - Partial payments
 - Invoice status transitions
+- Combined Partially Paid and Overdue presentation
 - Refunds
+- Transaction direction, overpayment prevention, and refund limits
 - Next-number suggestion
 - Quote to multiple invoices
 - Recurring invoice generation
@@ -931,14 +1013,20 @@ Create automated tests for critical calculations and workflows, especially:
 - Tenant isolation
 - Role authorization
 - Public quote acceptance
+- Quote validity expiry and reactivation after an authorized validity change
 - Public-link expiry and revocation
-- Full customer creation in the scrollable document-editor modal without losing in-progress data
+- Full customer creation in quote, invoice, and recurring-template editor modals without losing in-progress data
 - Customer email-recipient and PDF-attachment default precedence
+- Recipient validation/deduplication and missing-recipient failure for automated sends
 - Email-template placeholder validation and language fallback
+- Quote/Invoice lifecycle behavior for immediate dispatch failure, later delivery failure, and retry
 - Reminder materialization, before/after-due scheduling, due-date changes, and duplicate suppression
 - Reminder cancellation when an invoice becomes Paid or Cancelled
 - Optional payment-received email behavior for current versus historical payments
 - Recurring-template inheritance of invoice defaults, email settings, and reminders
+- Recurring pause/resume, optional automatic email, missed-run behavior, and one-invoice-per-occurrence idempotency
+- Expired versus explicitly revoked public-link behavior during direct and automated email
+- Audit attribution for user, public-customer, webhook, scheduled-job, and system actors
 
 Implement browser-level tests for the main journey:
 
@@ -989,105 +1077,158 @@ Do not generate the application as an unstructured code dump. Work incrementally
 
 First produce:
 
-1. Requirements assessment
-2. Architecture recommendation
-3. Technology stack recommendation
-4. Data model/schema
-5. Permission and tenant model
-6. Main routes and navigation
-7. Exact domain calculation and rounding rules
-8. Implementation phases and verification strategy
+1. Requirements assessment, contradiction resolution, and risk register
+2. Architecture and technology-stack recommendation with trade-offs
+3. Relational data model, migration strategy, and snapshot boundaries
+4. Tenant model and complete role/action permission matrix
+5. Main routes, navigation, operational lists, and editor composition
+6. Exact calculation, rounding, document-state, payment-state, numbering, and concurrency specification
+7. Background-job, recurring, reminder, email, webhook, PDF, upload, and public-token design
+8. Security, observability, backup/restore, deployment, and operational-recovery plan
+9. Implementation phases, acceptance gates, and verification strategy
 
 Then build in logical stages. A sensible initial order is:
 
-### Phase 1 — Foundation
+### Phase 1 — Core platform and cross-cutting foundations
 
 - Project structure
-- Database
-- Authentication
-- Users and accounts
-- Companies
-- Memberships
-- Settings
-- Tenant isolation
+- PostgreSQL schema, migrations, and test-data strategy
+- Registration, email verification, sign-in/out, password reset, and secure sessions
+- Foundational system-email delivery for verification, recovery, and company invitations
+- Users, accounts, companies, memberships, invitations, company switching, and ownership-transfer safeguards
+- Server-side tenant isolation and authorization primitives
+- English/Romanian localization framework used by every later feature
+- Audit-event infrastructure used by every later business operation
+- Shared validation, error handling, logging, health checks, and configuration/secrets boundaries
+- File-upload foundation for validated company logos
 
-### Phase 2 — Customers
+Acceptance gate: authentication recovery paths work; tenant-isolation and role checks are enforced server-side; migrations are repeatable; audit and localization primitives are usable by the next phase.
 
-- Customers
-- Contacts
-- Customer defaults
+### Phase 2 — Company configuration
 
-### Phase 3 — Products & Services
+- Structured company identity and timezone
+- Currency settings and display/precision configuration
+- Tax presets
+- Payment terms, quote validity, Terms & Conditions, and quote/invoice note defaults
+- Numbering-series settings
+- Bank accounts and default selection
+- Logo and primary brand color
+- Email and public-link defaults required by later phases
+- Settings authorization and audit coverage
+
+Acceptance gate: all defaults required to create stable customer, product, and document snapshots exist and are company-scoped.
+
+### Phase 3 — Customers and contacts
+
+- Customer/contact CRUD, archive/delete rules, search, sorting, and pagination
+- Individual/company identity and structured registration/address fields
+- Primary/billing contacts and email-delivery preferences
+- Currency, language, tax, payment-term, and recipient defaults
+- Customer authorization and audit coverage
+
+Acceptance gate: customer defaults resolve predictably and customer records are ready to be snapshotted by documents. Inline creation starts with the shared document editor in Phase 5 and is reused by recurring templates in Phase 10.
+
+### Phase 4 — Products & Services
 
 - Company-scoped product/service CRUD
-- Search and archive behavior
-- Inline creation from document editors
-- Editable snapshot initialization and currency-mismatch handling
+- Search, sorting, pagination, and archive/delete behavior
+- Price/currency, unit, tax, period, description, and code/SKU defaults
+- Catalog permissions and audit coverage
 
-### Phase 4 — Quotes
+Acceptance gate: active entries can initialize detached editable line data, including safe behavior for currency mismatches. Inline creation starts with the shared document editor in Phase 5 and is reused by recurring templates in Phase 10.
 
-- Quote CRUD
-- Line calculations
-- Numbering
-- PDF
-- Statuses
+### Phase 5 — Shared document core and quotes
 
-### Phase 5 — Invoices
+- Shared document editor and exact-decimal line/document calculation engine
+- Manual lines, product/service selection, and inline customer/product creation
+- Customer, product/service, tax, bank, Terms & Conditions, notes, and settings snapshots
+- Shared numbering/concurrency mechanism, first applied to quotes
+- Quote CRUD, validation, lifecycle, derived expiry, and list controls
+- Shared outward-facing renderer and first PDF implementation
+- Quote audit coverage and browser-level workflow tests
+
+Acceptance gate: quotes calculate deterministically, preserve every required snapshot, render consistently, and remain isolated under concurrent company activity.
+
+### Phase 6 — Invoices and quote conversion
 
 - Invoice CRUD
-- Quote-to-invoice workflow
-- Calculations
-- Numbering
-- PDF
-- Statuses
+- Reuse of the shared editor, calculations, numbering, renderer, and PDF pipeline
+- Draft/Issued/Cancelled lifecycle, derived payment state, due-date validation, and overdue flag
+- Quote-to-one-or-many-invoices workflow with quoted/invoiced/remaining allocation
+- Invoice list controls and audit coverage
 
-### Phase 6 — Payments
+Acceptance gate: independent and quote-derived invoices produce the same calculations/snapshots, and invoice state behaves correctly around company-local due dates.
+
+### Phase 7 — Payments
 
 - Transactions
-- Partial payments and refunds
-- Invoice payment states
-- Transactions screen
+- Explicit payment/refund/adjustment direction
+- Partial payments, refund limits, overpayment prevention, and outstanding-balance derivation
+- Derived invoice payment state
+- Company Transactions screen with operational list controls
+- Payment/refund audit coverage
 
-### Phase 7 — Public documents
+Acceptance gate: transaction history reconciles to invoice balance and status under create, edit, delete, adjustment, and refund paths.
+
+### Phase 8 — Public documents
 
 - Secure links
 - Expiry
 - Revocation and regeneration
 - Quote acceptance/rejection
 - Invoice viewing
+- Rate limits, replay protection, lifecycle/validity rules, and public-action audit attribution
 
-### Phase 8 — Email
+Acceptance gate: public access cannot cross tenants, revoked tokens stay revoked, expired quote actions are blocked, and repeated customer actions are idempotent.
 
-- ZeptoMail integration
+### Phase 9 — Document email and reminders
+
+- Zoho ZeptoMail document-email integration, reusing the platform email transport where appropriate
 - Event- and language-specific default templates
 - Safe placeholders and preview
 - Editing before sending
-- Delivery/open tracking
+- Recipient/PDF-delivery precedence and valid-link handling
+- Authenticated, idempotent delivery/open webhooks and email history
 - Automated before/after-due reminders
 - Optional payment-received messages
+- Scheduler execution records, retries, failure visibility, and duplicate suppression
 
-### Phase 9 — Recurring invoices
+Acceptance gate: direct and automated sends are recoverable and observable, reminder links are valid without overriding explicit revocation, and duplicate jobs/webhooks cannot duplicate customer-visible effects.
 
-- Templates
-- Scheduling
-- Automatic invoice generation
-- Automatic issue and email
-- Invoice-default and reminder inheritance
+### Phase 10 — Recurring invoices
 
-### Phase 10 — Dashboard and audit
+- Template CRUD, line snapshots, and Draft/Active/Paused/Completed states
+- Reuse of shared customer/product selection, inline creation, editor, calculations, and snapshot behavior
+- Scheduling in the company timezone with daylight-saving and downtime behavior
+- Idempotent one-invoice-per-occurrence generation
+- Automatic issue, optional automatic email, and visible last/next run outcomes
+- Invoice-default, delivery, and reminder inheritance
 
-- Dashboard
-- Audit history
-- Destructive-action handling
+Acceptance gate: retries, overlaps, pause/resume, and missed occurrences cannot create unintended duplicate invoices or emails.
 
-### Phase 11 — Polish
+### Phase 11 — Dashboard, audit UX, and data lifecycle
 
-- English and Romanian
-- UX refinement
-- Responsive behavior
-- Edge cases
-- Tests
-- Security review
+- Currency-grouped operational dashboard
+- Searchable audit-history UI and completeness review across prior phases
+- Archive/delete flows, dependency warnings, and user-data deletion paths
+- Ownership-transfer and membership-management UX review
+
+Acceptance gate: users can understand operational state and safely complete every destructive or ownership-sensitive action.
+
+### Phase 12 — Release readiness
+
+- Complete English and Romanian translation coverage
+- Accessibility, responsive behavior, and cross-browser refinement
+- Full critical-path, edge-case, concurrency, and tenant-isolation test suite
+- Security review and abuse/rate-limit verification
+- Production migrations, backup/restore test, deployment rollback, monitoring, alerting, and operational runbooks
+- End-to-end acceptance against the successful-v1 definition
+
+Acceptance gate: the release can be deployed, observed, backed up, restored, rolled back, and operated safely; all successful-v1 journeys pass in both launch languages.
+
+### Quality gate for every phase
+
+Do not postpone quality, security, audit, localization, or tenant isolation to Phase 12. Every phase must include relevant migrations, authorization checks, audit events, localized user-facing strings, automated tests, error/empty/loading states, and operational logging. A phase is complete only when its outputs are stable prerequisites for the next phase.
 
 Change the order only when a simpler or safer sequence is justified.
 
@@ -1095,7 +1236,7 @@ Change the order only when a simpler or safer sequence is justified.
 
 A new user can:
 
-1. Register.
+1. Register, verify their email address, sign in, and recover account access.
 2. Create a company.
 3. Configure its basic information.
 4. Add a customer.
@@ -1105,19 +1246,20 @@ A new user can:
 8. Email the quote.
 9. Let the customer accept it online.
 10. Generate one or multiple invoices from it.
-11. Send an invoice.
+11. Send an invoice and let the customer view/download it through a secure link.
 12. Record one or multiple payments.
 13. See the invoice become partially paid or paid automatically.
 14. Find those payments under Transactions.
 15. Create an invoice without a quote.
-16. Create recurring invoice templates.
-17. Have recurring invoices generated, issued, and emailed automatically.
-18. Manage multiple completely independent companies.
-19. Invite users with appropriate roles.
-20. Transfer a company to another account owner.
-21. Work in English or Romanian.
-22. Configure automatic invoice reminders before or after due dates.
-23. Customize multilingual company email templates and preview their resolved content.
+16. Create, activate, pause, resume, and complete recurring invoice templates.
+17. Have recurring invoices generated and issued exactly once per occurrence, with optional automatic email.
+18. Find operational records using appropriate search, filters, sorting, and pagination.
+19. Manage multiple completely independent companies.
+20. Invite users safely with appropriate roles.
+21. Transfer a company to another account owner.
+22. Work in English or Romanian.
+23. Configure automatic invoice reminders before or after due dates.
+24. Customize multilingual company email templates and preview their resolved content.
 
 All of this should feel substantially simpler than traditional accounting software.
 

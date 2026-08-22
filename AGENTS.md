@@ -11,8 +11,7 @@ Project rules:
 - Keep Invumo focused on quotation and invoicing; do not introduce accounting-suite features without explicit approval.
 - PostgreSQL is required from day one.
 - Do not silently choose or expand the application stack before completing the required architecture assessment.
-- Treat tenant isolation, authorization, money calculations, numbering behavior, recurring execution, webhooks, and public tokens as security/data-integrity boundaries.
+- Treat authentication and invitations, tenant isolation, authorization, document snapshots, money calculations, document/payment state, numbering concurrency, recurring/reminder execution, webhooks, and public tokens as security/data-integrity boundaries.
 - Prefer a single application, one database, simple deployment, and minimal infrastructure.
 - Record meaningful approved product or architecture changes in documentation.
 - Never commit credentials, tokens, production data, or environment secrets.
-

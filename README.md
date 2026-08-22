@@ -16,7 +16,6 @@ Durable cross-session context for agents is stored separately in [`digitalwowro/
 
 ## Current phase
 
-The next deliverable is an architecture package covering requirements risks, stack recommendation, data model, tenant and permission model, routes/navigation, exact calculation rules, implementation phases, and verification strategy.
+The next deliverable is an architecture package covering requirements risks; stack recommendation; relational data and snapshot boundaries; tenant and permission model; routes, lists, and editor composition; exact calculation, state, numbering, and concurrency rules; jobs and external integrations; security and operations; and phase acceptance/verification strategy.
 
 PostgreSQL is required from day one. No other application stack has been approved yet.
-

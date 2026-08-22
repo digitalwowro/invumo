@@ -12,10 +12,15 @@ This document is a concise implementation-facing companion to the [master build 
 - A CompanyMembership connects a user and company with Owner, Admin, or Member role.
 - One account owner may manage multiple companies.
 - A user may belong to companies owned by different accounts.
+- Each company has exactly one owning Account and one Owner membership held by that Account's owner; Admin and Member memberships may be multiple.
 - Transferring a company to a different account must not rewrite its customers, documents, transactions, or audit history.
-- Existing members remain attached during transfer by default.
+- Transfer validates destination-plan entitlements, makes the destination account owner the sole company Owner, and retains the former Owner as Admin by default unless explicitly removed in the confirmed transfer.
+- Other existing members remain attached during transfer by default.
 - Every server-side business-data operation must verify company scope, membership, and permission.
 - Never trust a client-provided company identifier without server-side authorization.
+- Authentication covers registration, email verification, sign-in/out, password reset, and secure session invalidation.
+- Company invitations are email-addressed, expiring, revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
+- Ownership transfer requires explicit confirmation and cannot be performed as an ordinary role change.
 
 ## Plan boundary
 
@@ -37,15 +42,16 @@ This document is a concise implementation-facing companion to the [master build 
 
 - A company may have multiple bank accounts.
 - Bank account fields include label, bank name, account holder, IBAN/account number, SWIFT/BIC, optional currency, and optional local routing details.
+- A company may designate a default bank account; each quote or invoice may override it or omit bank details.
 - A quote or invoice stores a snapshot of any bank details presented on the document.
 - Editing, archiving, or deleting the source bank account must not rewrite an existing document snapshot.
 
 ## Customer selection and creation
 
-- A quote or invoice editor must support selecting an existing customer.
-- The user may create a customer from the editor in a vertically scrollable modal containing the complete customer form without losing the in-progress document.
+- A quote, invoice, or recurring-invoice-template editor must support selecting an existing customer.
+- The user may create a customer from the editor in a vertically scrollable modal containing the complete customer form without losing the in-progress document/template.
 - After a successful modal save, close the modal and select the new customer automatically.
-- Validation failure must retain both the customer form values and the in-progress document.
+- Validation failure must retain both the customer form values and the in-progress document/template.
 
 ## Customer identity and defaults
 
@@ -54,8 +60,8 @@ This document is a concise implementation-facing companion to the [master build 
 - Company customers use a company/legal name and may have multiple contacts.
 - Contacts may be designated as primary contact and billing contact/default recipient.
 - Each customer has one structured billing/legal address: address line 1, optional address line 2, city, state/province/region, postal code, and country.
-- Customer identity supports phone, primary/billing email, optional external reference/code, tax registration label and identifier, and business registration label and number.
-- Customer defaults include currency, document language, payment terms, tax settings, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
+- Customer identity supports phone, an optional general/primary email, optional external reference/code, tax registration label and identifier, and business registration label and number. An Individual's primary email may be its default recipient; Company recipients normally resolve from contacts or an explicitly stored address.
+- Customer defaults include currency, document language, payment terms, tax preset, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
 - PDF email-delivery mode is secure link only or attach PDF.
 - Internal customer notes are never rendered automatically on documents, public pages, or email.
 - v1 excludes separate shipping/service addresses, customer tags, customer-specific manual date formats, and an ambiguous free-form legal-info field.
@@ -70,11 +76,20 @@ This document is a concise implementation-facing companion to the [master build 
 - Quote, invoice, and recurring-invoice editors provide searchable selection of active entries while still allowing fully manual lines.
 - Users may create a product/service inline from those editors without losing document progress; successful creation selects it automatically, and validation failures retain both forms.
 - Selecting an entry copies applicable values onto the line. The line remains completely editable and financially authoritative.
+- Product/service name and optional description initialize the customer-visible line description; price, unit, period unit, and tax initialize their corresponding line fields.
 - Document and recurring-template lines are snapshots, not live catalog links. Editing or archiving a product/service never rewrites existing lines or invoices generated later from already-snapshotted recurring-template lines.
 - Copy a default price only when its currency matches the document currency. On mismatch, copy non-price defaults and require manual price entry or confirmation; never perform FX conversion.
 - Owner/Admin roles manage entries by default. Members may search and use active entries subject to the approved permission matrix.
 - Archive a previously used entry rather than hard-deleting it by default.
 - v1 excludes product URLs/customer-visible product links, inventory and stock movements, tags/categories, variants, bundles, supplier/purchasing data, cost/margin tracking, tiered/customer-specific price lists, product images, and catalog CSV import/export.
+
+## Default resolution and snapshot timing
+
+- Resolve company/customer defaults into stored draft fields when a quote, invoice, or recurring template is created.
+- Resolve product/service defaults into a line when the entry is selected.
+- Later source changes never propagate silently to an existing document or template.
+- Changing the selected customer requires confirmation of the resulting identity/default/recipient changes and must not silently replace lines or unrelated manual edits.
+- Reapplying current defaults is an explicit user action with a clear preview of what will change.
 
 ## Quote workflow
 
@@ -89,31 +104,40 @@ Statuses:
 Rules:
 
 - Quotes remain editable after sending or acceptance.
+- A quote stores company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, notes, and any displayed bank-details snapshot.
+- Sending requires all required fields and at least one valid billable line. A Draft quote becomes Sent after provider dispatch acceptance; immediate dispatch failure leaves it Draft and records the attempt, while later delivery failure does not revert it.
+- Expired is derived after `valid_until` in the company timezone when the quote is neither Accepted nor Rejected.
+- Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes status.
+- Editing a sent/accepted quote does not reset its status automatically; significant changes are audited.
 - There is no quote versioning in v1.
 - A quote may generate multiple invoices.
-- Track quoted amount, invoiced amount, and remaining amount.
+- Linked invoices use the quote currency; there is no cross-currency allocation.
+- Quote currency cannot change after linked invoices exist unless those links are removed through a valid workflow.
+- Invoiced amount is the sum of non-Cancelled linked invoice totals, including Draft invoices; remaining amount is quote total minus invoiced amount and may be negative.
 - Warn rather than block when generated invoices exceed the quoted amount.
 - Default validity is 30 days, configurable by company and overridable per quote.
 - Quote numbers are suggested automatically and manually overridable.
 
 ## Invoice workflow
 
-Statuses:
+State model:
 
-- Draft
-- Issued
-- Partially Paid
-- Paid
-- Overdue
-- Cancelled
+- Stored lifecycle state: Draft, Issued, or Cancelled.
+- Derived payment state: Unpaid, Partially Paid, or Paid.
+- Derived Overdue flag: Issued, not Cancelled, positive outstanding balance, and due date earlier than the current company-local date.
+- Partially Paid and Overdue may both be true and must both remain visible.
 
 Rules:
 
 - Invoices may be created from a quote or independently.
+- An invoice stores company, customer snapshot, number, issue date, due date, currency, document language, lines, Terms & Conditions, notes, and any displayed bank-details snapshot.
+- Drafts may be incomplete; issue/send requires all required fields and at least one valid billable line.
+- Sending a Draft invoice issues it before delivery. Dispatch failure leaves it Issued and records a retryable failed email attempt.
 - Issued invoices remain editable, including financial fields.
 - Significant edits after issue require understandable audit records, including appropriate before/after data.
-- Payment state is derived from the net total of valid payments and refunds.
-- Overdue behavior depends on due date and outstanding balance; the architecture specification must define precedence between Overdue and payment statuses.
+- Financial edits recalculate balance and payment state. Do not reduce invoice total below net paid until the necessary refund or corrective adjustment is recorded.
+- Invoice currency cannot change while valid payment/refund/adjustment transactions exist.
+- Payment state is derived from the net total of valid payments, refunds, and explicit adjustments.
 - v1 does not enforce jurisdiction-specific invoice immutability or numbering law.
 
 ## Document numbering
@@ -122,9 +146,12 @@ Rules:
 - Allow manual number entry and renumbering.
 - Permit deletion where the application allows it.
 - Audit meaningful numbering changes and deletions.
-- Warn about duplicate numbers and unintended reuse.
+- Warn whenever a number duplicates another non-deleted document in the same company and document type, while permitting an intentional override.
 - Do not silently reuse a removed number without clear user intent.
 - Keep numbering configurable without building an unnecessarily complex rules engine.
+- Quote and invoice sequences are separate per company.
+- The architecture specification defines numeric parsing, optional reset periods, manual overrides, and concurrency control.
+- A manual override must not silently move a sequence backwards.
 
 Example:
 
@@ -140,7 +167,7 @@ Lines may be entered manually or initialized from the Products & Services librar
 Each quote or invoice line contains:
 
 - Order/line number
-- Description
+- Customer-visible description, initialized from the selected product/service name and optional description when applicable
 - Item price
 - Quantity
 - Optional unit
@@ -194,6 +221,10 @@ discount_value = items_total × discount_percentage
 grand_subtotal = items_total − discount_value
 tax_value = grand_subtotal × line_tax_rate
 final_line_total = grand_subtotal + tax_value
+
+document_subtotal = sum(line.grand_subtotal)
+document_tax_total = sum(line.tax_value)
+document_total = sum(line.final_line_total)
 ```
 
 The architecture phase must define:
@@ -210,7 +241,7 @@ These rules must be explicit before implementation; never use binary floating-po
 
 - Support a percentage discount per line.
 - Calculate the discount value automatically.
-- An overall document discount may be supported only if its ordering and tax interaction are unambiguous and can be implemented cleanly.
+- Do not support an overall document discount in v1.
 - Do not silently produce ambiguous totals.
 
 ## Tax
@@ -219,6 +250,7 @@ These rules must be explicit before implementation; never use binary floating-po
 - Prices are entered tax-exclusive.
 - Lines may use different tax rates.
 - Company and customer settings may provide defaults; the user may override them on document lines.
+- A selected product/service may also provide a default.
 - No invoice-wide tax in v1.
 - No country-specific tax engine or electronic-invoicing compliance claim.
 
@@ -233,12 +265,14 @@ Users may add, edit, and archive presets. Referenced presets should be archived 
 
 Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
 
+Initial line-tax precedence is explicit line choice, selected product/service default, customer default, then company default. The copied line value is authoritative afterward.
+
 Render the applied tax name and percentage together on customer-visible documents, for example `VAT 19%`. v1 has no separate tax-percentage visibility setting.
 
 ## Currency
 
-- Each customer has a default currency.
-- New customer documents inherit that currency by default.
+- Each company has a default currency, and a customer may override it.
+- Initial document-currency precedence is document choice, customer default, then company default.
 - Currency may be overridden per quote or invoice.
 - Currency decimal precision is user-configurable per currency.
 - The company selects ISO-code or symbol display style independently from currency precision.
@@ -256,24 +290,30 @@ Default precedence:
 
 The due date is derived from the applicable terms but remains editable.
 
-Terms & Conditions are separate from structured payment terms and from notes/footer:
+Terms & Conditions are separate from structured payment terms and document notes:
 
 - A company may define default customer-visible Terms & Conditions.
 - New quotes and invoices inherit that default.
 - The user may override Terms & Conditions per document.
 - Changing the company default affects new documents, not already-created documents.
 - Generated public pages and PDFs display the document's stored Terms & Conditions.
+- Quote and invoice notes inherit their respective company defaults and may be overridden per document.
+- Notes are a normal customer-visible document block, not a fixed PDF footer or arbitrary footer element.
 
 ## Payments and refunds
 
-- A transaction represents a payment, refund, or adjustment attached to one invoice.
+- A transaction represents a payment, refund, or explicit adjustment attached to one invoice.
+- Store a non-negative amount and an explicit type/direction; do not use one signed amount to ambiguously encode transaction meaning.
 - An invoice may have one payment or multiple partial payments.
 - The company Transactions section is the aggregate view of invoice transactions.
 - There are no expenses, unrelated transactions, chart of accounts, or bookkeeping ledger.
 - Prevent payments from unintentionally exceeding the outstanding balance.
+- Prevent refunds from exceeding the amount available to refund.
 - Refunds may make an invoice partially or fully unpaid again; status must update accordingly.
 - Transaction fields include amount, currency, date, payment method, reference, and notes.
 - Transaction currency must be consistent with the invoice because v1 has no FX conversion.
+- `net_paid = payments + positive adjustments − refunds − negative adjustments`; `outstanding = invoice_total − net_paid`.
+- An adjustment requires a reason and audit entry and must not silently make net paid negative.
 - After recording a payment, offer an optional payment-received email action.
 - Do not automatically email receipts for historical/backfilled payments without clear user intent.
 
@@ -294,10 +334,16 @@ Recurring template
 - Existing generated invoices remain unchanged.
 - Support weekly, monthly, quarterly, yearly, and custom intervals.
 - Support start date, optional end date, and optional maximum occurrence count.
+- Templates have Draft, Active, Paused, and Completed states; only Active templates execute.
+- Pausing prevents future occurrences. Resuming continues with the next eligible occurrence and does not backfill missed occurrences without explicit user intent.
 - Inherit company invoice defaults while allowing template overrides for payment terms, due-date calculation, Terms & Conditions, notes, email delivery, and reminder rules.
 - Generated invoices use the normal company invoice numbering sequence.
 - Generated invoices materialize the applicable defaults and reminder schedule; later company-default changes do not rewrite them.
+- Scheduled invoices are created and issued. A per-template setting controls whether they are emailed automatically or left issued for manual sending.
+- If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.
+- Use a stable occurrence idempotency key and record last run, next run, outcome, and generated invoice.
+- The architecture specification defines company-local execution time, daylight-saving behavior, retry policy, and treatment of service downtime.
 - Avoid a queue or separate worker unless architecture analysis proves it necessary.
 
 ## Public documents
@@ -307,6 +353,9 @@ Recurring template
 - Expiry is user-configurable.
 - Links are revocable and regeneratable.
 - Regeneration invalidates the old link.
+- Quote validity and public-link expiry are independent; a technically valid link does not permit actions on a commercially Expired quote.
+- Direct email must create or confirm a valid link before sending.
+- Automated reminders may replace a naturally expired link but never recreate explicitly revoked access unless public access is re-enabled.
 - Public invoice pages support viewing and PDF download.
 - Public quote pages support viewing, PDF download, Accept, and Reject.
 - Accept or Reject requires customer name and email address.
@@ -327,6 +376,8 @@ Recurring template
 - Resolve recipients and PDF-delivery mode using per-send override, then customer preference, then company default.
 - Support one primary/default recipient and optional multiple CC and BCC recipients.
 - Show resolved recipients and secure-link-only/attach-PDF choice in the send composer before sending.
+- Require at least one valid primary recipient; validate and deduplicate To/CC/BCC addresses.
+- Automated sends with no valid recipient fail visibly and record the reason rather than retrying indefinitely.
 - Track Sent, Delivered, and Opened where ZeptoMail supports them.
 - Authenticate webhooks and process provider events idempotently.
 - Customer SMTP is excluded from v1.
@@ -341,6 +392,7 @@ Recurring template
 - Company-default changes affect future schedules unless explicitly reapplied.
 - Pending reminders are recalculated when the due date changes.
 - Pending reminders are suppressed when an invoice becomes Paid or Cancelled.
+- A Partially Paid invoice continues to receive reminders while it has a positive outstanding balance.
 - Reminder jobs run in the company timezone and must be idempotent under retries or overlapping executions.
 - Record sends and failures in invoice/email history.
 - The architecture specification must define the company-local send time and retry policy.
@@ -350,7 +402,8 @@ Recurring template
 - Launch languages are English and Romanian.
 - Both UI and generated documents are localized.
 - Additional languages should be straightforward to add.
-- Document language inherits the applicable default and is overridable per quote or invoice.
+- Initial document-language precedence is document choice, customer default, then company default.
+- The signed-in user's application language affects the internal UI only, not customer document language.
 - Localize system terminology, dates, numbers, and presentation.
 - Preserve user-entered descriptions exactly; do not automatically translate them.
 
@@ -380,3 +433,5 @@ Audit at least:
 - Important settings and membership changes
 
 An audit record should explain what happened, when, who caused it, what object was affected, and enough before/after information to understand important edits. Do not introduce full event sourcing solely for this requirement.
+
+Audit infrastructure is established with the platform foundation and used as each feature is built. Actor types distinguish internal users, authenticated public-customer actions, provider webhooks, scheduled jobs, and other system actions.

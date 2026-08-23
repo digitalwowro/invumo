@@ -40,19 +40,23 @@ export default function CompanyInvitationPage({
                 <Stack gap="xl">
                     <Stack gap="sm">
                         <BodyStrong>
-                            {interpolate(labels.invitedTo, {
-                                company: invitation.companyName ?? '',
-                                role: invitation.role
-                                    ? labels.roles[invitation.role]
-                                    : '',
-                            })}
+                            {invitation.emailMatches && invitation.role
+                                ? interpolate(labels.invitedTo, {
+                                      company: invitation.companyName ?? '',
+                                      role: labels.roles[invitation.role],
+                                  })
+                                : interpolate(labels.invitedToCompany, {
+                                      company: invitation.companyName ?? '',
+                                  })}
                         </BodyStrong>
-                        <Body>
-                            {interpolate(labels.sentTo, {
-                                email: invitation.invitedEmail ?? '',
-                            })}
-                        </Body>
-                        {invitation.expiresAt && (
+                        {invitation.emailMatches && invitation.invitedEmail && (
+                            <Body>
+                                {interpolate(labels.sentTo, {
+                                    email: invitation.invitedEmail,
+                                })}
+                            </Body>
+                        )}
+                        {invitation.emailMatches && invitation.expiresAt && (
                             <SecondaryText>
                                 {interpolate(labels.expires, {
                                     date: new Intl.DateTimeFormat(locale, {
@@ -116,12 +120,7 @@ function InvitationAction({
     if (!invitation.emailMatches) {
         return (
             <Stack gap="lg">
-                <SystemMessage
-                    title={interpolate(labels.wrongAccount, {
-                        email: invitation.invitedEmail ?? '',
-                    })}
-                    tone="warning"
-                />
+                <SystemMessage title={labels.wrongAccount} tone="warning" />
                 <TextLink href={logout()} as="button">
                     {labels.signIn}
                 </TextLink>

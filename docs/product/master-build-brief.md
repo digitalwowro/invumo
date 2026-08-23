@@ -48,6 +48,7 @@ Invumo is a multi-tenant SaaS for:
 9. Sending quotes and invoices by email
 10. Generating PDFs
 11. Publishing public quote and invoice links
+12. Operating the hosted SaaS through a restricted internal Platform Operations area
 
 Do not implement in v1:
 
@@ -63,7 +64,7 @@ Do not implement in v1:
 - Automatic translation of user-entered content
 - Customer SMTP
 - TOTP two-factor authentication and recovery codes
-- Subscription billing or payment collection for Invumo itself
+- Self-service or automated subscription billing and payment collection for Invumo itself; provider-independent manual plan-lifecycle administration is included
 - Custom document title/header overrides
 - Company-uploaded signature or stamp images
 - Custom company favicons
@@ -96,7 +97,7 @@ Separate these concepts:
 
 An Account belongs to an account owner. The account owner has an Invumo plan. In v1, registration creates exactly one personal Account for the new User in the same transaction, using the default placeholder plan. A User cannot own a second Account, but their Account may own multiple Companies and the User may also belong to Companies owned by other Accounts.
 
-v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, and rate limiting. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
+v1 authentication uses the official Laravel React starter kit with built-in Fortify sessions. It must cover registration, email verification, sign-in, sign-out, password reset, password confirmation, secure session invalidation, and rate limiting. Verification and recovery email must use the User's Laravel-authored English/Romanian locale, encrypted after-commit queue payloads, bounded retries, and delivery-time suppression when the verification state or recovery token is no longer valid. Do not use WorkOS AuthKit or the starter kit's Teams domain; Invumo owns its Account, Company, and Membership model.
 
 TOTP two-factor authentication and recovery codes are explicitly deferred from v1.
 
@@ -108,7 +109,21 @@ Initial placeholder plans:
 
 These are placeholders only. Additional plans must be possible later.
 
-Do not build subscription billing, Stripe integration, or a plan-creator/admin plan builder in v1. The plan and entitlement architecture should exist, but its initial behavior may remain minimal.
+Do not build subscription checkout/payment collection, Stripe integration, automated renewals/dunning, or a plan-creator interface in v1. Platform Operations includes manual assignment of the seeded Plans and provider-independent lifecycle/status/date tracking so the operator can see active, trialing, past-due, canceled, expired, and upcoming-expiry Accounts.
+
+## 2.1 Platform Operations
+
+Invumo requires an internal back office for its operator. This is not a fourth Company role.
+
+- A verified User receives Platform Owner authority only through a separate protected operator record.
+- Company Owner/Admin/Member roles never imply platform authority, and Platform Owner never implies Company membership.
+- Platform Operations uses a distinct `/platform` shell and exposes only approved control-plane User, Account, Company, plan-lifecycle, and platform-audit metadata.
+- It does not expose tenant Customers, documents, Transactions, settings, email/PDF content, or tenant audit payloads and does not bypass PostgreSQL RLS.
+- v1 supports guarded User and Account suspension/reactivation, session invalidation, manual current-Plan/lifecycle administration, and append-only platform audit.
+- v1 excludes impersonation, routine tenant-data support access, self-service billing, payment collection, provider webhooks, and Plan creation/editing.
+- The first Platform Owner is granted only through an explicitly authorized protected application command after the User has registered and verified their email.
+
+The complete security, data, status, route, and implementation sequence is defined in [Platform Operations](../architecture/platform-operations.md).
 
 ## 3. Companies and tenant model
 
@@ -153,7 +168,7 @@ A company can have multiple members with these roles:
 
 v1 uses only these fixed roles. There are no custom permissions, per-user overrides, creator-only records, or per-record sharing rules inside a Company. Permissions follow the active Company membership, and permitted Company records are shared regardless of who created them.
 
-The Owner has every Company permission and exclusively controls the owning Account plan, ownership transfer, and permanent Company erasure. Admin manages ordinary Company operations, settings, and non-Owner membership administration but cannot affect the Owner membership or itself through those actions. Member performs day-to-day Customer, Quote, Invoice, Payment, and Refund work; may correct Quote lifecycle and cancel/reopen Invoices; may prepare Draft recurring templates; and may use active catalog entries or manual lines. Member cannot manage Company settings/catalog entries, Adjustments, Active recurring automation, permanent deletion, Quote provenance unlinking, exceptional duplicate/issued numbering, Company-wide operations, or the full audit trail.
+The Owner has every Company permission and, among Company roles, exclusively controls owning-Account plan views/actions, ownership transfer, and permanent Company erasure. The separate Platform Owner may administer the current Plan/lifecycle only through Platform Operations. Admin manages ordinary Company operations, settings, and non-Owner membership administration but cannot affect the Owner membership or itself through those actions. Member performs day-to-day Customer, Quote, Invoice, Payment, and Refund work; may correct Quote lifecycle and cancel/reopen Invoices; may prepare Draft recurring templates; and may use active catalog entries or manual lines. Member cannot manage Company settings/catalog entries, Adjustments, Active recurring automation, permanent deletion, Quote provenance unlinking, exceptional duplicate/issued numbering, Company-wide operations, or the full audit trail.
 
 Members may create, edit, and delete Payments and Refunds under the complete ledger rules. Creating, editing, or deleting an Adjustment remains entirely Owner/Admin-only. The exact approved action matrix and enforcement requirements are defined in [Owner, Admin, and Member Permission Matrix](../architecture/role-permission-matrix.md).
 
@@ -167,6 +182,7 @@ During transfer:
 
 - Existing company data remains intact.
 - Existing company members remain attached by default.
+- The destination must already be an Admin or Member of that Company; ownership cannot be transferred by entering an arbitrary registered email address.
 - The destination account owner becomes the sole company Owner.
 - The former Owner remains attached as Admin by default unless the confirmed transfer explicitly removes them.
 - Destination-plan entitlements and limits are validated before the transfer commits.
@@ -982,6 +998,8 @@ Account/user settings include profile, account preferences, application language
 
 Company settings include legal details, structured address, customizable registration labels, timezone, automation-local time, tax presets, bank accounts, logo, primary brand color, currencies, currency display style, precision, numbering, document defaults, language, payment terms, quote validity, email defaults, members, and public-link defaults.
 
+Platform Operations is a separate internal workspace. It is not placed in Account or Company settings and is not shown to ordinary Users.
+
 A user switching between companies must always understand which company is active.
 
 ## 31. Security
@@ -1006,6 +1024,7 @@ Address at least:
 - File and logo upload validation
 - Sensitive logging
 - Ownership-transfer safety
+- Platform-operator isolation, last-operator protection, suspension safeguards, and platform-audit integrity
 
 Never rely solely on client-side authorization. Every server-side business-data operation must verify company membership and permission.
 
@@ -1023,6 +1042,7 @@ Likely concepts include:
 - Authentication/session/recovery records or provider mappings
 - Accounts
 - Plans/entitlements
+- Platform operators and append-only platform audit events
 - Companies
 - Company members
 - Company invitations
@@ -1088,6 +1108,7 @@ Create automated tests for critical calculations and workflows, especially:
 
 - Registration verification, password recovery, session invalidation, and invitation expiry/revocation/single use
 - Company switching, ownership transfer, and cross-company access denial
+- Platform-role isolation, plan-lifecycle boundaries, User/Account suspension, and last-operator protection
 - Invoice line and period calculations
 - Discounts and taxes
 - Tax-preset snapshot behavior

@@ -5,8 +5,10 @@ use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
 use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
 use App\Modules\Companies\Http\Controllers\CompanyMemberController;
+use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
 use App\Support\Inertia\CommonTranslationBag;
 use App\Support\Inertia\DesignSystemTranslationBag;
+use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -38,6 +40,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->group(function (): void {
             Route::get('companies/{company}/settings/members', [CompanyMemberController::class, 'index'])
                 ->name('company-members.index');
+            Route::delete('companies/{company}/settings/members/current', [CompanyMemberController::class, 'leave'])
+                ->middleware('throttle:10,1')
+                ->name('company-members.leave');
+            Route::patch('companies/{company}/settings/ownership', [CompanyOwnershipController::class, 'update'])
+                ->middleware([RequirePassword::class, 'throttle:5,1'])
+                ->name('company-ownership.update');
+            Route::patch('companies/{company}/settings/members/{membership}', [CompanyMemberController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-members.update');
+            Route::delete('companies/{company}/settings/members/{membership}', [CompanyMemberController::class, 'destroy'])
+                ->middleware('throttle:20,1')
+                ->name('company-members.destroy');
             Route::post('companies/{company}/settings/members/invitations', [CompanyMemberController::class, 'store'])
                 ->middleware('throttle:10,1')
                 ->name('company-invitations.store');

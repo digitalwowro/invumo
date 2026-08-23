@@ -60,6 +60,9 @@ export type CompanyMember = {
     email: string;
     role: CompanyRole;
     isCurrentUser: boolean;
+    nextRole: Exclude<CompanyRole, 'OWNER'> | null;
+    updateUrl: string | null;
+    removeUrl: string | null;
 };
 
 export type CompanyPendingInvitation = {
@@ -70,6 +73,13 @@ export type CompanyPendingInvitation = {
     expired: boolean;
     resendUrl: string;
     revokeUrl: string;
+};
+
+export type CompanyOwnershipCandidate = {
+    id: string;
+    name: string;
+    email: string;
+    role: Exclude<CompanyRole, 'OWNER'>;
 };
 
 export type CompanyMembersTranslations = {
@@ -93,6 +103,31 @@ export type CompanyMembersTranslations = {
     expires_column: string;
     actions_column: string;
     current_user: string;
+    change_role: string;
+    change_role_title: string;
+    change_role_description: string;
+    confirm_role_change: string;
+    remove_member: string;
+    remove_member_title: string;
+    remove_member_description: string;
+    confirm_remove_member: string;
+    leave_title: string;
+    leave_description: string;
+    leave_company: string;
+    leave_company_title: string;
+    leave_company_description: string;
+    confirm_leave_company: string;
+    transfer_title: string;
+    transfer_description: string;
+    transfer_company: string;
+    transfer_dialog_title: string;
+    transfer_dialog_description: string;
+    transfer_destination: string;
+    transfer_destination_placeholder: string;
+    retain_former_owner: string;
+    confirm_transfer: string;
+    no_transfer_candidates_title: string;
+    no_transfer_candidates_description: string;
     expired: string;
     pending: string;
     resend: string;
@@ -101,7 +136,16 @@ export type CompanyMembersTranslations = {
     revoke_description: string;
     confirm_revoke: string;
     roles: Record<CompanyRole, string>;
-    feedback: Record<'invited' | 'resent' | 'revoked', string>;
+    feedback: Record<
+        | 'invited'
+        | 'resent'
+        | 'revoked'
+        | 'role_changed'
+        | 'removed'
+        | 'left'
+        | 'ownership_transferred',
+        string
+    >;
     errors: Record<string, string>;
 };
 
@@ -112,6 +156,7 @@ export type CompanyInvitationTranslations = {
         title: string;
         description: string;
         invitedTo: string;
+        invitedToCompany: string;
         sentTo: string;
         expires: string;
         accept: string;

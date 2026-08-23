@@ -8,6 +8,10 @@ use App\Modules\Audit\Data\AuditActorType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $before
+ * @property array<string, mixed>|null $after
+ */
 #[Fillable([
     'company_id',
     'actor_type',

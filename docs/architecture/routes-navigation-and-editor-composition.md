@@ -73,7 +73,7 @@ The narrow-screen navigation is a sheet containing the same Company switcher, de
 
 Members do not receive a dead or disabled Products & Services navigation item. Catalogue selection remains available in document editors. Owner-only settings/actions are omitted for Admin where required, while the normal Company-scoped Settings destination remains visible.
 
-The account/user menu owns Profile, Security, Preferences/Application language, accessible Companies, Plan/entitlements where permitted, and Sign out. These are not mixed into Company Settings.
+The account/user menu owns Profile, Security, Preferences/Application language, accessible Companies, Plan/entitlements where permitted, and Sign out. A verified Platform Owner additionally receives one “Platform operations” destination. These are not mixed into Company Settings, and platform navigation never appears in the Company sidebar.
 
 There is no v1 primary navigation entry for Purchase Orders, Vendors, Credit Notes, Expenses, Accounting, Reports, Contracts, Inventory, or Audit for Members. Owner/Admin reach the full Company audit trail from Company Settings/Operations rather than adding another top-level destination.
 
@@ -92,11 +92,34 @@ Route names use normal Laravel resource vocabulary. Exact controller/action clas
 | GET         | `/invitations/{token}`                                                    | Rate-limited invitation review without Company enumeration                |
 | POST        | `/invitations/{token}/accept`                                             | Accept after authentication, verification, and invited-email matching     |
 | GET/POST    | `/companies/{company}/settings/members`                                   | Authorized member directory and invitation creation                      |
+| PATCH/DELETE | `/companies/{company}/settings/members/{membership}`                      | Guarded non-Owner role change or removal                                  |
+| DELETE      | `/companies/{company}/settings/members/current`                            | Guarded Admin/Member self-leave                                            |
+| PATCH       | `/companies/{company}/settings/ownership`                                  | Reauthenticated Owner transfer to an existing Admin/Member                 |
 | POST/DELETE | `/companies/{company}/settings/members/invitations/{invitation}/*`        | Resend or revoke a Company-bound pending invitation                       |
 | GET/PATCH   | `/settings/profile`                                                      | User identity                                                             |
 | GET/PUT     | `/settings/security`                                                     | Password and secure-session controls in v1 scope                          |
 | GET/PATCH   | `/settings/preferences`                                                  | Application language and account-level preferences                        |
-| GET         | `/settings/plan`                                                         | Owner-controlled Account plan/entitlements when implemented               |
+| GET         | `/settings/plan`                                                         | Account Owner view of current plan/entitlements when implemented           |
+
+### 4.1.1 Platform Operations routes
+
+These routes use a distinct platform shell, current operator revalidation, and the guards in the approved [Platform Operations contract](platform-operations.md).
+
+| Method | Route                                  | Responsibility                                                                      |
+| ------ | -------------------------------------- | ----------------------------------------------------------------------------------- |
+| GET    | `/platform`                            | Platform overview                                                                   |
+| GET    | `/platform/users`                      | Searchable User control-plane list                                                   |
+| GET    | `/platform/accounts`                   | Searchable Account and current plan-lifecycle list                                   |
+| GET    | `/platform/companies`                  | Searchable Company ownership/membership-count list                                   |
+| GET    | `/platform/plan-lifecycle`             | Active/trial/past-due/cancel-at-end/expired/upcoming-expiry operational views        |
+| GET    | `/platform/audit`                      | Reverse-chronological append-only platform audit                                     |
+| POST   | `/platform/users/{user}/suspension`    | Guarded User suspension                                                              |
+| DELETE | `/platform/users/{user}/suspension`    | Guarded User reactivation                                                            |
+| POST   | `/platform/accounts/{account}/suspension` | Guarded Account suspension                                                         |
+| DELETE | `/platform/accounts/{account}/suspension` | Guarded Account reactivation                                                       |
+| PATCH  | `/platform/accounts/{account}/plan`    | Guarded seeded-Plan and lifecycle update                                             |
+
+Platform Owner grant/revoke has no web route in v1. Non-operators receive no platform route/action props. Platform pages use the same shared page, operational-table, status, form, confirmation, accessibility, responsive, and localization components as the Company application without a second visual system.
 
 ### 4.2 Company shell and operational resources
 

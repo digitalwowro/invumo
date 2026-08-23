@@ -60,7 +60,7 @@ These records are needed before a Company tenant context is selected. They use s
 
 ### `users`
 
-Use UUIDv7 `id` with the official Laravel/Fortify authentication fields. Keep application language on the User. Framework session, password-reset, and similar infrastructure tables retain only the identifier exceptions already approved in the identifier policy.
+Use UUIDv7 `id` with the official Laravel/Fortify authentication fields. Keep application language plus nullable `suspended_at` and `last_login_at` on the User. Framework session, password-reset, and similar infrastructure tables retain only the identifier exceptions already approved in the identifier policy.
 
 ### `plans`
 
@@ -70,15 +70,18 @@ Use UUIDv7 `id` with the official Laravel/Fortify authentication fields. Keep ap
 - `entitlements` as a small validated `jsonb` object because placeholder plan capabilities are intentionally extensible and not Company business data
 - `active`
 
-There is no subscription billing or plan-builder domain in v1.
+There is no checkout/payment collection, provider integration, automated renewal/dunning, or plan-builder domain in v1. The existing seeded Plans are assigned manually through the approved Platform Operations lifecycle.
 
 ### `accounts`
 
 - `id`
 - `owner_user_id`, unique and restricted on delete
 - `plan_id`
+- `plan_status`: `TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`, or `EXPIRED`
+- `plan_started_at`, nullable `trial_ends_at`, nullable `access_ends_at`, `cancel_at_period_end`, and nullable `ended_at`
+- nullable `suspended_at`
 
-The unique owner key enforces at most one personal Account per User. Registration creates the User and Account in one transaction.
+The unique owner key enforces at most one personal Account per User. Registration creates the User and Account in one transaction with the active Free Plan, `ACTIVE` status, a start timestamp, and no access end. Named checks enforce the approved lifecycle/date combinations. The current Account row is authoritative; append-only platform audit preserves manual lifecycle-change history until a future billing integration justifies a separate provider-event model.
 
 ### `companies`
 
@@ -87,7 +90,7 @@ The unique owner key enforces at most one personal Account per User. Registratio
 - minimal control-plane display name needed for Company selection
 - `archived_at`, nullable
 
-Company business identity belongs to tenant settings, not this control-plane selector row. Company transfer changes `owning_account_id` and membership roles without changing `companies.id` or any business foreign key.
+Company business identity belongs to tenant settings, not this control-plane selector row. Company transfer may target only an existing Admin/Member; it changes `owning_account_id` and the two affected membership roles without changing `companies.id` or any business foreign key.
 
 ### `company_memberships`
 
@@ -112,6 +115,28 @@ A deferred constraint trigger validates at transaction commit that each Company 
 Acceptance locks the invitation, rechecks email/company/expiry/revocation, creates one membership, records the accepting User, and consumes the invitation in one transaction. A resend rotates the token and restarts the full 7-day lifetime so the previous link stops working. Ordinary invitations cannot create Owner membership.
 
 Invitation email is queued only after the business transaction commits. Because the acceptance credential must appear in the email but plaintext tokens are never persisted as invitation data, the token-bearing queue job payload is encrypted. Immediately before mail delivery it reloads the invitation and suppresses delivery if the token was rotated, accepted, revoked, or expired.
+
+### `platform_operators`
+
+- `id`
+- `user_id`, unique and indexed
+- role limited to `OWNER` in v1
+- timestamps
+
+Platform authority is independent of Company membership. The grant/revoke command locks the target User/operator rows, requires a verified and unsuspended User, prevents removal of the last active Platform Owner, and records a platform audit event.
+
+### `platform_audit_events`
+
+- `id`
+- nullable/indexed actor User for bootstrap/system cases
+- action, target type, and target UUID
+- nullable required-by-action reason
+- allowlisted `before`/`after` `jsonb`
+- occurrence timestamp and optional unique idempotency key
+
+This is append-only control-plane history, not Company audit. The restricted runtime role can insert and perform authorized reads but cannot update/delete. Payloads follow the approved audit allowlist and secret-safety contract and never contain tenant business data.
+
+Control-plane list indexes cover User normalized email/creation/suspension, Account status/end/suspension, Company owner/name/creation, operator User, and reverse-chronological platform audit. PostgreSQL does not automatically index foreign keys, so every platform/control-plane foreign key used for lookup or deletion receives an explicit supporting index.
 
 ## 5. Company configuration
 
@@ -619,12 +644,14 @@ Named actions acquire locks in this order when the records apply:
 4. dependent provenance/transaction/reminder rows in stable UUID order;
 5. audit and `job_dispatches` inserts.
 
+Ownership transfer uses its own control-plane specialization: lock the Company, the current/destination Accounts in stable UUID order, then the current/destination memberships in stable UUID order before changing the former-Owner outcome, sole Owner role, and `owning_account_id` in one transaction. The deferred matching-Owner constraint validates the final state at commit.
+
 No network, PDF rendering, file upload, provider request, or user wait occurs while these locks are held.
 
 ### Migration order
 
 1. Database roles, approved extensions, shared helpers, and conventions.
-2. Users, plans, Accounts, Companies, memberships, and invitations.
+2. Users, plans, Accounts, Companies, memberships, invitations, platform operators, and platform audit.
 3. tenant settings, currencies, taxes, bank accounts, assets, email defaults, numbering/history, reminder defaults, and audit foundation.
 4. Customers/contacts/recipients and Products/Services.
 5. shared Documents, Quote/Invoice subtypes, snapshots, lines, and provenance.
@@ -639,7 +666,10 @@ For safe deployed changes, prefer expand/backfill/verify/constrain/contract migr
 - Every domain primary/foreign key has the approved UUID type and every new model generates UUIDv7.
 - Every tenant table has non-null `company_id`, forced RLS, restricted runtime grants, and same-Company foreign keys.
 - Missing/wrong tenant context cannot read or write data, including child/snapshot tables.
-- Exactly one valid Owner exists after registration and ownership transfer.
+- Exactly one valid Owner exists after registration and ownership transfer; transfer rejects non-members, the existing Owner, cross-Company memberships, and destination Accounts without a currently active eligible Plan.
+- Company roles cannot grant platform access; the last active Platform Owner cannot be removed or suspended.
+- Account plan-lifecycle check constraints reject impossible state/date combinations, and exact 7-/30-day expiry queries use supporting indexes.
+- User suspension invalidates authentication while Account suspension denies only Companies owned by that Account.
 - Document base/subtype kind integrity cannot be violated.
 - Drafts may be incomplete, but Quote send and Invoice issue cannot commit without complete snapshots and a valid billable line.
 - Source edits/archives cannot change existing ordinary document/template line snapshots.

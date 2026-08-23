@@ -64,6 +64,7 @@ type ConfirmationDialogProps = {
     cancelLabel: string;
     closeLabel?: string;
     onConfirm?: () => void;
+    tone?: 'default' | 'destructive';
 };
 
 export function ConfirmationDialog({
@@ -74,11 +75,16 @@ export function ConfirmationDialog({
     cancelLabel,
     closeLabel,
     onConfirm,
+    tone = 'destructive',
 }: ConfirmationDialogProps) {
+    const triggerVariant = tone === 'destructive' ? 'destructive' : 'secondary';
+    const confirmVariant =
+        tone === 'destructive' ? 'destructive-confirm' : 'primary';
+
     return (
         <ResponsiveDialog
             trigger={
-                <Button type="button" variant="destructive">
+                <Button type="button" variant={triggerVariant}>
                     {triggerLabel}
                 </Button>
             }
@@ -95,7 +101,7 @@ export function ConfirmationDialog({
                     <DialogClose asChild>
                         <Button
                             type="button"
-                            variant="destructive-confirm"
+                            variant={confirmVariant}
                             onClick={onConfirm}
                         >
                             {confirmLabel}

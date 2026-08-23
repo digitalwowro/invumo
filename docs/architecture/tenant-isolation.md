@@ -15,11 +15,14 @@ The application must access some records before selecting a tenant:
 
 - Users and authentication/session/recovery records
 - Accounts and plan entitlements
+- Platform operators, Account plan lifecycle/suspension, and platform audit
 - Companies
 - Memberships and invitations
 - Minimal scheduling-dispatch records
 
 These tables use strict grants, application authorization, and targeted query paths. They must not contain copied customer/document financial payloads merely to avoid RLS.
+
+The approved Platform Operations area may query only this bounded control-plane metadata. Platform Owner is not an RLS-bypass role and cannot use an unscoped connection to inspect tenant business tables. Any future support access to tenant data requires a separately approved break-glass design.
 
 ### Tenant-owned business data
 
@@ -148,6 +151,8 @@ Required tests prove:
 - The scheduling dispatcher cannot read tenant business data
 - Migration privileges remain unavailable to the runtime role
 - Ownership transfer preserves tenant identity and isolation
+- Platform Operations cannot read tenant business rows without entering an independently authorized Company context
+- Account suspension denies access only to Companies owned by the suspended Account
 
 Run these tests in continuous integration against PostgreSQL. SQLite is not an acceptable substitute for isolation, concurrency, numbering, or scheduling integration tests.
 

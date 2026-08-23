@@ -48,6 +48,7 @@ The approved module catalog is:
 | `Recurring`    | Recurring templates, occurrence generation, schedule resolution, and automation controls                                |
 | `Delivery`     | Public document access, PDF composition, email/reminder workflows, delivery history, and provider-event normalization   |
 | `Audit`        | Append-only audit events and authorized operational/audit queries                                                       |
+| `Platform`     | Internal operator authorization, control-plane administration, Account plan lifecycle/suspension, and platform audit    |
 
 This catalog describes ownership, not deployment. A cross-cutting workflow still runs inside one database transaction and one application. Split or merge a module only through an approved architecture change backed by actual code pressure.
 
@@ -109,6 +110,8 @@ Laravel entry points / Inertia pages
 ```
 
 `Foundation` depends on neither modules nor integrations. Modules may depend on Foundation but not concrete integrations. Integrations may depend on Foundation and the module contracts/data they implement, but not on module Actions, Models, HTTP code, or Policies.
+
+`Platform` may coordinate approved control-plane mutations through the owning `Identity` or `Companies` module Action when that domain owns the invariant. It never mutates another module's models as an authorization shortcut and never bypasses tenant context to inspect Company business data.
 
 ## 3. Write and read boundaries
 

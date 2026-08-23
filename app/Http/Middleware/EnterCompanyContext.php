@@ -29,7 +29,11 @@ final readonly class EnterCompanyContext
                     $response = $next($request);
 
                     if ($response->getStatusCode() < 400) {
-                        $request->session()->put('last_company_id', $company->id);
+                        if ($request->session()->pull('company_context.skip_remember_once', false)) {
+                            $request->session()->forget('last_company_id');
+                        } else {
+                            $request->session()->put('last_company_id', $company->id);
+                        }
                     }
 
                     return $response;

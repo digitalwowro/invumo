@@ -145,10 +145,14 @@ class CompanyInvitationWorkflowTest extends TestCase
             $second->invitation->token_hash,
         );
         $this->assertTrue($second->invitation->expires_at->equalTo(now()->addDays(7)));
-        $this->assertSame([], $this->notificationFor($first)->via(new AnonymousNotifiable));
+        $this->assertFalse(
+            $this->notificationFor($first)->shouldSend(new AnonymousNotifiable, 'mail'),
+        );
 
         app(RevokeCompanyInvitation::class)->handle($company, $owner, $second->invitation);
-        $this->assertSame([], $this->notificationFor($second)->via(new AnonymousNotifiable));
+        $this->assertFalse(
+            $this->notificationFor($second)->shouldSend(new AnonymousNotifiable, 'mail'),
+        );
 
         $invitee = $this->accountOwner(email: 'invited@example.com');
         $this->expectExceptionObject(CompanyInvitationException::unavailable());

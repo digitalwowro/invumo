@@ -18,6 +18,7 @@ type SelectOption = {
 type SelectFieldProps = {
     id?: string;
     name: string;
+    form?: string;
     label: string;
     description?: string;
     error?: string;
@@ -31,6 +32,7 @@ type SelectFieldProps = {
 export function SelectField({
     id: suppliedId,
     name,
+    form,
     label,
     description,
     error,
@@ -51,6 +53,7 @@ export function SelectField({
             <FieldLabel htmlFor={id}>{label}</FieldLabel>
             <Select
                 name={name}
+                form={form}
                 defaultValue={defaultValue}
                 required={required}
                 disabled={disabled}

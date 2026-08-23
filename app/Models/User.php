@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Foundation\Database\Concerns\HasDomainIdentifiers;
 use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Identity\Models\Account;
+use App\Modules\Identity\Notifications\ResetPasswordNotification;
+use App\Modules\Identity\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -34,6 +36,16 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasDomainIdentifiers, HasFactory, Notifiable;
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify((new VerifyEmailNotification)->locale($this->language_code));
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify((new ResetPasswordNotification($token))->locale($this->language_code));
+    }
 
     public function getConnectionName(): string
     {

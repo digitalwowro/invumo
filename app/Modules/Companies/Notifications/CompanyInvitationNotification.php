@@ -33,19 +33,22 @@ final class CompanyInvitationNotification extends Notification implements Should
     /** @return list<string> */
     public function via(object $notifiable): array
     {
+        return ['mail'];
+    }
+
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
         $invitation = CompanyInvitation::query()->find($this->invitationId);
 
-        if (
-            $invitation === null
-            || $invitation->revoked_at !== null
-            || $invitation->accepted_at !== null
-            || $invitation->expires_at->lessThanOrEqualTo(now())
-            || ! hash_equals($invitation->token_hash, CompanyInvitationToken::hash($this->plainTextToken))
-        ) {
-            return [];
-        }
-
-        return ['mail'];
+        return $channel === 'mail'
+            && $invitation !== null
+            && $invitation->revoked_at === null
+            && $invitation->accepted_at === null
+            && $invitation->expires_at->isAfter(now())
+            && hash_equals(
+                $invitation->token_hash,
+                CompanyInvitationToken::hash($this->plainTextToken),
+            );
     }
 
     public function toMail(object $notifiable): MailMessage

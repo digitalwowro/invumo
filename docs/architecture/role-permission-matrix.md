@@ -19,6 +19,7 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 - Admin is the Company-management role. It has all operational and configuration permissions except authority over the owning Account, ownership transfer, permanent Company erasure, or the Owner membership.
 - Member is the ordinary day-to-day role. It can manage Customers, routine document workflows, Payments/Refunds, Quote lifecycle corrections, and Invoice cancellation/reopening. It cannot change Company configuration, control unattended automation, create or mutate Adjustments, manage the product catalog, permanently delete business records, unlink Quote provenance, or make exceptional duplicate/issued-number decisions.
 - Removing a membership or accepting a role change affects authorization immediately. Existing sessions must not retain the previous Company abilities.
+- Platform Owner is a separate internal role governed by the [Platform Operations contract](platform-operations.md). It is never inferred from any Company role and does not grant Company membership or tenant-data access.
 
 ## 2. Matrix legend
 
@@ -29,6 +30,23 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 | Self     | This is a personal User action rather than authority over other Company members                                                    |
 | Use only | The role may view/select active values but cannot manage their source records                                                      |
 | No       | The server denies the action and the UI does not offer it                                                                          |
+
+## 2.1 Platform Operations matrix
+
+This matrix is independent of the Company-role tables below.
+
+| Action                                                       | Platform Owner | Company Owner/Admin/Member without platform role | Notes                                                                                              |
+| ------------------------------------------------------------ | -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Open Platform Operations                                     | Yes            | No                                              | Verified, unsuspended User and current operator record required                                    |
+| View approved User/Account/Company control-plane metadata    | Yes            | No                                              | Never includes tenant business content or an RLS bypass                                            |
+| View current plan lifecycle and upcoming expirations         | Yes            | No                                              | Operational status/date tracking only; no billing/payment data exists in v1                        |
+| Change an Account's seeded Plan or lifecycle                 | Guarded        | No                                              | Recent password confirmation, explicit confirmation/reason, locks, validation, and platform audit  |
+| Suspend/reactivate a non-operator User and revoke sessions   | Guarded        | No                                              | Cannot target self or the last active Platform Owner                                               |
+| Suspend/reactivate an Account                                | Guarded        | No                                              | Blocks Companies owned by that Account; does not affect unrelated Account ownership                |
+| View platform audit                                          | Yes            | No                                              | Separate from Company audit                                                                        |
+| Grant/revoke Platform Owner through the web UI               | No             | No                                              | Protected confirmed application command only in v1; last active operator cannot be removed         |
+| Read tenant Customers/documents/Transactions without context | No             | No                                              | A future support break-glass workflow requires separate approval                                   |
+| Impersonate another User                                     | No             | No                                              | Explicitly excluded from v1                                                                        |
 
 ## 3. Already-approved authorization boundaries
 
@@ -47,8 +65,8 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 | Edit own profile, application language, password, and sessions | Self    | Self    | Self   | Not delegated through a Company role                                                                             |
 | Switch among Companies where the User has active membership    | Yes     | Yes     | Yes    | The destination membership controls the new context                                                              |
 | View active Company identity and member directory              | Yes     | Yes     | Yes    | Does not expose secrets or Account controls                                                                      |
-| View/manage the owning Account's plan and entitlements         | Yes     | No      | No     | Authority belongs to that Account's owner                                                                        |
-| Transfer Company ownership                                     | Guarded | No      | No     | **Already approved:** validate destination entitlements, reauthenticate, confirm former-Owner outcome, and audit |
+| View the owning Account's plan and entitlements                | Yes     | No      | No     | Exclusive among Company roles; Platform Owner lifecycle administration follows the separate matrix               |
+| Transfer Company ownership                                     | Guarded | No      | No     | Existing Admin/Member only; validate destination Account/Plan, reauthenticate, confirm former-Owner outcome, and audit |
 | Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                         |
 | Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expires 7 days after issue/resend; revocable and single-use; cannot invite Owner                                  |
 | Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                        |

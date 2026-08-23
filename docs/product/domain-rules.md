@@ -17,18 +17,18 @@ Across the domain, unusual but internally valid workflows should remain possible
 - A user may belong to companies owned by different accounts.
 - Each company has exactly one owning Account and one Owner membership held by that Account's owner; Admin and Member memberships may be multiple.
 - Transferring a company to a different account must not rewrite its customers, documents, transactions, or audit history.
-- Transfer validates destination-plan entitlements, makes the destination account owner the sole company Owner, and retains the former Owner as Admin by default unless explicitly removed in the confirmed transfer.
+- Transfer targets only an existing Admin or Member of that Company, validates the destination member's Account and current Plan eligibility, makes that User the sole Company Owner, and retains the former Owner as Admin by default unless explicitly removed in the confirmed transfer.
 - Other existing members remain attached during transfer by default.
 - Every server-side business-data operation must verify company scope, membership, and permission.
 - Never trust a client-provided company identifier without server-side authorization.
 - Tenant-owned business tables also use forced PostgreSQL Row-Level Security. Every tenant-owned row, including child rows, carries `company_id`; same-company composite foreign keys prevent cross-company parent/child links.
 - The Laravel runtime database role is not the schema owner and cannot bypass RLS. Tenant context is set transaction-locally only after authorization, is required by queue jobs, and denies access when absent.
 - Control-plane, public-token, and scheduler bootstrap paths are narrow and must never grant a general tenant-data bypass. The approved mechanism is defined in [`../architecture/tenant-isolation.md`](../architecture/tenant-isolation.md).
-- Authentication uses the official Laravel React starter kit with built-in Fortify and covers registration, email verification, sign-in/out, password reset/confirmation, rate limiting, and secure session invalidation. WorkOS AuthKit, the starter kit's Teams domain, TOTP two-factor authentication, and recovery codes are excluded from v1.
+- Authentication uses the official Laravel React starter kit with built-in Fortify and covers registration, email verification, sign-in/out, password reset/confirmation, rate limiting, and secure session invalidation. Verification and recovery messages use the User's Laravel-authored English/Romanian locale, encrypted after-commit queue payloads, bounded retries, and delivery-time link-validity rechecks. WorkOS AuthKit, the starter kit's Teams domain, TOTP two-factor authentication, and recovery codes are excluded from v1.
 - Company invitations are email-addressed, expire exactly 7 days after their most recent issue or resend, are revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
 - Ownership transfer requires explicit confirmation and cannot be performed as an ordinary role change.
 - v1 has only the fixed Owner, Admin, and Member roles; it has no custom permissions, per-user overrides, creator-only records, or per-record sharing within a Company.
-- Owner has every Company permission and alone controls the owning Account plan, ownership transfer, and permanent Company erasure.
+- Owner has every Company permission and, among Company roles, alone controls owning-Account plan views/actions, ownership transfer, and permanent Company erasure; separate Platform Owner lifecycle administration follows the Platform Operations boundary.
 - Admin manages normal Company operations/settings and may invite, change, or remove non-Owner members other than itself; it cannot affect the Owner membership.
 - Member may manage Customers and routine Quotes/Invoices; send documents; manage their public links and Invoice reminder overrides; correct Quote lifecycle; cancel/reopen Invoices; record/edit/delete Payments and Refunds; and prepare Draft recurring templates.
 - Member may use active Products & Services or enter manual lines but cannot manage the catalog, Company settings, Adjustments, Active recurring automation, permanent deletion, Quote provenance unlinking, exceptional duplicate/issued numbering, Company-wide operations, or the full audit trail.
@@ -39,8 +39,22 @@ Across the domain, unusual but internally valid workflows should remain possible
 
 - Plans belong to the account, not individual companies.
 - Free, Pro, and Enterprise are placeholder plan names.
-- v1 needs an extensible entitlement model only.
-- Billing, payment collection, and a plan-builder interface are excluded.
+- v1 keeps one current Plan on each Account plus provider-independent lifecycle status and optional trial/access-end dates for internal operational visibility.
+- Platform Owner may manually assign an active seeded Plan and lifecycle state with confirmation, reason, row locking, and platform audit.
+- Plan expiry/past-due state never deletes data, silently changes plan, or automatically suspends access in v1; suspension is an explicit separate action.
+- Self-service checkout, automated billing/payment collection, renewal/dunning, provider webhooks, and a plan-builder interface are excluded.
+
+## Platform Operations boundary
+
+- Platform Owner is a separate internal role attached to a verified User through a protected operator record; no Company role or Account ownership grants it.
+- Platform Operations may search and review approved User, Account, Company, membership-count, plan-lifecycle, suspension, and platform-audit control-plane metadata only.
+- Platform Operations never receives a general tenant-RLS bypass and does not expose tenant Customer, document, Transaction, settings, delivery, file, or tenant-audit content.
+- v1 has no impersonation or tenant-data support mode.
+- User suspension invalidates that User's sessions, blocks authentication, and preserves all data/history. A Platform Owner cannot suspend itself or the last active Platform Owner.
+- Account suspension blocks all members from Companies owned by that Account while preserving memberships/data and leaving their access to Companies owned by other active Accounts intact.
+- Every platform mutation requires current operator revalidation, confirmation, a reason where applicable, recent password confirmation for sensitive actions, row locking, and an append-only platform audit event.
+- Web UI cannot grant/revoke Platform Owner in v1; a protected confirmed command performs it and cannot remove the last active operator.
+- The complete approved contract is [`../architecture/platform-operations.md`](../architecture/platform-operations.md).
 
 ## Company identity and locale
 

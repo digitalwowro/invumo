@@ -5,7 +5,9 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use App\Modules\Identity\Notifications\VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -29,6 +31,8 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register()
     {
+        Notification::fake();
+
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -46,6 +50,7 @@ class RegistrationTest extends TestCase
         $this->assertSame('test@example.com', $user->email_normalized);
         $this->assertSame('free', $account->plan()->firstOrFail()->code);
         $this->assertTrue(Plan::query()->where('code', 'free')->where('active', true)->exists());
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 
     public function test_registration_rejects_email_case_variants(): void

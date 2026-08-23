@@ -36,6 +36,8 @@ This choice optimizes total system complexity rather than language count. PHP an
 
 Invumo is a modular monolith. Its approved business modules, physical code layout, cross-module APIs, dependency direction, application-action transaction contract, frontend layers, test ownership, and maintenance rules are defined in the living [Invumo Codebase Map](codebase-map.md).
 
+The internal [Platform Operations](platform-operations.md) back office is another bounded module and React/Inertia shell inside this same application. It uses the same authentication, localization, design system, database, and deployment; it does not introduce a second service, frontend, authentication system, or tenant-data bypass.
+
 Module boundaries organize code and tests but do not create network services or separately deployed applications. Create a module directory only when it has real implementation. Keep Laravel's framework entry points conventional where that is clearer, and do not introduce a module package, empty scaffolds, repositories around every model, event sourcing, or premature service interfaces.
 
 Controllers remain thin; Form Requests validate input shape; Policies enforce permissions; purpose-specific Queries own reads; and one named root application Action owns each mutation workflow and its outer database transaction. Business state changes do not live in controllers, React pages, provider adapters, or queued-job handlers. Cross-module mutation goes through the owning module's Action rather than direct model updates.
@@ -67,7 +69,7 @@ Use React/Inertia for the authenticated application and customer-facing public p
 
 Create the application from Laravel's official React starter kit and retain its Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, source-owned shadcn/ui, Vite, and Wayfinder foundation.
 
-Use the starter kit's built-in Fortify authentication. Keep registration, email verification, sign-in/out, password reset, password confirmation, secure session management, and rate limiting. Do not select WorkOS AuthKit and do not enable the starter kit's Teams domain: Invumo owns its Account, Company, Membership, invitation, company-switching, and ownership-transfer model. TOTP two-factor authentication and recovery codes are explicitly deferred from v1.
+Use the starter kit's built-in Fortify authentication. Keep registration, email verification, sign-in/out, password reset, password confirmation, secure session management, and rate limiting. Foundational verification and recovery notifications live in `Identity`, use Laravel-authored locale copy, queue only after commit with encrypted payloads and bounded retries, and recheck link validity at delivery rather than only at dispatch. Do not select WorkOS AuthKit and do not enable the starter kit's Teams domain: Invumo owns its Account, Company, Membership, invitation, company-switching, and ownership-transfer model. TOTP two-factor authentication and recovery codes are explicitly deferred from v1.
 
 Use Composer for PHP and npm for browser dependencies. Commit both lockfiles. Do not introduce Bun, pnpm, Yarn, or a second package manager without a demonstrated build or operational need.
 
@@ -85,6 +87,7 @@ Use Laravel Boost as a development-only Composer dependency. Its installed-versi
 - Do not add Redux or another global state library without a demonstrated need.
 - Treat Inertia props as server-provided page data; keep draft interaction state local to the editor.
 - Keep sensitive or unnecessary fields out of Inertia props because all props reach the browser.
+- Keep ordinary User/Company props free of platform authority and control-plane data; expose only a bounded Platform Operations destination/ability to a currently authorized operator.
 - Prefer source-owned shadcn/ui components over a runtime UI-framework dependency.
 - Keep raw internal colour values in the single approved semantic-token definition. Feature/page code consumes token-backed shared components and must not create page-specific visual treatments or hard-coded colours.
 - Treat pages as composition and data-binding boundaries: source-owned shadcn primitives feed shared Invumo application/domain components, and those components own appearance, state presentation, responsive behavior, and accessibility.

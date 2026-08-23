@@ -7,6 +7,7 @@ use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Actions\InviteCompanyMember;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Queries\CompanyInvitationView;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -87,14 +88,22 @@ class CompanyInvitationHttpTest extends TestCase
         );
         $reviewUrl = route('company-invitations.show', $issued->plainTextToken);
 
-        $this->get($reviewUrl)
+        $guestResponse = $this->get($reviewUrl)
             ->assertOk()
             ->assertSessionHas('url.intended', $reviewUrl)
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/company-invitation')
                 ->where('invitation.available', true)
                 ->where('invitation.authenticated', false)
-                ->where('invitation.companyName', 'Acme SRL'));
+                ->where('invitation.companyName', 'Acme SRL')
+                ->where('invitation.invitedEmail', null)
+                ->where('invitation.role', null)
+                ->where('invitation.expiresAt', null));
+        $guestResponse->assertDontSee('invitee@example.com', false);
+        $guestResponse->assertDontSee(
+            $issued->invitation->expires_at->toIso8601String(),
+            false,
+        );
 
         $this->post(route('company-invitations.accept', $issued->plainTextToken))
             ->assertRedirect(route('login'));
@@ -103,7 +112,10 @@ class CompanyInvitationHttpTest extends TestCase
             ->get($reviewUrl)
             ->assertInertia(fn (Assert $page) => $page
                 ->where('invitation.emailMatches', true)
-                ->where('invitation.emailVerified', true));
+                ->where('invitation.emailVerified', true)
+                ->where('invitation.invitedEmail', 'invitee@example.com')
+                ->where('invitation.role', CompanyRole::Member->value)
+                ->where('invitation.expiresAt', fn (mixed $value) => is_string($value)));
 
         $this->post(route('company-invitations.accept', $issued->plainTextToken))
             ->assertRedirect(route('companies.dashboard', $company));
@@ -130,10 +142,14 @@ class CompanyInvitationHttpTest extends TestCase
         );
         $url = route('company-invitations.show', $issued->plainTextToken);
 
-        $this->actingAs($wrong)
+        $wrongAccountResponse = $this->actingAs($wrong)
             ->get($url)
             ->assertInertia(fn (Assert $page) => $page
-                ->where('invitation.emailMatches', false));
+                ->where('invitation.emailMatches', false)
+                ->where('invitation.invitedEmail', null)
+                ->where('invitation.role', null)
+                ->where('invitation.expiresAt', null));
+        $wrongAccountResponse->assertDontSee('target@example.com', false);
 
         $this->actingAs($unverified)
             ->get($url)
@@ -147,7 +163,35 @@ class CompanyInvitationHttpTest extends TestCase
         $this->get($url)
             ->assertInertia(fn (Assert $page) => $page
                 ->where('invitation.available', false)
-                ->where('invitation.status', 'expired'));
+                ->where('invitation.status', 'expired')
+                ->where('invitation.invitedEmail', null)
+                ->where('invitation.role', null)
+                ->where('invitation.expiresAt', null));
+    }
+
+    public function test_review_uses_the_stored_normalized_email_for_identity_matching(): void
+    {
+        Notification::fake();
+        $owner = $this->accountOwner();
+        $company = $this->companyFor($owner);
+        $issued = app(InviteCompanyMember::class)->handle(
+            $company,
+            $owner,
+            'target@example.com',
+            CompanyRole::Member,
+        );
+        $actor = new User;
+        $actor->setRawAttributes([
+            'email' => 'normalization-must-not-use-this@example.com',
+            'email_normalized' => 'target@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $view = app(CompanyInvitationView::class)
+            ->for($issued->plainTextToken, $actor);
+
+        $this->assertTrue($view['emailMatches']);
+        $this->assertSame('target@example.com', $view['invitedEmail']);
     }
 
     private function accountOwner(
@@ -159,7 +203,7 @@ class CompanyInvitationHttpTest extends TestCase
         $plan = Plan::query()->where('code', 'free')->firstOrFail();
         Account::query()->create(['owner_user_id' => $user->id, 'plan_id' => $plan->id]);
 
-        return $user;
+        return $user->refresh();
     }
 
     private function companyFor(User $owner): Company

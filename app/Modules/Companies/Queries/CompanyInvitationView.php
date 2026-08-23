@@ -5,7 +5,6 @@ namespace App\Modules\Companies\Queries;
 use App\Models\User;
 use App\Modules\Companies\Models\CompanyInvitation;
 use App\Modules\Companies\Support\CompanyInvitationToken;
-use Illuminate\Support\Str;
 
 final readonly class CompanyInvitationView
 {
@@ -27,18 +26,24 @@ final readonly class CompanyInvitationView
             $invitation->expires_at->lessThanOrEqualTo(now()) => 'expired',
             default => 'pending',
         };
+        $emailMatches = $actor !== null
+            && $actor->email_normalized === $invitation->invited_email_normalized;
+        $mayViewPrivateDetails = $status === 'pending' && $emailMatches;
 
         return [
             'available' => $status === 'pending',
             'status' => $status,
             'companyName' => $invitation->company->name,
-            'invitedEmail' => $invitation->invited_email,
-            'role' => $invitation->role->value,
-            'expiresAt' => $invitation->expires_at->toIso8601String(),
+            'invitedEmail' => $mayViewPrivateDetails ? $invitation->invited_email : null,
+            'role' => $mayViewPrivateDetails ? $invitation->role->value : null,
+            'expiresAt' => $mayViewPrivateDetails
+                ? $invitation->expires_at->toIso8601String()
+                : null,
             'authenticated' => $actor !== null,
-            'emailMatches' => $actor !== null
-                && Str::lower($actor->email) === $invitation->invited_email_normalized,
-            'emailVerified' => $actor?->hasVerifiedEmail() ?? false,
+            'emailMatches' => $emailMatches,
+            'emailVerified' => $actor !== null
+                && $emailMatches
+                && $actor->hasVerifiedEmail(),
         ];
     }
 

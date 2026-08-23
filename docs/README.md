@@ -31,6 +31,7 @@ The design contract is system-wide. Pages compose shared components and must not
 - [`architecture/role-permission-matrix.md`](architecture/role-permission-matrix.md) — complete fixed-role Owner/Admin/Member authorization, guarded-action, system/public-actor, and policy-test contract
 - [`architecture/relational-schema-and-snapshots.md`](architecture/relational-schema-and-snapshots.md) — approved v1 relational model, same-Company constraints, typed snapshot boundaries, deletion/retention rules, indexes, and migration strategy
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream implementation obligations
+- [`architecture/routes-navigation-and-editor-composition.md`](architecture/routes-navigation-and-editor-composition.md) — approved Company route boundary, authorized sidebar and Create menu, operational-list behavior, canonical workspaces, and shared document-editor composition
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 

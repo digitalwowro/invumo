@@ -1,0 +1,216 @@
+@import '@fontsource-variable/atkinson-hyperlegible-next';
+@import '@fontsource-variable/atkinson-hyperlegible-mono';
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@theme inline {
+    --font-sans:
+        'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui,
+        sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-mono:
+        'Atkinson Hyperlegible Mono Variable', ui-monospace, SFMono-Regular,
+        Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+    --radius-sm: var(--radius-status);
+    --radius-md: var(--radius-control);
+    --radius-lg: var(--radius-surface);
+    --radius-xl: var(--radius-surface);
+
+    --color-background: var(--background);
+    --color-page: var(--page);
+    --color-foreground: var(--foreground);
+    --color-foreground-mid: var(--foreground-mid);
+    --color-foreground-muted: var(--foreground-muted);
+    --color-foreground-subtle: var(--foreground-subtle);
+    --color-foreground-inverse: var(--foreground-inverse);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-surface-inset: var(--surface-inset);
+    --color-selection: var(--selection);
+    --color-overlay-backdrop: var(--overlay-backdrop);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
+    --color-divider: var(--divider);
+    --color-rule: var(--rule);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-ring-inverse: var(--ring-inverse);
+    --color-row-affordance: var(--row-affordance);
+
+    --color-money-fill: var(--money-fill);
+    --color-money-fill-foreground: var(--money-fill-foreground);
+    --color-money-text: var(--money-text);
+    --color-danger-fill: var(--danger-fill);
+    --color-danger-foreground: var(--danger-foreground);
+    --color-danger-text: var(--danger-text);
+    --color-danger-hover: var(--danger-hover);
+    --color-danger-surface: var(--danger-surface);
+    --color-danger-border: var(--danger-border);
+    --color-danger-on-ink: var(--danger-on-ink);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-warning-fill: var(--warning-fill);
+    --color-warning-fill-foreground: var(--warning-fill-foreground);
+    --color-warning-text: var(--warning-text);
+    --color-status-quiet-background: var(--status-quiet-background);
+    --color-status-quiet-foreground: var(--status-quiet-foreground);
+    --color-status-quiet-border: var(--status-quiet-border);
+    --color-status-muted-foreground: var(--status-muted-foreground);
+    --color-status-muted-border: var(--status-muted-border);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-active);
+    --color-sidebar-primary-foreground: var(--sidebar-active-foreground);
+    --color-sidebar-accent: var(--sidebar-hover);
+    --color-sidebar-accent-foreground: var(--sidebar-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--ring-inverse);
+    --color-sidebar-surface: var(--sidebar-surface);
+    --color-sidebar-muted: var(--sidebar-muted);
+    --color-sidebar-nav: var(--sidebar-nav);
+    --color-sidebar-active: var(--sidebar-active);
+    --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+    --color-sidebar-count: var(--sidebar-count);
+    --color-sidebar-avatar: var(--sidebar-avatar);
+    --color-sidebar-avatar-foreground: var(--sidebar-avatar-foreground);
+
+    --shadow-overlay: var(--overlay-shadow);
+}
+
+:root {
+    color-scheme: light;
+
+    --background: #ffffff;
+    --page: #f7f8fa;
+    --surface-subtle: #fafbfc;
+    --surface-inset: #f4f6f8;
+    --border: #dee3e9;
+    --border-strong: #c3cbd3;
+    --divider: #e7ebf0;
+    --rule: #eef1f5;
+    --foreground: #14181c;
+    --foreground-mid: #4a5361;
+    --foreground-muted: #5b6470;
+    --foreground-subtle: #8a929e;
+    --foreground-inverse: #ffffff;
+    --selection: #eef1f5;
+    --overlay-backdrop: rgb(20 24 28 / 70%);
+    --row-affordance: #6e7783;
+
+    --sidebar-background: #121418;
+    --sidebar-surface: #1b1f26;
+    --sidebar-border: #262a33;
+    --sidebar-foreground: #f4f5f7;
+    --sidebar-muted: #8e949f;
+    --sidebar-nav: #b6bcc7;
+    --sidebar-hover: #1d212a;
+    --sidebar-active: #22262f;
+    --sidebar-active-foreground: #ffffff;
+    --sidebar-count: #767d89;
+    --sidebar-avatar: #262a33;
+    --sidebar-avatar-foreground: #c6cbd4;
+
+    --money-fill: #a3e635;
+    --money-fill-foreground: #1b2708;
+    --money-text: #4d7c0f;
+    --danger-fill: #e11900;
+    --danger-foreground: #ffffff;
+    --danger-text: #d81800;
+    --danger-hover: #b31400;
+    --danger-surface: #fbe9e7;
+    --danger-border: #f2cfcb;
+    --danger-on-ink: #ff8a7a;
+    --warning-fill: #ffb020;
+    --warning-fill-foreground: #2e1d00;
+    --warning-text: #8a5a0b;
+    --status-quiet-background: #ffffff;
+    --status-quiet-foreground: #14181c;
+    --status-quiet-border: #c3cbd3;
+    --status-muted-foreground: #5b6470;
+    --status-muted-border: #dce0e4;
+
+    --card: var(--background);
+    --card-foreground: var(--foreground);
+    --popover: var(--background);
+    --popover-foreground: var(--foreground);
+    --primary: var(--foreground);
+    --primary-foreground: var(--foreground-inverse);
+    --secondary: var(--background);
+    --secondary-foreground: var(--foreground);
+    --muted: var(--surface-inset);
+    --muted-foreground: var(--foreground-muted);
+    --accent: var(--surface-inset);
+    --accent-foreground: var(--foreground);
+    --destructive: var(--danger-text);
+    --destructive-foreground: var(--danger-foreground);
+    --input: var(--border);
+    --ring: var(--foreground);
+    --ring-inverse: var(--sidebar-foreground);
+
+    --chart-1: #14181c;
+    --chart-2: #414a56;
+    --chart-3: #6e7783;
+    --chart-4: #9ea6b0;
+    --chart-5: #cbd1d8;
+
+    --radius-status: 0.25rem;
+    --radius-control: 0.375rem;
+    --radius-surface: 0.5rem;
+    --overlay-shadow: 0 16px 40px rgb(20 24 28 / 14%);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html {
+        background: var(--page);
+    }
+
+    body {
+        @apply bg-page font-sans text-foreground antialiased;
+    }
+
+    ::selection {
+        background: var(--selection);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
+}
+
+@layer utilities {
+    .font-data {
+        @apply font-mono tabular-nums;
+    }
+}

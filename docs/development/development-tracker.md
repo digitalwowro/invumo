@@ -11,8 +11,8 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 
 - Current phase: Phase 1 — Core platform and cross-cutting foundations
 - Current phase status: In progress
-- Application implementation: Not started
-- Next gate: Begin the approved Laravel React starter-kit scaffold; complete the design-system foundation and route/navigation/editor-composition gate before building the custom application shell
+- Application implementation: In progress
+- Next gate: Complete the token-backed shared component and localization foundation, then verify the approved application shell in English, Romanian, desktop, and narrow layouts
 
 Phase 0 is complete. Domain migrations, models, and business workflows may now follow the approved relational schema and phase dependencies below. Route/UI, integration, and production-operations decisions still follow the just-in-time gates below and do not block unrelated development.
 
@@ -120,14 +120,14 @@ Security, tenant isolation, auditability, error handling, and observability are 
 ### Tasks
 
 - [x] Review and approve the centralized [Invumo Design System Contract](../design/design-system.md) before implementing custom application UI beyond the starter scaffold.
-- [ ] Scaffold the official Laravel React starter kit with Laravel 13, PHP 8.5, Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, Vite, and Wayfinder.
+- [x] Scaffold the official Laravel React starter kit with Laravel 13, PHP 8.5, Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, Vite, and Wayfinder.
 - [ ] Implement the approved semantic token/font foundation, source-owned shadcn primitive customization, shared Invumo component layers, component-state gallery, raw-colour/component-boundary guards, and core visual-regression coverage before building the custom application shell.
-- [ ] Before building the custom application shell and feature navigation, produce and review the route, navigation, operational-list, and shared-editor composition map.
-- [ ] Use built-in Fortify authentication; exclude WorkOS AuthKit and the starter-kit Teams domain.
-- [ ] Commit Composer and npm lockfiles; do not introduce an alternative JavaScript package manager.
-- [ ] Install development-only Laravel Boost and commit Invumo-specific agent rules while keeping generated/local agent configuration out of production runtime concerns.
-- [ ] Configure Pint, Larastan/PHPStan, strict TypeScript, ESLint, Prettier, Pest 4, Vitest, and Pest Browser/Playwright.
-- [ ] Add GitHub Actions checks for PHP tests/static analysis/formatting, TypeScript tests/type checking/linting, browser smoke tests where appropriate, and production asset builds.
+- [x] Before building the custom application shell and feature navigation, produce and review the approved route, navigation, operational-list, and shared-editor composition map.
+- [x] Use built-in Fortify authentication; exclude WorkOS AuthKit and the starter-kit Teams domain.
+- [x] Commit Composer and npm lockfiles; do not introduce an alternative JavaScript package manager.
+- [x] Install development-only Laravel Boost and commit Invumo-specific agent rules while keeping generated/local agent configuration out of production runtime concerns.
+- [x] Configure Pint, Larastan/PHPStan, strict TypeScript, ESLint, Prettier, Pest 4, Vitest, and Pest Browser/Playwright.
+- [x] Add GitHub Actions checks for PHP tests/static analysis/formatting, TypeScript tests/type checking/linting, browser smoke tests where appropriate, and production asset builds.
 - [ ] Establish the conventional modular-monolith structure and application-action transaction boundaries.
 - [ ] Build the PostgreSQL schema foundation using UUIDv7 domain identifiers and approved exact-decimal types, separate migration/runtime roles, forced RLS, repeatable migrations, and a PostgreSQL test-data strategy.
 - [ ] Implement registration, email verification, sign-in/out, password reset, secure sessions, and session invalidation without TOTP or recovery-code scope.
@@ -371,6 +371,11 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-23 | 1 | Began the approved single-source localization foundation with English/Romanian Laravel catalogs, a bounded common Inertia bag, typed React lookup/interpolation, browser-native plural selection, locale key/placeholder tests, and localized shell accessibility labels; frontend checks, PHP formatting/static analysis, the isolated PHP localization test, and the production asset build pass; the complete database-backed PHP suite awaits local test-database credentials | `vendor/bin/pint --test`; `vendor/bin/phpstan analyse --no-progress`; `php artisan test tests/Unit/Localization/TranslationCatalogTest.php` (1 passed, 49 assertions); `npm run format:check`; `npm run design:check`; `npm run lint:check`; `npm run types:check`; `npm run test:unit` (10 passed); `npm run build` |
+| 2026-08-23 | 1 | Added and verified Composer/npm lockfiles, development-only Laravel Boost, the approved PHP/TypeScript quality toolchain, and the GitHub Actions PostgreSQL 18 CI workflow; database-backed tests are configured to run with CI-owned credentials and application-key generation | `composer validate --strict`; `composer.lock`; `package-lock.json`; [GitHub Actions workflow](../../.github/workflows/tests.yml) |
+| 2026-08-23 | 1 | Approved explicit Company routes; Dashboard, Quotes, Invoices, Transactions, Customers, Recurring, Products, Settings sidebar order; compact Create menu; Member Products visibility; canonical workspaces; and cursor-versus-numbered pagination behavior, closing the composition gate | [Approved composition gate](../architecture/routes-navigation-and-editor-composition.md) |
+| 2026-08-23 | 1 | Produced the draft route, authorized navigation, operational-list, and shared-editor composition map; it remains unapproved and the custom application shell remains blocked | [Draft composition gate](../architecture/routes-navigation-and-editor-composition.md) |
+| 2026-08-23 | 1 | Scaffolded the approved official Laravel React foundation, selected Fortify registration/verification/password features without TOTP, WorkOS, or Teams, installed the approved quality tooling, and began the shared design-system implementation; frontend design guard, lint, strict types, unit tests, and production build pass | `npm run design:check`; `npm run lint:check`; `npm run types:check`; `npm run test:unit` (7 passed); `npm run build`; Laravel 13.26.1, Inertia Laravel 3.3.1, React 19.2.8, Tailwind 4.3.3, Vite 8.2.2 |
 | 2026-08-23 | 1 | Approved the centralized design-system implementation contract, completed its just-in-time review gate, and advanced Phase 1 to In progress; application implementation remains not started | [Approved design-system contract](../design/design-system.md) |
 | 2026-08-22 | 0 | Approved the complete relational schema and snapshot boundaries, including all six composition/search/deletion/dispatch choices; passed the Phase 0 acceptance gate and advanced the canonical current position to Phase 1 | [Approved relational schema](../architecture/relational-schema-and-snapshots.md) |
 | 2026-08-22 | 0 | Documented the expected Member-to-Owner/Admin escalation when cancellation requires an Adjustment: keep cancellation blocked, explain the required role, and never suggest a Refund beyond actual refundable cash | [State escalation rule](../architecture/document-and-financial-state.md#permission-aware-cancellation-escalation) |

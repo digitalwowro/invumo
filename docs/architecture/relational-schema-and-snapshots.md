@@ -549,7 +549,9 @@ Occurrence creation, Invoice creation/numbering, issue, reminder materialization
 
 When an idempotency reference is present, a partial unique constraint over Company, action, and that reference makes the retained audit/action event the retry anchor, including after the affected business row has been deleted.
 
-Audit `jsonb` is intentional because event shapes differ. Every action writes an allowlisted payload and excludes secrets, plaintext public tokens, raw provider payloads, credentials, and unnecessary recipient/customer data.
+Audit `jsonb` is intentional because event shapes differ. Every action constructs its before/after values through an explicit action-specific field allowlist; it must never copy a request, model, exception context, or provider response wholesale. The action that supplies the payload owns the semantic safety of every selected value and must test its exact permitted fields. It excludes secrets, plaintext public tokens, raw provider payloads, credentials, and unnecessary recipient/customer data.
+
+The shared audit guard is defense in depth, not a general secret detector. It rejects secret-shaped keys recursively and scans keys, payload values, reasons, actor references, correlation IDs, and idempotency references for only unmistakable private-key blocks and complete Basic/Bearer authorization values. Do not add broad entropy or keyword scanning that would reject legitimate document numbers, customer references, or explanatory text while still missing unknown secret formats.
 
 Normal audit history can describe significant edits. Permanent document deletion replaces/removes sensitive document audit payloads and leaves a minimal tombstone containing Company, target type/UUID, document number, deletion actor/time, and deletion action only.
 

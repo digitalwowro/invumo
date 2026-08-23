@@ -6,6 +6,12 @@ use InvalidArgumentException;
 
 final readonly class AuditPayloadGuard
 {
+    private const PRIVATE_KEY_PATTERN = '/-----BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY-----/i';
+
+    private const AUTHORIZATION_HEADER_PATTERN = '/\bAuthorization\s*:\s*(?:Bearer|Basic)\s+\S+/i';
+
+    private const AUTHORIZATION_VALUE_PATTERN = '/^(?:Bearer|Basic)\s+[A-Za-z0-9+\/.=_~-]{12,}$/i';
+
     /**
      * @param  array<string, mixed>|null  $payload
      */
@@ -16,6 +22,21 @@ final readonly class AuditPayloadGuard
         }
 
         $this->inspect($payload);
+    }
+
+    public function ensureSafeText(?string $value, string $field): void
+    {
+        if ($value === null) {
+            return;
+        }
+
+        if (
+            preg_match(self::PRIVATE_KEY_PATTERN, $value) === 1
+            || preg_match(self::AUTHORIZATION_HEADER_PATTERN, $value) === 1
+            || preg_match(self::AUTHORIZATION_VALUE_PATTERN, trim($value)) === 1
+        ) {
+            throw new InvalidArgumentException("Audit field [{$field}] contains credential-shaped material.");
+        }
     }
 
     /**
@@ -33,6 +54,10 @@ final readonly class AuditPayloadGuard
 
             if (is_array($value)) {
                 $this->inspect($value);
+            }
+
+            if (is_string($value)) {
+                $this->ensureSafeText($value, is_string($key) ? $key : 'value');
             }
         }
     }

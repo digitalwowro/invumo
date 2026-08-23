@@ -5,8 +5,8 @@ namespace App\Modules\Audit\Data;
 final readonly class AuditEventData
 {
     /**
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
+     * Callers own the semantic safety of every value and must construct each
+     * before/after payload from that action's explicit field allowlist.
      */
     public function __construct(
         public AuditActorType $actorType,
@@ -18,7 +18,7 @@ final readonly class AuditEventData
         public ?string $correlationId = null,
         public ?string $idempotencyReference = null,
         public ?string $reason = null,
-        public ?array $before = null,
-        public ?array $after = null,
+        public ?AuditPayload $before = null,
+        public ?AuditPayload $after = null,
     ) {}
 }

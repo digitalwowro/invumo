@@ -21,8 +21,15 @@ final readonly class RecordAuditEvent
             throw new LogicException('Audit events must be recorded inside the owning business transaction.');
         }
 
-        $this->payloadGuard->ensureSafe($event->before);
-        $this->payloadGuard->ensureSafe($event->after);
+        $before = $event->before?->values();
+        $after = $event->after?->values();
+
+        $this->payloadGuard->ensureSafe($before);
+        $this->payloadGuard->ensureSafe($after);
+        $this->payloadGuard->ensureSafeText($event->actorReference, 'actor_reference');
+        $this->payloadGuard->ensureSafeText($event->correlationId, 'correlation_id');
+        $this->payloadGuard->ensureSafeText($event->idempotencyReference, 'idempotency_reference');
+        $this->payloadGuard->ensureSafeText($event->reason, 'reason');
 
         return AuditEvent::query()->create([
             'actor_type' => $event->actorType,
@@ -35,8 +42,8 @@ final readonly class RecordAuditEvent
             'correlation_id' => $event->correlationId,
             'idempotency_reference' => $event->idempotencyReference,
             'reason' => $event->reason,
-            'before' => $event->before,
-            'after' => $event->after,
+            'before' => $before,
+            'after' => $after,
         ]);
     }
 }

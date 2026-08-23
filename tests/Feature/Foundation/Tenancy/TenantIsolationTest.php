@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
+use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
@@ -133,8 +134,54 @@ class TenantIsolationTest extends TestCase
                 action: 'company.updated',
                 targetType: 'Company',
                 targetId: $company->id,
-                after: ['api_token' => 'must-not-be-recorded'],
+                after: AuditPayload::fromAllowedFields(
+                    ['api_token' => 'must-not-be-recorded'],
+                    ['api_token'],
+                ),
             ));
+        });
+    }
+
+    public function test_audit_recorder_rejects_credential_values_under_innocuous_keys(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        app(TenantContext::class)->runAsSystem($company->id, function () use ($company): void {
+            app(RecordAuditEvent::class)->handle(new AuditEventData(
+                actorType: AuditActorType::System,
+                action: 'company.updated',
+                targetType: 'Company',
+                targetId: $company->id,
+                after: AuditPayload::fromAllowedFields(
+                    ['summary' => 'Authorization: Bearer fake-credential-123456'],
+                    ['summary'],
+                ),
+            ));
+        });
+    }
+
+    public function test_audit_recorder_preserves_allowlisted_legitimate_domain_values(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        app(TenantContext::class)->runAsSystem($company->id, function () use ($company): void {
+            $event = app(RecordAuditEvent::class)->handle(new AuditEventData(
+                actorType: AuditActorType::System,
+                action: 'company.updated',
+                targetType: 'Company',
+                targetId: $company->id,
+                after: AuditPayload::fromAllowedFields([
+                    'customer_reference' => 'PO-BEARER-2026-001',
+                    'status' => 'ACTIVE',
+                ], ['customer_reference', 'status']),
+            ));
+
+            $this->assertSame([
+                'customer_reference' => 'PO-BEARER-2026-001',
+                'status' => 'ACTIVE',
+            ], $event->after);
         });
     }
 

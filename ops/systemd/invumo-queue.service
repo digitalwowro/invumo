@@ -1,0 +1,30 @@
+[Unit]
+Description=Invumo Laravel queue worker
+
+[Service]
+Type=simple
+WorkingDirectory=/home/invumo/invumo
+Environment=APP_ENV=production
+Environment=HOME=/home/invumo
+ExecStart=/usr/bin/php artisan queue:work database --queue=default --sleep=3 --tries=3 --backoff=10 --timeout=90 --max-time=3600
+ExecReload=/usr/bin/php artisan queue:restart
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=120
+UMask=0077
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=full
+RestrictRealtime=true
+RestrictSUIDSGID=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=invumo-queue
+
+[Install]
+WantedBy=default.target

@@ -1150,7 +1150,7 @@ Register
 
 The approved baseline is one Laravel 13 modular monolith on PHP 8.5, with React 19/strict TypeScript through Inertia 3, PostgreSQL 18, Vite, Tailwind CSS 4, and source-owned shadcn/ui components. The application uses one repository, one deployment, one database, a PostgreSQL-backed Laravel queue, one supervised PHP worker, and one cron-triggered scheduler. Node builds browser assets but does not run a production web server. See [Invumo Application Architecture Baseline](../architecture/application-architecture.md).
 
-Develop locally and deploy through a repeatable checked process to the owner's infrastructure. Initially only one hosted production environment is required; this does not authorize editing source directly on the production server. Docker, a separate frontend deployment, a web API for the Inertia application, Inertia SSR, Redis, and microservices are excluded unless later evidence justifies them.
+Until public launch, while Invumo has no real users, development may occur directly in the hosted production checkout. Source control and relevant automated checks still apply, but repeatable deployment automation is deliberately deferred. Rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are externally managed and must be verified before public launch. Introduce separate development and production environments plus a repeatable release process before real-user dependency makes direct-production development unsafe. Docker, a separate frontend deployment, a web API for the Inertia application, Inertia SSR, Redis, and microservices are excluded unless later evidence justifies them.
 
 Prefer:
 

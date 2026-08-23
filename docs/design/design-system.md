@@ -29,6 +29,8 @@ Product behavior, authorization, financial state, and domain vocabulary remain c
 
 The owner-supplied HTML is a visual reference only. It must never be imported, copied, converted, or treated as production markup, CSS, component code, navigation scope, or application behavior. Experimental variants inside it are not approved choices.
 
+This approved contract supersedes every earlier visual proposal, simulation, and provisional direction. In particular, the earlier “ledger ink” exploration and every ledger, paper, bookmark, book, rubber-stamp, skeuomorphic, ornamental, or nostalgic accounting motif are retired and must not influence implementation.
+
 The product name is **Invumo**. `Invuma` in the supplied reference files is a source typo and must not appear in application copy, assets, metadata, or code identifiers.
 
 ## 2. Contract language

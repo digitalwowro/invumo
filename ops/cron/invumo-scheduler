@@ -1,0 +1,1 @@
+* * * * * /bin/bash -o pipefail -c 'umask 077; /usr/bin/flock -n /home/invumo/invumo/storage/framework/invumo-scheduler.lock /usr/bin/php /home/invumo/invumo/artisan schedule:run --no-interaction 2>&1 | /usr/bin/logger --tag invumo-scheduler'

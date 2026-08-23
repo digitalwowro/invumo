@@ -107,7 +107,9 @@ These decisions must be completed before the named implementation boundary, not 
 | PDF renderer compatibility proof and final renderer selection | Committing to and implementing the shared production PDF renderer | Phase 5 |
 | Public-token hashing, tenant bootstrap, expiry, revocation, regeneration, and rate-limit design | Implementing public document access | Phase 8 |
 | ZeptoMail transport, webhook authentication, event mapping, retry, and idempotency design | Implementing document email delivery and provider webhooks | Phase 9 |
-| Scripted deployment, secret management, restricted production roles, off-server backup/restore, monitoring, worker/scheduler supervision, and rollback | The first deployment to the hosted production environment; reverified in full before v1 release | First production deployment and Phase 12 |
+| Hosted secrets, restricted database roles, health endpoint, and worker/scheduler supervision | Running the pre-launch hosted production application | Phase 1 |
+| Evidence that externally managed rollback, off-server backup/restore, uptime/error monitoring, and alerts are active | Public launch and reverified before v1 release | Phase 12 |
+| Separate development/production environments and a repeatable application release process | Before real users make direct-production development unsafe | Post-launch transition gate; no Phase 1 blocker |
 
 Security, tenant isolation, auditability, error handling, and observability are designed and verified with every phase. The complete release security and operational review remains a Phase 12 gate.
 
@@ -120,6 +122,7 @@ Security, tenant isolation, auditability, error handling, and observability are 
 ### Tasks
 
 - [x] Review and approve the centralized [Invumo Design System Contract](../design/design-system.md) before implementing custom application UI beyond the starter scaffold.
+- [x] Confirm the source-reference `Invuma` typo is absent from application code, copy, asset/file names, and metadata; enforce the correct `Invumo` name in the design-contract CI guard.
 - [x] Scaffold the official Laravel React starter kit with Laravel 13, PHP 8.5, Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, Vite, and Wayfinder.
 - [ ] Implement the approved semantic token/font foundation, source-owned shadcn primitive customization, shared Invumo component layers, component-state gallery, raw-colour/component-boundary guards, and core visual-regression coverage before building the custom application shell.
 - [x] Before building the custom application shell and feature navigation, produce and review the approved route, navigation, operational-list, and shared-editor composition map.
@@ -138,9 +141,9 @@ Security, tenant isolation, auditability, error handling, and observability are 
 - [ ] Implement audit-event infrastructure used by every later business operation.
 - [ ] Implement shared validation, error handling, logging, health checks, and configuration/secrets boundaries.
 - [ ] Implement server-authoritative `brick/math` calculation primitives, `decimal.js` preview primitives, string decimal transport, and shared golden calculation vectors.
-- [ ] Configure the PostgreSQL-backed queue, one supervised PHP worker, cron-triggered scheduler, and job idempotency/observability primitives.
+- [ ] Configure the PostgreSQL-backed queue, one linger-backed `invumo` user-level systemd worker, `invumo` user cron-triggered scheduler, and job idempotency/observability primitives.
 - [ ] Complete the upload/storage design gate, then implement the validated file-upload foundation required for company logos.
-- [ ] Before the first hosted production deployment, complete and test the deployment, secrets, restricted-role, off-server backup/restore, monitoring, worker/scheduler supervision, and rollback gate; reverify it in Phase 12.
+- [x] Establish the hosted pre-launch runtime and record the approved temporary direct-production workflow: private secrets, restricted database roles, public health checks, and unprivileged worker/scheduler supervision are in place; rollback, backup/restore, and monitoring remain externally managed; repeatable deployment automation is deferred until the development/production split.
 
 ### Acceptance gate
 
@@ -358,9 +361,10 @@ Users can understand operational state and safely complete every destructive, da
 - [ ] Complete the critical-path, edge-case, concurrency, scheduling, calculation, and tenant-isolation test suites.
 - [ ] Complete the security review and abuse/rate-limit verification.
 - [ ] Verify production migrations and restricted database roles.
-- [ ] Test automated off-server backup and full restore.
-- [ ] Test repeatable deployment and rollback.
-- [ ] Configure health checks, monitoring, alerting, queue/scheduler supervision, and operational runbooks.
+- [ ] Verify evidence that the externally managed off-server database/file backup and full-restore process is active and usable.
+- [ ] Verify evidence that the externally managed rollback process and recovery ownership are active and usable.
+- [ ] Verify external uptime/error monitoring and alert delivery; reverify the application health endpoint and internal queue/scheduler supervision.
+- [ ] Before real users make direct-production development unsafe, establish separate development and production environments plus a repeatable application release process; this is intentionally not a Phase 1 blocker during the no-user pre-launch period.
 - [ ] Run end-to-end acceptance against the successful-v1 definition in both launch languages.
 
 ### Acceptance gate
@@ -371,6 +375,10 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-23 | 1 | Configured the production foundational account-email transport through ZeptoMail's regional authenticated SMTP endpoint with TLS, a verified sender, bounded timeout, private environment/cache permissions, atomic rollback-on-failure setup, and unprivileged queue restart; the provider accepted the test and the recipient confirmed delivery; actual verification, recovery, and invitation flows remain open | [Production runtime baseline](../operations/production-runtime.md#system-email-through-zeptomail); `scripts/configure-zeptomail.sh`; cached-setting checks; received test message; active queue worker; `scripts/verify-production-runtime.sh` |
+| 2026-08-23 | 1 | Added a physically separate `invumo_test` database and a pre-migration test guard requiring `APP_ENV=testing` plus `_test` PostgreSQL targets on both runtime/schema connections; proved that cached production configuration aborts before `RefreshDatabase`, then ran the complete CI suite safely against the isolated database, restored private production caches, restarted the user worker, and confirmed the production database remained unchanged | `composer ci:check` (Vitest 10 passed; Pest 34 passed, 139 assertions; build and all checks passed); production before/after verification; `scripts/bootstrap-test-database.sh`; `scripts/verify-production-runtime.sh` |
+| 2026-08-23 | 1 | Established and verified the initial hosted runtime at `app.invumo.com`: PHP 8.5/PostgreSQL 18, private production environment/config cache, separate non-superuser schema/runtime database roles, successful starter migrations, secure host-only sessions, public health/login checks, a linger-backed `invumo` user-level queue service, and an overlap-protected `invumo` user scheduler cron with journal output; approved temporary direct-production development before launch, external ownership of rollback/backups/monitoring, and deferral of repeatable deployment until the development/production split; real email, RLS business schema, and job-observability work remains open | [Production runtime baseline](../operations/production-runtime.md); `scripts/verify-production-runtime.sh`; `/up` HTTP 200; `/` HTTP 302; `systemctl --user is-active invumo-queue`; scheduler journal evidence |
+| 2026-08-23 | 1 | Confirmed that `Invuma` exists only in explanatory documentation identifying the supplied-reference typo, with no occurrence in application code, copy, asset/file names, or metadata; extended the design-contract check to reject future filename, application-content, or metadata leaks; clarified that the approved design contract supersedes all earlier ledger/paper/bookmark visual exploration | `git grep -in 'invuma'`; `git ls-files \| rg -i 'invuma'`; `npm run design:check`; [Approved design-system authority](../design/design-system.md#1-authority-and-precedence) |
 | 2026-08-23 | 1 | Began the approved single-source localization foundation with English/Romanian Laravel catalogs, a bounded common Inertia bag, typed React lookup/interpolation, browser-native plural selection, locale key/placeholder tests, and localized shell accessibility labels; frontend checks, PHP formatting/static analysis, the isolated PHP localization test, and the production asset build pass; the complete database-backed PHP suite awaits local test-database credentials | `vendor/bin/pint --test`; `vendor/bin/phpstan analyse --no-progress`; `php artisan test tests/Unit/Localization/TranslationCatalogTest.php` (1 passed, 49 assertions); `npm run format:check`; `npm run design:check`; `npm run lint:check`; `npm run types:check`; `npm run test:unit` (10 passed); `npm run build` |
 | 2026-08-23 | 1 | Added and verified Composer/npm lockfiles, development-only Laravel Boost, the approved PHP/TypeScript quality toolchain, and the GitHub Actions PostgreSQL 18 CI workflow; database-backed tests are configured to run with CI-owned credentials and application-key generation | `composer validate --strict`; `composer.lock`; `package-lock.json`; [GitHub Actions workflow](../../.github/workflows/tests.yml) |
 | 2026-08-23 | 1 | Approved explicit Company routes; Dashboard, Quotes, Invoices, Transactions, Customers, Recurring, Products, Settings sidebar order; compact Create menu; Member Products visibility; canonical workspaces; and cursor-versus-numbered pagination behavior, closing the composition gate | [Approved composition gate](../architecture/routes-navigation-and-editor-composition.md) |

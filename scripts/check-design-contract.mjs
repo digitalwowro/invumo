@@ -4,6 +4,49 @@ import { extname, join, relative } from 'node:path';
 const projectRoot = process.cwd();
 const roots = ['resources/js', 'resources/views'];
 const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.php']);
+const productNameRoots = [
+    'app',
+    'bootstrap',
+    'config',
+    'database',
+    'lang',
+    'public',
+    'resources',
+    'routes',
+    'tests',
+];
+const productNameExtensions = new Set([
+    '.css',
+    '.html',
+    '.js',
+    '.jsx',
+    '.json',
+    '.mjs',
+    '.php',
+    '.svg',
+    '.ts',
+    '.tsx',
+    '.txt',
+    '.xml',
+    '.yaml',
+    '.yml',
+]);
+const productNameMetadataFiles = [
+    '.env.example',
+    'components.json',
+    'composer.json',
+    'package.json',
+    'phpunit.xml',
+    'vite.config.ts',
+];
+const ignoredFilenameDirectories = new Set([
+    '.git',
+    'cache',
+    'node_modules',
+    'storage',
+    'vendor',
+]);
+const productNameTypo = new RegExp(`\\b${'invum'}a\\b`, 'i');
 
 const rules = [
     {
@@ -55,7 +98,80 @@ async function collectFiles(directory) {
     return files;
 }
 
+async function collectAllFiles(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const files = [];
+
+    for (const entry of entries) {
+        if (entry.isDirectory() && ignoredFilenameDirectories.has(entry.name)) {
+            continue;
+        }
+
+        const path = join(directory, entry.name);
+
+        if (entry.isDirectory()) {
+            files.push(...(await collectAllFiles(path)));
+        } else {
+            files.push(path);
+        }
+    }
+
+    return files;
+}
+
 const violations = [];
+
+for (const file of await collectAllFiles(projectRoot)) {
+    const path = relative(projectRoot, file);
+
+    if (productNameTypo.test(path)) {
+        violations.push({
+            file: path,
+            line: 1,
+            rule: 'product-name typo in filename',
+            match: path,
+            context: path,
+        });
+    }
+}
+
+for (const root of productNameRoots) {
+    for (const file of await collectAllFiles(join(projectRoot, root))) {
+        if (!productNameExtensions.has(extname(file))) {
+            continue;
+        }
+
+        const source = await readFile(file, 'utf8');
+        const match = source.match(productNameTypo);
+
+        if (match) {
+            const line = source.slice(0, match.index).split('\n').length;
+            violations.push({
+                file: relative(projectRoot, file),
+                line,
+                rule: 'product-name typo in application content',
+                match: match[0],
+                context: source.split('\n')[line - 1]?.trim(),
+            });
+        }
+    }
+}
+
+for (const metadataFile of productNameMetadataFiles) {
+    const source = await readFile(join(projectRoot, metadataFile), 'utf8');
+    const match = source.match(productNameTypo);
+
+    if (match) {
+        const line = source.slice(0, match.index).split('\n').length;
+        violations.push({
+            file: metadataFile,
+            line,
+            rule: 'product-name typo in metadata',
+            match: match[0],
+            context: source.split('\n')[line - 1]?.trim(),
+        });
+    }
+}
 
 for (const root of roots) {
     for (const file of await collectFiles(join(projectRoot, root))) {

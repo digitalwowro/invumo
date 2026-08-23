@@ -126,7 +126,7 @@ The later relational-model document may refine table and column names but must p
 
 A queue is justified because PDF creation, ZeptoMail requests, webhooks, reminders, and recurring generation must be retryable and must not hold open browser requests.
 
-Use Laravel's PostgreSQL-backed database queue and one `systemd`-supervised PHP worker initially. Use Laravel's scheduler through one cron entry. This is part of the same application and server, not separate worker infrastructure.
+Use Laravel's PostgreSQL-backed database queue and one `systemd --user`-supervised PHP worker owned by the unprivileged `invumo` operating-system account. Enabled systemd lingering starts and supervises that user service across logout and server restart without a root-owned application unit. Invoke Laravel's scheduler once per minute through the `invumo` user's crontab, with overlap protection and output sent to the system journal. This is part of the same application and server, not separate worker infrastructure.
 
 Do not add Redis, RabbitMQ, Kafka, Horizon, or a separate message-broker service initially. Reassess only when observed throughput, latency, or operational needs exceed the database queue.
 
@@ -136,11 +136,11 @@ Generate v1 PDFs from dedicated Blade templates using a pure-PHP renderer behind
 
 If that proof fails, replace only the renderer with a headless-browser implementation; do not move invoice rendering or calculations into a Node service.
 
-Use Laravel's filesystem abstraction. Local production storage is acceptable initially only when uploaded and generated files are included in automated off-server backups. This preserves a later move to S3-compatible storage without changing domain code.
+Use Laravel's filesystem abstraction. Local production storage is acceptable initially only when uploaded and generated files are covered by the externally managed off-server backup and restore process. This preserves a later move to S3-compatible storage without changing domain code.
 
 ## Development and deployment
 
-The initial hosted footprint is one production environment on the owner's infrastructure. Development still occurs locally; source code is never edited directly on the production server.
+The initial hosted footprint is one production environment on the owner's infrastructure. Until public launch, while the application has no real users, development may occur directly in the hosted production checkout. This is an explicitly temporary operating mode, not the intended post-launch workflow. Changes still remain source-controlled and must pass the relevant automated checks before they are treated as complete.
 
 Initial production processes:
 
@@ -153,11 +153,15 @@ One Laravel queue worker
 One cron-triggered Laravel scheduler
 ```
 
+The worker is a linger-backed `invumo` user service, and the scheduler belongs to the `invumo` user's crontab. Neither application process runs as root. Root remains limited to operating-system, Nginx, PHP-FPM, and PostgreSQL administration.
+
 Node is used locally and during deployment to build the React/TypeScript/CSS assets. No Node web server remains running in production. Inertia server-side rendering is disabled.
 
-Docker, Kubernetes, a separate frontend deployment, and a separate web API are not part of v1. Deployment must nevertheless be scripted and repeatable, with environment secrets outside Git, database migrations, health checks, automated off-server backups, and a tested rollback path.
+Docker, Kubernetes, a separate frontend deployment, and a separate web API are not part of v1. Repeatable application deployment automation is deliberately deferred during the temporary pre-launch, no-user direct-production period. Environment secrets remain outside Git, database changes remain migration-driven, and the application retains its health endpoint and supervised worker/scheduler even during this period.
 
-Only one hosted environment is needed before launch. A separate hosted development/staging environment is added when real users make direct production deployment unsafe.
+Rollback, database/file backup and restore, uptime/error monitoring, and alert delivery are managed externally to the application repository. Invumo documentation records this ownership boundary and the release gate verifies that the external safeguards are active; it does not duplicate the owner's infrastructure tooling.
+
+Before real users depend on the service, introduce separate development and production environments and a repeatable release process. Reassess whether a staging environment is justified at that boundary rather than adding it automatically.
 
 ## Quality guardrails for agent-written code
 

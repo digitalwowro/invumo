@@ -191,7 +191,7 @@ These risks require careful implementation and tests but do not need another pro
 | Issued documents and numbers are flexible rather than legally immutable | Invumo does not claim jurisdiction-specific accounting or numbering compliance in v1 | Clear product language, warnings, authorization, and detailed audit history |
 | Manual duplicate document numbers are allowed | Duplicate is permitted after explicit confirmation | Prominent duplicate warning, indexed lookup, permission check, and audit event |
 | Public quote identity is self-asserted | Name/email attribution is not an electronic signature or customer account | Unpredictable link, rate limiting, replay protection, timestamps, and careful wording |
-| One production environment initially | No hosted staging environment is required before real users | Local development, CI, repeatable deployment, off-server backup/restore test, monitoring, and rollback before first deployment |
+| Direct production development before launch | Temporarily allowed only while Invumo has no real users; no hosted development/staging environment or repeatable deployment automation is required yet | Source control and relevant automated checks during development; externally managed rollback, off-server backup/restore, monitoring, and alerts verified before public launch; separate development/production environments and repeatable releases before real-user dependency makes the temporary workflow unsafe |
 | One queue worker initially | Low infrastructure overhead is preferred over early horizontal scaling | Queue age/failure monitoring and a measured threshold for adding workers or separating queues |
 
 ## Just-in-time risks
@@ -205,7 +205,7 @@ The canonical tracker owns these gates. This assessment confirms that none requi
 | PDF renderer | Prove Romanian diacritics, fonts, long tables, wrapping, page breaks, logos, and brand color before selecting the production renderer |
 | Public tokens | Finalize token entropy/hash, eligibility lookup, expiry/revocation/regeneration, rate limits, and RLS bootstrap before public access |
 | ZeptoMail/webhooks | Finalize API/SMTP choice, provider authentication, event ordering, idempotency, safe payload retention, and failure mapping before document email |
-| Production operations | Test deployment, secrets, restricted roles, migrations, off-server backup/restore, health/monitoring, worker/scheduler supervision, and rollback before the first hosted deployment |
+| Production operations | Keep secrets private and roles restricted; supervise worker/scheduler and expose health checks now; verify externally managed rollback, off-server backup/restore, monitoring, and alerts before public launch; introduce separate development/production environments and repeatable releases before real-user dependency makes direct-production development unsafe |
 
 ## Verification obligations carried forward
 

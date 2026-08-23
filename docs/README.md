@@ -19,6 +19,12 @@ Update the tracker as work advances. Do not create or maintain phase status, tas
 
 The design contract is system-wide. Pages compose shared components and must not create local colour, typography, status, control, or layout treatments that compete with the shared system. The owner-supplied HTML reference is illustrative only and is never an implementation source.
 
+## Operations
+
+- [`operations/production-runtime.md`](operations/production-runtime.md) — verified hosted runtime, database-role separation, user-level queue supervision, scheduler operation, security boundaries, and remaining production gates
+
+Operational documents record how an approved runtime is installed and verified. Phase status and acceptance remain canonical only in the development tracker.
+
 ## Approved architecture baseline
 
 - [`architecture/application-architecture.md`](architecture/application-architecture.md) — approved stack, modular-monolith boundary, runtime, deployment shape, and future mobile path

@@ -37,7 +37,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
 
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
         $account = Account::query()->where('owner_user_id', $user->id)->firstOrFail();

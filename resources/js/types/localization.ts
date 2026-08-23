@@ -21,6 +21,7 @@ export type CommonTranslations = {
         switch: string;
         select: string;
         manage: string;
+        create: string;
     };
     account: {
         profile: string;

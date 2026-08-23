@@ -3,14 +3,20 @@
 namespace App\Modules\Companies\Models;
 
 use App\Foundation\Database\Concerns\HasDomainIdentifiers;
+use App\Foundation\Database\RuntimeModel;
 use App\Models\User;
 use App\Modules\Companies\Data\CompanyRole;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $company_id
+ * @property string $user_id
+ * @property CompanyRole $role
+ */
 #[Fillable(['company_id', 'user_id', 'role'])]
-class CompanyMembership extends Model
+class CompanyMembership extends RuntimeModel
 {
     use HasDomainIdentifiers;
 

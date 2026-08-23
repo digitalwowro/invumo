@@ -10,7 +10,7 @@ final readonly class DeleteUser
 {
     public function handle(User $user): void
     {
-        DB::transaction(function () use ($user): void {
+        DB::connection(config('database.tenant_connection'))->transaction(function () use ($user): void {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
             $account = $lockedUser->account()->lockForUpdate()->first();
 

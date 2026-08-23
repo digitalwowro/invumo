@@ -50,7 +50,7 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 | View/manage the owning Account's plan and entitlements         | Yes     | No      | No     | Authority belongs to that Account's owner                                                                        |
 | Transfer Company ownership                                     | Guarded | No      | No     | **Already approved:** validate destination entitlements, reauthenticate, confirm former-Owner outcome, and audit |
 | Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                         |
-| Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expiring, revocable, single-use invitation; cannot invite Owner                                                  |
+| Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expires 7 days after issue/resend; revocable and single-use; cannot invite Owner                                  |
 | Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                        |
 | Change another non-Owner membership between Admin and Member   | Guarded | Guarded | No     | Confirmation and audit; Admin cannot affect Owner or change its own role through this action                     |
 | Remove another non-Owner member                                | Guarded | Guarded | No     | Confirmation and audit; Admin cannot remove Owner or itself through this action                                  |

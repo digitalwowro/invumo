@@ -3,15 +3,15 @@
 namespace App\Modules\Identity\Models;
 
 use App\Foundation\Database\Concerns\HasDomainIdentifiers;
+use App\Foundation\Database\RuntimeModel;
 use App\Models\User;
 use App\Modules\Companies\Models\Company;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['owner_user_id', 'plan_id'])]
-class Account extends Model
+class Account extends RuntimeModel
 {
     use HasDomainIdentifiers;
 

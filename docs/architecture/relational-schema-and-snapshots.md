@@ -106,10 +106,12 @@ A deferred constraint trigger validates at transaction commit that each Company 
 - original and normalized invited email
 - role limited to `ADMIN` or `MEMBER`
 - unique hashed token; plaintext is never stored
-- `expires_at`, `revoked_at`, `accepted_at`, and `accepted_by_user_id`
+- `expires_at`, set to exactly 7 days after the latest issue/resend, plus `revoked_at`, `accepted_at`, and `accepted_by_user_id`
 - inviter User and timestamps
 
-Acceptance locks the invitation, rechecks email/company/expiry/revocation, creates one membership, records the accepting User, and consumes the invitation in one transaction. Ordinary invitations cannot create Owner membership.
+Acceptance locks the invitation, rechecks email/company/expiry/revocation, creates one membership, records the accepting User, and consumes the invitation in one transaction. A resend rotates the token and restarts the full 7-day lifetime so the previous link stops working. Ordinary invitations cannot create Owner membership.
+
+Invitation email is queued only after the business transaction commits. Because the acceptance credential must appear in the email but plaintext tokens are never persisted as invitation data, the token-bearing queue job payload is encrypted. Immediately before mail delivery it reloads the invitation and suppresses delivery if the token was rotated, accepted, revoked, or expired.
 
 ## 5. Company configuration
 

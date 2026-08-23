@@ -41,7 +41,7 @@ class CompanyOwnershipConstraintTest extends TestCase
 
         $this->expectException(PDOException::class);
 
-        DB::transaction(fn () => Company::query()->create([
+        DB::connection('pgsql')->transaction(fn () => Company::query()->create([
             'owning_account_id' => $account->id,
             'name' => 'Ownerless SRL',
         ]));
@@ -54,7 +54,7 @@ class CompanyOwnershipConstraintTest extends TestCase
 
         $this->expectException(PDOException::class);
 
-        DB::transaction(function () use ($account, $otherUser): void {
+        DB::connection('pgsql')->transaction(function () use ($account, $otherUser): void {
             $company = Company::query()->create([
                 'owning_account_id' => $account->id,
                 'name' => 'Mismatched SRL',

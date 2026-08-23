@@ -11,8 +11,10 @@ final readonly class CompanyMembershipVerifier implements VerifiesTenantMembersh
     public function allows(User $user, string $companyId): bool
     {
         return CompanyMembership::query()
+            ->join('companies', 'companies.id', '=', 'company_memberships.company_id')
             ->where('company_id', $companyId)
             ->where('user_id', $user->id)
+            ->whereNull('companies.archived_at')
             ->exists();
     }
 }

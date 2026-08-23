@@ -35,6 +35,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasDomainIdentifiers, HasFactory, Notifiable;
 
+    public function getConnectionName(): string
+    {
+        return config('database.tenant_connection');
+    }
+
     /**
      * @return HasOne<Account, $this>
      */

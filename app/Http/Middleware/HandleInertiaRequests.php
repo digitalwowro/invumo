@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Companies\Queries\CompanyContextProps;
 use App\Support\Inertia\CommonTranslationBag;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -42,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'companyContext' => fn () => app(CompanyContextProps::class)->for($request),
             'i18n' => [
                 'locale' => app()->getLocale(),
                 'supportedLocales' => config('localization.supported_locales'),

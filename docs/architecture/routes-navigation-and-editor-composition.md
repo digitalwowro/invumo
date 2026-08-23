@@ -83,18 +83,20 @@ Route names use normal Laravel resource vocabulary. Exact controller/action clas
 
 ### 4.1 Identity, onboarding, and account routes
 
-| Method    | Route                              | Responsibility                                                            |
-| --------- | ---------------------------------- | ------------------------------------------------------------------------- |
-| GET       | `/`                                | Safe guest/authenticated redirect only                                    |
-| GET/POST  | Fortify identity routes            | Registration, verification, sign-in/out, password reset, and confirmation |
-| GET       | `/companies`                       | Accessible Company chooser/management entry                               |
-| GET/POST  | `/companies/create`                | Create the first or another Company                                       |
-| GET       | `/invitations/{invitation}`        | Rate-limited invitation review without Company enumeration                |
-| POST      | `/invitations/{invitation}/accept` | Accept a valid invitation after authentication as required                |
-| GET/PATCH | `/settings/profile`                | User identity                                                             |
-| GET/PUT   | `/settings/security`               | Password and secure-session controls in v1 scope                          |
-| GET/PATCH | `/settings/preferences`            | Application language and account-level preferences                        |
-| GET       | `/settings/plan`                   | Owner-controlled Account plan/entitlements when implemented               |
+| Method      | Route                                                                      | Responsibility                                                            |
+| ----------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| GET         | `/`                                                                        | Safe guest/authenticated redirect only                                    |
+| GET/POST    | Fortify identity routes                                                    | Registration, verification, sign-in/out, password reset, and confirmation |
+| GET         | `/companies`                                                               | Accessible Company chooser/management entry                               |
+| GET/POST    | `/companies/create`                                                        | Create the first or another Company                                       |
+| GET         | `/invitations/{token}`                                                    | Rate-limited invitation review without Company enumeration                |
+| POST        | `/invitations/{token}/accept`                                             | Accept after authentication, verification, and invited-email matching     |
+| GET/POST    | `/companies/{company}/settings/members`                                   | Authorized member directory and invitation creation                      |
+| POST/DELETE | `/companies/{company}/settings/members/invitations/{invitation}/*`        | Resend or revoke a Company-bound pending invitation                       |
+| GET/PATCH   | `/settings/profile`                                                      | User identity                                                             |
+| GET/PUT     | `/settings/security`                                                     | Password and secure-session controls in v1 scope                          |
+| GET/PATCH   | `/settings/preferences`                                                  | Application language and account-level preferences                        |
+| GET         | `/settings/plan`                                                         | Owner-controlled Account plan/entitlements when implemented               |
 
 ### 4.2 Company shell and operational resources
 

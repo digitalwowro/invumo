@@ -34,7 +34,7 @@ class TenantIsolationTest extends TestCase
         $context->runAsSystem($companyA->id, function () use ($companyA): void {
             app(RecordAuditEvent::class)->handle($this->event($companyA));
 
-            $this->assertSame(1, AuditEvent::query()->count());
+            $this->assertSame(2, AuditEvent::query()->count());
         });
 
         $this->assertSame(0, AuditEvent::withoutGlobalScopes()->count());
@@ -44,11 +44,11 @@ class TenantIsolationTest extends TestCase
         );
 
         $context->runAsSystem($companyB->id, function (): void {
-            $this->assertSame(0, AuditEvent::query()->count());
+            $this->assertSame(1, AuditEvent::query()->count());
         });
 
         $context->runAsSystem($companyA->id, function (): void {
-            $this->assertSame(1, AuditEvent::query()->count());
+            $this->assertSame(2, AuditEvent::query()->count());
         });
     }
 
@@ -118,7 +118,7 @@ class TenantIsolationTest extends TestCase
         app(TenantContext::class)->runForMember($owner, $company->id, function () use ($company): void {
             app(RecordAuditEvent::class)->handle($this->event($company));
 
-            $this->assertSame(1, AuditEvent::query()->count());
+            $this->assertSame(2, AuditEvent::query()->count());
         });
     }
 

@@ -25,7 +25,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - The Laravel runtime database role is not the schema owner and cannot bypass RLS. Tenant context is set transaction-locally only after authorization, is required by queue jobs, and denies access when absent.
 - Control-plane, public-token, and scheduler bootstrap paths are narrow and must never grant a general tenant-data bypass. The approved mechanism is defined in [`../architecture/tenant-isolation.md`](../architecture/tenant-isolation.md).
 - Authentication uses the official Laravel React starter kit with built-in Fortify and covers registration, email verification, sign-in/out, password reset/confirmation, rate limiting, and secure session invalidation. WorkOS AuthKit, the starter kit's Teams domain, TOTP two-factor authentication, and recovery codes are excluded from v1.
-- Company invitations are email-addressed, expiring, revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
+- Company invitations are email-addressed, expire exactly 7 days after their most recent issue or resend, are revocable, single-use, and company-bound; they assign Admin or Member, never Owner.
 - Ownership transfer requires explicit confirmation and cannot be performed as an ordinary role change.
 - v1 has only the fixed Owner, Admin, and Member roles; it has no custom permissions, per-user overrides, creator-only records, or per-record sharing within a Company.
 - Owner has every Company permission and alone controls the owning Account plan, ownership transfer, and permanent Company erasure.

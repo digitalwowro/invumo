@@ -86,7 +86,7 @@ Run the interactive [ZeptoMail configurator](../../scripts/configure-zeptomail.s
 
 The configurator hides the password while it is entered, validates the non-secret inputs, updates the environment atomically, rebuilds the private configuration cache, sends one synchronous test message, and restarts the user-owned queue worker. If any step fails, it automatically restores the previous mail configuration. The later document-email/webhook design remains a separate Phase 9 gate.
 
-Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS submission, verified sender, and bounded timeout are active in cached production configuration; the test message was accepted and received; the queue worker remained active after restart; and the environment/configuration files remained mode `0600`. This proves the transport only. The verification, recovery, and invitation flows still require their Phase 1 implementation and tests.
+Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS submission, verified sender, and bounded timeout are active in cached production configuration; the test message was accepted and received; the queue worker remained active after restart; and the environment/configuration files remained mode `0600`. This proves the transport. The Company-invitation flow is now implemented and isolated tests exercise its queued notification boundary without sending real email; its business migration has not been applied to production and no live invitation was sent as verification. Verification and recovery flows remain Phase 1 work.
 
 The owner also confirmed on 2026-08-23 that ZeptoMail domain authentication and DMARC were added and provider-verified. Later the same day, Google and Cloudflare public DNS resolvers both returned `_dmarc.invumo.com` as `v=DMARC1; p=none; adkim=r; aspf=r`, closing the propagation recheck.
 
@@ -109,7 +109,8 @@ This runtime baseline does **not** close the complete Phase 1 or public-launch a
 
 - evidence before public launch that externally managed rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are active and usable;
 - separate development/production environments and repeatable application releases before real users make direct-production development unsafe; this is deliberately deferred during the current no-user period;
-- verification, recovery, and invitation mail flows, templates, queue behavior, and tests on the now-verified ZeptoMail transport;
+- verification and recovery mail flows, templates, queue behavior, and tests on the now-verified ZeptoMail transport;
+- applying and smoke-testing the completed invitation flow only through a separately authorized production change when appropriate;
 - application/job idempotency and observability primitives;
 - complete business migrations, forced RLS policies, and restricted-role isolation tests;
 - later Phase 12 operational re-verification.

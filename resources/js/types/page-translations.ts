@@ -45,4 +45,5 @@ export type SettingsUiTranslations = {
 export type DashboardTranslations = {
     title: string;
     subtitle: string;
+    members: string;
 };

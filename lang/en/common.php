@@ -21,6 +21,7 @@ return [
         'switch' => 'Switch company',
         'select' => 'Select company',
         'manage' => 'Manage companies',
+        'create' => 'New company',
     ],
     'account' => [
         'profile' => 'Profile',

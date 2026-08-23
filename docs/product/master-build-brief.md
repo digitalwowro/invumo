@@ -159,7 +159,7 @@ Members may create, edit, and delete Payments and Refunds under the complete led
 
 Each company has exactly one owning Account and exactly one Owner membership, held by that Account's owner. Admin and Member memberships may be multiple.
 
-Company invitations must be email-addressed, expiring, revocable, single-use, and safe for both existing and newly registered users. Acceptance must attach the intended user to the intended company only. Invitations assign Admin or Member; Owner is assigned only through the explicit ownership-transfer workflow and must not be achievable through an ordinary invitation or membership-role change.
+Company invitations must be email-addressed, expire exactly 7 days after their most recent issue or resend, be revocable and single-use, and remain safe for both existing and newly registered users. Acceptance must attach the intended user to the intended company only. Invitations assign Admin or Member; Owner is assigned only through the explicit ownership-transfer workflow and must not be achievable through an ordinary invitation or membership-role change.
 
 Company ownership must be transferable. A company should be movable from one account owner/account to another without rewriting or duplicating its business data.
 

@@ -3,12 +3,12 @@
 namespace App\Modules\Identity\Models;
 
 use App\Foundation\Database\Concerns\HasDomainIdentifiers;
+use App\Foundation\Database\RuntimeModel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['code', 'name', 'entitlements', 'active'])]
-class Plan extends Model
+class Plan extends RuntimeModel
 {
     use HasDomainIdentifiers;
 

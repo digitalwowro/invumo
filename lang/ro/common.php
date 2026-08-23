@@ -21,6 +21,7 @@ return [
         'switch' => 'Schimbă compania',
         'select' => 'Selectează compania',
         'manage' => 'Administrează companiile',
+        'create' => 'Companie nouă',
     ],
     'account' => [
         'profile' => 'Profil',

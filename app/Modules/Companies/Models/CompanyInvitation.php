@@ -3,11 +3,26 @@
 namespace App\Modules\Companies\Models;
 
 use App\Foundation\Database\Concerns\HasDomainIdentifiers;
+use App\Foundation\Database\RuntimeModel;
 use App\Models\User;
+use App\Modules\Companies\Data\CompanyRole;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $company_id
+ * @property string $invited_email
+ * @property string $invited_email_normalized
+ * @property CompanyRole $role
+ * @property string $token_hash
+ * @property CarbonImmutable $expires_at
+ * @property CarbonImmutable|null $revoked_at
+ * @property CarbonImmutable|null $accepted_at
+ * @property string|null $accepted_by_user_id
+ * @property string|null $invited_by_user_id
+ */
 #[Fillable([
     'company_id',
     'invited_email',
@@ -20,7 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'accepted_by_user_id',
     'invited_by_user_id',
 ])]
-class CompanyInvitation extends Model
+class CompanyInvitation extends RuntimeModel
 {
     use HasDomainIdentifiers;
 
@@ -46,6 +61,7 @@ class CompanyInvitation extends Model
     protected function casts(): array
     {
         return [
+            'role' => CompanyRole::class,
             'expires_at' => 'immutable_datetime',
             'revoked_at' => 'immutable_datetime',
             'accepted_at' => 'immutable_datetime',

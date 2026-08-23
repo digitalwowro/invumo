@@ -88,6 +88,11 @@ return new class extends Migration
                 OR (accepted_at IS NOT NULL AND accepted_by_user_id IS NOT NULL)
             )
             SQL);
+        DB::statement(<<<'SQL'
+            CREATE UNIQUE INDEX company_invitations_one_pending_email_unique
+            ON company_invitations (company_id, invited_email_normalized)
+            WHERE accepted_at IS NULL AND revoked_at IS NULL
+            SQL);
 
         $this->createOwnerConstraint();
         $this->grantRuntimePrivileges();

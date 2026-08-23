@@ -1,0 +1,17 @@
+export type Status =
+    | 'paid'
+    | 'accepted'
+    | 'completed'
+    | 'overdue'
+    | 'rejected'
+    | 'failed'
+    | 'partial'
+    | 'expired'
+    | 'paused'
+    | 'issued'
+    | 'sent'
+    | 'active'
+    | 'unpaid'
+    | 'draft'
+    | 'cancelled'
+    | 'archived';

@@ -36,21 +36,23 @@ function translationPlaceholders(string $translation): array
     return $placeholders;
 }
 
-it('keeps English and Romanian common translation keys and placeholders aligned', function () {
+it('keeps English and Romanian authored translation keys and placeholders aligned', function () {
     $projectRoot = dirname(__DIR__, 3);
 
-    /** @var array<string, mixed> $english */
-    $english = require $projectRoot.'/lang/en/common.php';
-    /** @var array<string, mixed> $romanian */
-    $romanian = require $projectRoot.'/lang/ro/common.php';
+    foreach (['auth_ui', 'common', 'dashboard', 'design_system', 'settings_ui'] as $catalogue) {
+        /** @var array<string, mixed> $english */
+        $english = require "{$projectRoot}/lang/en/{$catalogue}.php";
+        /** @var array<string, mixed> $romanian */
+        $romanian = require "{$projectRoot}/lang/ro/{$catalogue}.php";
 
-    $english = flattenTranslations($english);
-    $romanian = flattenTranslations($romanian);
+        $english = flattenTranslations($english);
+        $romanian = flattenTranslations($romanian);
 
-    expect(array_keys($romanian))->toBe(array_keys($english));
+        expect(array_keys($romanian))->toBe(array_keys($english));
 
-    foreach ($english as $key => $translation) {
-        expect(translationPlaceholders($romanian[$key]))
-            ->toBe(translationPlaceholders($translation), "Placeholder mismatch for [{$key}].");
+        foreach ($english as $key => $translation) {
+            expect(translationPlaceholders($romanian[$key]))
+                ->toBe(translationPlaceholders($translation), "Placeholder mismatch for [{$catalogue}.{$key}].");
+        }
     }
 });

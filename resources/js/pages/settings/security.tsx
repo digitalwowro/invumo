@@ -1,131 +1,102 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/app/heading';
-import InputError from '@/components/app/input-error';
-import PasswordInput from '@/components/app/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { PasswordField } from '@/components/app/form-field';
+import { FormSection } from '@/components/app/form-section';
+import type { SettingsUiTranslations } from '@/types';
 
 type Props = {
     passwordRules: string;
+    translations: SettingsUiTranslations;
 };
 
-export default function Security(props: Props) {
+export default function Security({ passwordRules, translations }: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const { page, shared } = translations;
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title={page.headTitle} />
 
-            <h1 className="sr-only">Security settings</h1>
+            <Form
+                {...SecurityController.update.form()}
+                options={{ preserveScroll: true }}
+                resetOnError={[
+                    'password',
+                    'password_confirmation',
+                    'current_password',
+                ]}
+                resetOnSuccess
+                onError={(errors) => {
+                    if (errors.password) {
+                        passwordInput.current?.focus();
+                    }
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
-                />
-
-                <Form
-                    {...SecurityController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    resetOnError={[
-                        'password',
-                        'password_confirmation',
-                        'current_password',
-                    ]}
-                    resetOnSuccess
-                    onError={(errors) => {
-                        if (errors.password) {
-                            passwordInput.current?.focus();
-                        }
-
-                        if (errors.current_password) {
-                            currentPasswordInput.current?.focus();
-                        }
-                    }}
-                    className="space-y-6"
-                >
-                    {({ errors, processing }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_password">
-                                    Current password
-                                </Label>
-
-                                <PasswordInput
-                                    id="current_password"
-                                    ref={currentPasswordInput}
-                                    name="current_password"
-                                    className="mt-1 block w-full"
-                                    autoComplete="current-password"
-                                    placeholder="Current password"
-                                />
-
-                                <InputError message={errors.current_password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
-
-                                <PasswordInput
-                                    id="password"
-                                    ref={passwordInput}
-                                    name="password"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="New password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="Confirm password"
-                                    passwordrules={props.passwordRules}
-                                />
-
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-password-button"
+                    if (errors.current_password) {
+                        currentPasswordInput.current?.focus();
+                    }
+                }}
+            >
+                {({ errors, processing }) => (
+                    <FormSection
+                        title={page.title}
+                        description={page.description}
+                        actions={
+                            <FormActions>
+                                <SubmitButton
+                                    processing={processing}
+                                    testId="update-password-button"
                                 >
-                                    Save
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </div>
+                                    {shared.save}
+                                </SubmitButton>
+                            </FormActions>
+                        }
+                    >
+                        <PasswordField
+                            id="current_password"
+                            label={page.currentPassword}
+                            error={errors.current_password}
+                            input={{
+                                ref: currentPasswordInput,
+                                name: 'current_password',
+                                autoComplete: 'current-password',
+                                placeholder: shared.passwordPlaceholder,
+                                showLabel: shared.showPassword,
+                                hideLabel: shared.hidePassword,
+                            }}
+                        />
+                        <PasswordField
+                            id="password"
+                            label={page.newPassword}
+                            error={errors.password}
+                            input={{
+                                ref: passwordInput,
+                                name: 'password',
+                                autoComplete: 'new-password',
+                                placeholder: shared.passwordPlaceholder,
+                                passwordrules: passwordRules,
+                                showLabel: shared.showPassword,
+                                hideLabel: shared.hidePassword,
+                            }}
+                        />
+                        <PasswordField
+                            id="password_confirmation"
+                            label={page.confirmPassword}
+                            error={errors.password_confirmation}
+                            input={{
+                                name: 'password_confirmation',
+                                autoComplete: 'new-password',
+                                placeholder: shared.passwordPlaceholder,
+                                passwordrules: passwordRules,
+                                showLabel: shared.showPassword,
+                                hideLabel: shared.hidePassword,
+                            }}
+                        />
+                    </FormSection>
+                )}
+            </Form>
         </>
     );
 }
-
-Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: edit(),
-        },
-    ],
-};

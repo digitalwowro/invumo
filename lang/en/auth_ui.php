@@ -1,0 +1,65 @@
+<?php
+
+return [
+    'shared' => [
+        'email' => 'Email address',
+        'emailPlaceholder' => 'email@example.com',
+        'password' => 'Password',
+        'passwordPlaceholder' => 'Password',
+        'confirmPassword' => 'Confirm password',
+        'currentPassword' => 'Current password',
+        'newPassword' => 'New password',
+        'name' => 'Name',
+        'fullNamePlaceholder' => 'Full name',
+        'showPassword' => 'Show password',
+        'hidePassword' => 'Hide password',
+    ],
+    'pages' => [
+        'login' => [
+            'title' => 'Log in to your account',
+            'description' => 'Enter your email and password to continue.',
+            'headTitle' => 'Log in',
+            'forgotPassword' => 'Forgot your password?',
+            'remember' => 'Remember me',
+            'submit' => 'Log in',
+            'noAccount' => 'Don’t have an account?',
+            'signUp' => 'Create one',
+        ],
+        'register' => [
+            'title' => 'Create an account',
+            'description' => 'Enter your details to create your Invumo account.',
+            'headTitle' => 'Register',
+            'submit' => 'Create account',
+            'hasAccount' => 'Already have an account?',
+            'logIn' => 'Log in',
+        ],
+        'confirmPassword' => [
+            'title' => 'Confirm your password',
+            'description' => 'This is a secure area. Confirm your password before continuing.',
+            'headTitle' => 'Confirm password',
+            'submit' => 'Confirm password',
+        ],
+        'forgotPassword' => [
+            'title' => 'Forgot your password?',
+            'description' => 'Enter your email to receive a password reset link.',
+            'headTitle' => 'Forgot password',
+            'submit' => 'Email password reset link',
+            'returnPrompt' => 'Or return to',
+            'logIn' => 'log in',
+        ],
+        'resetPassword' => [
+            'title' => 'Reset your password',
+            'description' => 'Choose a new password for your account.',
+            'headTitle' => 'Reset password',
+            'submit' => 'Reset password',
+        ],
+        'verifyEmail' => [
+            'title' => 'Verify your email',
+            'description' => 'Open the verification link we sent to your email address.',
+            'headTitle' => 'Email verification',
+            'sent' => 'A new verification link has been sent to your email address.',
+            'resend' => 'Resend verification email',
+            'logOut' => 'Log out',
+        ],
+    ],
+];

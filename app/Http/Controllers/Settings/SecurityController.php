@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
+use App\Support\Inertia\SettingsUiTranslationBag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -14,10 +15,11 @@ class SecurityController extends Controller
     /**
      * Show the user's security settings page.
      */
-    public function edit(): Response
+    public function edit(SettingsUiTranslationBag $translations): Response
     {
         $props = [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'translations' => $translations->for('security'),
         ];
 
         return Inertia::render('settings/security', $props);
@@ -32,7 +34,10 @@ class SecurityController extends Controller
             'password' => $request->password,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('settings_ui.flash.passwordUpdated'),
+        ]);
 
         return back();
     }

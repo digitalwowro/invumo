@@ -177,6 +177,23 @@ for (const root of roots) {
     for (const file of await collectFiles(join(projectRoot, root))) {
         const source = await readFile(file, 'utf8');
         const lines = source.split('\n');
+        const projectPath = relative(projectRoot, file);
+
+        if (
+            projectPath.startsWith('resources/js/pages/') &&
+            /\b(?:className|style)\s*=/.test(source)
+        ) {
+            const match = source.match(/\b(?:className|style)\s*=/);
+            const line = source.slice(0, match.index).split('\n').length;
+
+            violations.push({
+                file: projectPath,
+                line,
+                rule: 'page-owned visual override',
+                match: match[0],
+                context: lines[line - 1]?.trim(),
+            });
+        }
 
         for (const rule of rules) {
             rule.pattern.lastIndex = 0;
@@ -184,7 +201,7 @@ for (const root of roots) {
             for (const match of source.matchAll(rule.pattern)) {
                 const line = source.slice(0, match.index).split('\n').length;
                 violations.push({
-                    file: relative(projectRoot, file),
+                    file: projectPath,
                     line,
                     rule: rule.name,
                     match: match[0],

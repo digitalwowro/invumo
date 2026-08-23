@@ -53,11 +53,15 @@ export type CommonTranslations = {
         sent: string;
         accepted: string;
         rejected: string;
+        failed: string;
         issued: string;
         partial: string;
+        expired: string;
         paid: string;
+        unpaid: string;
         overdue: string;
         cancelled: string;
+        archived: string;
         active: string;
         paused: string;
         completed: string;

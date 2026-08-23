@@ -19,6 +19,8 @@ return [
 
     'default' => env('DB_CONNECTION', 'pgsql'),
 
+    'tenant_connection' => 'pgsql',
+
     /*
     |--------------------------------------------------------------------------
     | Database Connections

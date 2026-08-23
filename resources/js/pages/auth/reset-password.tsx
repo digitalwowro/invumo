@@ -1,96 +1,87 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/app/input-error';
-import PasswordInput from '@/components/app/password-input';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { PasswordField, TextField } from '@/components/app/form-field';
+import { Stack } from '@/components/app/layout';
 import { update } from '@/routes/password';
+import type { AuthUiTranslations } from '@/types';
 
 type Props = {
     token: string;
     email: string;
     passwordRules: string;
+    translations: AuthUiTranslations;
 };
 
-export default function ResetPassword({ token, email, passwordRules }: Props) {
+export default function ResetPassword({
+    token,
+    email,
+    passwordRules,
+    translations,
+}: Props) {
+    const { page, shared } = translations;
+
     return (
         <>
-            <Head title="Reset password" />
-
+            <Head title={page.headTitle} />
             <Form
                 {...update.form()}
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
             >
                 {({ processing, errors }) => (
-                    <div className="grid gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
+                    <Stack gap="xl">
+                        <Stack gap="lg">
+                            <TextField
                                 id="email"
-                                type="email"
-                                name="email"
-                                autoComplete="email"
-                                value={email}
-                                className="mt-1 block w-full"
-                                readOnly
+                                label={shared.email}
+                                error={errors.email}
+                                input={{
+                                    type: 'email',
+                                    name: 'email',
+                                    autoComplete: 'email',
+                                    value: email,
+                                    readOnly: true,
+                                }}
                             />
-                            <InputError
-                                message={errors.email}
-                                className="mt-2"
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <PasswordInput
+                            <PasswordField
                                 id="password"
-                                name="password"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                autoFocus
-                                placeholder="Password"
-                                passwordrules={passwordRules}
+                                label={shared.password}
+                                error={errors.password}
+                                input={{
+                                    name: 'password',
+                                    autoComplete: 'new-password',
+                                    autoFocus: true,
+                                    placeholder: shared.passwordPlaceholder,
+                                    passwordrules: passwordRules,
+                                    showLabel: shared.showPassword,
+                                    hideLabel: shared.hidePassword,
+                                }}
                             />
-                            <InputError message={errors.password} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirm password
-                            </Label>
-                            <PasswordInput
+                            <PasswordField
                                 id="password_confirmation"
-                                name="password_confirmation"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
-                                passwordrules={passwordRules}
+                                label={shared.confirmPassword}
+                                error={errors.password_confirmation}
+                                input={{
+                                    name: 'password_confirmation',
+                                    autoComplete: 'new-password',
+                                    placeholder: shared.passwordPlaceholder,
+                                    passwordrules: passwordRules,
+                                    showLabel: shared.showPassword,
+                                    hideLabel: shared.hidePassword,
+                                }}
                             />
-                            <InputError
-                                message={errors.password_confirmation}
-                                className="mt-2"
-                            />
-                        </div>
-
-                        <Button
-                            type="submit"
-                            className="mt-4 w-full"
-                            disabled={processing}
-                            data-test="reset-password-button"
-                        >
-                            {processing && <Spinner />}
-                            Reset password
-                        </Button>
-                    </div>
+                        </Stack>
+                        <FormActions align="stretch">
+                            <SubmitButton
+                                processing={processing}
+                                testId="reset-password-button"
+                            >
+                                {page.submit}
+                            </SubmitButton>
+                        </FormActions>
+                    </Stack>
                 )}
             </Form>
         </>
     );
 }
-
-ResetPassword.layout = {
-    title: 'Reset password',
-    description: 'Please enter your new password below',
-};

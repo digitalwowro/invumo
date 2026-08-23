@@ -113,6 +113,10 @@ function resolveFrontendImport(file, specifier) {
 }
 
 function frontendLayer(file) {
+    if (file.startsWith('resources/js/pages/')) {
+        return 'page';
+    }
+
     if (file.startsWith('resources/js/components/ui/')) {
         return 'ui';
     }
@@ -171,6 +175,7 @@ function checkFrontend(file) {
         )?.[1];
 
         const forbidden = {
+            page: ['ui'],
             ui: ['app', 'domain', 'feature'],
             app: ['domain', 'feature'],
             domain: ['feature'],

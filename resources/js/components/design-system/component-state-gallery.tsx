@@ -1,92 +1,33 @@
-import { Cluster, Stack } from '@/components/app/layout';
+import { Stack } from '@/components/app/layout';
 import { PageHeader } from '@/components/app/page-header';
-import { Surface } from '@/components/app/surface';
-import { MoneyValue } from '@/components/domain/money-value';
-import { StatusBadge } from '@/components/domain/status-badge';
-import type { Status } from '@/components/domain/status-badge';
-import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { GalleryFoundations } from '@/components/design-system/gallery-foundations';
+import { GalleryStates } from '@/components/design-system/gallery-states';
+import { GalleryTable } from '@/components/design-system/gallery-table';
+import type {
+    DesignSystemStatusLabels,
+    DesignSystemTranslations,
+} from '@/types';
 
-const statuses: Status[] = [
-    'paid',
-    'accepted',
-    'completed',
-    'overdue',
-    'rejected',
-    'failed',
-    'partial',
-    'expired',
-    'paused',
-    'issued',
-    'sent',
-    'active',
-    'unpaid',
-    'draft',
-    'cancelled',
-    'archived',
-];
-
-type GalleryLabels = {
-    title: string;
-    subtitle: string;
-    field: string;
-    fieldDescription: string;
-    actions: Record<'primary' | 'secondary' | 'ghost' | 'destructive', string>;
-    statuses: Record<Status, string>;
+type ComponentStateGalleryProps = {
+    labels: DesignSystemTranslations;
+    statusLabels: DesignSystemStatusLabels;
 };
 
-export function ComponentStateGallery({ labels }: { labels: GalleryLabels }) {
+export function ComponentStateGallery({
+    labels,
+    statusLabels,
+}: ComponentStateGalleryProps) {
     return (
-        <Stack gap="xl">
-            <PageHeader title={labels.title} subtitle={labels.subtitle} />
-
-            <Surface>
-                <Cluster gap="sm">
-                    <Button>{labels.actions.primary}</Button>
-                    <Button variant="secondary">
-                        {labels.actions.secondary}
-                    </Button>
-                    <Button variant="ghost">{labels.actions.ghost}</Button>
-                    <Button variant="destructive">
-                        {labels.actions.destructive}
-                    </Button>
-                </Cluster>
-            </Surface>
-
-            <Surface>
-                <Field>
-                    <FieldLabel htmlFor="gallery-field">
-                        {labels.field}
-                    </FieldLabel>
-                    <Input id="gallery-field" />
-                    <FieldDescription>
-                        {labels.fieldDescription}
-                    </FieldDescription>
-                </Field>
-            </Surface>
-
-            <Surface>
-                <Cluster gap="sm">
-                    {statuses.map((status) => (
-                        <StatusBadge
-                            key={status}
-                            status={status}
-                            label={labels.statuses[status]}
-                        />
-                    ))}
-                </Cluster>
-            </Surface>
-
-            <Surface>
-                <Cluster gap="xl">
-                    <MoneyValue value="€ 1.240,00" emphasis="strong" />
-                    <MoneyValue value="€ 0,00" tone="positive" />
-                    <MoneyValue value="€ 780,00" tone="danger" />
-                </Cluster>
-            </Surface>
+        <Stack gap="2xl">
+            <PageHeader
+                title={labels.page.title}
+                subtitle={labels.page.subtitle}
+            />
+            <GalleryFoundations labels={labels} />
+            <GalleryStates labels={labels} statusLabels={statusLabels} />
+            <GalleryTable labels={labels} statusLabels={statusLabels} />
         </Stack>
     );
 }
 
-export type { GalleryLabels };
+export type { ComponentStateGalleryProps };

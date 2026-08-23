@@ -1,24 +1,7 @@
 import { Check } from 'lucide-react';
 import type { badgeVariants } from '@/components/ui/badge';
 import { Badge } from '@/components/ui/badge';
-
-type Status =
-    | 'paid'
-    | 'accepted'
-    | 'completed'
-    | 'overdue'
-    | 'rejected'
-    | 'failed'
-    | 'partial'
-    | 'expired'
-    | 'paused'
-    | 'issued'
-    | 'sent'
-    | 'active'
-    | 'unpaid'
-    | 'draft'
-    | 'cancelled'
-    | 'archived';
+import type { Status } from '@/types/status';
 
 type BadgeVariant = NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
 
@@ -69,4 +52,4 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
 }
 
 export { presentations as statusPresentations };
-export type { Status };
+export type { Status } from '@/types/status';

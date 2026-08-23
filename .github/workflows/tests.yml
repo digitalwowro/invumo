@@ -29,6 +29,11 @@ jobs:
           --health-retries 5
 
     env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: invumo_test
+      DB_USERNAME: invumo_runtime
+      DB_PASSWORD: invumo_runtime_test_password
       DB_SCHEMA_HOST: 127.0.0.1
       DB_SCHEMA_PORT: 5432
       DB_SCHEMA_DATABASE: invumo_test
@@ -64,7 +69,12 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+          PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 --command="CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS"
+          PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 --command="GRANT USAGE ON SCHEMA public TO invumo_runtime"
           php artisan migrate --database=pgsql_schema --force
+
+      - name: Install browser runtime
+        run: npx playwright install --with-deps chromium
 
       - name: Run CI Checks
         run: composer ci:check

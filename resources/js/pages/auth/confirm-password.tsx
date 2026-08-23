@@ -1,51 +1,47 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/app/input-error';
-import PasswordInput from '@/components/app/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { PasswordField } from '@/components/app/form-field';
+import { Stack } from '@/components/app/layout';
 import { store } from '@/routes/password/confirm';
+import type { AuthUiTranslations } from '@/types';
 
-export default function ConfirmPassword() {
+export default function ConfirmPassword({
+    translations,
+}: {
+    translations: AuthUiTranslations;
+}) {
+    const { page, shared } = translations;
+
     return (
         <>
-            <Head title="Confirm password" />
-
+            <Head title={page.headTitle} />
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
-                    <div className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <PasswordInput
-                                id="password"
-                                name="password"
-                                placeholder="Password"
-                                autoComplete="current-password"
-                                autoFocus
-                            />
-
-                            <InputError message={errors.password} />
-                        </div>
-
-                        <div className="flex items-center">
-                            <Button
-                                className="w-full"
-                                disabled={processing}
-                                data-test="confirm-password-button"
+                    <Stack gap="xl">
+                        <PasswordField
+                            id="password"
+                            label={shared.password}
+                            error={errors.password}
+                            input={{
+                                name: 'password',
+                                autoComplete: 'current-password',
+                                autoFocus: true,
+                                placeholder: shared.passwordPlaceholder,
+                                showLabel: shared.showPassword,
+                                hideLabel: shared.hidePassword,
+                            }}
+                        />
+                        <FormActions align="stretch">
+                            <SubmitButton
+                                processing={processing}
+                                testId="confirm-password-button"
                             >
-                                {processing && <Spinner />}
-                                Confirm password
-                            </Button>
-                        </div>
-                    </div>
+                                {page.submit}
+                            </SubmitButton>
+                        </FormActions>
+                    </Stack>
                 )}
             </Form>
         </>
     );
 }
-
-ConfirmPassword.layout = {
-    title: 'Confirm password',
-    description:
-        'This is a secure area of the application. Please confirm your password before continuing.',
-};

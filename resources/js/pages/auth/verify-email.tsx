@@ -1,46 +1,42 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { Stack } from '@/components/app/layout';
+import { SystemMessage } from '@/components/app/system-message';
 import TextLink from '@/components/app/text-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
+import type { AuthUiTranslations } from '@/types';
 
-export default function VerifyEmail({ status }: { status?: string }) {
+type Props = {
+    status?: string;
+    translations: AuthUiTranslations;
+};
+
+export default function VerifyEmail({ status, translations }: Props) {
+    const { page } = translations;
+
     return (
         <>
-            <Head title="Email verification" />
-
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-foreground">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
-            )}
-
-            <Form {...send.form()} className="space-y-6 text-center">
-                {({ processing }) => (
-                    <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Resend verification email
-                        </Button>
-
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
-                        >
-                            Log out
-                        </TextLink>
-                    </>
+            <Head title={page.headTitle} />
+            <Stack gap="xl">
+                {status === 'verification-link-sent' && (
+                    <SystemMessage title={page.sent} />
                 )}
-            </Form>
+
+                <Form {...send.form()}>
+                    {({ processing }) => (
+                        <FormActions align="stretch">
+                            <SubmitButton processing={processing}>
+                                {page.resend}
+                            </SubmitButton>
+                        </FormActions>
+                    )}
+                </Form>
+
+                <TextLink href={logout()} as="button">
+                    {page.logOut}
+                </TextLink>
+            </Stack>
         </>
     );
 }
-
-VerifyEmail.layout = {
-    title: 'Email verification',
-    description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
-};

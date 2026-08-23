@@ -1,4 +1,7 @@
 export type * from './auth';
+export type * from './design-system';
 export type * from './localization';
 export type * from './navigation';
+export type * from './page-translations';
+export type * from './status';
 export type * from './ui';

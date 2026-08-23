@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Modules\Identity\Models;
+
+use App\Foundation\Database\Concerns\HasDomainIdentifiers;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+#[Fillable(['code', 'name', 'entitlements', 'active'])]
+class Plan extends Model
+{
+    use HasDomainIdentifiers;
+
+    /**
+     * @return HasMany<Account, $this>
+     */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'entitlements' => 'array',
+            'active' => 'boolean',
+        ];
+    }
+}

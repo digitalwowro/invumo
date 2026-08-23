@@ -74,6 +74,7 @@ Do not add `Services`, `Managers`, `Helpers`, or repositories as default buckets
 `app/Foundation` contains only stable building blocks required by several modules:
 
 - `Tenancy` — company context and restricted-role/RLS plumbing;
+- `Database` — UUIDv7 domain-identifier conventions and narrowly shared persistence primitives;
 - `Money` — exact-decimal and currency-precision primitives;
 - `Jobs` — tenant-safe dispatch, idempotency, and shared execution context.
 

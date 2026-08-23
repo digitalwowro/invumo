@@ -71,7 +71,8 @@
             "npm run types:check",
             "npm run test:unit",
             "npm run build",
-            "@test"
+            "@test",
+            "@test:browser"
         ],
         "types:check": [
             "phpstan analyse"
@@ -81,6 +82,9 @@
             "@lint:check",
             "@types:check",
             "@php artisan test"
+        ],
+        "test:browser": [
+            "pest tests/Browser --compact"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

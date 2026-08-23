@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
+use App\Foundation\Tenancy\TenantContext;
+use App\Modules\Companies\Queries\CompanyMembershipVerifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            VerifiesTenantMembership::class,
+            CompanyMembershipVerifier::class,
+        );
+        $this->app->singleton(TenantContext::class);
     }
 
     /**

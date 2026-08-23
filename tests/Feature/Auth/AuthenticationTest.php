@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -16,6 +17,18 @@ class AuthenticationTest extends TestCase
         $response = $this->get(route('login'));
 
         $response->assertOk();
+    }
+
+    public function test_login_screen_receives_laravel_resolved_romanian_strings(): void
+    {
+        app()->setLocale('ro');
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/login')
+                ->where('translations.page.title', 'Intră în cont')
+                ->where('translations.shared.email', 'Adresă de e-mail'));
     }
 
     public function test_users_can_authenticate_using_the_login_screen()

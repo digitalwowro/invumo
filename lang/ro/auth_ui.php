@@ -1,0 +1,65 @@
+<?php
+
+return [
+    'shared' => [
+        'email' => 'Adresă de e-mail',
+        'emailPlaceholder' => 'email@exemplu.ro',
+        'password' => 'Parolă',
+        'passwordPlaceholder' => 'Parolă',
+        'confirmPassword' => 'Confirmă parola',
+        'currentPassword' => 'Parola curentă',
+        'newPassword' => 'Parolă nouă',
+        'name' => 'Nume',
+        'fullNamePlaceholder' => 'Nume complet',
+        'showPassword' => 'Afișează parola',
+        'hidePassword' => 'Ascunde parola',
+    ],
+    'pages' => [
+        'login' => [
+            'title' => 'Intră în cont',
+            'description' => 'Introdu adresa de e-mail și parola pentru a continua.',
+            'headTitle' => 'Autentificare',
+            'forgotPassword' => 'Ai uitat parola?',
+            'remember' => 'Ține-mă minte',
+            'submit' => 'Intră în cont',
+            'noAccount' => 'Nu ai cont?',
+            'signUp' => 'Creează unul',
+        ],
+        'register' => [
+            'title' => 'Creează un cont',
+            'description' => 'Introdu datele pentru a crea contul Invumo.',
+            'headTitle' => 'Înregistrare',
+            'submit' => 'Creează contul',
+            'hasAccount' => 'Ai deja un cont?',
+            'logIn' => 'Intră în cont',
+        ],
+        'confirmPassword' => [
+            'title' => 'Confirmă parola',
+            'description' => 'Aceasta este o zonă securizată. Confirmă parola înainte de a continua.',
+            'headTitle' => 'Confirmarea parolei',
+            'submit' => 'Confirmă parola',
+        ],
+        'forgotPassword' => [
+            'title' => 'Ai uitat parola?',
+            'description' => 'Introdu adresa de e-mail pentru a primi linkul de resetare.',
+            'headTitle' => 'Parolă uitată',
+            'submit' => 'Trimite linkul de resetare',
+            'returnPrompt' => 'Sau revino la',
+            'logIn' => 'autentificare',
+        ],
+        'resetPassword' => [
+            'title' => 'Resetează parola',
+            'description' => 'Alege o parolă nouă pentru cont.',
+            'headTitle' => 'Resetarea parolei',
+            'submit' => 'Resetează parola',
+        ],
+        'verifyEmail' => [
+            'title' => 'Verifică adresa de e-mail',
+            'description' => 'Deschide linkul de verificare trimis la adresa ta de e-mail.',
+            'headTitle' => 'Verificarea e-mailului',
+            'sent' => 'Un nou link de verificare a fost trimis la adresa ta de e-mail.',
+            'resend' => 'Retrimite e-mailul de verificare',
+            'logOut' => 'Deconectare',
+        ],
+    ],
+];

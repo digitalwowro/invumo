@@ -1,26 +1,22 @@
 import { Head } from '@inertiajs/react';
-import Heading from '@/components/app/heading';
-import { dashboard } from '@/routes';
+import { PageFrame } from '@/components/app/page-frame';
+import { PageHeader } from '@/components/app/page-header';
+import type { DashboardTranslations } from '@/types';
 
-export default function Dashboard() {
+export default function Dashboard({
+    translations,
+}: {
+    translations: DashboardTranslations;
+}) {
     return (
         <>
-            <Head title="Dashboard" />
-            <div className="p-8">
-                <Heading
-                    title="Dashboard"
-                    description="The Invumo foundation is being prepared."
+            <Head title={translations.title} />
+            <PageFrame>
+                <PageHeader
+                    title={translations.title}
+                    subtitle={translations.subtitle}
                 />
-            </div>
+            </PageFrame>
         </>
     );
 }
-
-Dashboard.layout = {
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-    ],
-};

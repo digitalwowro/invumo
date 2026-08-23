@@ -1,114 +1,98 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/app/input-error';
-import PasswordInput from '@/components/app/password-input';
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import {
+    CheckboxField,
+    PasswordField,
+    TextField,
+} from '@/components/app/form-field';
+import { Stack } from '@/components/app/layout';
+import { SystemMessage } from '@/components/app/system-message';
 import TextLink from '@/components/app/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { PageSubtitle } from '@/components/app/typography';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import type { AuthUiTranslations } from '@/types';
 
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    translations: AuthUiTranslations;
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    translations,
+}: Props) {
+    const { page, shared } = translations;
+
     return (
         <>
-            <Head title="Log in" />
+            <Head title={page.headTitle} />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
+            <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot your password?
+                    <Stack gap="xl">
+                        <Stack gap="lg">
+                            <TextField
+                                id="email"
+                                label={shared.email}
+                                error={errors.email}
+                                input={{
+                                    type: 'email',
+                                    name: 'email',
+                                    required: true,
+                                    autoFocus: true,
+                                    autoComplete: 'email',
+                                    placeholder: shared.emailPlaceholder,
+                                }}
+                            />
+                            <PasswordField
+                                id="password"
+                                label={shared.password}
+                                error={errors.password}
+                                labelAction={
+                                    canResetPassword ? (
+                                        <TextLink href={request()}>
+                                            {page.forgotPassword}
                                         </TextLink>
-                                    )}
-                                </div>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+                                    ) : undefined
+                                }
+                                input={{
+                                    name: 'password',
+                                    required: true,
+                                    autoComplete: 'current-password',
+                                    placeholder: shared.passwordPlaceholder,
+                                    showLabel: shared.showPassword,
+                                    hideLabel: shared.hidePassword,
+                                }}
+                            />
+                            <CheckboxField
+                                id="remember"
+                                label={page.remember}
+                                checkbox={{ name: 'remember' }}
+                            />
+                        </Stack>
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
+                        <FormActions align="stretch">
+                            <SubmitButton
+                                processing={processing}
+                                testId="login-button"
                             >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
+                                {page.submit}
+                            </SubmitButton>
+                        </FormActions>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{' '}
-                            <TextLink href={register()} tabIndex={5}>
-                                Sign up
-                            </TextLink>
-                        </div>
-                    </>
+                        <PageSubtitle>
+                            {page.noAccount}{' '}
+                            <TextLink href={register()}>{page.signUp}</TextLink>
+                        </PageSubtitle>
+
+                        {status && <SystemMessage title={status} />}
+                    </Stack>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-foreground">
-                    {status}
-                </div>
-            )}
         </>
     );
 }
-
-Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
-};

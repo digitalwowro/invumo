@@ -1,12 +1,13 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { PageSubtitle, PageTitle } from '@/components/app/typography';
 import { home } from '@/routes';
-import type { AuthLayoutProps } from '@/types';
+import type { AuthLayoutProps, AuthUiTranslations } from '@/types';
 
-export default function AuthSimpleLayout({
-    children,
-    title,
-    description,
-}: AuthLayoutProps) {
+export default function AuthSimpleLayout({ children }: AuthLayoutProps) {
+    const { translations } = usePage<{
+        translations: AuthUiTranslations;
+    }>().props;
+
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-page p-6 md:p-10">
             <div className="w-full max-w-sm">
@@ -20,12 +21,10 @@ export default function AuthSimpleLayout({
                         </Link>
 
                         <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-bold tracking-tight">
-                                {title}
-                            </h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
+                            <PageTitle>{translations.page.title}</PageTitle>
+                            <PageSubtitle>
+                                {translations.page.description}
+                            </PageSubtitle>
                         </div>
                     </div>
                     {children}

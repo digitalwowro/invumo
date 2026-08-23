@@ -1,50 +1,58 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ComponentStateGallery } from '@/components/design-system/component-state-gallery';
-import type { GalleryLabels } from '@/components/design-system/component-state-gallery';
-
-const romanianLabels: GalleryLabels = {
-    title: 'Componente Invumo',
-    subtitle: 'Verificare comună în limba română',
-    field: 'Denumire client',
-    fieldDescription: 'Folosește diacritice românești: ă â î ș ț.',
-    actions: {
-        primary: 'Salvează',
-        secondary: 'Anulează',
-        ghost: 'Previzualizează',
-        destructive: 'Șterge',
-    },
-    statuses: {
-        paid: 'Plătit',
-        accepted: 'Acceptat',
-        completed: 'Finalizat',
-        overdue: 'Restant',
-        rejected: 'Respins',
-        failed: 'Eșuat',
-        partial: 'Parțial',
-        expired: 'Expirat',
-        paused: 'Întrerupt',
-        issued: 'Emis',
-        sent: 'Trimis',
-        active: 'Activ',
-        unpaid: 'Neplătit',
-        draft: 'Ciornă',
-        cancelled: 'Anulat',
-        archived: 'Arhivat',
-    },
-};
+import {
+    romanianDesignSystemTranslations,
+    romanianStatusLabels,
+} from '@/test/fixtures/design-system';
 
 describe('ComponentStateGallery', () => {
-    it('renders the shared state matrix with Romanian diacritics', () => {
-        render(<ComponentStateGallery labels={romanianLabels} />);
-
-        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-            'Componente Invumo',
+    it('renders the complete shared state matrix with Romanian diacritics', () => {
+        render(
+            <ComponentStateGallery
+                labels={romanianDesignSystemTranslations}
+                statusLabels={romanianStatusLabels}
+            />,
         );
+
         expect(
-            screen.getByText('Folosește diacritice românești: ă â î ș ț.'),
+            screen.getAllByRole('heading', { level: 1 })[0],
+        ).toHaveTextContent('Sistemul de componente Invumo');
+        expect(
+            screen.getByText('Text obișnuit cu diacritice: ă â î ș ț.'),
         ).toBeInTheDocument();
-        expect(screen.getByText('Parțial')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Salvează' })).toBeEnabled();
+        expect(screen.getAllByText('Parțial').length).toBeGreaterThan(0);
+        expect(
+            screen.getByRole('button', { name: 'Salvează modificările' }),
+        ).toBeEnabled();
+        expect(
+            screen.getByRole('table', {
+                name: 'Exemplu de listă cu facturi',
+            }),
+        ).toBeInTheDocument();
+    });
+
+    it('opens the shared confirmation dialog and exposes localized actions', async () => {
+        const user = userEvent.setup();
+
+        render(
+            <ComponentStateGallery
+                labels={romanianDesignSystemTranslations}
+                statusLabels={romanianStatusLabels}
+            />,
+        );
+
+        await user.click(
+            screen.getByRole('button', { name: 'Deschide confirmarea' }),
+        );
+
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Șterge ciorna' }),
+        ).toBeEnabled();
+        expect(
+            screen.getByRole('button', { name: 'Închide fereastra' }),
+        ).toBeEnabled();
     });
 });

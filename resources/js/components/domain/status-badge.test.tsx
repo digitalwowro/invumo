@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { StatusBadge, statusPresentations } from '@/components/status-badge';
-import type { Status } from '@/components/status-badge';
+import {
+    StatusBadge,
+    statusPresentations,
+} from '@/components/domain/status-badge';
+import type { Status } from '@/components/domain/status-badge';
 
 const expectedStatuses: Status[] = [
     'paid',

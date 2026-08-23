@@ -9,12 +9,12 @@ Invumo uses one deterministic calculation model for quotes, invoices, recurring 
 
 Use PostgreSQL `numeric`, never `real`, `double precision`, PHP floats, or JavaScript `number`, for financial calculations or persisted financial values.
 
-| Value | PostgreSQL type | Meaning |
-| --- | --- | --- |
+| Value                                   | PostgreSQL type | Meaning                                                                                              |
+| --------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
 | Unit prices and stored monetary amounts | `numeric(30,8)` | Up to eight fractional digits; computed amounts are additionally quantized to the document precision |
-| Quantity and period quantity | `numeric(20,6)` | Up to six fractional digits |
-| Discount and tax rates | `numeric(12,6)` | Percentage points; `19` means 19%, not `0.19` |
-| Currency precision | `smallint` | Integer from 0 through 8 |
+| Quantity and period quantity            | `numeric(20,6)` | Up to six fractional digits                                                                          |
+| Discount and tax rates                  | `numeric(12,6)` | Percentage points; `19` means 19%, not `0.19`                                                        |
+| Currency precision                      | `smallint`      | Integer from 0 through 8                                                                             |
 
 The fixed database scale is a safe storage envelope, not the display or business precision of every currency. The application validates values before persistence and must not rely on PostgreSQL coercion to perform business rounding.
 

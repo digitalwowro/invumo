@@ -66,6 +66,8 @@
             "npm run lint:check",
             "npm run format:check",
             "npm run design:check",
+            "npm run lines:check",
+            "npm run modules:check",
             "npm run types:check",
             "npm run test:unit",
             "npm run build",
@@ -102,8 +104,7 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": [
-                ]
+                "post-create-project": []
             }
         }
     },

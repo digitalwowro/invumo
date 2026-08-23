@@ -1,17 +1,19 @@
 import { Link } from '@inertiajs/react';
 import { LayoutGrid } from 'lucide-react';
-import AppLogo from '@/components/app-logo';
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
+import AppLogo from '@/components/app/app-logo';
+import { NavMain } from '@/components/app/nav-main';
+import { NavUser } from '@/components/app/nav-user';
+import { Sidebar } from '@/components/ui/sidebar';
 import {
-    Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
+} from '@/components/ui/sidebar-layout';
+import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
+} from '@/components/ui/sidebar-menu';
 import { useI18n } from '@/hooks/use-i18n';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';

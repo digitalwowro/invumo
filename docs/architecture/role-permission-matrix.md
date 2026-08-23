@@ -22,13 +22,13 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 
 ## 2. Matrix legend
 
-| Value | Meaning |
-| --- | --- |
-| Yes | The role may perform the action, subject to normal validation and state rules |
-| Guarded | The role may perform it only with the additional confirmation, reason, reauthentication, or state checks named in the Notes column |
-| Self | This is a personal User action rather than authority over other Company members |
-| Use only | The role may view/select active values but cannot manage their source records |
-| No | The server denies the action and the UI does not offer it |
+| Value    | Meaning                                                                                                                            |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Yes      | The role may perform the action, subject to normal validation and state rules                                                      |
+| Guarded  | The role may perform it only with the additional confirmation, reason, reauthentication, or state checks named in the Notes column |
+| Self     | This is a personal User action rather than authority over other Company members                                                    |
+| Use only | The role may view/select active values but cannot manage their source records                                                      |
+| No       | The server denies the action and the UI does not offer it                                                                          |
 
 ## 3. Already-approved authorization boundaries
 
@@ -42,96 +42,96 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 
 ## 4. Personal access and Company governance
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Edit own profile, application language, password, and sessions | Self | Self | Self | Not delegated through a Company role |
-| Switch among Companies where the User has active membership | Yes | Yes | Yes | The destination membership controls the new context |
-| View active Company identity and member directory | Yes | Yes | Yes | Does not expose secrets or Account controls |
-| View/manage the owning Account's plan and entitlements | Yes | No | No | Authority belongs to that Account's owner |
-| Transfer Company ownership | Guarded | No | No | **Already approved:** validate destination entitlements, reauthenticate, confirm former-Owner outcome, and audit |
-| Permanently delete/erase the Company | Guarded | No | No | Reauthentication, highest-friction confirmation, dependency ordering, and audit required |
-| Invite a User as Admin or Member | Yes | Yes | No | Expiring, revocable, single-use invitation; cannot invite Owner |
-| Resend or revoke a pending invitation | Yes | Yes | No | Audit significant actions |
-| Change another non-Owner membership between Admin and Member | Guarded | Guarded | No | Confirmation and audit; Admin cannot affect Owner or change its own role through this action |
-| Remove another non-Owner member | Guarded | Guarded | No | Confirmation and audit; Admin cannot remove Owner or itself through this action |
-| Leave a Company | Guarded | Self | Self | Owner must transfer ownership or erase the Company first |
+| Action                                                         | Owner   | Admin   | Member | Notes                                                                                                            |
+| -------------------------------------------------------------- | ------- | ------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| Edit own profile, application language, password, and sessions | Self    | Self    | Self   | Not delegated through a Company role                                                                             |
+| Switch among Companies where the User has active membership    | Yes     | Yes     | Yes    | The destination membership controls the new context                                                              |
+| View active Company identity and member directory              | Yes     | Yes     | Yes    | Does not expose secrets or Account controls                                                                      |
+| View/manage the owning Account's plan and entitlements         | Yes     | No      | No     | Authority belongs to that Account's owner                                                                        |
+| Transfer Company ownership                                     | Guarded | No      | No     | **Already approved:** validate destination entitlements, reauthenticate, confirm former-Owner outcome, and audit |
+| Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                         |
+| Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expiring, revocable, single-use invitation; cannot invite Owner                                                  |
+| Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                        |
+| Change another non-Owner membership between Admin and Member   | Guarded | Guarded | No     | Confirmation and audit; Admin cannot affect Owner or change its own role through this action                     |
+| Remove another non-Owner member                                | Guarded | Guarded | No     | Confirmation and audit; Admin cannot remove Owner or itself through this action                                  |
+| Leave a Company                                                | Guarded | Self    | Self   | Owner must transfer ownership or erase the Company first                                                         |
 
 ## 5. Company settings and reusable configuration
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| View/select active Company defaults and presets in ordinary workflows | Yes | Yes | Use only | Members receive only values needed by their permitted screens |
-| Edit legal identity, address, and registration | Yes | Yes | No | Existing document snapshots remain unchanged |
-| Edit timezone or automation time | Guarded | Guarded | No | Approved confirmation, audit, and pending-schedule recalculation rules apply |
-| Edit document defaults, language, payment terms, Quote validity, notes, and Terms & Conditions | Yes | Yes | No | Affects future/default resolution only unless explicitly reapplied |
-| Manage currencies, display style, and precision | Yes | Yes | No | Existing document snapshots remain unchanged |
-| Manage tax presets and bank accounts | Yes | Yes | No | Referenced records archive rather than rewriting snapshots |
-| Manage numbering formats and reset policy | Yes | Yes | No | Does not silently alter existing counters/documents |
-| Realign a number counter, including moving it backwards | Guarded | Guarded | No | **Already approved:** lock, preview, duplicate/reuse warning, reason, and audit |
-| Manage Company logo and primary brand color | Yes | Yes | No | Upload validation remains a Phase 1 gate |
-| Manage Company email templates, reminder defaults, recipient defaults, and public-link defaults | Yes | Yes | No | Per-document/per-send overrides are assigned separately below |
+| Action                                                                                          | Owner   | Admin   | Member   | Notes                                                                           |
+| ----------------------------------------------------------------------------------------------- | ------- | ------- | -------- | ------------------------------------------------------------------------------- |
+| View/select active Company defaults and presets in ordinary workflows                           | Yes     | Yes     | Use only | Members receive only values needed by their permitted screens                   |
+| Edit legal identity, address, and registration                                                  | Yes     | Yes     | No       | Existing document snapshots remain unchanged                                    |
+| Edit timezone or automation time                                                                | Guarded | Guarded | No       | Approved confirmation, audit, and pending-schedule recalculation rules apply    |
+| Edit document defaults, language, payment terms, Quote validity, notes, and Terms & Conditions  | Yes     | Yes     | No       | Affects future/default resolution only unless explicitly reapplied              |
+| Manage currencies, display style, and precision                                                 | Yes     | Yes     | No       | Existing document snapshots remain unchanged                                    |
+| Manage tax presets and bank accounts                                                            | Yes     | Yes     | No       | Referenced records archive rather than rewriting snapshots                      |
+| Manage numbering formats and reset policy                                                       | Yes     | Yes     | No       | Does not silently alter existing counters/documents                             |
+| Realign a number counter, including moving it backwards                                         | Guarded | Guarded | No       | **Already approved:** lock, preview, duplicate/reuse warning, reason, and audit |
+| Manage Company logo and primary brand color                                                     | Yes     | Yes     | No       | Upload validation remains a Phase 1 gate                                        |
+| Manage Company email templates, reminder defaults, recipient defaults, and public-link defaults | Yes     | Yes     | No       | Per-document/per-send overrides are assigned separately below                   |
 
 ## 6. Customers and Products & Services
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Search/view Customers and contacts | Yes | Yes | Yes | Company-scoped only |
-| Create/edit Customers, contacts, defaults, and delivery preferences | Yes | Yes | Yes | Includes the inline Customer modal |
-| Archive or restore a Customer | Yes | Yes | Yes | Reversible operational action; snapshots remain unchanged |
-| Permanently delete a Customer | Guarded | Guarded | No | Only after blocking dependencies are removed |
-| Search/select active Products & Services | Yes | Yes | Use only | **Already approved:** selection copies an editable snapshot |
-| Create/edit/archive/restore Products & Services | Yes | Yes | No | Includes saving a new inline catalog entry |
-| Permanently delete an unreferenced Product/Service | Guarded | Guarded | No | Referenced entries use archive; snapshots remain unchanged |
-| Enter a manual document line without a catalog entry | Yes | Yes | Yes | Member does not need product-management permission |
+| Action                                                              | Owner   | Admin   | Member   | Notes                                                       |
+| ------------------------------------------------------------------- | ------- | ------- | -------- | ----------------------------------------------------------- |
+| Search/view Customers and contacts                                  | Yes     | Yes     | Yes      | Company-scoped only                                         |
+| Create/edit Customers, contacts, defaults, and delivery preferences | Yes     | Yes     | Yes      | Includes the inline Customer modal                          |
+| Archive or restore a Customer                                       | Yes     | Yes     | Yes      | Reversible operational action; snapshots remain unchanged   |
+| Permanently delete a Customer                                       | Guarded | Guarded | No       | Only after blocking dependencies are removed                |
+| Search/select active Products & Services                            | Yes     | Yes     | Use only | **Already approved:** selection copies an editable snapshot |
+| Create/edit/archive/restore Products & Services                     | Yes     | Yes     | No       | Includes saving a new inline catalog entry                  |
+| Permanently delete an unreferenced Product/Service                  | Guarded | Guarded | No       | Referenced entries use archive; snapshots remain unchanged  |
+| Enter a manual document line without a catalog entry                | Yes     | Yes     | Yes      | Member does not need product-management permission          |
 
 ## 7. Quotes
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Search/view/create a Quote | Yes | Yes | Yes | New creates an idempotent persisted Draft |
-| Edit a Quote in any lifecycle state | Yes | Yes | Yes | State does not reset automatically; stale saves are rejected |
-| Send/resend a Quote and edit per-send content/recipients | Yes | Yes | Yes | Accepted/Rejected resend uses the approved warning |
-| Create, revoke, regenerate, or re-enable a Quote public link | Yes | Yes | Yes | Public-token rules remain a Phase 8 implementation gate |
-| Correct stored lifecycle among Draft/Sent/Accepted/Rejected | Guarded | Guarded | Guarded | Confirmation, required reason, and audit; Expired remains derived |
-| Convert an Accepted Quote to a Draft Invoice | Yes | Yes | Yes | Normal commercial path |
-| Convert a Draft, Sent, or Expired Quote to a Draft Invoice | Guarded | Guarded | No | **Already approved** intentional override; never convert Rejected directly |
-| Unlink an eligible unused Quote-derived Draft Invoice | Guarded | Guarded | No | Approved state/provenance checks, confirmation, and audit |
-| Edit a Draft Quote number to a non-duplicate value | Yes | Yes | Yes | Counter remains unchanged |
-| Confirm a duplicate Quote number or renumber a Sent/Accepted/Rejected Quote | Guarded | Guarded | No | Warning, reason, and audit; no silent counter change |
-| Permanently delete a Quote with no linked Invoice | Guarded | Guarded | No | Lifecycle does not block; exposed/decided history strengthens confirmation |
+| Action                                                                      | Owner   | Admin   | Member  | Notes                                                                      |
+| --------------------------------------------------------------------------- | ------- | ------- | ------- | -------------------------------------------------------------------------- |
+| Search/view/create a Quote                                                  | Yes     | Yes     | Yes     | New creates an idempotent persisted Draft                                  |
+| Edit a Quote in any lifecycle state                                         | Yes     | Yes     | Yes     | State does not reset automatically; stale saves are rejected               |
+| Send/resend a Quote and edit per-send content/recipients                    | Yes     | Yes     | Yes     | Accepted/Rejected resend uses the approved warning                         |
+| Create, revoke, regenerate, or re-enable a Quote public link                | Yes     | Yes     | Yes     | Public-token rules remain a Phase 8 implementation gate                    |
+| Correct stored lifecycle among Draft/Sent/Accepted/Rejected                 | Guarded | Guarded | Guarded | Confirmation, required reason, and audit; Expired remains derived          |
+| Convert an Accepted Quote to a Draft Invoice                                | Yes     | Yes     | Yes     | Normal commercial path                                                     |
+| Convert a Draft, Sent, or Expired Quote to a Draft Invoice                  | Guarded | Guarded | No      | **Already approved** intentional override; never convert Rejected directly |
+| Unlink an eligible unused Quote-derived Draft Invoice                       | Guarded | Guarded | No      | Approved state/provenance checks, confirmation, and audit                  |
+| Edit a Draft Quote number to a non-duplicate value                          | Yes     | Yes     | Yes     | Counter remains unchanged                                                  |
+| Confirm a duplicate Quote number or renumber a Sent/Accepted/Rejected Quote | Guarded | Guarded | No      | Warning, reason, and audit; no silent counter change                       |
+| Permanently delete a Quote with no linked Invoice                           | Guarded | Guarded | No      | Lifecycle does not block; exposed/decided history strengthens confirmation |
 
 Customer Accept/Reject is outside this membership matrix and follows the approved public-link identity, eligibility, rate-limit, idempotency, and audit rules.
 
 ## 8. Invoices
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Search/view/create an independent Draft Invoice | Yes | Yes | Yes | Company/customer/default rules apply |
-| Edit a Draft Invoice | Yes | Yes | Yes | Stale saves are rejected |
-| Issue or send a Draft Invoice | Yes | Yes | Yes | Issue commits before external delivery |
-| Edit an Issued Invoice | Yes | Yes | Yes | Complete-ledger, currency, audit, PDF, and reminder rules apply |
-| Send/resend an Issued Invoice and edit per-send content/recipients | Yes | Yes | Yes | Delivery safety gates are rechecked immediately before send |
-| Create, revoke, regenerate, or re-enable an Invoice public link | Yes | Yes | Yes | Invoice page remains view/download only |
-| Override Invoice-specific reminder rules | Yes | Yes | Yes | Treated as a document edit; only pending instances are recalculated |
-| Cancel an eligible Issued Invoice | Guarded | Guarded | Guarded | Net paid must be zero; confirmation, reason, reminder suppression, and audit |
-| Reopen a Cancelled Invoice | Guarded | Guarded | Guarded | Returns to Issued under the approved transaction/public/reminder behavior |
-| Edit a Draft Invoice number to a non-duplicate value | Yes | Yes | Yes | Counter remains unchanged |
-| Confirm a duplicate Invoice number or renumber an Issued/Cancelled Invoice | Guarded | Guarded | No | Warning, reason, and audit; no silent counter change |
-| Permanently delete a transaction-free Invoice | Guarded | Guarded | No | Highest-friction confirmation if ever issued, sent, or shared; transaction rows always block |
+| Action                                                                     | Owner   | Admin   | Member  | Notes                                                                                        |
+| -------------------------------------------------------------------------- | ------- | ------- | ------- | -------------------------------------------------------------------------------------------- |
+| Search/view/create an independent Draft Invoice                            | Yes     | Yes     | Yes     | Company/customer/default rules apply                                                         |
+| Edit a Draft Invoice                                                       | Yes     | Yes     | Yes     | Stale saves are rejected                                                                     |
+| Issue or send a Draft Invoice                                              | Yes     | Yes     | Yes     | Issue commits before external delivery                                                       |
+| Edit an Issued Invoice                                                     | Yes     | Yes     | Yes     | Complete-ledger, currency, audit, PDF, and reminder rules apply                              |
+| Send/resend an Issued Invoice and edit per-send content/recipients         | Yes     | Yes     | Yes     | Delivery safety gates are rechecked immediately before send                                  |
+| Create, revoke, regenerate, or re-enable an Invoice public link            | Yes     | Yes     | Yes     | Invoice page remains view/download only                                                      |
+| Override Invoice-specific reminder rules                                   | Yes     | Yes     | Yes     | Treated as a document edit; only pending instances are recalculated                          |
+| Cancel an eligible Issued Invoice                                          | Guarded | Guarded | Guarded | Net paid must be zero; confirmation, reason, reminder suppression, and audit                 |
+| Reopen a Cancelled Invoice                                                 | Guarded | Guarded | Guarded | Returns to Issued under the approved transaction/public/reminder behavior                    |
+| Edit a Draft Invoice number to a non-duplicate value                       | Yes     | Yes     | Yes     | Counter remains unchanged                                                                    |
+| Confirm a duplicate Invoice number or renumber an Issued/Cancelled Invoice | Guarded | Guarded | No      | Warning, reason, and audit; no silent counter change                                         |
+| Permanently delete a transaction-free Invoice                              | Guarded | Guarded | No      | Highest-friction confirmation if ever issued, sent, or shared; transaction rows always block |
 
 The UI must treat deletion of an already issued, sent, or publicly shared transaction-free Invoice as the strongest irreversible document action, materially above an ordinary warning. The Phase 6 UI must test the final confirmation interaction.
 
 ## 9. Payments, Refunds, and Adjustments
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Search/view Invoice transactions and balances | Yes | Yes | Yes | Company-scoped operational data |
-| Record a Payment | Yes | Yes | Yes | Issued positive-total Invoice only; complete-ledger validation applies |
-| Send the optional payment-received email | Yes | Yes | Yes | Never automatic for backfilled payments |
-| Record a Refund | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply |
-| Record a positive/negative Adjustment | Guarded | Guarded | No | Required reason and audit; never creates refundable cash |
-| Edit or delete an existing Payment or Refund | Guarded | Guarded | Guarded | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
-| Edit or delete an existing Adjustment | Guarded | Guarded | No | Adjustment creation and all later mutation remain entirely Owner/Admin-only |
+| Action                                        | Owner   | Admin   | Member  | Notes                                                                                 |
+| --------------------------------------------- | ------- | ------- | ------- | ------------------------------------------------------------------------------------- |
+| Search/view Invoice transactions and balances | Yes     | Yes     | Yes     | Company-scoped operational data                                                       |
+| Record a Payment                              | Yes     | Yes     | Yes     | Issued positive-total Invoice only; complete-ledger validation applies                |
+| Send the optional payment-received email      | Yes     | Yes     | Yes     | Never automatic for backfilled payments                                               |
+| Record a Refund                               | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply                                      |
+| Record a positive/negative Adjustment         | Guarded | Guarded | No      | Required reason and audit; never creates refundable cash                              |
+| Edit or delete an existing Payment or Refund  | Guarded | Guarded | Guarded | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
+| Edit or delete an existing Adjustment         | Guarded | Guarded | No      | Adjustment creation and all later mutation remain entirely Owner/Admin-only           |
 
 Invumo records financial facts but does not move money. These permissions do not authorize a bank/card refund outside Invumo.
 
@@ -139,29 +139,29 @@ A Member may therefore reach a valid Invoice state where cancellation still requ
 
 ## 10. Recurring templates and automation
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| Search/view recurring templates and occurrence history | Yes | Yes | Yes | Internal template name remains non-customer-visible |
-| Create/edit a Draft recurring template | Yes | Yes | Yes | Member may prepare but not activate unattended automation |
-| Duplicate a Completed template into a new Draft | Yes | Yes | Yes | Completed remains terminal |
-| Activate a Draft template | Guarded | Guarded | No | Validate schedule, content, recipients, reminders, and email setting |
-| Pause/resume or complete an Active template | Guarded | Guarded | No | No implicit pause-period backfill |
-| Edit schedule/customer/currency/lines/delivery on an Active template | Guarded | Guarded | No | Confirmation; affects future unmaterialized occurrences only |
-| Enable/disable automatic email on a template | Guarded | Guarded | No | Currency-review latch remains authoritative |
-| Archive/delete a recurring template where dependencies permit | Guarded | Guarded | No | Preserve completed/failed occurrence history as required by schema |
-| Retry a failed occurrence or automation action | Guarded | Guarded | No | Same idempotency identity; eligibility rechecked |
-| Manually send an already-generated Invoice | Yes | Yes | Yes | Uses normal Invoice send permission; provider acceptance may clear the currency latch |
+| Action                                                               | Owner   | Admin   | Member | Notes                                                                                 |
+| -------------------------------------------------------------------- | ------- | ------- | ------ | ------------------------------------------------------------------------------------- |
+| Search/view recurring templates and occurrence history               | Yes     | Yes     | Yes    | Internal template name remains non-customer-visible                                   |
+| Create/edit a Draft recurring template                               | Yes     | Yes     | Yes    | Member may prepare but not activate unattended automation                             |
+| Duplicate a Completed template into a new Draft                      | Yes     | Yes     | Yes    | Completed remains terminal                                                            |
+| Activate a Draft template                                            | Guarded | Guarded | No     | Validate schedule, content, recipients, reminders, and email setting                  |
+| Pause/resume or complete an Active template                          | Guarded | Guarded | No     | No implicit pause-period backfill                                                     |
+| Edit schedule/customer/currency/lines/delivery on an Active template | Guarded | Guarded | No     | Confirmation; affects future unmaterialized occurrences only                          |
+| Enable/disable automatic email on a template                         | Guarded | Guarded | No     | Currency-review latch remains authoritative                                           |
+| Archive/delete a recurring template where dependencies permit        | Guarded | Guarded | No     | Preserve completed/failed occurrence history as required by schema                    |
+| Retry a failed occurrence or automation action                       | Guarded | Guarded | No     | Same idempotency identity; eligibility rechecked                                      |
+| Manually send an already-generated Invoice                           | Yes     | Yes     | Yes    | Uses normal Invoice send permission; provider acceptance may clear the currency latch |
 
 ## 11. Email, reminders, public access, and operational history
 
-| Action | Owner | Admin | Member | Notes |
-| --- | --- | --- | --- | --- |
-| View document delivery/status/reminder history | Yes | Yes | Yes | Ordinary document-local operational history, not the full audit log |
-| Retry a failed direct Quote/Invoice email | Yes | Yes | Yes | Same authorization as sending the document; create a new immutable attempt |
-| Retry a failed automated reminder | Guarded | Guarded | No | Recheck balance, lifecycle, due date, recipient, link, and idempotency |
-| View Company-wide automation failures/operations | Yes | Yes | No | Includes recurring/reminder failures requiring intervention |
-| View the full Company audit trail | Yes | Yes | No | Member still sees ordinary document status/delivery history |
-| Delete or rewrite audit history | No | No | No | Only approved retention/erasure workflows may remove records |
+| Action                                           | Owner   | Admin   | Member | Notes                                                                      |
+| ------------------------------------------------ | ------- | ------- | ------ | -------------------------------------------------------------------------- |
+| View document delivery/status/reminder history   | Yes     | Yes     | Yes    | Ordinary document-local operational history, not the full audit log        |
+| Retry a failed direct Quote/Invoice email        | Yes     | Yes     | Yes    | Same authorization as sending the document; create a new immutable attempt |
+| Retry a failed automated reminder                | Guarded | Guarded | No     | Recheck balance, lifecycle, due date, recipient, link, and idempotency     |
+| View Company-wide automation failures/operations | Yes     | Yes     | No     | Includes recurring/reminder failures requiring intervention                |
+| View the full Company audit trail                | Yes     | Yes     | No     | Member still sees ordinary document status/delivery history                |
+| Delete or rewrite audit history                  | No      | No      | No     | Only approved retention/erasure workflows may remove records               |
 
 ## 12. System and public actors
 

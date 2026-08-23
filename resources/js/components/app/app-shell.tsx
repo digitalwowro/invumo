@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { SkipLink } from '@/components/skip-link';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SkipLink } from '@/components/app/skip-link';
+import { SidebarProvider } from '@/components/ui/sidebar-context';
 import type { AppVariant } from '@/types';
 
 type Props = {

@@ -155,66 +155,66 @@ The values below are the complete internal v1 palette. They are documented here 
 
 ### 6.1 Content and neutral tokens
 
-| Semantic token | Value | Required use |
-| --- | --- | --- |
-| `background` | `#FFFFFF` | Main content and unraised surfaces |
-| `page` | `#F7F8FA` | Page canvas behind bounded surfaces |
-| `surface-subtle` | `#FAFBFC` | Table headers and row hover |
-| `surface-inset` | `#F4F6F8` | Disabled/inherited controls and ghost hover |
-| `border` | `#DEE3E9` | Controls and bounded surfaces |
-| `border-strong` | `#C3CBD3` | Quiet statuses and unchecked controls |
-| `divider` | `#E7EBF0` | Section boundaries |
-| `rule` | `#EEF1F5` | Table rows and chart grids |
-| `foreground` | `#14181C` | Primary text and ink fills |
-| `foreground-mid` | `#4A5361` | Field labels and secondary controls |
-| `foreground-muted` | `#5B6470` | Supporting text and captions |
+| Semantic token      | Value     | Required use                                   |
+| ------------------- | --------- | ---------------------------------------------- |
+| `background`        | `#FFFFFF` | Main content and unraised surfaces             |
+| `page`              | `#F7F8FA` | Page canvas behind bounded surfaces            |
+| `surface-subtle`    | `#FAFBFC` | Table headers and row hover                    |
+| `surface-inset`     | `#F4F6F8` | Disabled/inherited controls and ghost hover    |
+| `border`            | `#DEE3E9` | Controls and bounded surfaces                  |
+| `border-strong`     | `#C3CBD3` | Quiet statuses and unchecked controls          |
+| `divider`           | `#E7EBF0` | Section boundaries                             |
+| `rule`              | `#EEF1F5` | Table rows and chart grids                     |
+| `foreground`        | `#14181C` | Primary text and ink fills                     |
+| `foreground-mid`    | `#4A5361` | Field labels and secondary controls            |
+| `foreground-muted`  | `#5B6470` | Supporting text and captions                   |
 | `foreground-subtle` | `#8A929E` | Placeholders and disabled/decorative text only |
-| `selection` | `#EEF1F5` | Selected rows and neutral selected regions |
-| `row-affordance` | `#6E7783` | Persistent row-navigation chevron |
+| `selection`         | `#EEF1F5` | Selected rows and neutral selected regions     |
+| `row-affordance`    | `#6E7783` | Persistent row-navigation chevron              |
 
 `foreground-subtle` must not be used for normal body copy because it does not meet normal-text contrast on white.
 
 ### 6.2 Sidebar tokens
 
-| Semantic token | Value |
-| --- | --- |
-| `sidebar-background` | `#121418` |
-| `sidebar-surface` | `#1B1F26` |
-| `sidebar-border` | `#262A33` |
-| `sidebar-foreground` | `#F4F5F7` |
-| `sidebar-muted` | `#8E949F` |
-| `sidebar-nav` | `#B6BCC7` |
-| `sidebar-hover` | `#1D212A` |
-| `sidebar-active` | `#22262F` |
+| Semantic token              | Value     |
+| --------------------------- | --------- |
+| `sidebar-background`        | `#121418` |
+| `sidebar-surface`           | `#1B1F26` |
+| `sidebar-border`            | `#262A33` |
+| `sidebar-foreground`        | `#F4F5F7` |
+| `sidebar-muted`             | `#8E949F` |
+| `sidebar-nav`               | `#B6BCC7` |
+| `sidebar-hover`             | `#1D212A` |
+| `sidebar-active`            | `#22262F` |
 | `sidebar-active-foreground` | `#FFFFFF` |
-| `sidebar-count` | `#767D89` |
-| `sidebar-avatar` | `#262A33` |
+| `sidebar-count`             | `#767D89` |
+| `sidebar-avatar`            | `#262A33` |
 | `sidebar-avatar-foreground` | `#C6CBD4` |
 
 The active navigation item uses `sidebar-active` plus a thin `money-fill` leading marker. It must never become a large lime, Company-coloured, or saturated block.
 
 ### 6.3 Semantic-state tokens
 
-| Semantic token | Value | Use |
-| --- | --- | --- |
-| `money-fill` | `#A3E635` | Paid/Accepted/Completed fills, collected charts, active-nav marker, approved product-mark accent |
-| `money-fill-foreground` | `#1B2708` | Text/icons on `money-fill` |
-| `money-text` | `#4D7C0F` | Positive money figures only |
-| `danger-fill` | `#E11900` | Overdue/Rejected/failure status fills |
-| `danger-foreground` | `#FFFFFF` | Text/icons on `danger-fill` |
-| `danger-text` | `#D81800` | Overdue figures, validation, destructive labels |
-| `danger-hover` | `#B31400` | Confirmed destructive fill hover |
-| `danger-surface` | `#FBE9E7` | Destructive hover/confirmation support |
-| `danger-border` | `#F2CFCB` | Destructive outline |
-| `danger-on-ink` | `#FF8A7A` | Destructive text inside an ink bulk-action band |
-| `warning-fill` | `#FFB020` | Partial/Expired/Paused status fills |
-| `warning-fill-foreground` | `#2E1D00` | Text/icons on `warning-fill` |
-| `warning-text` | `#8A5A0B` | Inline warning copy/icons |
-| `status-quiet-background` | `#FFFFFF` | Quiet statuses |
-| `status-quiet-foreground` | `#14181C` | Issued/Sent/Active/Unpaid text and dot |
-| `status-quiet-border` | `#C3CBD3` | Issued/Sent/Active/Unpaid outline |
-| `status-muted-foreground` | `#5B6470` | Draft/Cancelled/Archived text |
-| `status-muted-border` | `#DCE0E4` | Draft/Cancelled/Archived outline |
+| Semantic token            | Value     | Use                                                                                              |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------ |
+| `money-fill`              | `#A3E635` | Paid/Accepted/Completed fills, collected charts, active-nav marker, approved product-mark accent |
+| `money-fill-foreground`   | `#1B2708` | Text/icons on `money-fill`                                                                       |
+| `money-text`              | `#4D7C0F` | Positive money figures only                                                                      |
+| `danger-fill`             | `#E11900` | Overdue/Rejected/failure status fills                                                            |
+| `danger-foreground`       | `#FFFFFF` | Text/icons on `danger-fill`                                                                      |
+| `danger-text`             | `#D81800` | Overdue figures, validation, destructive labels                                                  |
+| `danger-hover`            | `#B31400` | Confirmed destructive fill hover                                                                 |
+| `danger-surface`          | `#FBE9E7` | Destructive hover/confirmation support                                                           |
+| `danger-border`           | `#F2CFCB` | Destructive outline                                                                              |
+| `danger-on-ink`           | `#FF8A7A` | Destructive text inside an ink bulk-action band                                                  |
+| `warning-fill`            | `#FFB020` | Partial/Expired/Paused status fills                                                              |
+| `warning-fill-foreground` | `#2E1D00` | Text/icons on `warning-fill`                                                                     |
+| `warning-text`            | `#8A5A0B` | Inline warning copy/icons                                                                        |
+| `status-quiet-background` | `#FFFFFF` | Quiet statuses                                                                                   |
+| `status-quiet-foreground` | `#14181C` | Issued/Sent/Active/Unpaid text and dot                                                           |
+| `status-quiet-border`     | `#C3CBD3` | Issued/Sent/Active/Unpaid outline                                                                |
+| `status-muted-foreground` | `#5B6470` | Draft/Cancelled/Archived text                                                                    |
+| `status-muted-border`     | `#DCE0E4` | Draft/Cancelled/Archived outline                                                                 |
 
 There is no blue semantic token in v1. Issued, Sent, Active, and informational content are neutral ink treatments. The experimental blue link and informational treatments in the HTML reference are excluded.
 
@@ -222,17 +222,17 @@ There is no blue semantic token in v1. Issued, Sent, Active, and informational c
 
 shadcn/Tailwind aliases map to the semantic tokens rather than creating another palette:
 
-| Alias | Maps to |
-| --- | --- |
-| `primary` / `primary-foreground` | `foreground` / white |
-| `secondary` / `secondary-foreground` | white / `foreground` |
-| `muted` / `muted-foreground` | `surface-inset` / `foreground-muted` |
-| `accent` / `accent-foreground` | `surface-inset` / `foreground` |
-| `card` / `card-foreground` | `background` / `foreground` |
-| `popover` / `popover-foreground` | `background` / `foreground` |
+| Alias                                    | Maps to                                       |
+| ---------------------------------------- | --------------------------------------------- |
+| `primary` / `primary-foreground`         | `foreground` / white                          |
+| `secondary` / `secondary-foreground`     | white / `foreground`                          |
+| `muted` / `muted-foreground`             | `surface-inset` / `foreground-muted`          |
+| `accent` / `accent-foreground`           | `surface-inset` / `foreground`                |
+| `card` / `card-foreground`               | `background` / `foreground`                   |
+| `popover` / `popover-foreground`         | `background` / `foreground`                   |
 | `destructive` / `destructive-foreground` | context-dependent destructive variant / white |
-| `input` | `border` |
-| `ring` | `foreground` |
+| `input`                                  | `border`                                      |
+| `ring`                                   | `foreground`                                  |
 
 Links are ink-coloured. Hover and keyboard focus may add an underline; links must not use a semantic-state colour.
 
@@ -271,21 +271,21 @@ Ordinary names, email addresses, descriptions, button labels, navigation, helper
 
 Pages consume named components/roles, not font classes:
 
-| Role | Contract |
-| --- | --- |
-| `PageTitle` | 24px/32px, bold, tight tracking, interface face |
-| `PageSubtitle` | 14px/20px, regular, muted foreground |
-| `Breadcrumb` | 14px/20px, regular, ink/muted hierarchy |
-| `SectionTitle` | 16px/24px, semibold |
-| `SurfaceTitle` | 14px/20px, semibold |
-| `Body` | 14px/20px, regular |
-| `BodyStrong` | 14px/20px, semibold |
-| `SecondaryText` | 12px/16px, regular, muted foreground |
-| `MetaLabel` | 11px/16px, bold mono, uppercase, 0.10em tracking |
-| `MetricValue` | 20px/28px, bold mono, tabular figures |
-| `TableValue` | 13px/20px, regular mono, tabular figures |
-| `TableAmount` | 13px/20px, bold mono, tabular figures |
-| `StatusLabel` | 11px/16px, bold mono, uppercase, 0.07em tracking |
+| Role            | Contract                                         |
+| --------------- | ------------------------------------------------ |
+| `PageTitle`     | 24px/32px, bold, tight tracking, interface face  |
+| `PageSubtitle`  | 14px/20px, regular, muted foreground             |
+| `Breadcrumb`    | 14px/20px, regular, ink/muted hierarchy          |
+| `SectionTitle`  | 16px/24px, semibold                              |
+| `SurfaceTitle`  | 14px/20px, semibold                              |
+| `Body`          | 14px/20px, regular                               |
+| `BodyStrong`    | 14px/20px, semibold                              |
+| `SecondaryText` | 12px/16px, regular, muted foreground             |
+| `MetaLabel`     | 11px/16px, bold mono, uppercase, 0.10em tracking |
+| `MetricValue`   | 20px/28px, bold mono, tabular figures            |
+| `TableValue`    | 13px/20px, regular mono, tabular figures         |
+| `TableAmount`   | 13px/20px, bold mono, tabular figures            |
+| `StatusLabel`   | 11px/16px, bold mono, uppercase, 0.07em tracking |
 
 Only `MetaLabel`, table/column labels, compact financial codes where explicitly specified, and `StatusLabel` use uppercase. Interface text must not be uppercased for decoration.
 
@@ -379,30 +379,30 @@ The web application is responsive, not a native-mobile or mobile-first redesign.
 
 ### 10.1 Layout and hierarchy
 
-| Component/pattern | Responsibility |
-| --- | --- |
-| `AppShell` | Sidebar, narrow-screen navigation, main workspace, skip link, global boundaries |
-| `AppSidebar` | Product identity slot, Company switcher, authorized navigation, user/settings region |
-| `PageHeader` | Optional breadcrumb, one page title, subtitle/summary, primary and secondary actions |
-| `PageSection` | Consistent vertical separation and optional section divider |
-| `SectionHeader` | Section title, supporting copy, and a restrained action region |
-| `Surface` | Bounded neutral region only when a border/background materially improves grouping |
-| `Stack`, `Inline`, `Cluster`, `Grid` | Approved layout rhythm without visual styling |
-| `FormSection` | Standard form heading, description, fields, and action placement |
-| `DetailPanel` | Definition-list presentation for identity/settings details |
+| Component/pattern                    | Responsibility                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `AppShell`                           | Sidebar, narrow-screen navigation, main workspace, skip link, global boundaries      |
+| `AppSidebar`                         | Product identity slot, Company switcher, authorized navigation, user/settings region |
+| `PageHeader`                         | Optional breadcrumb, one page title, subtitle/summary, primary and secondary actions |
+| `PageSection`                        | Consistent vertical separation and optional section divider                          |
+| `SectionHeader`                      | Section title, supporting copy, and a restrained action region                       |
+| `Surface`                            | Bounded neutral region only when a border/background materially improves grouping    |
+| `Stack`, `Inline`, `Cluster`, `Grid` | Approved layout rhythm without visual styling                                        |
+| `FormSection`                        | Standard form heading, description, fields, and action placement                     |
+| `DetailPanel`                        | Definition-list presentation for identity/settings details                           |
 
 Every authenticated page uses `AppShell` and `PageHeader`. A page may omit visible breadcrumbs when the route is already obvious, but it must not recreate the header locally.
 
 ### 10.2 Buttons and actions
 
-| Variant | Treatment | Use |
-| --- | --- | --- |
-| `primary` | Ink fill, white text | The main forward action in an action region |
-| `secondary` | White fill, ink text, neutral border | Important alternative action |
-| `ghost` | Transparent, ink text | Low-emphasis action |
-| `destructive` | White, danger text, danger border | Destructive entry point outside confirmation |
-| `destructive-confirm` | Danger fill, white text | Final destructive action inside `AlertDialog` only |
-| `on-ink` | Ink-band-safe outlined treatment | Bulk actions on selected rows |
+| Variant               | Treatment                            | Use                                                |
+| --------------------- | ------------------------------------ | -------------------------------------------------- |
+| `primary`             | Ink fill, white text                 | The main forward action in an action region        |
+| `secondary`           | White fill, ink text, neutral border | Important alternative action                       |
+| `ghost`               | Transparent, ink text                | Low-emphasis action                                |
+| `destructive`         | White, danger text, danger border    | Destructive entry point outside confirmation       |
+| `destructive-confirm` | Danger fill, white text              | Final destructive action inside `AlertDialog` only |
+| `on-ink`              | Ink-band-safe outlined treatment     | Bulk actions on selected rows                      |
 
 Rules:
 
@@ -420,14 +420,14 @@ Permanent deletion of an issued, sent, or publicly shared document uses `Destruc
 
 All status appearance comes from one typed `StatusPresentation` registry and one `StatusBadge` component. The registry is keyed by domain meaning, not by a caller-supplied colour.
 
-| Semantic group | States | Presentation |
-| --- | --- | --- |
-| Positive final | Paid, Accepted, Completed | Solid lime, dark text, leading check |
-| Action/failure | Overdue, Rejected, delivery/operation failure | Solid red, white text |
-| Intermediate warning | Partial, Expired, Paused | Solid amber, dark text |
-| Quiet active | Issued, Sent, Active, Unpaid | White, ink text, strong border, ink dot |
-| Uncommitted | Draft | White, muted text, dashed muted border, grey dot |
-| Inactive retained | Cancelled, Archived | White, muted text, muted border; related totals struck through where specified |
+| Semantic group       | States                                        | Presentation                                                                   |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| Positive final       | Paid, Accepted, Completed                     | Solid lime, dark text, leading check                                           |
+| Action/failure       | Overdue, Rejected, delivery/operation failure | Solid red, white text                                                          |
+| Intermediate warning | Partial, Expired, Paused                      | Solid amber, dark text                                                         |
+| Quiet active         | Issued, Sent, Active, Unpaid                  | White, ink text, strong border, ink dot                                        |
+| Uncommitted          | Draft                                         | White, muted text, dashed muted border, grey dot                               |
+| Inactive retained    | Cancelled, Archived                           | White, muted text, muted border; related totals struck through where specified |
 
 Badges are compact, mono, uppercase, letterspaced, and slightly rounded. Solid badges have no dot; outlined badges do. They must look like modern digital state labels, never analog stamps or labels pasted onto paper.
 
@@ -472,6 +472,17 @@ Forms use the shared shadcn Field composition and Invumo form patterns:
 
 Use the shared searchable Combobox for Customers and Products & Services. Inline creation uses the shared scrollable creation dialog, preserves the parent editor, retains invalid modal values, and selects the new record after a successful save.
 
+The shared Combobox interaction contract is behavioral, not page-specific:
+
+- opening shows all eligible options until the user enters a query;
+- `ArrowDown` and `ArrowUp` move a distinct keyboard highlight without changing the stored selection;
+- `Enter` selects the highlighted option and may select the sole visible result when no option has yet been highlighted;
+- `Escape` and outside click close without selecting, and focus returns predictably to the trigger;
+- current selection and keyboard/search highlight use distinct state treatment, and selection is never communicated by colour alone;
+- listbox/option, active-descendant, accessible-name, and multiselect semantics must match the actual mode.
+
+Short, static option sets use the shared non-searchable Select behavior, including arrow-key navigation, `Enter` selection, `Escape` dismissal, and first-character typeahead supplied by the approved primitive. Pages do not recreate either selector family.
+
 Dates use one `DateField`/Calendar composition with locale-aware display, direct keyboard entry where supported, clear validation, and the same four-digit-year bounds as the domain. Currency, tax, language, timezone, Country, and other option lists use shared Select/Combobox behavior rather than individually styled controls.
 
 `FileUpload` owns idle, drag, selected, uploading, validation-error, success, replace, and remove states for Company logos and any later approved upload. Pages supply file rules and copy; they do not style drop zones or progress independently.
@@ -483,6 +494,7 @@ Long forms use `FormSection` and shared grids. They do not create individually s
 - Every Dialog, Sheet, and Drawer has an accessible title.
 - Standard dialogs use documented size variants; callers cannot pass arbitrary width.
 - Long forms scroll inside the shared body region while the title and actions remain reachable.
+- Tooltips, dropdowns, Combobox lists, popovers, and other floating content use the approved primitive portal so scrolling, overflow, and transformed ancestors cannot clip them; increasing a local z-index is not an acceptable substitute.
 - Narrow-screen behavior comes from the component, not the page.
 - Ordinary confirmations use `AlertDialog`.
 - Destructive confirmations state the affected record, consequence, recoverability, and blocking dependencies.
@@ -492,13 +504,13 @@ Long forms use `FormSection` and shared grids. They do not create individually s
 
 Use one `SystemMessage`/Alert contract:
 
-| Type | Presentation |
-| --- | --- |
-| Neutral confirmation | Solid ink surface with white text |
-| Money success | White surface, lime leading edge, olive icon/amount |
-| Warning | White surface, amber leading edge and warning-text icon |
-| Error | White surface, red leading edge and danger-text icon |
-| Informational | Neutral ink treatment; never blue |
+| Type                 | Presentation                                            |
+| -------------------- | ------------------------------------------------------- |
+| Neutral confirmation | Solid ink surface with white text                       |
+| Money success        | White surface, lime leading edge, olive icon/amount     |
+| Warning              | White surface, amber leading edge and warning-text icon |
+| Error                | White surface, red leading edge and danger-text icon    |
+| Informational        | Neutral ink treatment; never blue                       |
 
 System messages use a coloured edge, not a coloured fill, so they cannot be confused with status badges. Toasts use the same semantic mapping through the shared Sonner integration; pages do not configure toast colours.
 
@@ -611,17 +623,17 @@ The design system must meet WCAG 2.2 AA for supported journeys.
 
 Verified token pairs from the approved palette:
 
-| Pair | Contrast |
-| --- | --- |
-| foreground on white | 15.6:1 |
-| muted foreground on white | 5.6:1 |
-| subtle foreground on white | 3.1:1; large/decorative/disabled use only |
-| money-fill foreground on money-fill | 10.4:1 |
-| white on danger-fill | 4.7:1 |
-| warning-fill foreground on warning-fill | 8.9:1 |
-| money-text on white | 5.0:1 |
-| danger-text on white | 4.6:1 |
-| row-affordance on white | 4.6:1 |
+| Pair                                    | Contrast                                  |
+| --------------------------------------- | ----------------------------------------- |
+| foreground on white                     | 15.6:1                                    |
+| muted foreground on white               | 5.6:1                                     |
+| subtle foreground on white              | 3.1:1; large/decorative/disabled use only |
+| money-fill foreground on money-fill     | 10.4:1                                    |
+| white on danger-fill                    | 4.7:1                                     |
+| warning-fill foreground on warning-fill | 8.9:1                                     |
+| money-text on white                     | 5.0:1                                     |
+| danger-text on white                    | 4.6:1                                     |
+| row-affordance on white                 | 4.6:1                                     |
 
 Non-negotiable behavior:
 

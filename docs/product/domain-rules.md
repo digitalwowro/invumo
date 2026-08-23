@@ -1,7 +1,7 @@
 # Invumo Core Domain Rules
 
 Status: Approved product rules  
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
@@ -413,6 +413,7 @@ Recurring template
 
 ## Public documents
 
+- Public Quote and Invoice pages are served by the SaaS application at `app.invumo.com`, never by the separate `invumo.com` marketing website. Exact paths remain behind the Phase 8 public-token design gate.
 - Quotes and invoices use unpredictable public tokens rather than database IDs.
 - Default link expiry is 30 days.
 - Expiry is user-configurable.
@@ -432,7 +433,8 @@ Recurring template
 ## Email
 
 - Use Zoho ZeptoMail.
-- Prefer the API if architecture analysis confirms it is cleaner and more reliable than SMTP.
+- Use the already-configured authenticated SMTP transport for foundational account verification, recovery, and invitation email.
+- Before Phase 9 document email, complete the provider gate and select SMTP reuse or ZeptoMail API delivery without weakening webhook authentication, retries, idempotency, or delivery history.
 - Provide multilingual default subject and body for quotes and invoices.
 - Allow editing before sending.
 - Provide company templates per language for quote sent, invoice sent, payment reminder, and payment received events.

@@ -4,7 +4,8 @@ Status: Approved product brief
 
 Last updated: 2026-08-23
 
-Domain: `invumo.com`
+- Marketing website: `https://invumo.com`
+- SaaS application: `https://app.invumo.com`
 
 Invumo is a streamlined quotation and invoicing SaaS. Its core philosophy is:
 
@@ -755,7 +756,7 @@ Design the PDF system so more templates can be added later without rewriting the
 
 ## 23. Email
 
-Send transactional email through Zoho ZeptoMail. Prefer its API if the architecture assessment finds it cleaner and more reliable than SMTP.
+Send transactional email through Zoho ZeptoMail. Foundational account email already uses the production ZeptoMail SMTP transport over authenticated TLS. Before Phase 9 document delivery, complete the provider gate and choose whether quote/invoice/reminder delivery should reuse SMTP or use ZeptoMail's API; that choice must preserve the approved webhook, retry, idempotency, and delivery-history behavior.
 
 Quote and invoice emails include:
 
@@ -839,8 +840,10 @@ After one initial attempt, transient failures retry up to five times: after 1 mi
 
 Both quotes and invoices support secure public links, such as:
 
-- `invumo.com/q/<secure-token>`
-- `invumo.com/i/<secure-token>`
+- `app.invumo.com/q/<secure-token>`
+- `app.invumo.com/i/<secure-token>`
+
+Public document pages belong to the SaaS application host, not the separate `invumo.com` marketing website. The exact route and token-bootstrap contract remains subject to the Phase 8 public-token design gate.
 
 Do not expose predictable database IDs.
 
@@ -1148,7 +1151,7 @@ Register
 
 ## 35. Development philosophy
 
-The approved baseline is one Laravel 13 modular monolith on PHP 8.5, with React 19/strict TypeScript through Inertia 3, PostgreSQL 18, Vite, Tailwind CSS 4, and source-owned shadcn/ui components. The application uses one repository, one deployment, one database, a PostgreSQL-backed Laravel queue, one supervised PHP worker, and one cron-triggered scheduler. Node builds browser assets but does not run a production web server. See [Invumo Application Architecture Baseline](../architecture/application-architecture.md).
+The approved baseline is one Laravel 13 modular monolith on PHP 8.5, with React 19/strict TypeScript through Inertia 3, PostgreSQL 18, Vite, Tailwind CSS 4, and source-owned shadcn/ui components. The SaaS application uses the `invumo` repository, one application deployment at `app.invumo.com`, one database, a PostgreSQL-backed Laravel queue, one supervised PHP worker, and one cron-triggered scheduler. The future `invumo.com` marketing website is outside this application's routes and deployment and uses its approved separate `invumo-web` repository and `/home/invumo/invumo-web` working directory. Node builds browser assets but does not run a production web server. See the [Invumo Application Architecture Baseline](../architecture/application-architecture.md) and living [Invumo Codebase Map](../architecture/codebase-map.md).
 
 Until public launch, while Invumo has no real users, development may occur directly in the hosted production checkout. Source control and relevant automated checks still apply, but repeatable deployment automation is deliberately deferred. Rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are externally managed and must be verified before public launch. Introduce separate development and production environments plus a repeatable release process before real-user dependency makes direct-production development unsafe. Docker, a separate frontend deployment, a web API for the Inertia application, Inertia SSR, Redis, and microservices are excluded unless later evidence justifies them.
 
@@ -1162,6 +1165,10 @@ Prefer:
 - Maintainable code
 - Clear abstractions
 - Good UX
+
+Handwritten/source-owned PHP, TypeScript/React, JavaScript, test, and stylesheet files follow a 300-line soft limit and a 500-line hard limit. Crossing the soft limit triggers a visible warning and refactor review; crossing the hard limit fails automated checks unless the owner has explicitly approved and documented a narrow exception. Generated code, lockfiles, dependencies, compiled assets, documentation, and authored translation catalogs are excluded. The full responsibility and exception contract is defined in the [application architecture baseline](../architecture/application-architecture.md#source-file-size-and-responsibility-contract).
+
+External side effects, provider adapters, environment variables, logging privacy, material-change impact review, publication authority, and integration-evidence classification follow the approved [engineering and integration safety contract](../architecture/application-architecture.md#engineering-changes-and-external-integration-safety). Shared selector and overlay behavior follows the [design-system contract](../design/design-system.md); these are stack-neutral Invumo rules, not imported conventions from another application.
 
 Avoid by default:
 
@@ -1180,6 +1187,8 @@ If any of these become genuinely necessary, explain why before introducing them.
 ## 36. Implementation process
 
 Do not generate the application as an unstructured code dump. Work incrementally.
+
+Implement each feature as a coherent vertical slice through its validation, authorization, application Action/Query, persistence, Inertia/React composition, audit/outbox behavior, tests, and documentation. Preserve the approved module ownership and dependency direction; do not scaffold empty modules, accumulate generic service/helper buckets, or restructure unrelated areas opportunistically.
 
 The only canonical development sequence, progress checklist, phase status, dependency map, and acceptance-gate record is [Invumo Development Tracker](../development/development-tracker.md). Update that file as work advances; do not duplicate its phase checklist or progress state in this product brief or another document.
 

@@ -21,13 +21,14 @@ The design contract is system-wide. Pages compose shared components and must not
 
 ## Operations
 
-- [`operations/production-runtime.md`](operations/production-runtime.md) — verified hosted runtime, database-role separation, user-level queue supervision, scheduler operation, security boundaries, and remaining production gates
+- [`operations/production-runtime.md`](operations/production-runtime.md) — verified `app.invumo.com` runtime, database/test separation, user-level queue and scheduler operation, ZeptoMail account-email transport, temporary direct-production boundary, and remaining launch gates
 
 Operational documents record how an approved runtime is installed and verified. Phase status and acceptance remain canonical only in the development tracker.
 
 ## Approved architecture baseline
 
 - [`architecture/application-architecture.md`](architecture/application-architecture.md) — approved stack, modular-monolith boundary, runtime, deployment shape, and future mobile path
+- [`architecture/codebase-map.md`](architecture/codebase-map.md) — living Invumo-specific backend/frontend ownership map, dependency direction, Action transaction contract, and module-boundary rules
 - [`architecture/calculation-and-rounding.md`](architecture/calculation-and-rounding.md) — exact decimal storage, currency-precision snapshots, step rounding, authoritative libraries, and reconciliation tests
 - [`architecture/identifier-policy.md`](architecture/identifier-policy.md) — native UUIDv7 domain identifiers, UUID foreign keys, exceptions, and security boundaries
 - [`architecture/tenant-isolation.md`](architecture/tenant-isolation.md) — application authorization plus PostgreSQL RLS, database roles, tenant context, public-link bootstrap, and isolation tests

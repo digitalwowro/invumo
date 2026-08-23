@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { SectionHeader } from '@/components/section-header';
-import { Surface } from '@/components/surface';
+import { SectionHeader } from '@/components/app/section-header';
+import { Surface } from '@/components/app/surface';
 import { FieldGroup } from '@/components/ui/field';
 
 type FormSectionProps = {

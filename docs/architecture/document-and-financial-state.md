@@ -69,17 +69,17 @@ Customer-facing status precedence is Accepted or Rejected first, then Expired, t
 
 ### Approved transitions
 
-| Action | Preconditions | Result | External/history effects |
-| --- | --- | --- | --- |
-| Create | Authorized Company context | Persist incomplete `DRAFT` with an allocated number | Audit creation; idempotent Draft creation |
-| Send a Draft | Complete, valid, non-expired Quote; valid recipient/link | Provider acceptance changes `DRAFT → SENT` | Immediate provider failure leaves Draft; later delivery failure leaves Sent; record every attempt |
-| Resend | Complete existing Quote | Lifecycle unchanged | New immutable email attempt/artifact |
-| Public Accept | Valid public action under the public-state rule below | `SENT → ACCEPTED` | Required name/email, timestamp, idempotency, audit |
-| Public Reject | Valid public action under the public-state rule below | `SENT → REJECTED` | Required name/email, timestamp, idempotency, audit |
-| Edit | Any non-deleted lifecycle state; field invariants pass | Lifecycle does not change automatically | Audit significant changes; invalidate current PDF cache |
-| Derive expiry | Current Company-local date passes `valid_until` | Display/action eligibility becomes Expired | No stored lifecycle mutation required |
-| Convert to Invoice | Accepted normally; Owner/Admin confirmation for Draft, Sent, or Expired; never Rejected | Create linked Draft Invoice | Copy approved snapshots; audit provenance |
-| Unlink derived Invoice | Invoice remains Draft and has never been issued/sent, publicly shared, or associated with a transaction | Invoice becomes independent Draft | Confirm/audit; preserve copied Invoice data; recalculate Quote allocation |
+| Action                 | Preconditions                                                                                           | Result                                              | External/history effects                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Create                 | Authorized Company context                                                                              | Persist incomplete `DRAFT` with an allocated number | Audit creation; idempotent Draft creation                                                         |
+| Send a Draft           | Complete, valid, non-expired Quote; valid recipient/link                                                | Provider acceptance changes `DRAFT → SENT`          | Immediate provider failure leaves Draft; later delivery failure leaves Sent; record every attempt |
+| Resend                 | Complete existing Quote                                                                                 | Lifecycle unchanged                                 | New immutable email attempt/artifact                                                              |
+| Public Accept          | Valid public action under the public-state rule below                                                   | `SENT → ACCEPTED`                                   | Required name/email, timestamp, idempotency, audit                                                |
+| Public Reject          | Valid public action under the public-state rule below                                                   | `SENT → REJECTED`                                   | Required name/email, timestamp, idempotency, audit                                                |
+| Edit                   | Any non-deleted lifecycle state; field invariants pass                                                  | Lifecycle does not change automatically             | Audit significant changes; invalidate current PDF cache                                           |
+| Derive expiry          | Current Company-local date passes `valid_until`                                                         | Display/action eligibility becomes Expired          | No stored lifecycle mutation required                                                             |
+| Convert to Invoice     | Accepted normally; Owner/Admin confirmation for Draft, Sent, or Expired; never Rejected                 | Create linked Draft Invoice                         | Copy approved snapshots; audit provenance                                                         |
+| Unlink derived Invoice | Invoice remains Draft and has never been issued/sent, publicly shared, or associated with a transaction | Invoice becomes independent Draft                   | Confirm/audit; preserve copied Invoice data; recalculate Quote allocation                         |
 
 Repeated identical public decisions are idempotent. A replay must not create another decision record or audit effect.
 
@@ -111,15 +111,15 @@ Payment state and Overdue remain derived as specified below.
 
 ### Approved transitions
 
-| Action | Preconditions | Result | External/history effects |
-| --- | --- | --- | --- |
-| Create | Authorized Company context | Persist incomplete `DRAFT` with allocated number | Audit creation; idempotent Draft creation |
-| Issue without email | Complete valid Draft | `DRAFT → ISSUED` | Materialize reminder schedule; generate current PDF as needed; audit |
-| Send a Draft | Complete valid Draft and send inputs | Commit `DRAFT → ISSUED` before delivery | Dispatch failure never reverts issue; record retryable email failure |
-| Resend Issued | Valid recipient/link and no delivery-safety block | Remains `ISSUED` | New immutable email attempt/artifact |
-| Edit Draft | Result may remain incomplete but all populated fields are valid | Remains `DRAFT` | Recalculate current values |
-| Edit Issued | Complete result; total not below net paid; currency fixed while transactions exist | Remains `ISSUED` | Recalculate state/reminders; audit; invalidate current PDF cache |
-| Cancel | `ISSUED`, net paid exactly zero | `ISSUED → CANCELLED` | Suppress pending reminders; block new transactions; preserve history |
+| Action              | Preconditions                                                                      | Result                                           | External/history effects                                             |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------- |
+| Create              | Authorized Company context                                                         | Persist incomplete `DRAFT` with allocated number | Audit creation; idempotent Draft creation                            |
+| Issue without email | Complete valid Draft                                                               | `DRAFT → ISSUED`                                 | Materialize reminder schedule; generate current PDF as needed; audit |
+| Send a Draft        | Complete valid Draft and send inputs                                               | Commit `DRAFT → ISSUED` before delivery          | Dispatch failure never reverts issue; record retryable email failure |
+| Resend Issued       | Valid recipient/link and no delivery-safety block                                  | Remains `ISSUED`                                 | New immutable email attempt/artifact                                 |
+| Edit Draft          | Result may remain incomplete but all populated fields are valid                    | Remains `DRAFT`                                  | Recalculate current values                                           |
+| Edit Issued         | Complete result; total not below net paid; currency fixed while transactions exist | Remains `ISSUED`                                 | Recalculate state/reminders; audit; invalidate current PDF cache     |
+| Cancel              | `ISSUED`, net paid exactly zero                                                    | `ISSUED → CANCELLED`                             | Suppress pending reminders; block new transactions; preserve history |
 
 Sending is an external effect, not a lifecycle state beyond `ISSUED`. Provider Delivered/Opened/Failed values belong to immutable delivery attempts rather than the Invoice lifecycle.
 
@@ -168,14 +168,14 @@ Every financial mutation must leave the complete Invoice ledger in this state:
 
 ### Payment state
 
-| Lifecycle/amount condition | Derived payment state |
-| --- | --- |
-| Draft | None; do not present a customer payment status |
-| Issued and `invoice_total = 0` | Paid immediately |
-| Issued and `invoice_total > 0` and `net_paid = 0` | Unpaid |
-| Issued and `0 < net_paid < invoice_total` | Partially Paid |
-| Issued and `net_paid = invoice_total` | Paid |
-| Cancelled | Financial calculations remain available internally, but the primary customer-facing lifecycle is Cancelled |
+| Lifecycle/amount condition                        | Derived payment state                                                                                      |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Draft                                             | None; do not present a customer payment status                                                             |
+| Issued and `invoice_total = 0`                    | Paid immediately                                                                                           |
+| Issued and `invoice_total > 0` and `net_paid = 0` | Unpaid                                                                                                     |
+| Issued and `0 < net_paid < invoice_total`         | Partially Paid                                                                                             |
+| Issued and `net_paid = invoice_total`             | Paid                                                                                                       |
+| Cancelled                                         | Financial calculations remain available internally, but the primary customer-facing lifecycle is Cancelled |
 
 ### Overdue
 
@@ -201,14 +201,14 @@ The already-approved storage direction is a non-negative amount expressed in the
 
 Every executable Payment, Refund, or Adjustment uses a strictly positive amount; zero-amount transaction rows are invalid. Together with the complete-ledger invariants, apply these operation-specific limits:
 
-| Operation | Maximum/required result |
-| --- | --- |
-| Create Payment | Amount cannot exceed current outstanding |
-| Create Refund | Amount cannot exceed both current cash available and current net paid |
-| Create Increase-Paid Adjustment | Amount cannot exceed current outstanding |
-| Create Decrease-Paid Adjustment | Amount cannot exceed current net paid |
-| Edit any transaction | Recompute the complete ledger as though the edited row already had its new values; every invariant must pass |
-| Delete any transaction | Recompute the complete ledger without that row; every invariant must pass |
+| Operation                       | Maximum/required result                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Create Payment                  | Amount cannot exceed current outstanding                                                                     |
+| Create Refund                   | Amount cannot exceed both current cash available and current net paid                                        |
+| Create Increase-Paid Adjustment | Amount cannot exceed current outstanding                                                                     |
+| Create Decrease-Paid Adjustment | Amount cannot exceed current net paid                                                                        |
+| Edit any transaction            | Recompute the complete ledger as though the edited row already had its new values; every invariant must pass |
+| Delete any transaction          | Recompute the complete ledger without that row; every invariant must pass                                    |
 
 A positive adjustment changes balance but never refundable cash. A Refund can make a previously Paid Invoice Partially Paid or Unpaid again. Editing or deleting a Payment is rejected if retained Refunds or other rows would make the resulting ledger invalid.
 

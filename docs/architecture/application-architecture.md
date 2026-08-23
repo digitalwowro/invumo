@@ -9,50 +9,36 @@ This document records the approved technology and application-architecture basel
 
 Build Invumo as one modular Laravel application with a React/TypeScript interface connected through Inertia.
 
-| Concern | Decision |
-| --- | --- |
-| Backend and application runtime | Laravel 13 on PHP 8.5 |
-| Web interface | React 19 with strict TypeScript |
-| Laravel/React integration | Inertia 3 |
-| Project foundation | Official Laravel React starter kit |
-| Authentication | Built-in Laravel Fortify sessions, email verification/recovery, rate limiting, and secure session management |
-| Type-safe route integration | Laravel Wayfinder |
-| Database | PostgreSQL 18 |
-| Frontend build | Vite |
-| Styling and components | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md) |
-| Localization | Laravel `lang/en` and `lang/ro` files as the only authored source; resolved strings passed to React through Inertia props |
-| Package management | Composer and npm with committed lockfiles |
-| Automated testing | Pest 4, Vitest, and Pest Browser backed by Playwright |
-| Code quality | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier |
-| Continuous integration | GitHub Actions |
-| Agent development support | Laravel Boost as a development-only dependency |
-| Background work | Laravel database queue with one supervised PHP worker |
-| Scheduling | Laravel scheduler invoked once per minute by cron |
-| Deployment shape | One application deployment and one PostgreSQL database |
+| Concern                         | Decision                                                                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Backend and application runtime | Laravel 13 on PHP 8.5                                                                                                              |
+| Web interface                   | React 19 with strict TypeScript                                                                                                    |
+| Laravel/React integration       | Inertia 3                                                                                                                          |
+| Project foundation              | Official Laravel React starter kit                                                                                                 |
+| Authentication                  | Built-in Laravel Fortify sessions, email verification/recovery, rate limiting, and secure session management                       |
+| Type-safe route integration     | Laravel Wayfinder                                                                                                                  |
+| Database                        | PostgreSQL 18                                                                                                                      |
+| Frontend build                  | Vite                                                                                                                               |
+| Styling and components          | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md) |
+| Localization                    | Laravel `lang/en` and `lang/ro` files as the only authored source; resolved strings passed to React through Inertia props          |
+| Package management              | Composer and npm with committed lockfiles                                                                                          |
+| Automated testing               | Pest 4, Vitest, and Pest Browser backed by Playwright                                                                              |
+| Code quality                    | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier                                                            |
+| Continuous integration          | GitHub Actions                                                                                                                     |
+| Agent development support       | Laravel Boost as a development-only dependency                                                                                     |
+| Background work                 | Laravel database queue with one supervised PHP worker                                                                              |
+| Scheduling                      | Laravel scheduler invoked once per minute by cron                                                                                  |
+| Deployment shape                | One SaaS application deployment and one PostgreSQL database at `app.invumo.com`                                                    |
 
 This choice optimizes total system complexity rather than language count. PHP and TypeScript remain in one repository and one deployable application; they do not create separate backend and frontend services.
 
 ## Application boundary
 
-Invumo is a modular monolith. Initial modules follow the product boundaries:
+Invumo is a modular monolith. Its approved business modules, physical code layout, cross-module APIs, dependency direction, application-action transaction contract, frontend layers, test ownership, and maintenance rules are defined in the living [Invumo Codebase Map](codebase-map.md).
 
-- Identity, accounts, authentication, and entitlements
-- Companies, memberships, invitations, and ownership transfer
-- Company configuration
-- Customers and contacts
-- Products & Services
-- Shared documents and calculations
-- Quotes
-- Invoices
-- Payments, refunds, and adjustments
-- Public documents
-- Email and reminders
-- Recurring invoices
-- Audit and operational history
+Module boundaries organize code and tests but do not create network services or separately deployed applications. Create a module directory only when it has real implementation. Keep Laravel's framework entry points conventional where that is clearer, and do not introduce a module package, empty scaffolds, repositories around every model, event sourcing, or premature service interfaces.
 
-Module boundaries organize code and tests but do not create network services or separately deployed applications.
-
-Use conventional Laravel structure with pragmatic application actions/services for important use cases. Controllers remain thin; Form Requests validate input; Policies enforce permissions; application actions own workflows and transaction boundaries; Eloquent models represent persistence. Do not introduce an academic domain framework, repositories around every model, event sourcing, or premature service interfaces.
+Controllers remain thin; Form Requests validate input shape; Policies enforce permissions; purpose-specific Queries own reads; and one named root application Action owns each mutation workflow and its outer database transaction. Business state changes do not live in controllers, React pages, provider adapters, or queued-job handlers. Cross-module mutation goes through the owning module's Action rather than direct model updates.
 
 ## Laravel, Inertia, and React responsibilities
 
@@ -103,6 +89,20 @@ Use Laravel Boost as a development-only Composer dependency. Its installed-versi
 - Keep raw internal colour values in the single approved semantic-token definition. Feature/page code consumes token-backed shared components and must not create page-specific visual treatments or hard-coded colours.
 - Treat pages as composition and data-binding boundaries: source-owned shadcn primitives feed shared Invumo application/domain components, and those components own appearance, state presentation, responsive behavior, and accessibility.
 - Keep PHP application services independent of Inertia so future interfaces can reuse them.
+- Coordinate the initial data required by a page in Laravel and send one deliberate Inertia prop payload; do not create client-side request fan-out for data already known at navigation time.
+- Use direct React/component imports rather than barrel files, and preserve the `ui → app → domain → features → pages/layouts` dependency direction defined by the codebase map.
+
+## Engineering changes and external integration safety
+
+The following rules apply across PHP, React, queued work, tests, operations, and documentation:
+
+1. **External side effects are explicit.** A provider or external-system write may occur only from an explicit user action or an approved scheduled/system workflow. Rendering, reads, polling, previews, static checks, tests, and browser automation must not send email, mutate provider state, create external records, or change production data unless the owner explicitly authorizes that exact write-capable verification workflow.
+2. **Providers remain behind narrow adapters.** Provider-specific authentication, requests, responses, identifiers, statuses, errors, and retry details stay inside the relevant integration adapter. Core actions and domain code consume Invumo-owned commands and normalized concepts rather than ZeptoMail or another vendor's labels. Add an adapter at a real external boundary; do not create interfaces around ordinary internal Laravel code merely for uniformity.
+3. **Environment variables are an application interface.** Every new or changed variable defines its purpose, requirement/default, consumer, validation, and operational effect. Update Laravel configuration, validation, the root `.env.example`, operations documentation, and relevant tests together. Application/domain code reads `config()` values; direct `env()` access remains inside Laravel configuration files. Origins, endpoints, ports, credentials, and provider settings are never hard-coded in application code.
+4. **Logs are allowlisted and privacy-safe.** Logs and diagnostics never contain credentials, tokens, cookies, customer document contents, email bodies, recipient lists, full provider payloads, or sensitive identifiers. Store only the minimum structured, redacted metadata required to operate and diagnose the system; approved audit and provider-event retention rules remain authoritative.
+5. **Material changes receive an impact review.** Before implementing a change to schema, stored data, permissions, an external boundary, or public behavior, identify migration, backward-compatibility, and rollout consequences. Complete the affected contract/types, validation, server action, UI behavior, tests, operations, and documentation as one coherent change rather than leaving layers inconsistent.
+6. **Edit authority is not publication authority.** Authorization to inspect or modify files does not authorize committing, pushing, merging, deploying, releasing, sending communications, creating external records, or mutating production data. Each applicable external action requires its own explicit request.
+7. **Integration evidence is labelled accurately.** Integration notes distinguish facts guaranteed by current primary provider documentation, Invumo implementation choices, behavior observed in a real test, and conclusions inferred from tests or experiments. Observations and inferences must not be presented as provider guarantees.
 
 ## Data and integrity foundations
 
@@ -140,7 +140,9 @@ Use Laravel's filesystem abstraction. Local production storage is acceptable ini
 
 ## Development and deployment
 
-The initial hosted footprint is one production environment on the owner's infrastructure. Until public launch, while the application has no real users, development may occur directly in the hosted production checkout. This is an explicitly temporary operating mode, not the intended post-launch workflow. Changes still remain source-controlled and must pass the relevant automated checks before they are treated as complete.
+The initial hosted footprint is one production environment on the owner's infrastructure at `https://app.invumo.com`. Until public launch, while the application has no real users, development may occur directly in the hosted production checkout. This is an explicitly temporary operating mode, not the intended post-launch workflow. Changes still remain source-controlled and must pass the relevant automated checks before they are treated as complete.
+
+The public marketing website will use `https://invumo.com` and is outside this Laravel application's route tree, codebase, deployment, and product scope. Its approved implementation boundary is the private [`digitalwowro/invumo-web`](https://github.com/digitalwowro/invumo-web) repository and `/home/invumo/invumo-web` working directory. The repository and directory exist; the empty local directory may be connected to the remote when marketing-site implementation begins. The SaaS application remains in the `invumo` repository and `/home/invumo/invumo` checkout.
 
 Initial production processes:
 
@@ -175,8 +177,18 @@ Vibe coding increases the value of automated boundaries. The baseline requires:
 - Database constraints and migrations reviewed as product behavior
 - GitHub Actions checks that run tests, analysis, formatting/linting checks, and the production asset build before deployment
 - Design-contract guards that reject raw colours and major component-layer bypasses in feature/page code, plus a development/test component gallery and representative visual-regression coverage for the shared system
+- A source-file size guard that warns above the 300-line soft limit and fails above the 500-line hard limit
+- A module-boundary guard that rejects prohibited backend cross-module/concrete-integration imports and inverted frontend layer dependencies
 
 Tests must use the restricted PostgreSQL runtime role where RLS behavior matters. Generated code is not accepted solely because it renders or passes a happy-path browser check.
+
+### Source-file size and responsibility contract
+
+The limits count physical lines and apply to handwritten/source-owned PHP, TypeScript, React, JavaScript, tests, and stylesheets—including source-owned shadcn/ui primitives. A file with 301–500 lines produces a visible warning and requires a refactor review; more than 500 lines fails CI and is prohibited for new or modified source. The target remains at or below 300 lines whenever a coherent separation is available.
+
+Generated code, lockfiles, third-party dependencies, compiled assets, documentation, and authored translation catalogs are excluded. An unusually cohesive migration or configuration file may exceed the hard limit only after the owner explicitly approves an exact-path exception with a recorded reason. Convenience, framework origin, or the cost of splitting is not sufficient justification.
+
+Files should have one clear responsibility. Pages compose shared components rather than accumulating complete screens in one file; controllers remain thin while application actions own workflows and transaction boundaries; React editors split along meaningful interface/behavior regions; and tests split by behavior or scenario. The guard supplements architectural review—it does not make a fragmented collection of arbitrary small files desirable.
 
 ## Future mobile application
 

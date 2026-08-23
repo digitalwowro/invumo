@@ -1,10 +1,10 @@
 import { Link } from '@inertiajs/react';
+import { SidebarGroup } from '@/components/ui/sidebar-layout';
 import {
-    SidebarGroup,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
+} from '@/components/ui/sidebar-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 

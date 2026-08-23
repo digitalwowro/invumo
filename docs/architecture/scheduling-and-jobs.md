@@ -10,7 +10,7 @@ This specification defines how company-local recurring invoices and reminders ma
 - Laravel's scheduler is invoked once per minute by cron.
 - Due work is materialized in PostgreSQL and claimed transactionally.
 - Laravel's PostgreSQL-backed database queue carries retryable jobs.
-- One `systemd`-supervised PHP queue worker processes jobs initially.
+- One linger-backed `systemd --user` PHP queue worker owned by the unprivileged `invumo` account processes jobs initially.
 - Redis and an external message broker are not required.
 
 The scheduler dispatches work; it does not perform slow PDF or provider operations inside the scheduler lock.

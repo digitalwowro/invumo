@@ -10,6 +10,8 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "lines:check": "node scripts/check-file-lines.mjs",
+        "modules:check": "node scripts/check-module-boundaries.mjs",
         "test:unit": "vitest run",
         "test:unit:watch": "vitest",
         "types:check": "tsc --noEmit"

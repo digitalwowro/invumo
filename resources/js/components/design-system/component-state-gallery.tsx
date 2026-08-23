@@ -1,9 +1,9 @@
-import { Cluster, Stack } from '@/components/layout';
-import { MoneyValue } from '@/components/money-value';
-import { PageHeader } from '@/components/page-header';
-import { StatusBadge } from '@/components/status-badge';
-import type { Status } from '@/components/status-badge';
-import { Surface } from '@/components/surface';
+import { Cluster, Stack } from '@/components/app/layout';
+import { PageHeader } from '@/components/app/page-header';
+import { Surface } from '@/components/app/surface';
+import { MoneyValue } from '@/components/domain/money-value';
+import { StatusBadge } from '@/components/domain/status-badge';
+import type { Status } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';

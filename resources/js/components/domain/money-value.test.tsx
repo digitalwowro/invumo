@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { MoneyValue } from '@/components/money-value';
+import { MoneyValue } from '@/components/domain/money-value';
 
 describe('MoneyValue', () => {
     it('preserves the server-formatted decimal string', () => {

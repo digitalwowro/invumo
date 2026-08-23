@@ -51,7 +51,7 @@ The desktop sidebar contains, in order:
 2. active-Company switcher;
 3. compact **Create** menu;
 4. primary Company navigation;
-5. Company Settings at the bottom when permitted;
+5. the Company-scoped **Settings** destination at the bottom when permitted;
 6. account/user menu at the bottom.
 
 The Create menu contains only the frequent actions **New invoice**, **New quote**, and **New customer**. It uses the same create actions as the corresponding list headers. Product/service and recurring-template creation remain on their list pages so the global menu does not become a catalogue of every possible action.
@@ -60,18 +60,18 @@ The narrow-screen navigation is a sheet containing the same Company switcher, de
 
 ### 3.2 Primary destinations
 
-| Order | Destination | Visible to | Purpose |
-| --- | --- | --- | --- |
-| 1 | Dashboard | Owner, Admin, Member | Operational summary and work requiring attention |
-| 2 | Quotes | Owner, Admin, Member | Quote list, creation, decisions, conversion, and delivery history |
-| 3 | Invoices | Owner, Admin, Member | Invoice list, creation, financial state, and delivery history |
-| 4 | Transactions | Owner, Admin, Member | Company-wide Payment, Refund, and Adjustment history; mutation follows permission |
-| 5 | Customers | Owner, Admin, Member | Customers, contacts, delivery defaults, and customer history |
-| 6 | Recurring | Owner, Admin, Member | Templates and occurrence history; Member automation actions remain restricted |
-| 7 | Products | Owner, Admin | Manage the reusable Product & Service line-default catalogue; Members select entries only inside editors |
-| 8 | Company Settings | Owner, Admin | Company configuration and membership administration |
+| Order | Destination  | Visible to           | Purpose                                                                                                  |
+| ----- | ------------ | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1     | Dashboard    | Owner, Admin, Member | Operational summary and work requiring attention                                                         |
+| 2     | Quotes       | Owner, Admin, Member | Quote list, creation, decisions, conversion, and delivery history                                        |
+| 3     | Invoices     | Owner, Admin, Member | Invoice list, creation, financial state, and delivery history                                            |
+| 4     | Transactions | Owner, Admin, Member | Company-wide Payment, Refund, and Adjustment history; mutation follows permission                        |
+| 5     | Customers    | Owner, Admin, Member | Customers, contacts, delivery defaults, and customer history                                             |
+| 6     | Recurring    | Owner, Admin, Member | Templates and occurrence history; Member automation actions remain restricted                            |
+| 7     | Products     | Owner, Admin         | Manage the reusable Product & Service line-default catalogue; Members select entries only inside editors |
+| 8     | Settings     | Owner, Admin         | Company configuration and membership administration                                                      |
 
-Members do not receive a dead or disabled Products & Services navigation item. Catalogue selection remains available in document editors. Owner-only settings/actions are omitted for Admin where required, while the normal Company Settings destination remains visible.
+Members do not receive a dead or disabled Products & Services navigation item. Catalogue selection remains available in document editors. Owner-only settings/actions are omitted for Admin where required, while the normal Company-scoped Settings destination remains visible.
 
 The account/user menu owns Profile, Security, Preferences/Application language, accessible Companies, Plan/entitlements where permitted, and Sign out. These are not mixed into Company Settings.
 
@@ -83,66 +83,66 @@ Route names use normal Laravel resource vocabulary. Exact controller/action clas
 
 ### 4.1 Identity, onboarding, and account routes
 
-| Method | Route | Responsibility |
-| --- | --- | --- |
-| GET | `/` | Safe guest/authenticated redirect only |
-| GET/POST | Fortify identity routes | Registration, verification, sign-in/out, password reset, and confirmation |
-| GET | `/companies` | Accessible Company chooser/management entry |
-| GET/POST | `/companies/create` | Create the first or another Company |
-| GET | `/invitations/{invitation}` | Rate-limited invitation review without Company enumeration |
-| POST | `/invitations/{invitation}/accept` | Accept a valid invitation after authentication as required |
-| GET/PATCH | `/settings/profile` | User identity |
-| GET/PUT | `/settings/security` | Password and secure-session controls in v1 scope |
-| GET/PATCH | `/settings/preferences` | Application language and account-level preferences |
-| GET | `/settings/plan` | Owner-controlled Account plan/entitlements when implemented |
+| Method    | Route                              | Responsibility                                                            |
+| --------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| GET       | `/`                                | Safe guest/authenticated redirect only                                    |
+| GET/POST  | Fortify identity routes            | Registration, verification, sign-in/out, password reset, and confirmation |
+| GET       | `/companies`                       | Accessible Company chooser/management entry                               |
+| GET/POST  | `/companies/create`                | Create the first or another Company                                       |
+| GET       | `/invitations/{invitation}`        | Rate-limited invitation review without Company enumeration                |
+| POST      | `/invitations/{invitation}/accept` | Accept a valid invitation after authentication as required                |
+| GET/PATCH | `/settings/profile`                | User identity                                                             |
+| GET/PUT   | `/settings/security`               | Password and secure-session controls in v1 scope                          |
+| GET/PATCH | `/settings/preferences`            | Application language and account-level preferences                        |
+| GET       | `/settings/plan`                   | Owner-controlled Account plan/entitlements when implemented               |
 
 ### 4.2 Company shell and operational resources
 
-| Method | Route | Page/action |
-| --- | --- | --- |
-| GET | `/companies/{company}` | Redirect to Company Dashboard |
-| GET | `/companies/{company}/dashboard` | Dashboard |
-| GET | `/companies/{company}/customers` | Customer operational list |
-| GET | `/companies/{company}/customers/create` | Standalone complete Customer form |
-| POST | `/companies/{company}/customers` | Shared standalone/inline create action |
-| GET | `/companies/{company}/customers/{customer}` | Customer workspace |
-| PATCH | `/companies/{company}/customers/{customer}` | Update Customer aggregate |
-| POST | `/companies/{company}/customers/{customer}/archive` | Archive with dependency rules |
-| POST | `/companies/{company}/customers/{customer}/restore` | Restore archived Customer |
-| DELETE | `/companies/{company}/customers/{customer}` | Owner/Admin-only dependency-guarded permanent deletion |
-| GET | `/companies/{company}/products` | Product & Service operational list |
-| GET | `/companies/{company}/products/create` | Standalone catalogue form |
-| POST | `/companies/{company}/products` | Shared standalone/inline create action |
-| GET | `/companies/{company}/products/{product}` | Product/Service workspace |
-| PATCH | `/companies/{company}/products/{product}` | Update catalogue entry |
-| POST | `/companies/{company}/products/{product}/archive` | Archive entry |
-| POST | `/companies/{company}/products/{product}/restore` | Restore entry |
-| DELETE | `/companies/{company}/products/{product}` | Owner/Admin-only dependency-guarded permanent deletion |
-| GET | `/companies/{company}/quotes` | Quote operational list |
-| POST | `/companies/{company}/quotes` | Persist a numbered Draft and redirect to its workspace |
-| GET | `/companies/{company}/quotes/{quote}` | Quote document workspace/editor |
-| PATCH | `/companies/{company}/quotes/{quote}` | Version-checked aggregate save |
-| DELETE | `/companies/{company}/quotes/{quote}` | Guarded permanent deletion |
-| POST | `/companies/{company}/quotes/{quote}/invoices` | Guarded Quote-to-Invoice conversion |
-| POST | `/companies/{company}/quotes/{quote}/invoices/{invoice}/unlink` | Owner/Admin-only eligible Draft unlink action |
-| GET | `/companies/{company}/invoices` | Invoice operational list |
-| POST | `/companies/{company}/invoices` | Persist a numbered Draft and redirect to its workspace |
-| GET | `/companies/{company}/invoices/{invoice}` | Invoice document workspace/editor |
-| PATCH | `/companies/{company}/invoices/{invoice}` | Version-checked aggregate save |
-| DELETE | `/companies/{company}/invoices/{invoice}` | Strongly confirmed, guarded permanent deletion |
-| POST | `/companies/{company}/invoices/{invoice}/cancel` | Guarded cancellation |
-| POST | `/companies/{company}/invoices/{invoice}/reopen` | Guarded reopen |
-| GET | `/companies/{company}/recurring` | Recurring-template operational list |
-| GET | `/companies/{company}/recurring/create` | Minimal creation form requiring the internal template name |
-| POST | `/companies/{company}/recurring` | Persist a valid Draft template and redirect to its workspace |
-| GET | `/companies/{company}/recurring/{template}` | Recurring-template workspace/editor |
-| PATCH | `/companies/{company}/recurring/{template}` | Version-checked future-template save |
-| POST | `/companies/{company}/recurring/{template}/activate` | Owner/Admin activation |
-| POST | `/companies/{company}/recurring/{template}/pause` | Owner/Admin pause |
-| POST | `/companies/{company}/recurring/{template}/resume` | Owner/Admin resume |
-| POST | `/companies/{company}/recurring/{template}/complete` | Owner/Admin completion |
-| POST | `/companies/{company}/recurring/{template}/duplicate` | Duplicate retained/Completed template into a Draft |
-| GET | `/companies/{company}/transactions` | Company transaction operational list |
+| Method | Route                                                           | Page/action                                                  |
+| ------ | --------------------------------------------------------------- | ------------------------------------------------------------ |
+| GET    | `/companies/{company}`                                          | Redirect to Company Dashboard                                |
+| GET    | `/companies/{company}/dashboard`                                | Dashboard                                                    |
+| GET    | `/companies/{company}/customers`                                | Customer operational list                                    |
+| GET    | `/companies/{company}/customers/create`                         | Standalone complete Customer form                            |
+| POST   | `/companies/{company}/customers`                                | Shared standalone/inline create action                       |
+| GET    | `/companies/{company}/customers/{customer}`                     | Customer workspace                                           |
+| PATCH  | `/companies/{company}/customers/{customer}`                     | Update Customer aggregate                                    |
+| POST   | `/companies/{company}/customers/{customer}/archive`             | Archive with dependency rules                                |
+| POST   | `/companies/{company}/customers/{customer}/restore`             | Restore archived Customer                                    |
+| DELETE | `/companies/{company}/customers/{customer}`                     | Owner/Admin-only dependency-guarded permanent deletion       |
+| GET    | `/companies/{company}/products`                                 | Product & Service operational list                           |
+| GET    | `/companies/{company}/products/create`                          | Standalone catalogue form                                    |
+| POST   | `/companies/{company}/products`                                 | Shared standalone/inline create action                       |
+| GET    | `/companies/{company}/products/{product}`                       | Product/Service workspace                                    |
+| PATCH  | `/companies/{company}/products/{product}`                       | Update catalogue entry                                       |
+| POST   | `/companies/{company}/products/{product}/archive`               | Archive entry                                                |
+| POST   | `/companies/{company}/products/{product}/restore`               | Restore entry                                                |
+| DELETE | `/companies/{company}/products/{product}`                       | Owner/Admin-only dependency-guarded permanent deletion       |
+| GET    | `/companies/{company}/quotes`                                   | Quote operational list                                       |
+| POST   | `/companies/{company}/quotes`                                   | Persist a numbered Draft and redirect to its workspace       |
+| GET    | `/companies/{company}/quotes/{quote}`                           | Quote document workspace/editor                              |
+| PATCH  | `/companies/{company}/quotes/{quote}`                           | Version-checked aggregate save                               |
+| DELETE | `/companies/{company}/quotes/{quote}`                           | Guarded permanent deletion                                   |
+| POST   | `/companies/{company}/quotes/{quote}/invoices`                  | Guarded Quote-to-Invoice conversion                          |
+| POST   | `/companies/{company}/quotes/{quote}/invoices/{invoice}/unlink` | Owner/Admin-only eligible Draft unlink action                |
+| GET    | `/companies/{company}/invoices`                                 | Invoice operational list                                     |
+| POST   | `/companies/{company}/invoices`                                 | Persist a numbered Draft and redirect to its workspace       |
+| GET    | `/companies/{company}/invoices/{invoice}`                       | Invoice document workspace/editor                            |
+| PATCH  | `/companies/{company}/invoices/{invoice}`                       | Version-checked aggregate save                               |
+| DELETE | `/companies/{company}/invoices/{invoice}`                       | Strongly confirmed, guarded permanent deletion               |
+| POST   | `/companies/{company}/invoices/{invoice}/cancel`                | Guarded cancellation                                         |
+| POST   | `/companies/{company}/invoices/{invoice}/reopen`                | Guarded reopen                                               |
+| GET    | `/companies/{company}/recurring`                                | Recurring-template operational list                          |
+| GET    | `/companies/{company}/recurring/create`                         | Minimal creation form requiring the internal template name   |
+| POST   | `/companies/{company}/recurring`                                | Persist a valid Draft template and redirect to its workspace |
+| GET    | `/companies/{company}/recurring/{template}`                     | Recurring-template workspace/editor                          |
+| PATCH  | `/companies/{company}/recurring/{template}`                     | Version-checked future-template save                         |
+| POST   | `/companies/{company}/recurring/{template}/activate`            | Owner/Admin activation                                       |
+| POST   | `/companies/{company}/recurring/{template}/pause`               | Owner/Admin pause                                            |
+| POST   | `/companies/{company}/recurring/{template}/resume`              | Owner/Admin resume                                           |
+| POST   | `/companies/{company}/recurring/{template}/complete`            | Owner/Admin completion                                       |
+| POST   | `/companies/{company}/recurring/{template}/duplicate`           | Duplicate retained/Completed template into a Draft           |
+| GET    | `/companies/{company}/transactions`                             | Company transaction operational list                         |
 
 Payment, Refund, and Adjustment mutations are nested under the Invoice aggregate because every ledger change locks and recalculates that Invoice. They may have stable transaction identifiers for edit/audit links, but no mutation bypasses the Invoice workflow:
 
@@ -179,7 +179,7 @@ Settings use bounded offset pagination only where a list is naturally small. The
 
 ### 4.4 Deferred route contracts
 
-Public Quote/Invoice, PDF, email-provider webhook, upload-serving, and provider-callback routes are not fixed here. Their exact route and bootstrap contract remains blocked by their named token, renderer, upload, or integration gate. The internal route map reserves no insecure public-ID shortcut.
+Public Quote/Invoice, PDF, email-provider webhook, upload-serving, and provider-callback routes are not fixed here. Public document pages will remain on the `app.invumo.com` SaaS host rather than the separate `invumo.com` marketing website, but their exact path and bootstrap contract remains blocked by the named token, renderer, upload, or integration gate. The internal route map reserves no insecure public-ID shortcut.
 
 ## 5. Operational-list contract
 
@@ -208,14 +208,14 @@ Customers, Products & Services, Quotes, Invoices, Recurring, and Transactions ar
 
 ### 5.3 Resource configurations
 
-| List | Search includes | Core filters | Default stable sort |
-| --- | --- | --- | --- |
-| Customers | name, company name, external reference, email, registration identifiers | active/archived, Country where useful | recently updated |
-| Products & Services | name, internal code/SKU, description | active/archived, type | name then UUID |
-| Quotes | number, Customer, customer reference / PO number | lifecycle, issue/validity dates, expired | issue date descending |
-| Invoices | number, Customer, customer reference / PO number | lifecycle, payment state, overdue, issue/due dates | issue date descending |
-| Recurring | internal name, Customer, customer reference / PO number | Draft/Active/Paused/Completed, next-run range, currency-review required | next occurrence then UUID |
-| Transactions | Invoice number, Customer, transaction reference where present | Payment/Refund/Adjustment as permitted, date, currency | transaction date descending |
+| List                | Search includes                                                         | Core filters                                                            | Default stable sort         |
+| ------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| Customers           | name, company name, external reference, email, registration identifiers | active/archived, Country where useful                                   | recently updated            |
+| Products & Services | name, internal code/SKU, description                                    | active/archived                                                         | name then UUID              |
+| Quotes              | number, Customer, customer reference / PO number                        | lifecycle, issue/validity dates, expired                                | issue date descending       |
+| Invoices            | number, Customer, customer reference / PO number                        | lifecycle, payment state, overdue, issue/due dates                      | issue date descending       |
+| Recurring           | internal name, Customer, customer reference / PO number                 | Draft/Active/Paused/Completed, next-run range, currency-review required | next occurrence then UUID   |
+| Transactions        | Invoice number, Customer, transaction reference where present           | Payment/Refund/Adjustment as permitted, date, currency                  | transaction date descending |
 
 Amounts in different currencies are never added into one list total. Any summary is split by currency or omitted.
 

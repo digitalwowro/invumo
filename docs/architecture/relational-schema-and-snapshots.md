@@ -478,7 +478,7 @@ Forced RLS gives ordinary runtime inserts a current-Company `WITH CHECK` policy 
 ### `recurring_templates`
 
 - `id`, `company_id`
-- required internal-only name and Customer reference
+- required internal-only name and required same-Company Customer foreign key
 - state: `DRAFT`, `ACTIVE`, `PAUSED`, or `COMPLETED`
 - optional customer reference / PO number
 - recurrence kind, positive custom interval/count/unit where applicable

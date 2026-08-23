@@ -15,7 +15,8 @@ Rollback, off-server database/file backup and restore, uptime/error monitoring, 
 ## Public application
 
 - Canonical URL: `https://app.invumo.com`
-- Application repository: `/home/invumo/invumo`
+- Application repository: [`digitalwowro/invumo`](https://github.com/digitalwowro/invumo)
+- Application checkout: `/home/invumo/invumo`
 - Nginx document root: `/home/invumo/invumo/public`
 - PHP runtime: PHP 8.5 FPM using the `invumo` pool
 - Database: PostgreSQL 18
@@ -63,9 +64,9 @@ crontab -l
 journalctl --identifier=invumo-scheduler
 ```
 
-The repeatable [service installer](../../scripts/install-production-services.sh) installs both user-owned definitions without sudo. The [runtime verifier](../../scripts/verify-production-runtime.sh) checks environment permissions, migrations, system services, queue supervision, scheduler installation, the public health endpoint, and the login redirect without revealing secrets.
+The tracked [service installer](../../scripts/install-production-services.sh) installs both user-owned definitions without sudo. The [runtime verifier](../../scripts/verify-production-runtime.sh) checks environment permissions, migrations, system services, queue supervision, scheduler installation, the public health endpoint, and the login redirect without revealing secrets.
 
-## Test isolation on the hosted development server
+## Test isolation in the hosted production checkout
 
 Automated tests must never use the live `invumo` database. Both Laravel PostgreSQL connections are forced to `invumo_test` by `phpunit.xml`, and the base Laravel test case aborts before database-reset traits run unless the application environment is `testing` and every PostgreSQL connection name ends in `_test`. This guard also blocks a direct `php artisan test` invocation while production configuration remains cached.
 
@@ -86,6 +87,8 @@ Run the interactive [ZeptoMail configurator](../../scripts/configure-zeptomail.s
 The configurator hides the password while it is entered, validates the non-secret inputs, updates the environment atomically, rebuilds the private configuration cache, sends one synchronous test message, and restarts the user-owned queue worker. If any step fails, it automatically restores the previous mail configuration. The later document-email/webhook design remains a separate Phase 9 gate.
 
 Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS submission, verified sender, and bounded timeout are active in cached production configuration; the test message was accepted and received; the queue worker remained active after restart; and the environment/configuration files remained mode `0600`. This proves the transport only. The verification, recovery, and invitation flows still require their Phase 1 implementation and tests.
+
+The owner also confirmed on 2026-08-23 that ZeptoMail domain authentication and DMARC were added and provider-verified. Later the same day, Google and Cloudflare public DNS resolvers both returned `_dmarc.invumo.com` as `v=DMARC1; p=none; adkim=r; aspf=r`, closing the propagation recheck.
 
 ## Verified behavior
 

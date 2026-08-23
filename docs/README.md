@@ -13,6 +13,12 @@ The master brief is the canonical statement of scope. The domain-rules document 
 
 Update the tracker as work advances. Do not create or maintain phase status, task completion, or a competing implementation sequence in another document.
 
+## Design system
+
+- [`design/design-system.md`](design/design-system.md) — approved canonical visual, token, typography, component, responsive, accessibility, propagation, and enforcement contract for every Invumo interface
+
+The design contract is system-wide. Pages compose shared components and must not create local colour, typography, status, control, or layout treatments that compete with the shared system. The owner-supplied HTML reference is illustrative only and is never an implementation source.
+
 ## Approved architecture baseline
 
 - [`architecture/application-architecture.md`](architecture/application-architecture.md) — approved stack, modular-monolith boundary, runtime, deployment shape, and future mobile path

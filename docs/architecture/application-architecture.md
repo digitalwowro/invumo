@@ -1,7 +1,7 @@
 # Invumo Application Architecture Baseline
 
 Status: Approved architecture decision
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 This document records the approved technology and application-architecture baseline. It does not track implementation progress or remaining deliverables; those are maintained only in the [Invumo Development Tracker](../development/development-tracker.md).
 
@@ -19,7 +19,7 @@ Build Invumo as one modular Laravel application with a React/TypeScript interfac
 | Type-safe route integration | Laravel Wayfinder |
 | Database | PostgreSQL 18 |
 | Frontend build | Vite |
-| Styling and components | Tailwind CSS 4 and source-owned shadcn/ui components |
+| Styling and components | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md) |
 | Localization | Laravel `lang/en` and `lang/ro` files as the only authored source; resolved strings passed to React through Inertia props |
 | Package management | Composer and npm with committed lockfiles |
 | Automated testing | Pest 4, Vitest, and Pest Browser backed by Playwright |
@@ -100,6 +100,8 @@ Use Laravel Boost as a development-only Composer dependency. Its installed-versi
 - Treat Inertia props as server-provided page data; keep draft interaction state local to the editor.
 - Keep sensitive or unnecessary fields out of Inertia props because all props reach the browser.
 - Prefer source-owned shadcn/ui components over a runtime UI-framework dependency.
+- Keep raw internal colour values in the single approved semantic-token definition. Feature/page code consumes token-backed shared components and must not create page-specific visual treatments or hard-coded colours.
+- Treat pages as composition and data-binding boundaries: source-owned shadcn primitives feed shared Invumo application/domain components, and those components own appearance, state presentation, responsive behavior, and accessibility.
 - Keep PHP application services independent of Inertia so future interfaces can reuse them.
 
 ## Data and integrity foundations
@@ -168,6 +170,7 @@ Vibe coding increases the value of automated boundaries. The baseline requires:
 - Pest Browser, using Playwright, for critical full-browser customer and administrative journeys
 - Database constraints and migrations reviewed as product behavior
 - GitHub Actions checks that run tests, analysis, formatting/linting checks, and the production asset build before deployment
+- Design-contract guards that reject raw colours and major component-layer bypasses in feature/page code, plus a development/test component gallery and representative visual-regression coverage for the shared system
 
 Tests must use the restricted PostgreSQL runtime role where RLS behavior matters. Generated code is not accepted solely because it renders or passes a happy-path browser check.
 

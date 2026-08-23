@@ -1,7 +1,7 @@
 # Invumo Development Tracker
 
 Status: Active canonical tracker
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 This is the single source of truth for development sequence, phase status, task completion, acceptance gates, and implementation evidence. Product scope remains canonical in the [master build brief](../product/master-build-brief.md), implementation invariants remain canonical in [domain rules](../product/domain-rules.md), and approved technical constraints remain canonical in the [architecture documents](../README.md#approved-architecture-baseline).
 
@@ -10,9 +10,9 @@ Do not maintain a second phase checklist or progress table in another file. Othe
 ## Current position
 
 - Current phase: Phase 1 — Core platform and cross-cutting foundations
-- Current phase status: Not started
+- Current phase status: In progress
 - Application implementation: Not started
-- Next gate: Begin the approved Laravel React starter-kit scaffold; complete the route/navigation/editor-composition gate before building the custom application shell
+- Next gate: Begin the approved Laravel React starter-kit scaffold; complete the design-system foundation and route/navigation/editor-composition gate before building the custom application shell
 
 Phase 0 is complete. Domain migrations, models, and business workflows may now follow the approved relational schema and phase dependencies below. Route/UI, integration, and production-operations decisions still follow the just-in-time gates below and do not block unrelated development.
 
@@ -41,7 +41,7 @@ Phase 0 is complete. Domain migrations, models, and business workflows may now f
 | Phase | Name | Status | Required predecessors |
 | --- | --- | --- | --- |
 | 0 | Architecture readiness | Complete | None |
-| 1 | Core platform and cross-cutting foundations | Not started | Phase 0 |
+| 1 | Core platform and cross-cutting foundations | In progress | Phase 0 |
 | 2 | Company configuration | Not started | Phase 1 |
 | 3 | Customers and contacts | Not started | Phase 2 |
 | 4 | Products & Services | Not started | Phase 2; scheduled after Phase 3 |
@@ -101,6 +101,7 @@ These decisions must be completed before the named implementation boundary, not 
 
 | Design gate | Must be complete before | Tracked in |
 | --- | --- | --- |
+| Central design-system contract, semantic tokens, typography, shared component ownership, responsive/accessibility behavior, and enforcement | Building custom application UI beyond the starter scaffold | Phase 1 |
 | Route hierarchy, navigation, operational-list behavior, and shared-editor composition | Building the custom application shell and feature navigation beyond the starter scaffold | Phase 1 |
 | Upload validation, storage visibility, size/type limits, serving, replacement, and cleanup rules | Implementing the shared file-upload foundation | Phase 1 |
 | PDF renderer compatibility proof and final renderer selection | Committing to and implementing the shared production PDF renderer | Phase 5 |
@@ -112,13 +113,15 @@ Security, tenant isolation, auditability, error handling, and observability are 
 
 ## Phase 1 — Core platform and cross-cutting foundations
 
-- Status: Not started
-- Started: —
+- Status: In progress
+- Started: 2026-08-23
 - Completed: —
 
 ### Tasks
 
+- [x] Review and approve the centralized [Invumo Design System Contract](../design/design-system.md) before implementing custom application UI beyond the starter scaffold.
 - [ ] Scaffold the official Laravel React starter kit with Laravel 13, PHP 8.5, Inertia 3, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, Vite, and Wayfinder.
+- [ ] Implement the approved semantic token/font foundation, source-owned shadcn primitive customization, shared Invumo component layers, component-state gallery, raw-colour/component-boundary guards, and core visual-regression coverage before building the custom application shell.
 - [ ] Before building the custom application shell and feature navigation, produce and review the route, navigation, operational-list, and shared-editor composition map.
 - [ ] Use built-in Fortify authentication; exclude WorkOS AuthKit and the starter-kit Teams domain.
 - [ ] Commit Composer and npm lockfiles; do not introduce an alternative JavaScript package manager.
@@ -141,7 +144,7 @@ Security, tenant isolation, auditability, error handling, and observability are 
 
 ### Acceptance gate
 
-Authentication, email verification, recovery, and secure-session paths work without TOTP/recovery-code scope. Laravel authorization and PostgreSQL RLS independently deny cross-company access using the restricted runtime role. Migrations are repeatable; queue/scheduler context cannot leak between companies; CI enforces the approved quality stack; and audit, localization, exact-decimal, and file foundations are usable by Phase 2.
+Authentication, email verification, recovery, and secure-session paths work without TOTP/recovery-code scope. Laravel authorization and PostgreSQL RLS independently deny cross-company access using the restricted runtime role. Migrations are repeatable; queue/scheduler context cannot leak between companies; CI enforces the approved quality stack and design-contract boundaries; the token-backed shared component foundation propagates consistently in English, Romanian, and representative narrow layouts; and audit, localization, exact-decimal, and file foundations are usable by Phase 2.
 
 ## Phase 2 — Company configuration
 
@@ -368,6 +371,7 @@ The release can be deployed, observed, backed up, restored, rolled back, and ope
 
 | Date | Phase | Change | Evidence |
 | --- | --- | --- | --- |
+| 2026-08-23 | 1 | Approved the centralized design-system implementation contract, completed its just-in-time review gate, and advanced Phase 1 to In progress; application implementation remains not started | [Approved design-system contract](../design/design-system.md) |
 | 2026-08-22 | 0 | Approved the complete relational schema and snapshot boundaries, including all six composition/search/deletion/dispatch choices; passed the Phase 0 acceptance gate and advanced the canonical current position to Phase 1 | [Approved relational schema](../architecture/relational-schema-and-snapshots.md) |
 | 2026-08-22 | 0 | Documented the expected Member-to-Owner/Admin escalation when cancellation requires an Adjustment: keep cancellation blocked, explain the required role, and never suggest a Refund beyond actual refundable cash | [State escalation rule](../architecture/document-and-financial-state.md#permission-aware-cancellation-escalation) |
 | 2026-08-22 | 0 | Approved the complete fixed-role permission matrix, including Member Refund and Payment/Refund correction access, Owner/Admin-only Adjustments, Member Quote correction and Invoice cancel/reopen access, and the remaining governance/automation/audit boundaries; only the relational schema/snapshot specification still blocks Phase 0 | [Approved permission matrix](../architecture/role-permission-matrix.md) |

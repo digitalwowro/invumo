@@ -11,6 +11,7 @@ This repository contains the formal product documentation, application code, tes
 - [Documentation index](docs/README.md)
 - [Master build brief](docs/product/master-build-brief.md)
 - [Core domain rules](docs/product/domain-rules.md)
+- [Design system contract](docs/design/design-system.md)
 - [Development tracker](docs/development/development-tracker.md)
 
 Durable cross-session context for agents is stored separately in [`digitalwowro/invumo-agents`](https://github.com/digitalwowro/invumo-agents).

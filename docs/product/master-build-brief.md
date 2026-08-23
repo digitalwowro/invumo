@@ -1,7 +1,9 @@
 # Invumo — Master Build Brief
 
-Status: Approved product brief  
-Last updated: 2026-08-22  
+Status: Approved product brief
+
+Last updated: 2026-08-23
+
 Domain: `invumo.com`
 
 Invumo is a streamlined quotation and invoicing SaaS. Its core philosophy is:
@@ -918,7 +920,9 @@ Users must ultimately be able to delete their data. Do not impose artificial per
 
 ## 29. UI and UX
 
-Create the initial Invumo visual identity; there is no existing design system.
+Use the centralized [Invumo Design System Contract](../design/design-system.md) for every internal page, shared component, public-page foundation, and customer-facing document-presentation foundation. The approved identity is modern, light-mode, high-clarity, and achromatic except for the three semantic state hues. It is a system-wide contract, not a collection of independently styled screens.
+
+React pages compose shared token-backed components. Do not hard-code colours in feature code, create page-specific typography/control/status treatments, copy shared components to preserve a local appearance, or use Company branding to theme the internal application. A change belongs in the single owning token or component so that it propagates everywhere.
 
 Requirements:
 
@@ -931,6 +935,10 @@ Requirements:
 - Desktop-first
 - Usable on smaller screens
 - Light mode only in v1
+
+The v1 internal identity uses a near-black sidebar, white/light-neutral workspace, ink actions, Atkinson Hyperlegible Next for interface text, and Atkinson Hyperlegible Mono with tabular figures for financial and identifying data. Lime, red, and amber are the only saturated hues and communicate approved semantic state; no fourth saturated hue or generic internal brand-primary colour is allowed.
+
+Do not use old-ledger, paper, bookmark, book, rubber-stamp, skeuomorphic, or nostalgic accounting motifs. Compact status badges are modern digital controls rather than literal stamps.
 
 Avoid excessive dashboards, unnecessary cards, excessive modals, decorative complexity, and enterprise-style navigation overload.
 

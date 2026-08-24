@@ -60,6 +60,14 @@ class PlatformAuthorizationTest extends TestCase
                 ->where('platformContext.abilities.manage_platform_operators', true)
                 ->where('platformContext.abilities.impersonate_users', true)
                 ->has('platformContext.abilities', 6)
+                ->where(
+                    'platformContext.reauthentication.statusUrl',
+                    route('platform.password-confirmation.status'),
+                )
+                ->where(
+                    'platformContext.reauthentication.confirmUrl',
+                    route('platform.password-confirmation.store'),
+                )
                 ->missing('platformContext.role')
                 ->missing('companyContext')
                 ->where('translations.overview.title', 'Platform operations'));

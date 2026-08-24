@@ -6,7 +6,6 @@ use App\Foundation\Auth\ImpersonationSession;
 use App\Models\User;
 use App\Modules\Platform\Actions\EndUserImpersonation;
 use App\Modules\Platform\Actions\StartUserImpersonation;
-use App\Modules\Platform\Http\Requests\StartUserImpersonationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +25,7 @@ final readonly class UserImpersonationController
     }
 
     public function store(
-        StartUserImpersonationRequest $request,
+        Request $request,
         string $user,
         ImpersonationSession $impersonation,
         StartUserImpersonation $start,
@@ -38,6 +37,8 @@ final readonly class UserImpersonationController
 
         $target = $start->handle($actor, $user);
         $lastCompanyId = $request->session()->get('last_company_id');
+        // Never carry the operator's reauthentication window into the
+        // effective User session.
         $request->session()->forget(['last_company_id', 'auth.password_confirmed_at']);
         Auth::login($target);
         $impersonation->begin(
@@ -63,6 +64,8 @@ final readonly class UserImpersonationController
         $originalCompanyId = $impersonation->originalCompanyId($request);
         $originalUser = $end->handle($originalUserId, $effectiveUser);
         $impersonation->forget($request);
+        // Never restore password confirmation established by the effective
+        // User as if the original operator had performed it.
         $request->session()->forget(['last_company_id', 'auth.password_confirmed_at']);
 
         if ($originalUser === null) {

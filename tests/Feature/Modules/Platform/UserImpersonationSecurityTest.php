@@ -21,28 +21,41 @@ class UserImpersonationSecurityTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_start_requires_the_current_password_without_consuming_the_action(): void
+    public function test_start_uses_the_shared_confirmation_window_and_accepts_no_credentials(): void
     {
         $operator = $this->platformOwner('operator@example.com');
         $target = $this->accountOwner('target@example.com');
 
         $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $target))
-            ->assertSessionHasErrors('password');
-
-        $this->post(route('platform.users.impersonation.store', $target), [
-            'password' => 'wrong-password',
-        ])->assertSessionHasErrors('password');
+            ->post(route('platform.users.impersonation.store', $target), [
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('password.confirm'))
+            ->assertSessionHasNoErrors();
 
         $this->assertAuthenticatedAs($operator);
         $this->assertDatabaseCount('platform_audit_events', 0);
         $this->assertNull(session('platform_impersonation.original_user_id'));
+        $this->assertNull(session('auth.password_confirmed_at'));
 
-        $this->post(route('platform.users.impersonation.store', $target), [
+        $this->getJson(route('platform.password-confirmation.status'))
+            ->assertOk()
+            ->assertJson(['confirmed' => false]);
+        $this->postJson(route('platform.password-confirmation.store'), [
+            'password' => 'wrong-password',
+        ])->assertUnprocessable()->assertJsonValidationErrors('password');
+        $this->assertNull(session('auth.password_confirmed_at'));
+        $this->postJson(route('platform.password-confirmation.store'), [
             'password' => 'password',
-        ])
+        ])->assertCreated();
+        $this->getJson(route('platform.password-confirmation.status'))
+            ->assertOk()
+            ->assertJson(['confirmed' => true]);
+
+        $this->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'))
-            ->assertSessionHas('platform_impersonation.original_user_id', $operator->id);
+            ->assertSessionHas('platform_impersonation.original_user_id', $operator->id)
+            ->assertSessionMissing('auth.password_confirmed_at');
 
         $this->assertAuthenticatedAs($target);
         $this->assertDatabaseHas('platform_audit_events', [
@@ -51,23 +64,36 @@ class UserImpersonationSecurityTest extends TestCase
         ]);
     }
 
+    public function test_platform_password_confirmation_is_rate_limited(): void
+    {
+        $operator = $this->platformOwner('operator@example.com');
+        $this->actingAs($operator);
+
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->postJson(route('platform.password-confirmation.store'), [
+                'password' => 'wrong-password',
+            ])->assertUnprocessable();
+        }
+
+        $this->postJson(route('platform.password-confirmation.store'), [
+            'password' => 'wrong-password',
+        ])->assertStatus(429);
+    }
+
     public function test_start_is_rate_limited_after_ten_attempts_per_minute(): void
     {
         $operator = $this->platformOwner('operator@example.com');
         $missingTarget = '00000000-0000-7000-8000-000000000000';
 
-        $this->actingAs($operator);
+        $this->actingAs($operator)
+            ->withSession(['auth.password_confirmed_at' => time()]);
 
         for ($attempt = 1; $attempt <= 10; $attempt++) {
-            $this->post(route('platform.users.impersonation.store', $missingTarget), [
-                'password' => 'password',
-            ])
+            $this->post(route('platform.users.impersonation.store', $missingTarget))
                 ->assertNotFound();
         }
 
-        $this->post(route('platform.users.impersonation.store', $missingTarget), [
-            'password' => 'password',
-        ])
+        $this->post(route('platform.users.impersonation.store', $missingTarget))
             ->assertStatus(429);
     }
 
@@ -77,9 +103,8 @@ class UserImpersonationSecurityTest extends TestCase
         $targetOperator = $this->platformOwner('target@example.com');
 
         $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $targetOperator), [
-                'password' => 'password',
-            ])
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('platform.users.impersonation.store', $targetOperator))
             ->assertForbidden();
 
         $this->assertAuthenticatedAs($operator);

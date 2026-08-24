@@ -136,6 +136,12 @@ export function PlatformUsersTable({
                             <PlatformImpersonateButton
                                 url={user.impersonateUrl}
                                 targetName={user.name}
+                                confirmationStatusUrl={
+                                    platformContext.reauthentication.statusUrl
+                                }
+                                confirmationStoreUrl={
+                                    platformContext.reauthentication.confirmUrl
+                                }
                                 translations={translations}
                             />
                         )}

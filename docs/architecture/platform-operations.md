@@ -13,7 +13,7 @@ This contract adds the operational surface required to administer the hosted pla
 - Platform authority never comes from a Company membership, Account ownership, an email-domain rule, a client-provided flag, or a Company role.
 - v1 has one platform role only: `Platform Owner`. Additional platform roles require an explicit later permission design.
 - Granting or revoking Platform Owner is not available through the web UI in v1. A protected application command performs it by exact User identity, requires explicit confirmation, prevents removal of the last active Platform Owner, and records a platform audit event.
-- Platform routes require authentication, verified email, current operator revalidation, and CSRF protection for mutations. Sensitive plan/suspension changes retain their approved guards. Starting impersonation validates the current password in the same request and is throttled to 10 attempts per minute; it does not require a support reason or an additional confirmation step.
+- Platform routes require authentication, verified email, current operator revalidation, and CSRF protection for mutations. Every sensitive Platform mutation, including impersonation start, uses Laravel's shared recent-password confirmation window through `RequirePassword`; no guarded business-action endpoint accepts or verifies a password directly. The mutation routes remain throttled to 10 attempts per minute. Impersonation does not require a support reason or a separate action-specific confirmation after reauthentication.
 - Every platform mutation re-reads current authority and locks its target control-plane records inside its transaction. Platform Owner grant/revoke additionally uses one transaction-scoped PostgreSQL advisory lock so concurrent command runs remain serialized without granting UPDATE on the protected operator table. React receives named platform abilities and never infers authority from role strings.
 - TOTP remains deferred from v1. The impersonation flow does not remove recent-password, verified-email, current-operator, CSRF, throttling, audit-attribution, or last-operator safeguards from their applicable boundaries.
 
@@ -58,12 +58,26 @@ The Platform Operations pages themselves do not expose Customers, contacts, Prod
 
 Platform Operations does not use a general RLS bypass. Tenant business data becomes available to a Platform Owner only after explicitly entering the approved impersonation flow, and then only through the selected User's ordinary Company memberships, permissions, application authorization, and RLS context.
 
-## 4. Full-action User impersonation
+## 4. Platform reauthentication contract
+
+Laravel/Fortify is the single authority for Platform password reauthentication:
+
+- a successful password confirmation writes the server-owned `auth.password_confirmed_at` session timestamp;
+- `RequirePassword` guards every sensitive Platform mutation and accepts that confirmation only for Laravel's configured `auth.password_timeout` window;
+- a guarded business-action request never contains, validates, logs, or receives the operator's password; only Fortify's dedicated confirmation endpoint receives it;
+- the confirmation window may be reused for other guarded Platform mutations until it expires, matching Laravel's other sensitive-action behavior;
+- the Platform impersonation control checks the same Fortify confirmation status before submitting its mutation. If the window is stale, one localized dialog confirms the password through a Platform-scoped Fortify endpoint throttled to 10 attempts per minute, then submits the separately guarded impersonation action automatically. This preserves the single-interaction UI without turning the action endpoint into a password-verification oracle;
+- a direct stale-window request to any guarded mutation remains fail-closed through `RequirePassword`;
+- entering impersonation clears the original operator's confirmation timestamp before the selected User becomes effective, and exiting clears any timestamp established by the effective User before restoring the operator. A password-confirmation window never crosses an identity boundary.
+
+This is the sole Platform web reauthentication contract. Platform features may not add inline `current_password` fields or private confirmation-window implementations. Support reasons and action-specific confirmation dialogs remain separate controls and are required only where their individual product rules say so.
+
+## 5. Full-action User impersonation
 
 A Platform Owner may start impersonating a selected existing non-operator User directly from Platform Operations. This is full-action impersonation inside the selected User's ordinary application surface: the resulting application session behaves as that User, not as a read-only support preview.
 
-- Starting impersonation revalidates that the initiating session still belongs to a verified, unsuspended current Platform Owner, validates the current password in the same CSRF-protected request, and is throttled to 10 attempts per minute. The localized password dialog names the selected User, keeps a validation error in context, and a successful submission starts impersonation without returning to the Users list for a second click.
-- It requires no support reason, additional confirmation step, impersonation-specific duration, or restriction on actions ordinarily available to the selected User.
+- Starting impersonation revalidates that the initiating session still belongs to a verified, unsuspended current Platform Owner, requires the shared recent-password window, and is throttled to 10 action attempts per minute. When reauthentication is stale, the localized dialog names the selected User, establishes that window through the separately throttled Fortify confirmation endpoint, and then starts impersonation without returning to the Users list for a second click.
+- It requires no support reason, separate action-specific confirmation after reauthentication, impersonation-specific duration, or restriction on actions ordinarily available to the selected User.
 - The selected User becomes the effective authenticated identity. Navigation, Companies, records, abilities, validation, authorization, suspension behavior, and PostgreSQL RLS resolve exactly as they would for that User.
 - The Platform Owner receives no extra Company ability and no RLS bypass while impersonating. If the selected User cannot access or perform something, neither can the impersonated session.
 - Every action available to the selected User remains available, including mutations and real external effects such as document email, reminder, payment, refund, membership, settings, and deletion workflows where that User's normal role permits them.
@@ -78,7 +92,7 @@ A Platform Owner may start impersonating a selected existing non-operator User d
 
 The server-side database session retains the original Platform Owner identifier and impersonation start timestamp; these values are never accepted from browser input. Session regeneration occurs when starting and ending impersonation so neither identity transition reuses an older session identifier.
 
-## 5. Current plan lifecycle
+## 6. Current plan lifecycle
 
 Each Account keeps one current plan assignment. The existing `plan_id` remains authoritative for entitlements. v1 adds provider-independent operational lifecycle fields to the Account rather than introducing a second subscription/billing aggregate:
 
@@ -103,7 +117,7 @@ The Platform Owner may change the current Plan and lifecycle fields with confirm
 
 v1 does not include self-service checkout, prices, payment collection, platform invoices, tax handling for Invumo fees, provider webhooks, automated renewals/dunning, or a Plan-creation/editor interface.
 
-## 6. Suspension and session behavior
+## 7. Suspension and session behavior
 
 ### User suspension
 
@@ -120,7 +134,7 @@ v1 does not include self-service checkout, prices, payment collection, platform 
 
 Normal request entry, Company selection, direct Company URLs, invitation acceptance, jobs, and public mutation paths must recheck the relevant User/Account suspension boundary server-side. Read-only public documents are not silently revoked by Account suspension; changing that behavior requires an explicit later decision.
 
-## 7. Platform audit
+## 8. Platform audit
 
 `platform_audit_events` is a separate append-only control-plane log because Company audit requires a Company tenant context.
 
@@ -130,7 +144,7 @@ Platform audit follows the same payload-safety contract as Company audit: action
 
 Required actions include platform-owner grant/revoke, impersonation start/end, User suspension/reactivation, Account suspension/reactivation, session revocation, and plan/lifecycle changes. Company audit events add a nullable original-impersonator User reference so an impersonated mutation never erases the real operator identity.
 
-## 8. PostgreSQL shape and indexes
+## 9. PostgreSQL shape and indexes
 
 Control-plane tables use strict runtime grants and Laravel authorization, not tenant RLS:
 
@@ -141,7 +155,7 @@ Control-plane tables use strict runtime grants and Laravel authorization, not te
 
 Indexes must support operator lookup, User email/created/suspension lists, Account plan-status/end/suspension lists, Company owner/name/creation lists, and reverse-chronological platform audit queries. Foreign-key columns are indexed. Text statuses use named check constraints.
 
-## 9. Required tests
+## 10. Required tests
 
 Tests must prove:
 
@@ -149,10 +163,12 @@ Tests must prove:
 - an operator record for an unverified, missing, or suspended User does not grant access;
 - ordinary Users receive no platform navigation/props and direct access is denied;
 - platform reads expose only approved control-plane fields and cannot query tenant business rows without Company context;
-- impersonation validates the current password and target in one submission, respects the 10-per-minute throttle, starts only from a current Platform Owner, rejects an active Platform Owner target, regenerates the session, exposes exactly the target User's Companies/abilities/RLS rows, and grants no operator-derived tenant ability;
+- guarded mutations reject a stale password-confirmation window, accept the shared Fortify window within the configured timeout, and never accept a password in the mutation payload;
+- the Platform confirmation endpoint is CSRF protected and rate-limited, incorrect credentials do not establish the window, and a successful dialog confirmation immediately submits the separately guarded impersonation action;
+- impersonation respects its 10-per-minute action throttle, starts only from a current Platform Owner, rejects an active Platform Owner target, clears confirmation state across both identity transitions, regenerates the session, exposes exactly the target User's Companies/abilities/RLS rows, and grants no operator-derived tenant ability;
 - impersonated sessions can perform every action normally permitted to the selected User, including external effects, while denied actions remain denied;
 - impersonated sessions cannot access Platform Operations even if the effective User gains platform authority after entry;
-- impersonation requires no support reason, additional confirmation step, or special timeout, shows the shared persistent banner, exits safely, and cannot nest;
+- impersonation requires no support reason, separate action-specific confirmation, or special timeout, shows the shared persistent banner, exits safely, and cannot nest;
 - platform start/end events and every normally audited impersonated mutation preserve both original Platform Owner and effective User identities;
 - every mutation revalidates current authority, requires its guards, locks the target, and writes one allowlisted platform audit event;
 - plan lifecycle constraints and 7-/30-day expiry lists are correct at exact timestamp boundaries;
@@ -162,7 +178,7 @@ Tests must prove:
 - no platform mutation can alter the singular Company Owner invariant or bypass ownership transfer;
 - EN/RO UI, responsive layout, accessibility, and shared design-system rules remain intact.
 
-## 10. Implementation sequence
+## 11. Implementation sequence
 
 Platform Operations remains inside Phase 1 but follows its prerequisites:
 

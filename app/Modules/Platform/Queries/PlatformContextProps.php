@@ -47,6 +47,10 @@ final readonly class PlatformContextProps
                     'planLifecycle' => route('platform.plan-lifecycle.index'),
                     'audit' => route('platform.audit.index'),
                 ],
+                'reauthentication' => [
+                    'statusUrl' => route('platform.password-confirmation.status'),
+                    'confirmUrl' => route('platform.password-confirmation.store'),
+                ],
                 'abilities' => array_fill_keys(array_map(
                     static fn (PlatformAbility $ability): string => $ability->value,
                     PlatformAbility::cases(),

@@ -16,6 +16,8 @@ use App\Support\Inertia\DesignSystemTranslationBag;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
+use Laravel\Fortify\Http\Controllers\ConfirmedPasswordStatusController;
 
 Route::get('/', CompanyLandingController::class)->name('home');
 
@@ -58,8 +60,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('plan-lifecycle', [PlatformPageController::class, 'planLifecycle'])
                 ->name('plan-lifecycle.index');
             Route::get('audit', [PlatformPageController::class, 'audit'])->name('audit.index');
-            Route::post('users/{user}/impersonation', [UserImpersonationController::class, 'store'])
+            Route::get('password-confirmation', [ConfirmedPasswordStatusController::class, 'show'])
+                ->name('password-confirmation.status');
+            Route::post('password-confirmation', [ConfirmablePasswordController::class, 'store'])
                 ->middleware('throttle:10,1')
+                ->name('password-confirmation.store');
+            Route::post('users/{user}/impersonation', [UserImpersonationController::class, 'store'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
                 ->name('users.impersonation.store');
 
             Route::post('users/{user}/suspension', [UserSuspensionController::class, 'store'])

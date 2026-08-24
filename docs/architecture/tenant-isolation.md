@@ -22,7 +22,7 @@ The application must access some records before selecting a tenant:
 
 These tables use strict grants, application authorization, and targeted query paths. They must not contain copied customer/document financial payloads merely to avoid RLS.
 
-The approved Platform Operations pages may query only this bounded control-plane metadata. Platform Owner is not an RLS-bypass role and cannot use an unscoped connection to inspect tenant business tables. Full-action impersonation is the approved support-access path after same-request current-password validation and throttling: it leaves and blocks the platform control plane, establishes a selected non-operator User as the effective identity, and enters Company context only through that User's ordinary active membership and Account eligibility. RLS therefore exposes exactly what the selected User can access, never everything the Platform Owner might want to inspect.
+The approved Platform Operations pages may query only this bounded control-plane metadata. Platform Owner is not an RLS-bypass role and cannot use an unscoped connection to inspect tenant business tables. Full-action impersonation is the approved support-access path after Laravel's shared recent-password window and action throttle authorize a separate password-free mutation: it clears confirmation state across the identity transition, leaves and blocks the platform control plane, establishes a selected non-operator User as the effective identity, and enters Company context only through that User's ordinary active membership and Account eligibility. RLS therefore exposes exactly what the selected User can access, never everything the Platform Owner might want to inspect.
 
 ### Tenant-owned business data
 

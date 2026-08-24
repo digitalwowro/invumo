@@ -37,13 +37,12 @@ class UserImpersonationTest extends TestCase
         $this->actingAs($operator)
             ->withSession([
                 'last_company_id' => $operatorCompany->id,
+                'auth.password_confirmed_at' => time(),
             ]);
         $this->get(route('platform.overview'))->assertOk();
         $sessionBeforeStart = session()->getId();
 
-        $this->post(route('platform.users.impersonation.store', $target), [
-            'password' => 'password',
-        ])
+        $this->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'))
             ->assertSessionHas('platform_impersonation.original_user_id', $operator->id)
             ->assertSessionHas('platform_impersonation.original_company_id', $operatorCompany->id)
@@ -105,9 +104,8 @@ class UserImpersonationTest extends TestCase
         $target = $this->accountOwner('target@example.com');
 
         $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $target), [
-                'password' => 'password',
-            ])
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect();
         $this->beginNextRequest();
         PlatformOperator::query()->where('user_id', $operator->id)->delete();
@@ -129,9 +127,8 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['suspended_at' => now()])->save();
 
         $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $target), [
-                'password' => 'password',
-            ])
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'));
         $this->beginNextRequest();
         $this->get(route('home'))
@@ -155,9 +152,8 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['email_verified_at' => null])->save();
 
         $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $target), [
-                'password' => 'password',
-            ])
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'));
         $this->beginNextRequest();
 

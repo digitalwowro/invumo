@@ -26,6 +26,10 @@ export type PlatformContext = {
         planLifecycle: string;
         audit: string;
     };
+    reauthentication: {
+        statusUrl: string;
+        confirmUrl: string;
+    };
     abilities: PlatformAbilities;
 };
 

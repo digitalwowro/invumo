@@ -64,6 +64,8 @@ These records are needed before a Company tenant context is selected. They use s
 
 Use UUIDv7 `id` with the official Laravel/Fortify authentication fields. Keep application language plus nullable `suspended_at` and `last_login_at` on the User. Framework session, password-reset, and similar infrastructure tables retain only the identifier exceptions already approved in the identifier policy.
 
+The restricted runtime role receives explicit, migration-owned read/write privileges on the Laravel User, password-reset, session, cache, and queue tables, plus usage on queue sequences. These grants do not depend solely on role-level default privileges, so a fresh environment and an already-initialized installation converge on the same runtime contract. The runtime role retains no access to the migration repository.
+
 ### `plans`
 
 - `id`

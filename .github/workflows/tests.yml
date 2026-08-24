@@ -37,8 +37,8 @@ jobs:
       DB_SCHEMA_HOST: 127.0.0.1
       DB_SCHEMA_PORT: 5432
       DB_SCHEMA_DATABASE: invumo_test
-      DB_SCHEMA_USERNAME: postgres
-      DB_SCHEMA_PASSWORD: postgres
+      DB_SCHEMA_USERNAME: invumo_schema
+      DB_SCHEMA_PASSWORD: invumo_schema_test_password
 
     steps:
       - name: Checkout code
@@ -69,8 +69,20 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 --command="CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS"
-          PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 --command="GRANT USAGE ON SCHEMA public TO invumo_runtime"
+          PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE invumo_schema LOGIN PASSWORD 'invumo_schema_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          ALTER DATABASE invumo_test OWNER TO invumo_schema;
+          REVOKE ALL ON DATABASE invumo_test FROM PUBLIC;
+          GRANT CONNECT ON DATABASE invumo_test TO invumo_schema, invumo_runtime;
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          GRANT USAGE, CREATE ON SCHEMA public TO invumo_schema;
+          GRANT USAGE ON SCHEMA public TO invumo_runtime;
+          ALTER DEFAULT PRIVILEGES FOR ROLE invumo_schema IN SCHEMA public
+              GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO invumo_runtime;
+          ALTER DEFAULT PRIVILEGES FOR ROLE invumo_schema IN SCHEMA public
+              GRANT USAGE, SELECT ON SEQUENCES TO invumo_runtime;
+          SQL
           php artisan migrate --database=pgsql_schema --force
 
       - name: Install browser runtime

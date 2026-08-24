@@ -36,7 +36,10 @@ class ApplicationHealthTest extends TestCase
     public function test_health_reports_down_for_unsafe_production_configuration(): void
     {
         $this->app['env'] = 'production';
-        config()->set('app.url', 'http://unsafe.example.test');
+        config()->set([
+            'app.debug' => true,
+            'app.url' => 'http://unsafe.example.test',
+        ]);
 
         try {
             $this->getJson('/up')
@@ -45,6 +48,7 @@ class ApplicationHealthTest extends TestCase
 
             $this->get('/up')
                 ->assertInternalServerError()
+                ->assertSeeText('down')
                 ->assertDontSee('app.url');
         } finally {
             $this->app['env'] = 'testing';

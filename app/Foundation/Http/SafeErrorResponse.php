@@ -16,6 +16,12 @@ final class SafeErrorResponse
     {
         $status = $response->getStatusCode();
 
+        if ($request->is('up') && $status === 500) {
+            return $request->expectsJson()
+                ? response()->json(['status' => 'down'], $status)
+                : response('down', $status)->header('Content-Type', 'text/plain');
+        }
+
         if (! in_array($status, self::STATUSES, true)) {
             return $response;
         }

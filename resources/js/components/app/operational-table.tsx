@@ -119,7 +119,7 @@ export function OperationalTable<Row>({
     return (
         <div
             data-slot="operational-table"
-            className="overflow-hidden rounded-lg border border-border bg-background"
+            className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border border-border bg-background"
         >
             {toolbar && (
                 <div className="border-b border-divider p-4">{toolbar}</div>

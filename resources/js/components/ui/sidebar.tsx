@@ -139,7 +139,10 @@ function SidebarTrigger({
             data-slot="sidebar-trigger"
             variant="ghost"
             size="icon"
-            className={cn('size-7', className)}
+            className={cn(
+                'size-11 sm:size-8 in-data-[sidebar=sidebar]:text-sidebar-foreground in-data-[sidebar=sidebar]:hover:bg-sidebar-accent in-data-[sidebar=sidebar]:hover:text-sidebar-accent-foreground',
+                className,
+            )}
             onClick={(event) => {
                 onClick?.(event);
                 toggleSidebar();

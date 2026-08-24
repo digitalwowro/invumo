@@ -12,7 +12,7 @@ export default function SuspendedImpersonation({
     return (
         <>
             <Head title={translations.title} />
-            <PageFrame width="default">
+            <PageFrame>
                 <Stack gap="2xl">
                     <PageHeader title={translations.title} />
                     <SystemMessage

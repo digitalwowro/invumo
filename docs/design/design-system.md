@@ -354,7 +354,13 @@ The authenticated shell uses:
 
 - a 232px near-black left sidebar;
 - a flexible white/light-neutral content workspace;
+- one shared dense application frame that uses the same `max-w-7xl` width across Company and Platform screens; narrower page-specific application frames are prohibited, while explicit full-width workspace variants remain available when later workflows genuinely require them;
 - a persistent active-Company switcher near the top;
+- the sidebar collapse control in the product-identity row, remaining available
+  at the top of the collapsed icon rail without reserving a separate desktop
+  header strip;
+- collapsed-rail controls expose one horizontally centered primary visual while
+  hiding expanded labels and secondary indicators;
 - restrained active navigation with an ink surface and thin lime leading marker;
 - user/settings controls at the bottom of the sidebar;
 - one shared `PageHeader` followed by page content.
@@ -366,10 +372,11 @@ The route/navigation gate determines actual v1 destinations and their order. Lab
 The same component system must remain usable on smaller screens:
 
 - the sidebar becomes the shared navigation sheet rather than a second mobile navigation design;
+- a compact mobile header owns the navigation-sheet trigger;
 - page-header actions wrap or move into an approved overflow treatment;
 - action buttons keep at least a 44px touch target;
 - forms collapse through shared grid variants;
-- operational tables preserve identifying and monetary information and scroll horizontally instead of crushing columns;
+- tables never widen the page or place content outside the viewport; the shared table primitive uses bounded fixed layout and safe cell wrapping, while an approved readable minimum width scrolls only inside its keyboard-focusable table region on narrower screens;
 - dialogs use a responsive shared dialog/drawer policy and keep titles/actions visible while content scrolls;
 - no feature creates its own breakpoint behavior.
 
@@ -542,7 +549,8 @@ Required behavior:
 - Monetary columns align right and use `MoneyValue`.
 - Selected rows use the neutral selection token.
 - Bulk actions appear in the standard ink band.
-- A narrow viewport scrolls the table; it does not hide totals or crush names.
+- Every present and future table uses the shared `Table`/`OperationalTable` containment boundary; page-level horizontal overflow is prohibited.
+- Long values and action groups wrap within bounded desktop columns. A viewport narrower than the approved readable table width scrolls the table region horizontally; it does not hide totals or crush names.
 
 Feature-specific column definitions and filters are data configuration. Their appearance is not configurable by the page.
 

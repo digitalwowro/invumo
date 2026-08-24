@@ -33,6 +33,7 @@ export function CompanyConfigurationForm({
             action={updateUrl}
             method="patch"
             options={{ preserveScroll: true }}
+            setDefaultsOnSuccess
         >
             {({ errors, isDirty, processing }) => (
                 <Stack gap="2xl">

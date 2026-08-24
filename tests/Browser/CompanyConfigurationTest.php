@@ -62,6 +62,10 @@ it('renders configured Company defaults accessibly on desktop', function () {
 
     openCompanyConfiguration($owner, $company)
         ->assertSee('Company settings')
+        ->assertScript("Math.round(document.querySelector('[data-slot=page-frame]').getBoundingClientRect().width) === 1280")
+        ->click('Close navigation')
+        ->assertScript("Array.from(document.querySelectorAll('[data-state=collapsed][data-collapsible=icon] [data-sidebar=menu-button]')).filter((button) => getComputedStyle(button).display !== 'none').every((button) => { const primary = button.firstElementChild; if (!primary) return true; const buttonRect = button.getBoundingClientRect(); const primaryRect = primary.getBoundingClientRect(); return Math.abs((buttonRect.left + buttonRect.right - primaryRect.left - primaryRect.right) / 2) < 1; })")
+        ->click('Open navigation')
         ->assertValue('Legal name', 'Browser Legal SRL')
         ->assertSee('Europe/Bucharest')
         ->assertValue('Automation execution time', '09:00')
@@ -73,7 +77,11 @@ it('renders configured Company defaults accessibly on desktop', function () {
         ->assertSee('Company settings saved.')
         ->assertValue('Automation execution time', '08:30')
         ->assertNoJavaScriptErrors()
-        ->assertNoAccessibilityIssues();
+        ->assertNoAccessibilityIssues()
+        ->click('Members')
+        ->assertPathIs(route('company-members.index', $company, false))
+        ->assertSee('Members and invitations')
+        ->assertNoJavaScriptErrors();
 });
 
 it('keeps Romanian Company settings usable on a narrow viewport', function () {
@@ -81,6 +89,7 @@ it('keeps Romanian Company settings usable on a narrow viewport', function () {
 
     openCompanyConfiguration($owner, $company, mobile: true)
         ->assertSee('Setările companiei')
+        ->assertScript("document.querySelector('[data-slot=page-frame]').getBoundingClientRect().width === document.documentElement.clientWidth")
         ->assertSee('Denumirea legală')
         ->assertSee('Fusul orar al companiei')
         ->assertSee('Moneda implicită')

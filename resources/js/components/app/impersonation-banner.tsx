@@ -14,7 +14,8 @@ export function ImpersonationBanner() {
 
     return (
         <aside
-            className="border-warning-border bg-warning-surface sticky top-0 z-50 flex h-14 w-full items-center gap-3 border-b px-4 text-warning-text"
+            data-slot="impersonation-banner"
+            className="sticky top-0 z-50 flex h-14 w-full items-center gap-3 border-b border-warning-fill bg-background px-4 text-warning-text"
             role="status"
             aria-live="polite"
         >

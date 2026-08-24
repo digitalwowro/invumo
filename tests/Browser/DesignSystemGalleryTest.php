@@ -42,6 +42,7 @@ it('protects the responsive navigation on a narrow viewport', function () {
     $page = visit('/__design-system/en')
         ->on()->iPhone15()
         ->assertSee('Invumo component system')
+        ->assertScript("getComputedStyle(document.querySelector('[data-slot=mobile-sidebar-header]')).display !== 'none'")
         ->click('Open navigation')
         ->assertSee('Dashboard')
         ->assertNoJavaScriptErrors();
@@ -49,6 +50,22 @@ it('protects the responsive navigation on a narrow viewport', function () {
     if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
         VisualSnapshot::assertMatches($page, fullPage: false);
     }
+});
+
+it('contains wide tables within a narrow viewport', function () {
+    $page = visit('/__design-system/en')
+        ->on()->iPhone15()
+        ->assertSee('Operational table')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertScript("document.querySelector('[data-slot=table-container]').scrollWidth > document.querySelector('[data-slot=table-container]').clientWidth")
+        ->assertScript("document.querySelector('[data-slot=table-container]').tabIndex === 0");
+
+    $page->script("() => { const container = document.querySelector('[data-slot=table-container]'); container.scrollIntoView({ block: 'center' }); container.scrollLeft = container.scrollWidth; }");
+
+    $page
+        ->assertScript("document.querySelector('[data-slot=table-container]').scrollLeft > 0")
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
 });
 
 it('protects the shared confirmation overlay', function () {

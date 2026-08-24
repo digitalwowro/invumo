@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import {
     Building2,
     ClipboardList,
@@ -7,7 +7,7 @@ import {
     Users,
     WalletCards,
 } from 'lucide-react';
-import AppLogo from '@/components/app/app-logo';
+import { AppSidebarBrand } from '@/components/app/app-sidebar-brand';
 import { NavMain } from '@/components/app/nav-main';
 import { NavUser } from '@/components/app/nav-user';
 import { Sidebar } from '@/components/ui/sidebar';
@@ -16,11 +16,6 @@ import {
     SidebarFooter,
     SidebarHeader,
 } from '@/components/ui/sidebar-layout';
-import {
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar-menu';
 import type { NavItem } from '@/types';
 
 export function PlatformSidebar() {
@@ -65,20 +60,12 @@ export function PlatformSidebar() {
 
     return (
         <Sidebar
-            collapsible="offcanvas"
+            collapsible="icon"
             mobileTitle={platformContext.label}
             mobileDescription={platformContext.navigationDescription}
         >
             <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={platformContext.overviewUrl} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                <AppSidebarBrand href={platformContext.overviewUrl} />
             </SidebarHeader>
 
             <SidebarContent>

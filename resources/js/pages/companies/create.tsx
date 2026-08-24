@@ -18,7 +18,7 @@ export default function CreateCompany({
     return (
         <>
             <Head title={labels.head_title} />
-            <PageFrame width="default">
+            <PageFrame>
                 <Stack gap="2xl">
                     <PageHeader
                         title={labels.title}

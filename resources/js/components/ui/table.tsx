@@ -3,14 +3,22 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const accessibilityLabel =
+    typeof props["aria-label"] === "string" ? props["aria-label"] : undefined
+  const accessibilityLabelledBy = props["aria-labelledby"]
+
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      role={accessibilityLabel || accessibilityLabelledBy ? "region" : undefined}
+      aria-label={accessibilityLabel}
+      aria-labelledby={accessibilityLabelledBy}
+      tabIndex={0}
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("w-full table-fixed caption-bottom text-sm", className)}
         {...props}
       />
     </div>
@@ -68,7 +76,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "font-data h-10 px-4 text-left align-middle text-[11px] leading-4 font-bold tracking-[0.1em] whitespace-nowrap text-foreground-mid uppercase [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "font-data h-10 min-w-0 px-4 text-left align-middle text-[11px] leading-4 font-bold tracking-[0.1em] whitespace-normal text-foreground-mid uppercase [overflow-wrap:anywhere] [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}
@@ -81,7 +89,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-4 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "min-w-0 px-4 py-3 align-middle whitespace-normal [overflow-wrap:anywhere] [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}

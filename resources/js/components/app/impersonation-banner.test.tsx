@@ -38,6 +38,10 @@ describe('ImpersonationBanner', () => {
         expect(screen.getByRole('status')).toHaveTextContent(
             'You are impersonating Ana Popescu (ana@example.com).',
         );
+        expect(screen.getByRole('status')).toHaveClass(
+            'bg-background',
+            'border-warning-fill',
+        );
 
         await user.click(
             screen.getByRole('button', { name: 'Exit impersonation' }),

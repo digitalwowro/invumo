@@ -26,7 +26,7 @@ export function SettingsShell({
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <PageFrame width="default">
+        <PageFrame>
             <div className="space-y-8">
                 <PageHeader title={title} subtitle={description} />
                 <div className="flex flex-col gap-6 lg:flex-row lg:gap-12">

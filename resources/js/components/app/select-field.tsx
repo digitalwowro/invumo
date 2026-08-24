@@ -24,6 +24,8 @@ type SelectFieldProps = {
     error?: string;
     placeholder?: string;
     defaultValue?: string;
+    value?: string;
+    onValueChange?: (value: string) => void;
     required?: boolean;
     disabled?: boolean;
     options: SelectOption[];
@@ -38,6 +40,8 @@ export function SelectField({
     error,
     placeholder,
     defaultValue,
+    value,
+    onValueChange,
     required,
     disabled,
     options,
@@ -55,6 +59,8 @@ export function SelectField({
                 name={name}
                 form={form}
                 defaultValue={defaultValue}
+                value={value}
+                onValueChange={onValueChange}
                 required={required}
                 disabled={disabled}
             >

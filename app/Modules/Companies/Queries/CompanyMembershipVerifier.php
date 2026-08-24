@@ -12,9 +12,11 @@ final readonly class CompanyMembershipVerifier implements VerifiesTenantMembersh
     {
         return CompanyMembership::query()
             ->join('companies', 'companies.id', '=', 'company_memberships.company_id')
+            ->join('accounts', 'accounts.id', '=', 'companies.owning_account_id')
             ->where('company_id', $companyId)
             ->where('user_id', $user->id)
             ->whereNull('companies.archived_at')
+            ->whereNull('accounts.suspended_at')
             ->exists();
     }
 }

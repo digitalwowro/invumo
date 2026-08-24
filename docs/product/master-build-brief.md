@@ -2,7 +2,7 @@
 
 Status: Approved product brief
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 - Marketing website: `https://invumo.com`
 - SaaS application: `https://app.invumo.com`
@@ -117,10 +117,11 @@ Invumo requires an internal back office for its operator. This is not a fourth C
 
 - A verified User receives Platform Owner authority only through a separate protected operator record.
 - Company Owner/Admin/Member roles never imply platform authority, and Platform Owner never implies Company membership.
-- Platform Operations uses a distinct `/platform` shell and exposes only approved control-plane User, Account, Company, plan-lifecycle, and platform-audit metadata.
-- It does not expose tenant Customers, documents, Transactions, settings, email/PDF content, or tenant audit payloads and does not bypass PostgreSQL RLS.
+- Platform Operations uses a distinct `/platform` shell and exposes only approved control-plane User, Account, Company, plan-lifecycle, and platform-audit metadata before an explicit impersonation begins.
+- Its own pages do not expose tenant Customers, documents, Transactions, settings, email/PDF content, or tenant audit payloads and never receive a general PostgreSQL RLS bypass.
 - v1 supports guarded User and Account suspension/reactivation, session invalidation, manual current-Plan/lifecycle administration, and append-only platform audit.
-- v1 excludes impersonation, routine tenant-data support access, self-service billing, payment collection, provider webhooks, and Plan creation/editing.
+- v1 supports full-action User impersonation without password re-entry, reason, confirmation, impersonation-specific timeout, or action restrictions. The session has exactly the selected User's permissions/RLS context, permits all real actions and external effects available to that User, shows a persistent exit banner, prohibits nesting, and retains original Platform Owner plus effective User attribution in audit.
+- v1 excludes a general tenant-data/RLS bypass, self-service billing, payment collection, provider webhooks, and Plan creation/editing.
 - The first Platform Owner is granted only through an explicitly authorized protected application command after the User has registered and verified their email.
 
 The complete security, data, status, route, and implementation sequence is defined in [Platform Operations](../architecture/platform-operations.md).
@@ -1109,6 +1110,7 @@ Create automated tests for critical calculations and workflows, especially:
 - Registration verification, password recovery, session invalidation, and invitation expiry/revocation/single use
 - Company switching, ownership transfer, and cross-company access denial
 - Platform-role isolation, plan-lifecycle boundaries, User/Account suspension, and last-operator protection
+- Full-action impersonation with exact target-User permissions/RLS, no nested session, safe exit, persistent identity warning, real permitted effects, and original-operator/effective-User audit attribution
 - Invoice line and period calculations
 - Discounts and taxes
 - Tax-preset snapshot behavior

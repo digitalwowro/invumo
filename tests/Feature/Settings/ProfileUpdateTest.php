@@ -24,9 +24,7 @@ class ProfileUpdateTest extends TestCase
 
     public function test_profile_page_receives_laravel_resolved_romanian_strings(): void
     {
-        app()->setLocale('ro');
-
-        $user = User::factory()->create();
+        $user = User::factory()->create(['language_code' => 'ro']);
 
         $this->actingAs($user)
             ->get(route('profile.edit'))

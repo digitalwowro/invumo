@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Middleware\EnsureAuthenticatedUserIsActive;
 use App\Http\Middleware\EnterCompanyContext;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetApplicationLocale;
+use App\Modules\Platform\Http\Middleware\EnsurePlatformOperator;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,9 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'company.context' => EnterCompanyContext::class,
+            'platform.operator' => EnsurePlatformOperator::class,
         ]);
 
         $middleware->web(append: [
+            SetApplicationLocale::class,
+            EnsureAuthenticatedUserIsActive::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);

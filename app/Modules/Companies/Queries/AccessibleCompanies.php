@@ -16,9 +16,11 @@ final readonly class AccessibleCompanies
         return CompanyMembership::query()
             ->select('company_memberships.*')
             ->join('companies', 'companies.id', '=', 'company_memberships.company_id')
+            ->join('accounts', 'accounts.id', '=', 'companies.owning_account_id')
             ->with('company:id,name')
             ->where('company_memberships.user_id', $user->id)
             ->whereNull('companies.archived_at')
+            ->whereNull('accounts.suspended_at')
             ->orderBy('companies.name')
             ->get();
     }

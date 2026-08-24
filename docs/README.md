@@ -39,7 +39,7 @@ Operational documents record how an approved runtime is installed and verified. 
 - [`architecture/relational-schema-and-snapshots.md`](architecture/relational-schema-and-snapshots.md) — approved v1 relational model, same-Company constraints, typed snapshot boundaries, deletion/retention rules, indexes, and migration strategy
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream implementation obligations
 - [`architecture/routes-navigation-and-editor-composition.md`](architecture/routes-navigation-and-editor-composition.md) — approved Company route boundary, authorized sidebar and Create menu, operational-list behavior, canonical workspaces, and shared document-editor composition
-- [`architecture/platform-operations.md`](architecture/platform-operations.md) — approved Platform Owner boundary, control-plane visibility, manual Account plan lifecycle, suspension, platform audit, and back-office sequence
+- [`architecture/platform-operations.md`](architecture/platform-operations.md) — approved Platform Owner boundary, control-plane visibility, full-action User impersonation, Account lifecycle, suspension, dual-identity audit, and back-office sequence
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 

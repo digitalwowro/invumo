@@ -7,6 +7,7 @@ use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Notifications\ResetPasswordNotification;
 use App\Modules\Identity\Notifications\VerifyEmailNotification;
+use App\Modules\Platform\Models\PlatformOperator;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -25,10 +26,15 @@ use Illuminate\Support\Carbon;
  * @property string $email_normalized
  * @property string $language_code
  * @property Carbon|null $email_verified_at
+ * @property Carbon|null $suspended_at
+ * @property Carbon|null $last_login_at
  * @property string $password
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int $company_memberships_count
+ * @property bool $platform_operator_exists
+ * @property-read Account|null $account
  */
 #[Fillable(['name', 'email', 'password', 'language_code'])]
 #[Hidden(['password', 'remember_token'])]
@@ -68,6 +74,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(CompanyMembership::class);
     }
 
+    /** @return HasOne<PlatformOperator, $this> */
+    public function platformOperator(): HasOne
+    {
+        return $this->hasOne(PlatformOperator::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -77,6 +89,8 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'suspended_at' => 'immutable_datetime',
+            'last_login_at' => 'immutable_datetime',
             'password' => 'hashed',
         ];
     }

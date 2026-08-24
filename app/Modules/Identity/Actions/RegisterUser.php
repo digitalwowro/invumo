@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Actions;
 
 use App\Models\User;
+use App\Modules\Identity\Data\PlanStatus;
 use App\Modules\Identity\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -35,6 +36,8 @@ final readonly class RegisterUser
 
                 $user->account()->create([
                     'plan_id' => $plan->id,
+                    'plan_status' => PlanStatus::Active,
+                    'plan_started_at' => now(),
                 ]);
 
                 return $user;

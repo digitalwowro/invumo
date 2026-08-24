@@ -6,6 +6,11 @@ use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
 use App\Modules\Companies\Http\Controllers\CompanyMemberController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
+use App\Modules\Platform\Http\Controllers\AccountPlanController;
+use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
+use App\Modules\Platform\Http\Controllers\PlatformPageController;
+use App\Modules\Platform\Http\Controllers\UserImpersonationController;
+use App\Modules\Platform\Http\Controllers\UserSuspensionController;
 use App\Support\Inertia\CommonTranslationBag;
 use App\Support\Inertia\DesignSystemTranslationBag;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -17,6 +22,13 @@ Route::get('/', CompanyLandingController::class)->name('home');
 Route::get('invitations/{token}', [CompanyInvitationController::class, 'show'])
     ->middleware('throttle:20,1')
     ->name('company-invitations.show');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('impersonation/suspended', [UserImpersonationController::class, 'suspended'])
+        ->name('platform.impersonation.suspended');
+    Route::delete('impersonation', [UserImpersonationController::class, 'destroy'])
+        ->name('platform.impersonation.destroy');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn () => redirect()->route('home'))->name('dashboard');
@@ -34,6 +46,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('invitations/{token}/accept', [CompanyInvitationController::class, 'accept'])
         ->middleware('throttle:10,1')
         ->name('company-invitations.accept');
+
+    Route::prefix('platform')
+        ->name('platform.')
+        ->middleware('platform.operator')
+        ->group(function (): void {
+            Route::get('/', [PlatformPageController::class, 'overview'])->name('overview');
+            Route::get('users', [PlatformPageController::class, 'users'])->name('users.index');
+            Route::get('accounts', [PlatformPageController::class, 'accounts'])->name('accounts.index');
+            Route::get('companies', [PlatformPageController::class, 'companies'])->name('companies.index');
+            Route::get('plan-lifecycle', [PlatformPageController::class, 'planLifecycle'])
+                ->name('plan-lifecycle.index');
+            Route::get('audit', [PlatformPageController::class, 'audit'])->name('audit.index');
+            Route::post('users/{user}/impersonation', [UserImpersonationController::class, 'store'])
+                ->name('users.impersonation.store');
+
+            Route::post('users/{user}/suspension', [UserSuspensionController::class, 'store'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
+                ->name('users.suspension.store');
+            Route::delete('users/{user}/suspension', [UserSuspensionController::class, 'destroy'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
+                ->name('users.suspension.destroy');
+            Route::post('accounts/{account}/suspension', [AccountSuspensionController::class, 'store'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
+                ->name('accounts.suspension.store');
+            Route::delete('accounts/{account}/suspension', [AccountSuspensionController::class, 'destroy'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
+                ->name('accounts.suspension.destroy');
+            Route::patch('accounts/{account}/plan', [AccountPlanController::class, 'update'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
+                ->name('accounts.plan.update');
+        });
 
     Route::middleware('company.context')
         ->scopeBindings()

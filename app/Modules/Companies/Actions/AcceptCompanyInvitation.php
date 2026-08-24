@@ -38,6 +38,7 @@ final readonly class AcceptCompanyInvitation
                 $company = Company::query()
                     ->whereKey($candidate->company_id)
                     ->whereNull('archived_at')
+                    ->whereHas('owningAccount', fn ($query) => $query->whereNull('suspended_at'))
                     ->lockForUpdate()
                     ->first();
 

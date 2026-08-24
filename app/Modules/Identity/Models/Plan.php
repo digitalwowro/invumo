@@ -7,6 +7,10 @@ use App\Foundation\Database\RuntimeModel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $name
+ */
 #[Fillable(['code', 'name', 'entitlements', 'active'])]
 class Plan extends RuntimeModel
 {

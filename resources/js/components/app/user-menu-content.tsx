@@ -1,5 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { UserInfo } from '@/components/app/user-info';
 import {
     DropdownMenuGroup,
@@ -20,6 +20,7 @@ type Props = {
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
     const { t } = useI18n();
+    const { platformContext } = usePage().props;
 
     const handleLogout = () => {
         cleanup();
@@ -35,6 +36,19 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+                {platformContext ? (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={platformContext.overviewUrl}
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <ShieldCheck />
+                            {platformContext.label}
+                        </Link>
+                    </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

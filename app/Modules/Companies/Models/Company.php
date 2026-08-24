@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $memberships_count
+ * @property-read Account $owningAccount
+ */
 #[Fillable(['owning_account_id', 'name', 'archived_at'])]
 class Company extends RuntimeModel
 {

@@ -26,6 +26,11 @@ export function AppSidebar({
 }) {
     const { t } = useI18n();
     const { companyContext } = usePage().props;
+
+    if (!companyContext) {
+        return null;
+    }
+
     const homeUrl =
         companyContext.current?.dashboardUrl ?? companyContext.landingUrl;
     const mainNavItems: NavItem[] = [];

@@ -74,4 +74,12 @@ return [
             'other' => ':count invoices',
         ],
     ],
+    'impersonation' => [
+        'message' => 'You are acting as :name (:email). Every action has the selected User’s real effect.',
+        'exit' => 'Exit impersonation',
+        'ended' => 'Impersonation ended. Your Platform Owner session was restored.',
+        'nested_denied' => 'Exit the current impersonation before starting another one.',
+        'suspended_title' => 'This User is suspended',
+        'suspended_description' => 'A suspended User cannot enter Invumo. Exit impersonation or reactivate the User from Platform Operations.',
+    ],
 ];

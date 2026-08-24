@@ -2,7 +2,7 @@
 
 Status: Approved
 Approved: 2026-08-22
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 This document assigns every v1 Company action to the Owner, Admin, and Member roles. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [financial/document state contract](document-and-financial-state.md), [numbering contract](numbering-and-concurrency.md), [scheduling contract](scheduling-and-jobs.md), and [tenant-isolation contract](tenant-isolation.md) into one authorization contract for Laravel Policies, application actions, queue jobs, tests, and React UI visibility.
 
@@ -45,8 +45,8 @@ This matrix is independent of the Company-role tables below.
 | Suspend/reactivate an Account                                | Guarded        | No                                              | Blocks Companies owned by that Account; does not affect unrelated Account ownership                |
 | View platform audit                                          | Yes            | No                                              | Separate from Company audit                                                                        |
 | Grant/revoke Platform Owner through the web UI               | No             | No                                              | Protected confirmed application command only in v1; last active operator cannot be removed         |
-| Read tenant Customers/documents/Transactions without context | No             | No                                              | A future support break-glass workflow requires separate approval                                   |
-| Impersonate another User                                     | No             | No                                              | Explicitly excluded from v1                                                                        |
+| Read tenant Customers/documents/Transactions without context | No             | No                                              | Full impersonation must first establish the selected User's authorized Company/RLS context          |
+| Fully impersonate another User                              | Yes            | No                                              | No password/reason/confirmation/special timeout/action limit; target permissions/RLS and dual audit apply |
 
 ## 3. Already-approved authorization boundaries
 

@@ -2,7 +2,7 @@
 
 Status: Approved architecture decision  
 Approved: 2026-08-22  
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 This document defines the approved v1 PostgreSQL relational model, migration strategy, same-Company constraints, deletion behavior, and snapshot boundaries. It translates the approved product brief and architecture contracts into a schema that can be implemented without inventing domain behavior during migrations.
 
@@ -123,18 +123,21 @@ Invitation email is queued only after the business transaction commits. Because 
 - role limited to `OWNER` in v1
 - timestamps
 
-Platform authority is independent of Company membership. The grant/revoke command locks the target User/operator rows, requires a verified and unsuspended User, prevents removal of the last active Platform Owner, and records a platform audit event.
+Platform authority is independent of Company membership. The grant/revoke command serializes operator mutations through a transaction-scoped advisory lock, locks the affected operator Users in stable order, requires a verified and unsuspended User, prevents removal of the last active Platform Owner, and records a platform audit event. Runtime retains no UPDATE grant on the operator table.
 
 ### `platform_audit_events`
 
 - `id`
 - nullable/indexed actor User for bootstrap/system cases
+- nullable/indexed original impersonator User, populated when the effective actor is operating through full User impersonation
 - action, target type, and target UUID
 - nullable required-by-action reason
 - allowlisted `before`/`after` `jsonb`
 - occurrence timestamp and optional unique idempotency key
 
 This is append-only control-plane history, not Company audit. The restricted runtime role can insert and perform authorized reads but cannot update/delete. Payloads follow the approved audit allowlist and secret-safety contract and never contain tenant business data.
+
+Impersonation state is stored only in the server-side database session: original Platform Owner User identifier, selected effective User identifier, and start timestamp. No separate durable impersonation-session table or browser-provided identity field is required in v1. Platform audit records start and explicit end; ordinary session expiry may leave only the authoritative start event.
 
 Control-plane list indexes cover User normalized email/creation/suspension, Account status/end/suspension, Company owner/name/creation, operator User, and reverse-chronological platform audit. PostgreSQL does not automatically index foreign keys, so every platform/control-plane foreign key used for lookup or deletion receives an explicit supporting index.
 
@@ -569,6 +572,7 @@ Occurrence creation, Invoice creation/numbering, issue, reminder materialization
 - `id`, `company_id`
 - actor type: `USER`, `PUBLIC_CUSTOMER`, `PROVIDER_WEBHOOK`, `SCHEDULED_JOB`, or `SYSTEM`
 - nullable actor User/reference
+- nullable/indexed original impersonator User, populated only when a Platform Owner acts through full User impersonation
 - action
 - target type and target UUID without a destructive foreign key
 - occurred timestamp, request/correlation/idempotency reference, and required reason where applicable
@@ -577,6 +581,8 @@ Occurrence creation, Invoice creation/numbering, issue, reminder materialization
 When an idempotency reference is present, a partial unique constraint over Company, action, and that reference makes the retained audit/action event the retry anchor, including after the affected business row has been deleted.
 
 Audit `jsonb` is intentional because event shapes differ. Every action constructs its before/after values through an explicit action-specific field allowlist; it must never copy a request, model, exception context, or provider response wholesale. The action that supplies the payload owns the semantic safety of every selected value and must test its exact permitted fields. It excludes secrets, plaintext public tokens, raw provider payloads, credentials, and unnecessary recipient/customer data.
+
+During impersonation, `actor_user_id` remains the selected effective User so existing business rules and customer-facing attribution behave exactly as for that User, while `impersonator_user_id` preserves the original Platform Owner on every normally audited mutation. Both are server-derived from authenticated session state.
 
 The shared audit guard is defense in depth, not a general secret detector. It rejects secret-shaped keys recursively and scans keys, payload values, reasons, actor references, correlation IDs, and idempotency references for only unmistakable private-key blocks and complete Basic/Bearer authorization values. Do not add broad entropy or keyword scanning that would reject legitimate document numbers, customer references, or explanatory text while still missing unknown secret formats.
 

@@ -1,11 +1,11 @@
 # Platform Operations
 
 Status: Approved v1 architecture and product contract
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 Platform Operations is Invumo's internal SaaS back office. It is separate from every tenant Company's Owner, Admin, and Member permissions.
 
-This contract adds the minimum operational surface required to understand and administer the hosted platform without turning v1 into a billing system or granting routine access to tenant business data.
+This contract adds the operational surface required to administer the hosted platform, including explicit full-action User impersonation for support, without turning v1 into a billing system or granting a general tenant-data/RLS bypass.
 
 ## 1. Identity and authorization boundary
 
@@ -13,11 +13,19 @@ This contract adds the minimum operational surface required to understand and ad
 - Platform authority never comes from a Company membership, Account ownership, an email-domain rule, a client-provided flag, or a Company role.
 - v1 has one platform role only: `Platform Owner`. Additional platform roles require an explicit later permission design.
 - Granting or revoking Platform Owner is not available through the web UI in v1. A protected application command performs it by exact User identity, requires explicit confirmation, prevents removal of the last active Platform Owner, and records a platform audit event.
-- Platform routes require authentication, verified email, current operator revalidation, CSRF protection for mutations, recent password confirmation for sensitive actions, and dedicated rate limits.
-- Every platform mutation re-reads and locks the operator plus target control-plane record inside its transaction. React receives named platform abilities and never infers authority from role strings.
-- TOTP remains deferred from v1. This does not weaken the verified-email, recent-password, session-revocation, audit, or last-operator safeguards.
+- Platform routes require authentication, verified email, current operator revalidation, and CSRF protection for mutations. Sensitive plan/suspension changes retain their approved guards; starting impersonation is the explicit exception and requires no password re-entry, reason, confirmation, dedicated rate limit, or other additional ceremony.
+- Every platform mutation re-reads current authority and locks its target control-plane records inside its transaction. Platform Owner grant/revoke additionally uses one transaction-scoped PostgreSQL advisory lock so concurrent command runs remain serialized without granting UPDATE on the protected operator table. React receives named platform abilities and never infers authority from role strings.
+- TOTP remains deferred from v1. The approved no-reauthentication impersonation flow does not remove verified-email, current-operator, CSRF, audit-attribution, or last-operator safeguards from their applicable boundaries.
 
 Platform authority and Company authority are independent. A Platform Owner may also be a Company Owner/Admin/Member, but neither role implies the other.
+
+After the approved business migrations exist in the target environment and the User has registered and verified their email, the protected command is:
+
+```bash
+php artisan invumo:platform-owner grant owner@example.com --reason="Initial authorized Platform Owner"
+```
+
+Use `revoke` in place of `grant` for removal. The command always asks for interactive confirmation; it never creates a User, bypasses verification/suspension, or permits the last active Platform Owner to be removed. Creating the first production operator still requires the separate explicit production authorization tracked for Phase 1.
 
 ## 2. Interface boundary
 
@@ -46,11 +54,29 @@ Platform Operations may read only the control-plane fields needed by the pages a
 - Platform operator identity;
 - Platform audit events.
 
-It does not expose Customers, contacts, Products, Quotes, Invoices, recurring-template contents, Transactions, bank/tax settings, document/public-link payloads, tenant audit payloads, email bodies/recipients, PDFs, or uploaded files.
+The Platform Operations pages themselves do not expose Customers, contacts, Products, Quotes, Invoices, recurring-template contents, Transactions, bank/tax settings, document/public-link payloads, tenant audit payloads, email bodies/recipients, PDFs, or uploaded files.
 
-Platform Operations does not use a general RLS bypass. A future support workflow that needs tenant business data requires a separately approved, time-bounded, reasoned, and audited break-glass design. v1 has no impersonation or “log in as User” feature.
+Platform Operations does not use a general RLS bypass. Tenant business data becomes available to a Platform Owner only after explicitly entering the approved impersonation flow, and then only through the selected User's ordinary Company memberships, permissions, application authorization, and RLS context.
 
-## 4. Current plan lifecycle
+## 4. Full-action User impersonation
+
+A Platform Owner may start impersonating a selected existing User directly from Platform Operations. This is full-action impersonation: the resulting application session behaves as the selected User, not as a read-only support preview.
+
+- Starting impersonation revalidates that the initiating session still belongs to a verified, unsuspended current Platform Owner and uses normal CSRF protection.
+- It requires no recent password confirmation, support reason, confirmation dialog, impersonation-specific duration, or action restriction.
+- The selected User becomes the effective authenticated identity. Navigation, Companies, records, abilities, validation, authorization, suspension behavior, and PostgreSQL RLS resolve exactly as they would for that User.
+- The Platform Owner receives no extra Company ability and no RLS bypass while impersonating. If the selected User cannot access or perform something, neither can the impersonated session.
+- Every action available to the selected User remains available, including mutations and real external effects such as document email, reminder, payment, refund, membership, settings, and deletion workflows where that User's normal role permits them.
+- There is no impersonation-specific timeout. The session lasts until explicit exit, logout, or the ordinary application session lifetime ends.
+- A persistent, unmistakable shared-shell banner identifies the selected User and offers an immediate exit action. Pages may not hide or restyle this indicator.
+- Nested impersonation is prohibited. An already impersonating session cannot start another impersonation, even when the selected User is also a Platform Owner.
+- Any existing User may be selected. An unverified User remains inside the ordinary verification flow with the banner and exit available. A suspended User remains suspended and is confined to a dedicated identity-warning screen whose only application action is exiting impersonation; support entry never weakens the suspension boundary.
+- Exiting restores the original User only if that User still has a verified, unsuspended current Platform Owner record; otherwise the session ends safely at sign-in.
+- Start and explicit end are recorded in platform audit. Every normally audited mutation performed during impersonation records the selected User as the effective actor and the original Platform Owner as the impersonator. Outward customer-facing behavior remains attributable to the selected User.
+
+The server-side database session retains the original Platform Owner identifier and impersonation start timestamp; these values are never accepted from browser input. Session regeneration occurs when starting and ending impersonation so neither identity transition reuses an older session identifier.
+
+## 5. Current plan lifecycle
 
 Each Account keeps one current plan assignment. The existing `plan_id` remains authoritative for entitlements. v1 adds provider-independent operational lifecycle fields to the Account rather than introducing a second subscription/billing aggregate:
 
@@ -75,7 +101,7 @@ The Platform Owner may change the current Plan and lifecycle fields with confirm
 
 v1 does not include self-service checkout, prices, payment collection, platform invoices, tax handling for Invumo fees, provider webhooks, automated renewals/dunning, or a Plan-creation/editor interface.
 
-## 5. Suspension and session behavior
+## 6. Suspension and session behavior
 
 ### User suspension
 
@@ -92,28 +118,28 @@ v1 does not include self-service checkout, prices, payment collection, platform 
 
 Normal request entry, Company selection, direct Company URLs, invitation acceptance, jobs, and public mutation paths must recheck the relevant User/Account suspension boundary server-side. Read-only public documents are not silently revoked by Account suspension; changing that behavior requires an explicit later decision.
 
-## 6. Platform audit
+## 7. Platform audit
 
 `platform_audit_events` is a separate append-only control-plane log because Company audit requires a Company tenant context.
 
-Each event records a UUIDv7 identifier, nullable actor User for bootstrap/system cases, action, target type/UUID, required reason where applicable, allowlisted before/after fields, occurrence time, and an idempotency/correlation reference when needed.
+Each event records a UUIDv7 identifier, nullable actor User for bootstrap/system cases, nullable original impersonator User when the effective User is acting through impersonation, action, target type/UUID, required reason where applicable, allowlisted before/after fields, occurrence time, and an idempotency/correlation reference when needed.
 
 Platform audit follows the same payload-safety contract as Company audit: action-specific allowlists, no copied requests/models/provider payloads, no credentials/tokens, and no tenant business content. Runtime code may insert and authorized Platform Owners may read; ordinary Users cannot read it, and application runtime code cannot update or delete it.
 
-Required actions include platform-owner grant/revoke, User suspension/reactivation, Account suspension/reactivation, session revocation, and plan/lifecycle changes.
+Required actions include platform-owner grant/revoke, impersonation start/end, User suspension/reactivation, Account suspension/reactivation, session revocation, and plan/lifecycle changes. Company audit events add a nullable original-impersonator User reference so an impersonated mutation never erases the real operator identity.
 
-## 7. PostgreSQL shape and indexes
+## 8. PostgreSQL shape and indexes
 
 Control-plane tables use strict runtime grants and Laravel authorization, not tenant RLS:
 
 - `platform_operators`: UUIDv7 `id`, unique/indexed `user_id`, checked role, timestamps;
-- `platform_audit_events`: UUIDv7 `id`, nullable/indexed actor, action, target type/UUID, reason, allowlisted `jsonb` before/after, occurred timestamp, optional unique idempotency key;
+- `platform_audit_events`: UUIDv7 `id`, nullable/indexed actor, nullable/indexed original impersonator, action, target type/UUID, reason, allowlisted `jsonb` before/after, occurred timestamp, optional unique idempotency key;
 - `users`: nullable `suspended_at` and `last_login_at`;
 - `accounts`: the lifecycle and nullable `suspended_at` fields defined above.
 
 Indexes must support operator lookup, User email/created/suspension lists, Account plan-status/end/suspension lists, Company owner/name/creation lists, and reverse-chronological platform audit queries. Foreign-key columns are indexed. Text statuses use named check constraints.
 
-## 8. Required tests
+## 9. Required tests
 
 Tests must prove:
 
@@ -121,6 +147,10 @@ Tests must prove:
 - an operator record for an unverified, missing, or suspended User does not grant access;
 - ordinary Users receive no platform navigation/props and direct access is denied;
 - platform reads expose only approved control-plane fields and cannot query tenant business rows without Company context;
+- impersonation can start only from a current Platform Owner, regenerates the session, exposes exactly the target User's Companies/abilities/RLS rows, and grants no operator-derived tenant ability;
+- impersonated sessions can perform every action normally permitted to the selected User, including external effects, while denied actions remain denied;
+- impersonation requires no password/reason/confirmation or special timeout, shows the shared persistent banner, exits safely, and cannot nest;
+- platform start/end events and every normally audited impersonated mutation preserve both original Platform Owner and effective User identities;
 - every mutation revalidates current authority, requires its guards, locks the target, and writes one allowlisted platform audit event;
 - plan lifecycle constraints and 7-/30-day expiry lists are correct at exact timestamp boundaries;
 - User suspension invalidates sessions and blocks authentication;
@@ -129,7 +159,7 @@ Tests must prove:
 - no platform mutation can alter the singular Company Owner invariant or bypass ownership transfer;
 - EN/RO UI, responsive layout, accessibility, and shared design-system rules remain intact.
 
-## 9. Implementation sequence
+## 10. Implementation sequence
 
 Platform Operations remains inside Phase 1 but follows its prerequisites:
 
@@ -138,5 +168,6 @@ Platform Operations remains inside Phase 1 but follows its prerequisites:
 3. add platform operator, Account lifecycle/suspension, and platform audit schema;
 4. implement platform authorization and bootstrap command;
 5. implement guarded Actions/Queries and the shared-component back office;
-6. create the first Platform Owner only through an explicitly authorized production action;
-7. verify platform/tenant boundaries before Phase 1 sign-off.
+6. implement full-action impersonation, dual-identity audit attribution, and the persistent shared-shell exit banner;
+7. create the first Platform Owner only through an explicitly authorized production action;
+8. verify platform/tenant/impersonation boundaries before Phase 1 sign-off.

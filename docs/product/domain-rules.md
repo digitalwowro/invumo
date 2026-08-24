@@ -1,7 +1,7 @@
 # Invumo Core Domain Rules
 
 Status: Approved product rules  
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
@@ -47,12 +47,13 @@ Across the domain, unusual but internally valid workflows should remain possible
 ## Platform Operations boundary
 
 - Platform Owner is a separate internal role attached to a verified User through a protected operator record; no Company role or Account ownership grants it.
-- Platform Operations may search and review approved User, Account, Company, membership-count, plan-lifecycle, suspension, and platform-audit control-plane metadata only.
-- Platform Operations never receives a general tenant-RLS bypass and does not expose tenant Customer, document, Transaction, settings, delivery, file, or tenant-audit content.
-- v1 has no impersonation or tenant-data support mode.
+- Platform Operations may search and review approved User, Account, Company, membership-count, plan-lifecycle, suspension, and platform-audit control-plane metadata before an explicit impersonation begins.
+- Platform Operations never receives a general tenant-RLS bypass. Its own pages do not expose tenant Customer, document, Transaction, settings, delivery, file, or tenant-audit content.
+- Platform Owner may begin full-action impersonation of an existing User with no password re-entry, reason, confirmation, special duration, or action restriction. The session receives exactly that User's permissions and RLS context, permits every normally available action/external effect, shows a persistent exit banner, and cannot nest.
+- Platform audit records impersonation start/end, and every normally audited impersonated mutation retains both the effective User and original Platform Owner identities.
 - User suspension invalidates that User's sessions, blocks authentication, and preserves all data/history. A Platform Owner cannot suspend itself or the last active Platform Owner.
 - Account suspension blocks all members from Companies owned by that Account while preserving memberships/data and leaving their access to Companies owned by other active Accounts intact.
-- Every platform mutation requires current operator revalidation, confirmation, a reason where applicable, recent password confirmation for sensitive actions, row locking, and an append-only platform audit event.
+- Every platform mutation requires current operator revalidation, its action-specific guards, row locking where applicable, and an append-only platform audit event. Impersonation start is explicitly exempt from password, reason, confirmation, and special-duration requirements.
 - Web UI cannot grant/revoke Platform Owner in v1; a protected confirmed command performs it and cannot remove the last active operator.
 - The complete approved contract is [`../architecture/platform-operations.md`](../architecture/platform-operations.md).
 

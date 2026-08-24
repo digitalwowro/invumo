@@ -2,7 +2,7 @@
 
 Status: Approved implementation contract
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 This is the living map of Invumo's code ownership and dependency boundaries. It explains where new code belongs without duplicating the product specification or the development tracker.
 
@@ -48,7 +48,7 @@ The approved module catalog is:
 | `Recurring`    | Recurring templates, occurrence generation, schedule resolution, and automation controls                                |
 | `Delivery`     | Public document access, PDF composition, email/reminder workflows, delivery history, and provider-event normalization   |
 | `Audit`        | Append-only audit events and authorized operational/audit queries                                                       |
-| `Platform`     | Internal operator authorization, control-plane administration, Account plan lifecycle/suspension, and platform audit    |
+| `Platform`     | Operator authorization, control-plane administration, Account lifecycle/suspension, full User impersonation, and audit  |
 
 This catalog describes ownership, not deployment. A cross-cutting workflow still runs inside one database transaction and one application. Split or merge a module only through an approved architecture change backed by actual code pressure.
 
@@ -75,6 +75,7 @@ Do not add `Services`, `Managers`, `Helpers`, or repositories as default buckets
 `app/Foundation` contains only stable building blocks required by several modules:
 
 - `Tenancy` — company context and restricted-role/RLS plumbing;
+- `Auth` — request-session identity-transition context shared by Platform and audit boundaries;
 - `Database` — UUIDv7 domain-identifier conventions and narrowly shared persistence primitives;
 - `Money` — exact-decimal and currency-precision primitives;
 - `Jobs` — tenant-safe dispatch, idempotency, and shared execution context.

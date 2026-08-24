@@ -70,6 +70,14 @@ export type CommonTranslations = {
     counts: {
         invoices: PluralMessages;
     };
+    impersonation: {
+        message: string;
+        exit: string;
+        ended: string;
+        nested_denied: string;
+        suspended_title: string;
+        suspended_description: string;
+    };
 };
 
 export type I18nProps = {

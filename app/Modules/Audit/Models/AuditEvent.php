@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'company_id',
     'actor_type',
     'actor_user_id',
+    'impersonator_user_id',
     'actor_reference',
     'action',
     'target_type',
@@ -35,6 +36,12 @@ class AuditEvent extends TenantOwnedModel
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function impersonator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'impersonator_user_id');
     }
 
     /** @return array<string, string> */

@@ -1,7 +1,7 @@
 # Invumo Application Architecture Baseline
 
 Status: Approved architecture decision
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 This document records the approved technology and application-architecture baseline. It does not track implementation progress or remaining deliverables; those are maintained only in the [Invumo Development Tracker](../development/development-tracker.md).
 
@@ -36,7 +36,7 @@ This choice optimizes total system complexity rather than language count. PHP an
 
 Invumo is a modular monolith. Its approved business modules, physical code layout, cross-module APIs, dependency direction, application-action transaction contract, frontend layers, test ownership, and maintenance rules are defined in the living [Invumo Codebase Map](codebase-map.md).
 
-The internal [Platform Operations](platform-operations.md) back office is another bounded module and React/Inertia shell inside this same application. It uses the same authentication, localization, design system, database, and deployment; it does not introduce a second service, frontend, authentication system, or tenant-data bypass.
+The internal [Platform Operations](platform-operations.md) back office is another bounded module and React/Inertia shell inside this same application. It uses the same authentication, localization, design system, database, and deployment; it does not introduce a second service, frontend, authentication system, or general tenant-data bypass. Full-action impersonation transitions the existing server-side session to a selected effective User, preserves the original Platform Owner separately for audit/exit, and then uses only the selected User's normal authorization and RLS paths.
 
 Module boundaries organize code and tests but do not create network services or separately deployed applications. Create a module directory only when it has real implementation. Keep Laravel's framework entry points conventional where that is clearer, and do not introduce a module package, empty scaffolds, repositories around every model, event sourcing, or premature service interfaces.
 

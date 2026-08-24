@@ -1,5 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { SidebarGroup } from '@/components/ui/sidebar-layout';
+import {
+    SidebarGroup,
+    SidebarGroupLabel,
+} from '@/components/ui/sidebar-layout';
 import {
     SidebarMenu,
     SidebarMenuButton,
@@ -8,11 +11,18 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({
+    items = [],
+    label,
+}: {
+    items: NavItem[];
+    label?: string;
+}) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
         <SidebarGroup>
+            {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

@@ -31,9 +31,7 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_receives_laravel_resolved_romanian_strings(): void
     {
-        app()->setLocale('ro');
-
-        $user = User::factory()->create();
+        $user = User::factory()->create(['language_code' => 'ro']);
         $plan = Plan::query()->where('code', 'free')->firstOrFail();
         $account = Account::query()->create([
             'owner_user_id' => $user->id,

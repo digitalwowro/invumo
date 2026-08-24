@@ -46,15 +46,22 @@ return new class extends Migration
             $table->index('plan_id');
         });
 
-        DB::table('plans')->insert([
-            'id' => (string) Str::uuid7(),
-            'code' => 'free',
-            'name' => 'Free',
-            'entitlements' => '{}',
-            'active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        DB::table('plans')->insert(array_map(
+            static fn (array $plan): array => [
+                'id' => (string) Str::uuid7(),
+                'code' => $plan['code'],
+                'name' => $plan['name'],
+                'entitlements' => '{}',
+                'active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                ['code' => 'free', 'name' => 'Free'],
+                ['code' => 'pro', 'name' => 'Pro'],
+                ['code' => 'enterprise', 'name' => 'Enterprise'],
+            ],
+        ));
 
         $this->grantRuntimePrivileges();
     }

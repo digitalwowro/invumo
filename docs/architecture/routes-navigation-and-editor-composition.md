@@ -4,7 +4,7 @@ Status: Approved architecture decision
 
 Created: 2026-08-23
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
 Approved: 2026-08-23
 
@@ -113,13 +113,15 @@ These routes use a distinct platform shell, current operator revalidation, and t
 | GET    | `/platform/companies`                  | Searchable Company ownership/membership-count list                                   |
 | GET    | `/platform/plan-lifecycle`             | Active/trial/past-due/cancel-at-end/expired/upcoming-expiry operational views        |
 | GET    | `/platform/audit`                      | Reverse-chronological append-only platform audit                                     |
+| POST   | `/platform/users/{user}/impersonation` | Start full-action impersonation as the selected User without extra ceremony           |
+| DELETE | `/platform/impersonation`              | Exit impersonation and restore the still-authorized original Platform Owner           |
 | POST   | `/platform/users/{user}/suspension`    | Guarded User suspension                                                              |
 | DELETE | `/platform/users/{user}/suspension`    | Guarded User reactivation                                                            |
 | POST   | `/platform/accounts/{account}/suspension` | Guarded Account suspension                                                         |
 | DELETE | `/platform/accounts/{account}/suspension` | Guarded Account reactivation                                                       |
 | PATCH  | `/platform/accounts/{account}/plan`    | Guarded seeded-Plan and lifecycle update                                             |
 
-Platform Owner grant/revoke has no web route in v1. Non-operators receive no platform route/action props. Platform pages use the same shared page, operational-table, status, form, confirmation, accessibility, responsive, and localization components as the Company application without a second visual system.
+Platform Owner grant/revoke has no web route in v1. Non-operators receive no platform route/action props. Platform pages use the same shared page, operational-table, status, form, confirmation, accessibility, responsive, and localization components as the Company application without a second visual system. During impersonation, every application shell renders the shared persistent identity banner and exit action; this state is server-owned and may not be inferred or dismissed only in React.
 
 ### 4.2 Company shell and operational resources
 

@@ -3,6 +3,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import ImpersonationLayout from '@/layouts/impersonation-layout';
+import PlatformLayout from '@/layouts/platform-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Invumo';
@@ -13,8 +15,12 @@ createInertiaApp({
         switch (true) {
             case name.startsWith('auth/'):
                 return AuthLayout;
+            case name.startsWith('impersonation/'):
+                return ImpersonationLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name.startsWith('platform/'):
+                return PlatformLayout;
             default:
                 return AppLayout;
         }

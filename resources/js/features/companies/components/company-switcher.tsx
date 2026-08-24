@@ -18,11 +18,12 @@ import { useI18n } from '@/hooks/use-i18n';
 export function CompanySwitcher() {
     const { auth, companyContext } = usePage().props;
     const { t } = useI18n();
-    const current = companyContext.current;
 
-    if (!auth.user) {
+    if (!auth.user || !companyContext) {
         return null;
     }
+
+    const current = companyContext.current;
 
     return (
         <SidebarMenu>

@@ -74,4 +74,12 @@ return [
             'other' => ':count de facturi',
         ],
     ],
+    'impersonation' => [
+        'message' => 'Acționezi ca :name (:email). Fiecare acțiune produce efectele reale ale Utilizatorului selectat.',
+        'exit' => 'Încheie impersonarea',
+        'ended' => 'Impersonarea s-a încheiat. Sesiunea ta de Proprietar al platformei a fost restaurată.',
+        'nested_denied' => 'Încheie impersonarea curentă înainte de a începe alta.',
+        'suspended_title' => 'Acest Utilizator este suspendat',
+        'suspended_description' => 'Un Utilizator suspendat nu poate intra în Invumo. Încheie impersonarea sau reactivează Utilizatorul din Operațiuni platformă.',
+    ],
 ];

@@ -54,10 +54,12 @@ class CompanyAccessTest extends TestCase
             'role' => CompanyRole::Owner->value,
         ]);
 
-        app(TenantContext::class)->runAsSystem(
-            $company->id,
-            fn () => $this->assertSame(1, AuditEvent::query()->where('action', 'company.created')->count()),
-        );
+        app(TenantContext::class)->runAsSystem($company->id, function (): void {
+            $event = AuditEvent::query()->where('action', 'company.created')->sole();
+
+            $this->assertNull($event->before);
+            $this->assertNull($event->after);
+        });
     }
 
     public function test_cross_company_urls_do_not_reveal_company_existence(): void

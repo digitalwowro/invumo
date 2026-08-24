@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
-use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
@@ -52,9 +51,6 @@ final readonly class CreateCompany
                         action: 'company.created',
                         targetType: 'Company',
                         targetId: $company->id,
-                        after: AuditPayload::fromAllowedFields([
-                            'name' => $company->name,
-                        ], ['name']),
                     ));
                 });
 

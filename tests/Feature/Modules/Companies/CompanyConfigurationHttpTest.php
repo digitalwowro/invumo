@@ -85,14 +85,21 @@ final class CompanyConfigurationHttpTest extends TestCase
             $this->assertSame('RON', $currency->currency_code);
             $this->assertSame(2, $currency->currency_precision);
             $this->assertTrue($currency->is_default);
-            $this->assertSame('Acme SRL', $event->before['display_name']);
-            $this->assertSame('Acme Workspace', $event->after['display_name']);
             $this->assertSame('RON', $event->after['currency_code']);
-            $this->assertArrayNotHasKey('confirm_schedule_change', $event->after);
+            $this->assertEqualsCanonicalizing(
+                ['changed_fields', 'timezone', 'currency_code', 'currency_precision', 'currency_display_style'],
+                array_keys($event->after ?? []),
+            );
             $this->assertEqualsCanonicalizing(
                 array_keys($event->before ?? []),
                 array_keys($event->after ?? []),
             );
+            $payload = json_encode([$event->before, $event->after], JSON_THROW_ON_ERROR);
+            $this->assertStringNotContainsString('office@example.com', $payload);
+            $this->assertStringNotContainsString('10 Exemplu Street', $payload);
+            $this->assertStringNotContainsString('RO12345678', $payload);
+            $this->assertContains('email', $event->after['changed_fields']);
+            $this->assertContains('tax_registration_identifier', $event->after['changed_fields']);
         });
 
         $this->patch(route('company-settings.profile.update', $company), $payload)

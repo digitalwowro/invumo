@@ -20,12 +20,8 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateCompanyConfiguration
 {
-    private const AUDIT_FIELDS = [
-        'display_name', 'legal_name', 'trading_name', 'address_line_1',
-        'address_line_2', 'city', 'region', 'postal_code', 'country_code',
-        'tax_registration_label', 'tax_registration_identifier',
-        'business_registration_label', 'business_registration_number',
-        'email', 'phone', 'website', 'timezone', 'automation_local_time',
+    private const AUDIT_VALUE_FIELDS = [
+        'timezone', 'automation_local_time',
         'currency_code', 'currency_precision', 'currency_display_style',
     ];
 
@@ -61,13 +57,14 @@ final readonly class UpdateCompanyConfiguration
         $defaultCurrency = $currencies->firstWhere('is_default', true);
         $before = $this->snapshot($company, $settings, $defaultCurrency);
         $after = $this->dataSnapshot($data);
-        [$auditBefore, $auditAfter] = $this->changedValues($before, $after);
+        [$changedBefore, $changedAfter] = $this->changedValues($before, $after);
 
-        if ($auditBefore === []) {
+        if ($changedBefore === []) {
             return $settings;
         }
 
         $this->confirmScheduleChange($before, $after, $data->scheduleChangeConfirmed);
+        $changedFields = array_keys($changedAfter);
 
         if ($company->name !== $data->displayName) {
             $company->update(['name' => $data->displayName]);
@@ -82,8 +79,8 @@ final readonly class UpdateCompanyConfiguration
             action: 'company.configuration.updated',
             targetType: 'Company',
             targetId: $company->id,
-            before: AuditPayload::fromAllowedFields($auditBefore, self::AUDIT_FIELDS),
-            after: AuditPayload::fromAllowedFields($auditAfter, self::AUDIT_FIELDS),
+            before: $this->auditPayload($changedBefore, $changedFields),
+            after: $this->auditPayload($changedAfter, $changedFields),
         ));
 
         return $settings->refresh();
@@ -210,5 +207,22 @@ final readonly class UpdateCompanyConfiguration
         $keys = array_fill_keys($changed, true);
 
         return [array_intersect_key($before, $keys), array_intersect_key($after, $keys)];
+    }
+
+    /**
+     * @param  array<string, mixed>  $changedValues
+     * @param  list<string>  $changedFields
+     */
+    private function auditPayload(array $changedValues, array $changedFields): AuditPayload
+    {
+        $retainedValues = array_intersect_key(
+            $changedValues,
+            array_fill_keys(self::AUDIT_VALUE_FIELDS, true),
+        );
+
+        return AuditPayload::fromAllowedFields(
+            ['changed_fields' => $changedFields, ...$retainedValues],
+            ['changed_fields', ...self::AUDIT_VALUE_FIELDS],
+        );
     }
 }

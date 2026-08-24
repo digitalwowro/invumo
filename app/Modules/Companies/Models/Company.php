@@ -8,6 +8,7 @@ use App\Modules\Identity\Models\Account;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $memberships_count
@@ -48,6 +49,22 @@ class Company extends RuntimeModel
     public function assets(): HasMany
     {
         return $this->hasMany(CompanyAsset::class);
+    }
+
+    /**
+     * @return HasOne<CompanySetting, $this>
+     */
+    public function settings(): HasOne
+    {
+        return $this->hasOne(CompanySetting::class);
+    }
+
+    /**
+     * @return HasMany<CompanyCurrency, $this>
+     */
+    public function currencies(): HasMany
+    {
+        return $this->hasMany(CompanyCurrency::class);
     }
 
     /**

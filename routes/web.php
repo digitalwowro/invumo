@@ -6,6 +6,7 @@ use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
 use App\Modules\Companies\Http\Controllers\CompanyMemberController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
+use App\Modules\Companies\Http\Controllers\CompanySettingsController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
@@ -89,6 +90,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('company.context')
         ->scopeBindings()
         ->group(function (): void {
+            Route::get('companies/{company}/settings', [CompanySettingsController::class, 'index'])
+                ->name('company-settings.index');
+            Route::get('companies/{company}/settings/profile', [CompanySettingsController::class, 'edit'])
+                ->name('company-settings.profile.edit');
+            Route::patch('companies/{company}/settings/profile', [CompanySettingsController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-settings.profile.update');
             Route::get('companies/{company}/settings/members', [CompanyMemberController::class, 'index'])
                 ->name('company-members.index');
             Route::delete('companies/{company}/settings/members/current', [CompanyMemberController::class, 'leave'])

@@ -15,6 +15,7 @@ use App\Modules\Companies\Http\Requests\UpdateCompanyMemberRoleRequest;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Queries\CompanyMembersPage;
+use App\Modules\Companies\Queries\CompanySettingsNavigation;
 use App\Support\Inertia\CompaniesUiTranslationBag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,11 +29,13 @@ final class CompanyMemberController extends Controller
         Request $request,
         Company $company,
         CompanyMembersPage $page,
+        CompanySettingsNavigation $navigation,
         CompaniesUiTranslationBag $translations,
     ): Response {
-        return Inertia::render('companies/members/index', [
+        return Inertia::render('companies/settings/members', [
             'company' => ['id' => $company->id, 'name' => $company->name],
             ...$page->for($company, $request->user()),
+            'companySettingsNavigation' => $navigation->for($company, $request->user())['items'],
             'storeUrl' => route('company-invitations.store', $company, false),
             'status' => $request->session()->get('status'),
             'translations' => $translations->toArray(),

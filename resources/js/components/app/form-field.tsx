@@ -116,6 +116,8 @@ export function PasswordField({
 type CheckboxFieldProps = {
     id?: string;
     label: string;
+    description?: string;
+    error?: string;
     checkbox: Omit<
         ComponentProps<typeof Checkbox>,
         'className' | 'style' | 'id'
@@ -125,15 +127,37 @@ type CheckboxFieldProps = {
 export function CheckboxField({
     id: suppliedId,
     label,
+    description,
+    error,
     checkbox,
 }: CheckboxFieldProps) {
     const generatedId = useId();
     const id = suppliedId ?? generatedId;
+    const descriptionId = description ? `${id}-description` : undefined;
+    const errorId = error ? `${id}-error` : undefined;
+    const describedBy = [descriptionId, errorId].filter(Boolean).join(' ');
 
     return (
-        <Field orientation="horizontal" data-disabled={checkbox.disabled}>
-            <Checkbox {...checkbox} id={id} />
-            <FieldLabel htmlFor={id}>{label}</FieldLabel>
+        <Field
+            orientation="horizontal"
+            data-disabled={checkbox.disabled}
+            data-invalid={Boolean(error)}
+        >
+            <Checkbox
+                {...checkbox}
+                id={id}
+                aria-invalid={Boolean(error)}
+                aria-describedby={describedBy || undefined}
+            />
+            <div className="grid gap-1">
+                <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                {description && (
+                    <FieldDescription id={descriptionId}>
+                        {description}
+                    </FieldDescription>
+                )}
+                <InputError id={errorId} message={error} />
+            </div>
         </Field>
     );
 }

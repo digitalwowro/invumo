@@ -47,7 +47,7 @@ export function AppSidebar({
     ) {
         mainNavItems.push({
             title: t('navigation.settings'),
-            href: companyContext.current?.membersUrl ?? editProfile(),
+            href: companyContext.current?.settingsUrl ?? editProfile(),
             icon: Settings,
         });
     }

@@ -4,6 +4,7 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -73,15 +74,17 @@ export function SelectField({
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent align="start">
-                    {options.map((option) => (
-                        <SelectItem
-                            key={option.value}
-                            value={option.value}
-                            disabled={option.disabled}
-                        >
-                            {option.label}
-                        </SelectItem>
-                    ))}
+                    <SelectGroup>
+                        {options.map((option) => (
+                            <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                disabled={option.disabled}
+                            >
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
                 </SelectContent>
             </Select>
             {description && (

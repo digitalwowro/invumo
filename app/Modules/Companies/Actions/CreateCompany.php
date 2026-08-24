@@ -10,6 +10,7 @@ use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Identity\Models\Account;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -40,6 +41,11 @@ final readonly class CreateCompany
                 ]);
 
                 $this->tenantContext->runAsSystem($company->id, function () use ($actor, $company): void {
+                    CompanySetting::query()->create([
+                        'legal_name' => $company->name,
+                        'automation_local_time' => '09:00:00',
+                    ]);
+
                     $this->recordAuditEvent->handle(new AuditEventData(
                         actorType: AuditActorType::User,
                         actorUserId: $actor->id,

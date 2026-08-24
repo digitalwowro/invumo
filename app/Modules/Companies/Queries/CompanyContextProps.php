@@ -63,13 +63,21 @@ final readonly class CompanyContextProps
         );
     }
 
-    /** @return array{id: string, name: string, dashboardUrl: string, membersUrl: string|null} */
+    /** @return array{id: string, name: string, dashboardUrl: string, settingsUrl: string, membersUrl: string} */
     private function companyItem(CompanyMembership $membership): array
     {
+        $canManageSettings = $this->authorization->allows(
+            $membership->role,
+            CompanyAbility::ManageCompanySettings,
+        );
+
         return [
             'id' => $membership->company_id,
             'name' => $membership->company->name,
             'dashboardUrl' => route('companies.dashboard', $membership->company_id, false),
+            'settingsUrl' => $canManageSettings
+                ? route('company-settings.profile.edit', $membership->company_id, false)
+                : route('company-members.index', $membership->company_id, false),
             'membersUrl' => route('company-members.index', $membership->company_id, false),
         ];
     }

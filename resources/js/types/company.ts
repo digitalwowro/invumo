@@ -2,7 +2,8 @@ export type CompanySummary = {
     id: string;
     name: string;
     dashboardUrl: string;
-    membersUrl: string | null;
+    settingsUrl: string;
+    membersUrl: string;
 };
 
 export type CompanyAbilities = {
@@ -48,8 +49,77 @@ export type CompaniesUiTranslations = {
         name_placeholder: string;
         submit: string;
     };
+    settings: CompanySettingsTranslations;
     members: CompanyMembersTranslations;
     invitation: CompanyInvitationTranslations;
+};
+
+export type CompanyOption = {
+    value: string;
+    label: string;
+};
+
+export type CurrencyDisplayStyle = 'CODE' | 'SYMBOL';
+
+export type CompanyConfiguration = {
+    displayName: string;
+    legalName: string;
+    tradingName: string | null;
+    addressLine1: string | null;
+    addressLine2: string | null;
+    city: string | null;
+    region: string | null;
+    postalCode: string | null;
+    countryCode: string | null;
+    taxRegistrationLabel: string | null;
+    taxRegistrationIdentifier: string | null;
+    businessRegistrationLabel: string | null;
+    businessRegistrationNumber: string | null;
+    email: string | null;
+    phone: string | null;
+    website: string | null;
+    timezone: string | null;
+    automationLocalTime: string;
+    currencyCode: string | null;
+    currencyPrecision: string | null;
+    currencyDisplayStyle: CurrencyDisplayStyle | null;
+};
+
+export type CompanySettingsNavigationItem = {
+    key: 'profile' | 'members';
+    href: string;
+};
+
+export type CompanySettingsTranslations = {
+    layout: {
+        title: string;
+        description: string;
+        navigation_label: string;
+        navigation: Record<CompanySettingsNavigationItem['key'], string>;
+    };
+    profile: {
+        head_title: string;
+        identity_title: string;
+        identity_description: string;
+        address_title: string;
+        address_description: string;
+        registration_title: string;
+        registration_description: string;
+        schedule_title: string;
+        schedule_description: string;
+        currency_title: string;
+        currency_description: string;
+        save: string;
+        country_placeholder: string;
+        timezone_placeholder: string;
+        currency_placeholder: string;
+        schedule_confirmation: string;
+        unsaved_warning: string;
+        fields: Record<string, string>;
+        currency_display_options: Record<CurrencyDisplayStyle, string>;
+        feedback: { saved: string };
+        errors: { schedule_change_not_confirmed: string };
+    };
 };
 
 export type CompanyRole = 'OWNER' | 'ADMIN' | 'MEMBER';

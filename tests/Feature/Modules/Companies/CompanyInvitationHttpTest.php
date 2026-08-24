@@ -33,7 +33,7 @@ class CompanyInvitationHttpTest extends TestCase
             ->get(route('company-members.index', $company))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('companies/members/index')
+                ->component('companies/settings/members')
                 ->where('company.id', $company->id)
                 ->has('members', 3)
                 ->has('invitations', 0));

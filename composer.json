@@ -10,6 +10,8 @@
     ],
     "license": "MIT",
     "require": {
+        "ext-fileinfo": "*",
+        "ext-gd": "*",
         "php": "^8.5",
         "brick/math": "^0.18",
         "inertiajs/inertia-laravel": "^3.0",

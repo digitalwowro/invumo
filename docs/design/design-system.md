@@ -485,7 +485,7 @@ Short, static option sets use the shared non-searchable Select behavior, includi
 
 Dates use one `DateField`/Calendar composition with locale-aware display, direct keyboard entry where supported, clear validation, and the same four-digit-year bounds as the domain. Currency, tax, language, timezone, Country, and other option lists use shared Select/Combobox behavior rather than individually styled controls.
 
-`FileUpload` owns idle, drag, selected, uploading, validation-error, success, replace, and remove states for Company logos and any later approved upload. Pages supply file rules and copy; they do not style drop zones or progress independently.
+`FileUpload` owns idle, drag, selected, uploading, validation-error, success, replace, and remove states for Company logos and any later approved upload. Pages supply file rules and copy; they do not style drop zones or progress independently. Server-authoritative Company-logo rules, private storage, and serving remain governed by [`../architecture/uploads-and-storage.md`](../architecture/uploads-and-storage.md); the component is feedback and selection UI, not a security boundary.
 
 Long forms use `FormSection` and shared grids. They do not create individually styled cards for every small field group.
 

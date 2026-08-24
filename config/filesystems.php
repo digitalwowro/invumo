@@ -38,6 +38,14 @@ return [
             'report' => false,
         ],
 
+        'company_assets_local' => [
+            'driver' => 'local',
+            'root' => storage_path('app/company-assets'),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

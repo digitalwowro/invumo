@@ -12,6 +12,7 @@ export const romanianDesignSystemTranslations = {
         typography: 'Roluri tipografice',
         actions: 'Acțiuni',
         forms: 'Stările formularelor',
+        fileUpload: 'Stările încărcării de fișiere',
         statuses: 'Prezentarea stărilor',
         feedback: 'Mesaje de sistem',
         asyncStates: 'Stări asincrone',
@@ -51,6 +52,20 @@ export const romanianDesignSystemTranslations = {
         disabled: 'Număr de factură blocat',
         inherited: 'Termen de plată',
         inheritedCaption: '30 de zile · preluat de la client',
+    },
+    upload: {
+        label: 'Sigla companiei',
+        description: 'PNG, JPEG sau WebP de maximum 5 MiB.',
+        controls: {
+            dropPrompt: 'Trage imaginea aici sau alege un fișier',
+            choose: 'Alege imaginea',
+            replace: 'Înlocuiește imaginea',
+            remove: 'Elimină imaginea',
+            selected: 'Selectat',
+            uploading: 'Se încarcă imaginea',
+        },
+        error: 'Alege o imagine validă.',
+        success: 'Imaginea este pregătită',
     },
     feedback: {
         neutral: { title: 'Salvat', description: 'Setările sunt active.' },

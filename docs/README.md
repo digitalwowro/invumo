@@ -40,6 +40,7 @@ Operational documents record how an approved runtime is installed and verified. 
 - [`architecture/requirements-risk-assessment.md`](architecture/requirements-risk-assessment.md) — approved contradiction assessment, risk register, and downstream implementation obligations
 - [`architecture/routes-navigation-and-editor-composition.md`](architecture/routes-navigation-and-editor-composition.md) — approved Company route boundary, authorized sidebar and Create menu, operational-list behavior, canonical workspaces, and shared document-editor composition
 - [`architecture/platform-operations.md`](architecture/platform-operations.md) — approved Platform Owner boundary, control-plane visibility, full-action User impersonation, Account lifecycle, suspension, dual-identity audit, and back-office sequence
+- [`architecture/uploads-and-storage.md`](architecture/uploads-and-storage.md) — approved Company-logo validation, private Laravel storage, controlled serving, immutable replacement/cleanup, and local-to-S3 migration contract
 
 These are reviewed constraints. Later architecture documents may refine names and implementation composition but must not silently change their behavior.
 

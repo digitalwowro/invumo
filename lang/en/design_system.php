@@ -9,6 +9,7 @@ return [
         'typography' => 'Typography roles',
         'actions' => 'Actions',
         'forms' => 'Form states',
+        'fileUpload' => 'File upload states',
         'statuses' => 'Status presentation',
         'feedback' => 'Feedback',
         'asyncStates' => 'Asynchronous states',
@@ -48,6 +49,20 @@ return [
         'disabled' => 'Locked invoice number',
         'inherited' => 'Payment terms',
         'inheritedCaption' => 'Net 30 · from customer',
+    ],
+    'upload' => [
+        'label' => 'Company logo',
+        'description' => 'PNG, JPEG, or WebP up to 5 MiB and 4096 × 4096 pixels.',
+        'controls' => [
+            'dropPrompt' => 'Drop an image here or choose a file',
+            'choose' => 'Choose image',
+            'replace' => 'Replace image',
+            'remove' => 'Remove image',
+            'selected' => 'Selected',
+            'uploading' => 'Uploading image',
+        ],
+        'error' => 'Choose a valid image within the permitted size.',
+        'success' => 'Image ready',
     ],
     'feedback' => [
         'neutral' => [

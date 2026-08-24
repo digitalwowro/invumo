@@ -43,6 +43,14 @@ class Company extends RuntimeModel
     }
 
     /**
+     * @return HasMany<CompanyAsset, $this>
+     */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(CompanyAsset::class);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

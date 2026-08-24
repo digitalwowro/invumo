@@ -498,6 +498,7 @@ Recurring template
 ## Company appearance
 
 - v1 supports a company logo and one primary brand color.
+- Company-logo files follow the approved raster validation, private Laravel storage, controlled serving, immutable replacement/cleanup, and local-to-S3 migration contract in [`../architecture/uploads-and-storage.md`](../architecture/uploads-and-storage.md).
 - Offer safe presets and a custom color/hex input.
 - Provide a simple outward-facing document/public-page preview.
 - Apply the brand color to PDFs, public document pages, and restrained transactional email accents.

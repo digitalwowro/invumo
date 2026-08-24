@@ -5,6 +5,7 @@ it('protects the English design-system matrix on desktop', function () {
 
     $page->assertSee('Invumo component system')
         ->assertSee('Operational table')
+        ->assertSee('File upload states')
         ->assertSee('B/8 · O/0/D · 1/I/l')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
@@ -25,6 +26,7 @@ it('protects Romanian expansion and diacritics on desktop', function () {
     $page = visit('/__design-system/ro')
         ->on()->desktop()
         ->assertSee('Sistemul de componente Invumo')
+        ->assertSee('Stările încărcării de fișiere')
         ->assertSee('ă â î ș ț')
         ->assertNoJavaScriptErrors();
 

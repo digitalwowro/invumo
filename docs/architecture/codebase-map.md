@@ -38,7 +38,7 @@ The approved module catalog is:
 | Module         | Owns                                                                                                                    |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `Identity`     | Account-level identity and entitlement behavior beyond Fortify's framework authentication entry points                  |
-| `Companies`    | Companies, memberships, invitations, ownership, company switching, and company configuration                            |
+| `Companies`    | Companies, memberships, invitations, ownership, company switching, configuration, and private Company assets            |
 | `Customers`    | Customers, contacts, delivery recipients, defaults, and customer search                                                 |
 | `Catalog`      | Products and services, catalog defaults, search, and archive behavior                                                   |
 | `Documents`    | Shared document lines, snapshots, numbering, calculation orchestration, and common document behavior                    |

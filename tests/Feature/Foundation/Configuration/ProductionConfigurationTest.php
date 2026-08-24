@@ -92,6 +92,21 @@ class ProductionConfigurationTest extends TestCase
         }
     }
 
+    public function test_company_assets_require_a_configured_private_non_served_disk(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('invumo.company_assets.disk', 'public');
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('A public production Company-asset disk was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('filesystem.company_assets', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
     private function setSafeProductionConfiguration(): void
     {
         $this->app['env'] = 'production';

@@ -9,6 +9,7 @@ export type DesignSystemTranslations = {
         typography: string;
         actions: string;
         forms: string;
+        fileUpload: string;
         statuses: string;
         feedback: string;
         asyncStates: string;
@@ -48,6 +49,20 @@ export type DesignSystemTranslations = {
         disabled: string;
         inherited: string;
         inheritedCaption: string;
+    };
+    upload: {
+        label: string;
+        description: string;
+        controls: {
+            dropPrompt: string;
+            choose: string;
+            replace: string;
+            remove: string;
+            selected: string;
+            uploading: string;
+        };
+        error: string;
+        success: string;
     };
     feedback: Record<
         'neutral' | 'money' | 'warning' | 'error' | 'info',

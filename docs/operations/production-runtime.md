@@ -96,6 +96,12 @@ Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS 
 
 The owner also confirmed on 2026-08-23 that ZeptoMail domain authentication and DMARC were added and provider-verified. Later the same day, Google and Cloudflare public DNS resolvers both returned `_dmarc.invumo.com` as `v=DMARC1; p=none; adkim=r; aspf=r`, closing the propagation recheck.
 
+## Private Company assets
+
+Company-logo storage is configured through `COMPANY_ASSETS_DISK` and defaults to `company_assets_local`, whose root is `storage/app/company-assets`. This disk is private, has no public symbolic link or temporary-serving route, and requires the PHP `fileinfo` and `gd` extensions for content detection and full raster decoding. The production-readiness command rejects a missing, public, or framework-served Company-asset disk.
+
+No production Company-asset migration, file, route, or configuration-cache change was applied when the Phase 1 foundation was implemented. Before the Phase 2 logo workflow is enabled in production, run the approved migration/configuration rollout, verify that the unprivileged application processes can write this directory, and confirm that the externally managed off-server file backup and restore scope includes it. A later S3-compatible move follows the verified-copy transition in the [upload/storage contract](../architecture/uploads-and-storage.md), not a domain or UI rewrite.
+
 ## Verified behavior
 
 The 2026-08-23 verification proved:

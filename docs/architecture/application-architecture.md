@@ -146,7 +146,7 @@ Generate v1 PDFs from dedicated Blade templates using a pure-PHP renderer behind
 
 If that proof fails, replace only the renderer with a headless-browser implementation; do not move invoice rendering or calculations into a Node service.
 
-Use Laravel's filesystem abstraction. Local production storage is acceptable initially only when uploaded and generated files are covered by the externally managed off-server backup and restore process. This preserves a later move to S3-compatible storage without changing domain code.
+Use Laravel's filesystem abstraction. Local production storage is acceptable initially only when uploaded and generated files are covered by the externally managed off-server backup and restore process. This preserves a later move to S3-compatible storage without changing domain code. Company-logo validation, private serving, replacement, cleanup, and the local-to-S3 transition follow the approved [`uploads-and-storage.md`](uploads-and-storage.md) contract.
 
 ## Development and deployment
 

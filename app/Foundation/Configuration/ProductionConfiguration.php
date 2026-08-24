@@ -45,6 +45,7 @@ final class ProductionConfiguration
             'cache.default' => config('cache.default') !== 'database',
             'cache.tenant_job_connection' => config('cache.stores.tenant_jobs.connection')
                 !== $tenantConnection,
+            'filesystem.company_assets' => ! $this->companyAssetDiskIsPrivate(),
             'mail.default' => config('mail.default') !== 'smtp',
             'mail.smtp_password' => ! $this->nonEmpty(config('mail.mailers.smtp.password')),
             'mail.from' => filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL) === false,
@@ -71,5 +72,20 @@ final class ProductionConfiguration
         return is_string($value)
             && trim($value) !== ''
             && ! str_contains($value, '__INVUMO_');
+    }
+
+    private function companyAssetDiskIsPrivate(): bool
+    {
+        $diskName = config('invumo.company_assets.disk');
+
+        if (! is_string($diskName) || $diskName === '' || $diskName === 'public') {
+            return false;
+        }
+
+        $disk = config("filesystems.disks.{$diskName}");
+
+        return is_array($disk)
+            && ($disk['visibility'] ?? 'private') !== 'public'
+            && ($disk['serve'] ?? false) !== true;
     }
 }

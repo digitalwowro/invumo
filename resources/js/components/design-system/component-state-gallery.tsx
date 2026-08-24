@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/app/page-header';
 import { GalleryFoundations } from '@/components/design-system/gallery-foundations';
 import { GalleryStates } from '@/components/design-system/gallery-states';
 import { GalleryTable } from '@/components/design-system/gallery-table';
+import { GalleryUploads } from '@/components/design-system/gallery-uploads';
 import type {
     DesignSystemStatusLabels,
     DesignSystemTranslations,
@@ -24,6 +25,7 @@ export function ComponentStateGallery({
                 subtitle={labels.page.subtitle}
             />
             <GalleryFoundations labels={labels} />
+            <GalleryUploads labels={labels} />
             <GalleryStates labels={labels} statusLabels={statusLabels} />
             <GalleryTable labels={labels} statusLabels={statusLabels} />
         </Stack>

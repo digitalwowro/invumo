@@ -207,9 +207,10 @@ Local routing data is the first intentional `jsonb` business exception because f
 
 - `id`, `company_id`
 - purpose, storage disk/key, MIME type, byte size, content hash
-- immutable creation metadata and `deleted_at` only after no live reference remains
+- pixel width/height, nullable creator, immutable creation time, and `deleted_at` only after no live reference remains
 
 Replacing a logo creates a new asset row. Existing document snapshots can continue referencing the earlier immutable asset until their retention ends.
+The accepted upload, private-serving, replacement, cleanup, and storage-migration rules are defined in [`uploads-and-storage.md`](uploads-and-storage.md).
 
 ### `number_series` and `number_counters`
 

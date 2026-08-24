@@ -116,7 +116,7 @@ A deferred constraint trigger validates at transaction commit that each Company 
 
 Acceptance locks the invitation, rechecks email/company/expiry/revocation, creates one membership, records the accepting User, and consumes the invitation in one transaction. A resend rotates the token and restarts the full 7-day lifetime so the previous link stops working. Ordinary invitations cannot create Owner membership.
 
-Invitation email is queued only after the business transaction commits. Because the acceptance credential must appear in the email but plaintext tokens are never persisted as invitation data, the token-bearing queue job payload is encrypted. Immediately before mail delivery it reloads the invitation and suppresses delivery if the token was rotated, accepted, revoked, or expired.
+The encrypted invitation-email queue row and its database uniqueness lock are inserted inside the same transaction as invitation creation or resend, using the same restricted PostgreSQL connection. They become available to workers only when the business mutation commits and disappear with it on rollback. Because the acceptance credential must appear in the email but plaintext tokens are never persisted as invitation data, the token-bearing job payload is encrypted. Immediately before mail delivery the job enters the declared Company's forced-RLS context, reloads the invitation, and suppresses delivery if the token was rotated, accepted, revoked, or expired. It closes that short transaction before contacting the mail provider.
 
 ### `platform_operators`
 

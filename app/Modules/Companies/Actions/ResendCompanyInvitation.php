@@ -31,7 +31,7 @@ final readonly class ResendCompanyInvitation
     {
         $token = CompanyInvitationToken::issue();
 
-        $invitation = DB::connection(config('database.tenant_connection'))
+        return DB::connection(config('database.tenant_connection'))
             ->transaction(function () use ($company, $actor, $invitation, $token) {
                 $this->authorizer->authorize($actor, $company, CompanyAbility::ManageMembers);
                 $locked = $this->lockPending($company, $invitation);
@@ -58,13 +58,11 @@ final readonly class ResendCompanyInvitation
                     ));
                 });
 
-                return $locked->load('company');
+                $issued = new IssuedCompanyInvitation($locked, $token->plainText());
+                $this->notifier->queue($issued, $actor);
+
+                return $issued;
             });
-
-        $issued = new IssuedCompanyInvitation($invitation, $token->plainText());
-        $this->notifier->send($issued, $actor);
-
-        return $issued;
     }
 
     private function lockPending(Company $company, CompanyInvitation $invitation): CompanyInvitation

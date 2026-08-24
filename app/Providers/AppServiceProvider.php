@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Foundation\Diagnostics\ApplicationHealth;
+use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
             VerifiesTenantMembership::class,
             CompanyMembershipVerifier::class,
         );
+        $this->app->singleton(TenantJobExecution::class);
         $this->app->singleton(TenantContext::class);
     }
 

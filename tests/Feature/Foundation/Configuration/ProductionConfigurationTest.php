@@ -73,6 +73,25 @@ class ProductionConfigurationTest extends TestCase
         }
     }
 
+    public function test_queue_connection_and_visibility_timeout_must_match_the_worker_contract(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set([
+            'queue.connections.database.connection' => 'pgsql_schema',
+            'queue.connections.database.retry_after' => 90,
+        ]);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('An unsafe production queue topology was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('queue.database_connection', $exception->getMessage());
+            $this->assertStringContainsString('queue.retry_after', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
     private function setSafeProductionConfiguration(): void
     {
         $this->app['env'] = 'production';
@@ -93,7 +112,10 @@ class ProductionConfigurationTest extends TestCase
             'session.http_only' => true,
             'session.same_site' => 'lax',
             'queue.default' => 'database',
+            'queue.connections.database.connection' => 'pgsql',
+            'queue.connections.database.retry_after' => 120,
             'cache.default' => 'database',
+            'cache.stores.tenant_jobs.connection' => 'pgsql',
             'mail.default' => 'smtp',
             'mail.mailers.smtp.password' => 'mail-test-secret',
             'mail.from.address' => 'app@example.com',

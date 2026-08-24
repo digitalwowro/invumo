@@ -42,7 +42,7 @@ final readonly class InviteCompanyMember
         $token = CompanyInvitationToken::issue();
 
         try {
-            $invitation = DB::connection(config('database.tenant_connection'))
+            return DB::connection(config('database.tenant_connection'))
                 ->transaction(function () use ($company, $actor, $email, $normalizedEmail, $role, $token) {
                     $this->authorizer->authorize($actor, $company, CompanyAbility::ManageMembers);
                     $this->ensureNotMember($company, $normalizedEmail);
@@ -60,16 +60,14 @@ final readonly class InviteCompanyMember
 
                     $this->recordCreatedAudit($company, $actor, $invitation);
 
-                    return $invitation->load('company');
+                    $issued = new IssuedCompanyInvitation($invitation, $token->plainText());
+                    $this->notifier->queue($issued, $actor);
+
+                    return $issued;
                 });
         } catch (UniqueConstraintViolationException) {
             throw CompanyInvitationException::alreadyPending();
         }
-
-        $issued = new IssuedCompanyInvitation($invitation, $token->plainText());
-        $this->notifier->send($issued, $actor);
-
-        return $issued;
     }
 
     private function ensureNotMember(Company $company, string $normalizedEmail): void

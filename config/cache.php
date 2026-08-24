@@ -47,6 +47,13 @@ return [
             'lock_table' => env('DB_CACHE_LOCK_TABLE'),
         ],
 
+        'tenant_jobs' => [
+            'driver' => 'database',
+            'connection' => env('DB_TENANT_JOB_LOCK_CONNECTION', 'pgsql'),
+            'table' => env('DB_CACHE_TABLE', 'cache'),
+            'lock_table' => env('DB_CACHE_LOCK_TABLE'),
+        ],
+
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache/data'),

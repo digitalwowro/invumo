@@ -7,6 +7,8 @@ use RuntimeException;
 
 final class ProductionConfiguration
 {
+    private const QUEUE_WORKER_TIMEOUT_SECONDS = 90;
+
     public function assertSafe(): void
     {
         $tenantConnection = config('database.tenant_connection') ?? config('database.default');
@@ -36,7 +38,13 @@ final class ProductionConfiguration
             'session.http_only' => config('session.http_only') !== true,
             'session.same_site' => ! in_array(config('session.same_site'), ['lax', 'strict'], true),
             'queue.default' => config('queue.default') !== 'database',
+            'queue.database_connection' => config('queue.connections.database.connection')
+                !== $tenantConnection,
+            'queue.retry_after' => (int) config('queue.connections.database.retry_after')
+                <= self::QUEUE_WORKER_TIMEOUT_SECONDS,
             'cache.default' => config('cache.default') !== 'database',
+            'cache.tenant_job_connection' => config('cache.stores.tenant_jobs.connection')
+                !== $tenantConnection,
             'mail.default' => config('mail.default') !== 'smtp',
             'mail.smtp_password' => ! $this->nonEmpty(config('mail.mailers.smtp.password')),
             'mail.from' => filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL) === false,

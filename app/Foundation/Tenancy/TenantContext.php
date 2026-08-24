@@ -2,6 +2,7 @@
 
 namespace App\Foundation\Tenancy;
 
+use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Models\User;
 use Closure;
@@ -14,7 +15,10 @@ final class TenantContext
 {
     private ?string $companyId = null;
 
-    public function __construct(private VerifiesTenantMembership $memberships) {}
+    public function __construct(
+        private VerifiesTenantMembership $memberships,
+        private TenantJobExecution $jobExecution,
+    ) {}
 
     public function companyId(): ?string
     {
@@ -50,6 +54,18 @@ final class TenantContext
         return $this->run($companyId, $callback);
     }
 
+    public function assertClear(): void
+    {
+        $connection = $this->connection();
+        $databaseCompany = $connection->selectOne(
+            'SELECT public.invumo_current_company_id() AS company_id',
+        )?->company_id;
+
+        if ($this->companyId !== null || $connection->transactionLevel() !== 0 || $databaseCompany !== null) {
+            throw new LogicException('Tenant context leaked outside its transaction boundary.');
+        }
+    }
+
     /**
      * @template TReturn
      *
@@ -58,6 +74,8 @@ final class TenantContext
      */
     private function run(string $companyId, Closure $callback): mixed
     {
+        $this->jobExecution->ensureCompany($companyId);
+
         if ($this->companyId !== null) {
             if ($this->companyId !== $companyId) {
                 throw new LogicException('A tenant context cannot switch Company inside an active transaction.');

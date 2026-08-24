@@ -1,7 +1,7 @@
 # Scheduling, Recurrence, Reminders, and Downtime
 
 Status: Approved architecture decision  
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 This specification defines how company-local recurring invoices and reminders map to UTC execution, survive daylight-saving transitions and service downtime, and remain idempotent under retries or overlapping workers.
 
@@ -14,6 +14,22 @@ This specification defines how company-local recurring invoices and reminders ma
 - Redis and an external message broker are not required.
 
 The scheduler dispatches work; it does not perform slow PDF or provider operations inside the scheduler lock.
+
+## Shared tenant-job execution contract
+
+Phase 1 provides the worker-side contract reused by later scheduling features:
+
+- Every tenant business job carries a validated Company ID, stable machine idempotency key, and non-sensitive component label.
+- Payloads are encrypted and duplicate dispatch is suppressed for up to seven days, or until earlier processing release, through a dedicated database uniqueness lock on the same `pgsql` connection as the queue and business mutation.
+- Queue-row and lock insertion may occur inside the root business transaction when the work is already known; commit exposes the mutation and job together, while rollback removes both. Provider/network work never runs inside that transaction.
+- One initial attempt and five retries use delays of 1 minute, 5 minutes, 15 minutes, 1 hour, and 6 hours. The queue visibility timeout is 120 seconds, above the worker timeout of 90 seconds.
+- Jobs begin and end without tenant state, may enter only their declared Company's short transaction-local RLS context, and fail closed if they attempt to switch Company or leak a transaction/context into the next worker execution.
+- Operational logs contain correlation ID, component, attempt counts, duration, outcome, and a bounded machine failure category only. They exclude Company/target/idempotency identifiers, payloads, recipient addresses, tokens, exception text, and provider content.
+- Queue uniqueness prevents duplicate pending dispatch. Every business effect still needs its own delivery-time validity recheck and, where applicable, a database uniqueness/idempotency constraint. A provider acceptance followed by a worker crash is not made exactly-once by the queue; provider idempotency and event reconciliation remain part of each later integration design where supported.
+
+Company-invitation delivery is the initial proof workflow: its encrypted job is queued atomically with invitation creation/resend, reloads and validates the token under forced RLS, closes the database transaction, and then submits mail. A rotated, accepted, revoked, or expired invitation is deliberately skipped.
+
+The `job_dispatches` table and narrow cross-Company dispatcher privilege remain feature-owned by the later recurrence/reminder slice. They are not part of the Phase 1 worker foundation.
 
 ## Canonical time model
 
@@ -63,7 +79,7 @@ Changing a company's timezone or automation time requires confirmation, is audit
 
 A minimal scheduling-dispatch record contains company ID, opaque target ID, job type, due UTC timestamp, idempotency key, and processing status; it contains no customer or financial payload.
 
-The scheduler claims due dispatch records in small batches using a transaction and `FOR UPDATE SKIP LOCKED`, inserts the corresponding database-queue jobs, marks the dispatches queued, and commits those changes together before workers perform slow work. Each queued job carries its `company_id` and enters the tenant RLS context before reading business data.
+The scheduler claims due dispatch records in small batches using a transaction and `FOR UPDATE SKIP LOCKED`, inserts the corresponding database-queue jobs, marks the dispatches queued, and commits those changes together before workers perform slow work. Each queued job uses the shared tenant-job contract and enters only its declared Company's short tenant RLS context before reading business data.
 
 Business effects use database uniqueness constraints in addition to queue uniqueness:
 

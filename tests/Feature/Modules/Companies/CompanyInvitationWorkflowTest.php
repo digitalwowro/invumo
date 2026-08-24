@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Modules\Companies;
 
+use App\Foundation\Jobs\Middleware\RunTenantJob;
+use App\Foundation\Jobs\TenantJob;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Models\AuditEvent;
@@ -13,6 +15,7 @@ use App\Modules\Companies\Actions\RevokeCompanyInvitation;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Data\IssuedCompanyInvitation;
 use App\Modules\Companies\Exceptions\CompanyInvitationException;
+use App\Modules\Companies\Jobs\SendCompanyInvitation;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Notifications\CompanyInvitationNotification;
 use App\Modules\Companies\Support\CompanyInvitationToken;
@@ -24,6 +27,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CompanyInvitationWorkflowTest extends TestCase
@@ -38,6 +42,7 @@ class CompanyInvitationWorkflowTest extends TestCase
 
     public function test_invitation_is_hashed_audited_queued_and_expires_after_seven_days(): void
     {
+        Queue::fake();
         Notification::fake();
         Carbon::setTestNow('2026-08-23 10:00:00 Europe/Bucharest');
         $owner = $this->accountOwner(language: 'ro');
@@ -57,11 +62,26 @@ class CompanyInvitationWorkflowTest extends TestCase
         $this->assertNotSame($issued->plainTextToken, $invitation->token_hash);
         $this->assertTrue($invitation->expires_at->equalTo(now()->addDays(7)));
 
+        Queue::assertPushed(
+            SendCompanyInvitation::class,
+            function (SendCompanyInvitation $job) use ($company, $invitation): bool {
+                $this->assertInstanceOf(ShouldQueue::class, $job);
+                $this->assertInstanceOf(ShouldBeEncrypted::class, $job);
+                $this->assertSame($company->id, $job->identity->companyId);
+                $this->assertSame($invitation->id, $job->invitationId);
+                $this->assertSame('ro', $job->locale);
+                $this->assertSame([60, 300, 900, 3600, 21600], $job->backoff());
+                $this->assertSame(6, $job->tries);
+
+                return true;
+            },
+        );
+
+        $this->runJob($this->jobFor($issued, $owner));
+
         Notification::assertSentOnDemand(
             CompanyInvitationNotification::class,
             function ($notification, $channels, AnonymousNotifiable $notifiable, $locale): bool {
-                $this->assertInstanceOf(ShouldQueue::class, $notification);
-                $this->assertInstanceOf(ShouldBeEncrypted::class, $notification);
                 $this->assertSame(['mail'], $channels);
                 $this->assertSame('New.Member@Example.com', $notifiable->routeNotificationFor('mail'));
 
@@ -82,6 +102,7 @@ class CompanyInvitationWorkflowTest extends TestCase
 
     public function test_duplicate_pending_and_existing_member_invitations_are_rejected(): void
     {
+        Queue::fake();
         Notification::fake();
         $owner = $this->accountOwner();
         $existing = $this->accountOwner(email: 'existing@example.com');
@@ -121,6 +142,7 @@ class CompanyInvitationWorkflowTest extends TestCase
 
     public function test_resend_rotates_the_token_and_revoke_invalidates_delivery_and_acceptance(): void
     {
+        Queue::fake();
         Notification::fake();
         Carbon::setTestNow('2026-08-23 10:00:00 Europe/Bucharest');
         $owner = $this->accountOwner();
@@ -145,14 +167,12 @@ class CompanyInvitationWorkflowTest extends TestCase
             $second->invitation->token_hash,
         );
         $this->assertTrue($second->invitation->expires_at->equalTo(now()->addDays(7)));
-        $this->assertFalse(
-            $this->notificationFor($first)->shouldSend(new AnonymousNotifiable, 'mail'),
-        );
+        $this->runJob($this->jobFor($first, $owner));
+        Notification::assertNothingSent();
 
         app(RevokeCompanyInvitation::class)->handle($company, $owner, $second->invitation);
-        $this->assertFalse(
-            $this->notificationFor($second)->shouldSend(new AnonymousNotifiable, 'mail'),
-        );
+        $this->runJob($this->jobFor($second, $owner));
+        Notification::assertNothingSent();
 
         $invitee = $this->accountOwner(email: 'invited@example.com');
         $this->expectExceptionObject(CompanyInvitationException::unavailable());
@@ -161,6 +181,7 @@ class CompanyInvitationWorkflowTest extends TestCase
 
     public function test_acceptance_matches_email_creates_one_membership_and_is_single_use(): void
     {
+        Queue::fake();
         Notification::fake();
         $owner = $this->accountOwner();
         $invitee = $this->accountOwner(email: 'invitee@example.com');
@@ -192,6 +213,7 @@ class CompanyInvitationWorkflowTest extends TestCase
 
     public function test_wrong_email_and_expired_invitation_cannot_be_accepted(): void
     {
+        Queue::fake();
         Notification::fake();
         Carbon::setTestNow('2026-08-23 10:00:00 Europe/Bucharest');
         $owner = $this->accountOwner();
@@ -217,14 +239,23 @@ class CompanyInvitationWorkflowTest extends TestCase
         app(AcceptCompanyInvitation::class)->handle($rightUser, $issued->plainTextToken);
     }
 
-    private function notificationFor(IssuedCompanyInvitation $issued): CompanyInvitationNotification
+    private function jobFor(IssuedCompanyInvitation $issued, User $actor): SendCompanyInvitation
     {
-        return new CompanyInvitationNotification(
-            $issued->invitation->id,
-            $issued->plainTextToken,
-            $issued->invitation->company->name,
-            'Owner',
-            $issued->invitation->expires_at,
+        return new SendCompanyInvitation(
+            companyId: $issued->invitation->company_id,
+            invitationId: $issued->invitation->id,
+            plainTextToken: $issued->plainTextToken,
+            locale: $actor->language_code,
+        );
+    }
+
+    private function runJob(SendCompanyInvitation $job): void
+    {
+        app(RunTenantJob::class)->handle(
+            $job,
+            function (TenantJob $queued): void {
+                app()->call([$queued, 'handle']);
+            },
         );
     }
 

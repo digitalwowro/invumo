@@ -1,5 +1,6 @@
 <?php
 
+use App\Foundation\Database\Schema\TenantTable;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -10,10 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('audit_events', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('company_id')
-                ->constrained('companies')
-                ->cascadeOnDelete();
+            TenantTable::addIdentity($table);
             $table->text('actor_type');
             $table->foreignUuid('actor_user_id')
                 ->nullable()
@@ -30,7 +28,6 @@ return new class extends Migration
             $table->jsonb('before')->nullable();
             $table->jsonb('after')->nullable();
 
-            $table->unique(['company_id', 'id']);
             $table->index('actor_user_id');
             $table->index(['company_id', 'occurred_at', 'id']);
             $table->index(['company_id', 'target_type', 'target_id']);
@@ -53,40 +50,11 @@ return new class extends Migration
             WHERE idempotency_reference IS NOT NULL
             SQL);
 
-        DB::unprepared(<<<'SQL'
-            ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
-            ALTER TABLE audit_events FORCE ROW LEVEL SECURITY;
-
-            CREATE POLICY audit_events_company_policy
-            ON audit_events
-            FOR ALL
-            USING (
-                company_id = nullif(current_setting('app.current_company_id', true), '')::uuid
-            )
-            WITH CHECK (
-                company_id = nullif(current_setting('app.current_company_id', true), '')::uuid
-            );
-            SQL);
-
-        $this->grantRuntimePrivileges();
+        TenantTable::protect('audit_events', ['SELECT', 'INSERT']);
     }
 
     public function down(): void
     {
         Schema::dropIfExists('audit_events');
-    }
-
-    private function grantRuntimePrivileges(): void
-    {
-        DB::unprepared(<<<'SQL'
-            DO $$
-            BEGIN
-                IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_runtime') THEN
-                    EXECUTE 'REVOKE ALL ON TABLE audit_events FROM invumo_runtime';
-                    EXECUTE 'GRANT SELECT, INSERT ON TABLE audit_events TO invumo_runtime';
-                END IF;
-            END
-            $$
-            SQL);
     }
 };

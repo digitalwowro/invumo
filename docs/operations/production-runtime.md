@@ -33,7 +33,7 @@ PostgreSQL uses two login roles:
 - `invumo_schema` owns the database and is used only by controlled migrations;
 - `invumo_runtime` is used by web requests and jobs.
 
-Neither role is a superuser, may create databases or roles, or may bypass RLS. The runtime role cannot create schema objects or read/write the Laravel migration repository. Tenant-table RLS policies and restricted-role isolation tests remain part of the Phase 1 business-schema work.
+Neither role is a superuser, may create databases or roles, or may bypass RLS. The runtime role cannot create schema objects or read/write the Laravel migration repository. The Phase 1 business-schema foundation now enforces the reusable forced-RLS/restricted-grant contract and isolated PostgreSQL tests; each later feature migration must apply it to its own tenant tables.
 
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
 
@@ -111,5 +111,5 @@ This runtime baseline does **not** close the complete Phase 1 or public-launch a
 - separate development/production environments and repeatable application releases before real users make direct-production development unsafe; this is deliberately deferred during the current no-user period;
 - applying and smoke-testing the completed invitation flow only through a separately authorized production change when appropriate;
 - application/job idempotency and observability primitives;
-- complete business migrations, forced RLS policies, and restricted-role isolation tests;
+- later feature-owned business migrations, each using the completed forced-RLS/restricted-grant schema contract;
 - later Phase 12 operational re-verification.

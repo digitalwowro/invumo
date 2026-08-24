@@ -59,20 +59,22 @@ The runtime role:
 
 Enable and force RLS on tenant-owned tables. A missing applicable context/policy is default-deny. Migrations must create the policies and grants as part of the same reviewed schema change as each tenant-owned table.
 
+The shared Phase 1 migration contract applies those requirements consistently: UUID tenant identity, `(company_id, id)` uniqueness, same-Company foreign keys, forced RLS, a schema tag used by automated discovery, and an explicit runtime privilege allowlist. CI inspects every current tenant business table with `company_id` and fails when the policy, ownership separation, UUID type, non-nullability, tag, or composite identity is missing. Control-plane membership and invitation tables remain the documented non-RLS exceptions; the payload-free dispatcher table receives its separately bounded policy when introduced.
+
 ## Tenant policy
 
 The equivalent policy on each tenant-owned table is:
 
 ```sql
 USING (
-    company_id = nullif(current_setting('app.current_company_id', true), '')::uuid
+    company_id = (SELECT public.invumo_current_company_id())
 )
 WITH CHECK (
-    company_id = nullif(current_setting('app.current_company_id', true), '')::uuid
+    company_id = (SELECT public.invumo_current_company_id())
 )
 ```
 
-This restricts reads, updates, and deletes and prevents inserts or updates from writing another company's `company_id`.
+The stable helper resolves `nullif(current_setting('app.current_company_id', true), '')::uuid`; wrapping it in a scalar subquery lets PostgreSQL evaluate the transaction-local value once for the policy plan rather than once per candidate row. This restricts reads, updates, and deletes and prevents inserts or updates from writing another company's `company_id`.
 
 The `::uuid` cast is intentional: company IDs and all domain foreign keys are PostgreSQL-native UUIDs, not text values inferred merely from this policy example.
 

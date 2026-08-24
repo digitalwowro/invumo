@@ -52,6 +52,8 @@ The schema uses ordinary relational columns and child tables for fields that are
 - Use `ON DELETE RESTRICT` for historical/business dependencies and `ON DELETE CASCADE` only for true owned children whose removal is part of an already-authorized parent/whole-Company deletion.
 - Use partial unique indexes for single active/default designations and partial operational indexes for pending/active work.
 
+The Phase 1 implementation provides one `TenantTable` migration contract for these repeated invariants. It creates UUID tenant identity and `(company_id, id)` uniqueness, the approved exact money/quantity/percentage/precision column envelopes, indexed composite same-Company foreign keys, forced RLS, the canonical fail-closed policy, a tenant-table schema tag, and explicitly allowlisted runtime grants. Automated schema discovery checks every current business table carrying `company_id`, except the documented control-plane tables, so a later feature migration cannot silently omit this contract. This is a migration primitive, not a generic repository or module framework; feature-owned tables are still introduced just in time with their complete vertical slices.
+
 Every table below has `created_at` and `updated_at` when it represents mutable state. Immutable event/attempt rows instead use the relevant occurrence timestamp and do not pretend to be editable records.
 
 ## 4. Control-plane identity and ownership
@@ -664,6 +666,8 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 6. transactions, public links, artifacts, deliveries/provider events, and reminder instances.
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
+
+The first migration step is implemented: `pg_trgm`, the stable transaction-local Company resolver, the immutable currency-quantization predicate, domain `timestamptz` normalization, runtime migration-table denial, and the reusable tenant-table migration contract are present and isolated-tested. Steps 3–8 remain feature-owned persistence work and are not empty tables created ahead of their application Actions, Queries, validation, authorization, and tests. The outbox's dispatcher-specific grant remains coupled to the migration that introduces `job_dispatches`.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

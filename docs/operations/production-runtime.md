@@ -1,14 +1,14 @@
 # Production Runtime Baseline
 
-Status: Operational Phase 1 foundation; public-launch operations verification remains open
+Status: Phase 1 operational baseline complete; public-launch operations verification remains open
 
-Verified: 2026-08-23
+Verified: 2026-08-24
 
 This document records the production runtime that currently serves Invumo. It contains no credentials and does not replace the canonical [development tracker](../development/development-tracker.md).
 
 ## Temporary pre-launch operating model
 
-Until public launch, while Invumo has no real users, development occurs directly in this hosted production checkout. This is an approved temporary simplification. Source control and relevant automated checks still apply, but a repeatable application deployment process is not a Phase 1 requirement.
+Until public launch, while Invumo has no external users or customer business data, development occurs directly in this hosted production checkout. This is an approved temporary simplification. Source control and relevant automated checks still apply, but a repeatable application deployment process is not a Phase 1 requirement.
 
 Rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are provided by the owner's external infrastructure and are not implemented or configured in this repository. Before public launch, Phase 12 must verify evidence that those safeguards are active and usable. Before real users make direct-production development unsafe, Invumo must add separate development and production environments and a repeatable release process.
 
@@ -38,6 +38,8 @@ Neither role is a superuser, may create databases or roles, or may bypass RLS. T
 Production-like migrations now require `invumo_runtime` before executing any conditional grant path. A missing role aborts with a named configuration error instead of allowing a successful but incomplete migration. Local and isolated testing may omit split roles deliberately; when the role exists, the same grants and denials are applied and verified.
 
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
+
+Verified on 2026-08-24: all Phase 1 migrations through `2026_08_24_123000_create_company_assets` ran in production through the `pgsql_schema` connection as the `invumo` operating-system user. Post-migration readiness, private configuration/view caches, the user-owned queue worker, restricted runtime access, and the complete runtime verifier all passed. Later feature migrations remain just-in-time work owned by their phases.
 
 ## Queue worker
 
@@ -70,7 +72,7 @@ The tracked [service installer](../../scripts/install-production-services.sh) in
 
 Run `php artisan invumo:production-configuration --no-interaction` after a production configuration/release change and before admitting traffic, or run the complete runtime verifier that invokes it. The command validates HTTPS/non-debug operation, production environment identity, split PostgreSQL credentials, encrypted secure database sessions, database queue/cache, matching business/queue/tenant-job-lock connections, a visibility timeout above the worker timeout, authenticated SMTP, and English/Romanian localization. Failure names only unsafe configuration keys and returns a non-zero exit code; it never prints configured values.
 
-The assertion is intentionally absent from service-provider boot. This keeps Artisan inspection/repair commands and the health route bootable when configuration is unsafe. `/up` runs the same production contract and additionally opens the runtime database connection, verifies that PostgreSQL reports `invumo_runtime`, and fails if any tenant context was inherited. Its public response contains only `up` or `down`; operators use the command for the bounded cause. Ordinary web responses carry a server-generated `X-Request-ID`; operational logs accept only bounded machine labels, outcomes, counts/timings, and that correlation identifier. Customer values, record identifiers, free-text reasons, recipients, payloads, tokens, credentials, and exception messages are not accepted as operational-log context.
+The assertion is intentionally absent from service-provider boot. This keeps Artisan inspection/repair commands and the health route bootable when configuration is unsafe. `/up` runs the same production contract and additionally opens the runtime database connection, verifies that PostgreSQL reports `invumo_runtime`, and fails if any tenant context was inherited. A successful browser request renders Laravel's bounded `Application up` health page, while JSON requests receive the bounded `up` status and failures receive only the bounded `down` surface; operators use the command for the cause. Ordinary web responses carry a server-generated `X-Request-ID`; operational logs accept only bounded machine labels, outcomes, counts/timings, and that correlation identifier. Customer values, record identifiers, free-text reasons, recipients, payloads, tokens, credentials, and exception messages are not accepted as operational-log context.
 
 ## Test isolation in the hosted production checkout
 
@@ -92,7 +94,7 @@ Run the interactive [ZeptoMail configurator](../../scripts/configure-zeptomail.s
 
 The configurator hides the password while it is entered, validates the non-secret inputs, updates the environment atomically, rebuilds the private configuration cache, sends one synchronous test message, and restarts the user-owned queue worker. If any step fails, it automatically restores the previous mail configuration. The later document-email/webhook design remains a separate Phase 9 gate.
 
-Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS submission, verified sender, and bounded timeout are active in cached production configuration; the test message was accepted and received; the queue worker remained active after restart; and the environment/configuration files remained mode `0600`. This proves the transport. Verification and recovery flows use Laravel-authored English/Romanian copy, encrypted after-commit queue payloads, bounded retries, and delivery-time validity rechecks. Company-invitation delivery now uses the shared tenant-job contract: its encrypted database-queue row and uniqueness lock are inserted atomically with invitation creation/resend, the worker performs its validity check under short forced RLS, and mail submission starts after that transaction closes. Isolated tests exercise these boundaries without sending real email. The invitation business migration has not been applied to production, and no live account or invitation message was sent as part of automated verification.
+Verified on 2026-08-23: the regional ZeptoMail SMTP endpoint, authenticated TLS submission, verified sender, and bounded timeout are active in cached production configuration; the test message was accepted and received; the queue worker remained active after restart; and the environment/configuration files remained mode `0600`. This proves the transport. Verification and recovery flows use Laravel-authored English/Romanian copy, encrypted after-commit queue payloads, bounded retries, and delivery-time validity rechecks. Company-invitation delivery now uses the shared tenant-job contract: its encrypted database-queue row and uniqueness lock are inserted atomically with invitation creation/resend, the worker performs its validity check under short forced RLS, and mail submission starts after that transaction closes. Isolated tests exercise these boundaries without sending real email. The invitation schema is now deployed, but no live invitation or invitation email was created during the Phase 1 production closeout.
 
 The owner also confirmed on 2026-08-23 that ZeptoMail domain authentication and DMARC were added and provider-verified. Later the same day, Google and Cloudflare public DNS resolvers both returned `_dmarc.invumo.com` as `v=DMARC1; p=none; adkim=r; aspf=r`, closing the propagation recheck.
 
@@ -102,11 +104,17 @@ Company-logo storage is configured through `COMPANY_ASSETS_DISK` and defaults to
 
 The current 32 GiB host's Invumo PHP-FPM safety envelope is a resolved `memory_limit` of exactly `128M` per request and `pm.max_children = 50` for the `invumo` pool. `memory_limit` must never be unlimited in FPM. These values cap the Invumo pool's PHP-managed heap budget at 6.25 GiB before native-library overhead, leaving capacity for PostgreSQL, Nginx, the queue worker, the operating system, and other hosted pools. Do not raise either value without measuring representative resident memory and recalculating the combined host budget; lowering `pm.max_children` is safe when traffic permits. HTTP uploads execute in PHP-FPM, so the single Laravel queue worker is not an upload-concurrency control.
 
-No production Company-asset migration, file, route, or configuration-cache change was applied when the Phase 1 foundation was implemented. Before the Phase 2 logo workflow is enabled in production, run the approved migration/configuration rollout; verify the effective FPM `memory_limit` and `pm.max_children` against the envelope above; verify that the unprivileged application processes can write this directory; and confirm that the externally managed off-server file backup and restore scope includes it. A later S3-compatible move follows the verified-copy transition in the [upload/storage contract](../architecture/uploads-and-storage.md), not a domain or UI rewrite.
+The Company-asset metadata migration is deployed, but no Company-asset file, upload route, or public-serving route exists yet. Before the Phase 2 logo workflow is enabled in production, verify that the unprivileged application processes can write the private directory and confirm that the externally managed off-server file backup and restore scope includes it; the effective FPM `memory_limit` and `pm.max_children` must remain inside the envelope above. A later S3-compatible move follows the verified-copy transition in the [upload/storage contract](../architecture/uploads-and-storage.md), not a domain or UI rewrite.
+
+## Platform Operations bootstrap
+
+Verified on 2026-08-24: after explicit owner authorization, one existing-app-created and verified User with its personal Account received the initial Platform Owner grant through the protected application Action. No migration, seeder, fixture, web grant route, identifying credential, or tenant-data bypass created the authority. Production login succeeded, and all temporary authenticated smoke-test sessions were revoked afterward.
+
+The live Platform overview, Users, and Accounts pages returned HTTP 200 at 1440×1000 and 390×844 viewports with no browser console warning/error or failed request. Anonymous `/platform` access returned to `/login`, and the sole active Platform Owner was not offered self-impersonation. The isolated Platform suite passed 32 tests with 321 assertions, including full-action impersonation of an ordinary User, exact target authorization/RLS, password-confirmed/throttled entry, operator-target rejection, blocked Platform Operations during impersonation, safe exit, and dual audit attribution.
 
 ## Verified behavior
 
-The 2026-08-23 verification proved:
+The latest 2026-08-24 verification proved:
 
 - `/up` returns HTTP 200;
 - `/` returns HTTP 302 to the HTTPS login page;
@@ -115,15 +123,14 @@ The 2026-08-23 verification proved:
 - schema/runtime database separation matches the approved privilege boundary;
 - current migrations have run;
 - the user queue service is enabled, active, and has not restarted unexpectedly;
-- the cron scheduler executes and writes to the journal.
+- the cron scheduler executes and writes to the journal;
+- the initial Platform Owner boundary is live and the public application retains no smoke-test session.
 
-## Gates still open
+## Gates still open after Phase 1
 
-This runtime baseline does **not** close the complete Phase 1 or public-launch acceptance gates. The following still require implementation or verified evidence:
+Phase 1 is complete. The following later-phase or public-launch requirements remain open:
 
 - evidence before public launch that externally managed rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are active and usable;
 - separate development/production environments and repeatable application releases before real users make direct-production development unsafe; this is deliberately deferred during the current no-user period;
-- applying and smoke-testing the completed invitation flow only through a separately authorized production change when appropriate;
-- application/job idempotency and observability primitives;
 - later feature-owned business migrations, each using the completed forced-RLS/restricted-grant schema contract;
 - later Phase 12 operational re-verification.

@@ -14,33 +14,46 @@ it('protects the English design-system matrix on desktop', function () {
     expect($page->script("getComputedStyle(document.querySelector('[data-slot=metric-value]')).fontFamily"))
         ->toContain('Atkinson Hyperlegible Mono');
 
-    $page->assertScreenshotMatches();
+    // PNG rasterization differs across operating systems. GitHub's pinned
+    // Ubuntu runner owns the reference while every runner keeps semantic checks.
+    if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
+        $page->assertScreenshotMatches();
+    }
 });
 
 it('protects Romanian expansion and diacritics on desktop', function () {
-    visit('/__design-system/ro')
+    $page = visit('/__design-system/ro')
         ->on()->desktop()
         ->assertSee('Sistemul de componente Invumo')
         ->assertSee('ă â î ș ț')
-        ->assertNoJavaScriptErrors()
-        ->assertScreenshotMatches();
+        ->assertNoJavaScriptErrors();
+
+    if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
+        $page->assertScreenshotMatches();
+    }
 });
 
 it('protects the responsive navigation on a narrow viewport', function () {
-    visit('/__design-system/en')
+    $page = visit('/__design-system/en')
         ->on()->iPhone15()
         ->assertSee('Invumo component system')
         ->click('Open navigation')
         ->assertSee('Dashboard')
-        ->assertNoJavaScriptErrors()
-        ->assertScreenshotMatches(fullPage: false);
+        ->assertNoJavaScriptErrors();
+
+    if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
+        $page->assertScreenshotMatches(fullPage: false);
+    }
 });
 
 it('protects the shared confirmation overlay', function () {
-    visit('/__design-system/en')
+    $page = visit('/__design-system/en')
         ->on()->desktop()
         ->click('Open confirmation')
         ->assertSee('Delete this draft?')
-        ->assertNoJavaScriptErrors()
-        ->assertScreenshotMatches(fullPage: false);
+        ->assertNoJavaScriptErrors();
+
+    if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
+        $page->assertScreenshotMatches(fullPage: false);
+    }
 });

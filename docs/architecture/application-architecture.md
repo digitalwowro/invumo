@@ -184,6 +184,7 @@ Vibe coding increases the value of automated boundaries. The baseline requires:
 - Pest 4 for PHP unit, feature, domain, authorization, restricted-role RLS, database, and integration tests
 - Vitest for isolated TypeScript calculation and React behavior tests
 - Pest Browser, using Playwright, for critical full-browser customer and administrative journeys
+- Byte-level visual references owned by the pinned GitHub Ubuntu runner, with comparison artifacts retained on failure; non-canonical environments still run the browser behavior, accessibility, JavaScript, typography-selection, and responsive-state assertions
 - Database constraints and migrations reviewed as product behavior
 - GitHub Actions checks that run tests, analysis, formatting/linting checks, and the production asset build before deployment
 - Design-contract guards that reject raw colours and major component-layer bypasses in feature/page code, plus a development/test component gallery and representative visual-regression coverage for the shared system

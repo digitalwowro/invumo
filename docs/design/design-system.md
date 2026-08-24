@@ -703,6 +703,8 @@ Phase 1 must establish automated guardrails proportionate to these rules:
 - critical components have behavioral and accessibility tests for every variant/state;
 - a development/test-only component gallery renders the complete state matrix in English and Romanian;
 - browser visual-regression coverage protects the shell, typography, buttons, forms, statuses, feedback, table states, dialogs, and responsive layouts;
+- the pinned GitHub Ubuntu runner owns byte-level visual-regression references because PNG font rasterization is operating-system dependent; local and other runners retain the same behavioral, accessibility, JavaScript, typography-selection, and responsive-state checks;
+- failed canonical visual comparisons retain a short-lived expected/actual/difference artifact for review before a reference is changed;
 - representative tests verify no Company brand colour leaks into authenticated application chrome.
 
 Do not add Storybook or another design-system runtime by default. The component gallery may be a test harness excluded from production routing and bundles unless later evidence justifies a separate tool.

@@ -1,0 +1,327 @@
+{
+    "line_cases": [
+        {
+            "name": "zero-decimal-below-half",
+            "input": {
+                "unit_price": "1.49",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 0
+            },
+            "expected": {
+                "items_subtotal": "1",
+                "items_total": "1",
+                "discount_amount": "0",
+                "grand_subtotal": "1",
+                "tax_amount": "0",
+                "final_line_total": "1"
+            }
+        },
+        {
+            "name": "zero-decimal-at-half",
+            "input": {
+                "unit_price": "1.5",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 0
+            },
+            "expected": {
+                "items_subtotal": "2",
+                "items_total": "2",
+                "discount_amount": "0",
+                "grand_subtotal": "2",
+                "tax_amount": "0",
+                "final_line_total": "2"
+            }
+        },
+        {
+            "name": "zero-decimal-above-half",
+            "input": {
+                "unit_price": "1.51",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 0
+            },
+            "expected": {
+                "items_subtotal": "2",
+                "items_total": "2",
+                "discount_amount": "0",
+                "grand_subtotal": "2",
+                "tax_amount": "0",
+                "final_line_total": "2"
+            }
+        },
+        {
+            "name": "two-decimal-below-half",
+            "input": {
+                "unit_price": "1.0049",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "1.00",
+                "items_total": "1.00",
+                "discount_amount": "0.00",
+                "grand_subtotal": "1.00",
+                "tax_amount": "0.00",
+                "final_line_total": "1.00"
+            }
+        },
+        {
+            "name": "two-decimal-at-half",
+            "input": {
+                "unit_price": "1.005",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "1.01",
+                "items_total": "1.01",
+                "discount_amount": "0.00",
+                "grand_subtotal": "1.01",
+                "tax_amount": "0.00",
+                "final_line_total": "1.01"
+            }
+        },
+        {
+            "name": "two-decimal-above-half",
+            "input": {
+                "unit_price": "1.0051",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "1.01",
+                "items_total": "1.01",
+                "discount_amount": "0.00",
+                "grand_subtotal": "1.01",
+                "tax_amount": "0.00",
+                "final_line_total": "1.01"
+            }
+        },
+        {
+            "name": "three-decimal-monthly-line",
+            "input": {
+                "unit_price": "12.34567",
+                "quantity": "2.25",
+                "period_unit": "MONTH",
+                "period_quantity": "3.5",
+                "discount_percentage": "7.125",
+                "tax_percentage": "19.6",
+                "currency_precision": 3
+            },
+            "expected": {
+                "items_subtotal": "27.778",
+                "items_total": "97.223",
+                "discount_amount": "6.927",
+                "grand_subtotal": "90.296",
+                "tax_amount": "17.698",
+                "final_line_total": "107.994"
+            }
+        },
+        {
+            "name": "eight-decimal-yearly-line",
+            "input": {
+                "unit_price": "0.12345678",
+                "quantity": "1.234567",
+                "period_unit": "YEAR",
+                "period_quantity": "2.500001",
+                "discount_percentage": "12.345678",
+                "tax_percentage": "8.765432",
+                "currency_precision": 8
+            },
+            "expected": {
+                "items_subtotal": "0.15241567",
+                "items_total": "0.38103933",
+                "discount_amount": "0.04704189",
+                "grand_subtotal": "0.33399744",
+                "tax_amount": "0.02927632",
+                "final_line_total": "0.36327376"
+            }
+        },
+        {
+            "name": "one-hundred-percent-discount",
+            "input": {
+                "unit_price": "44.44444444",
+                "quantity": "3",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "100",
+                "tax_percentage": "21",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "133.33",
+                "items_total": "133.33",
+                "discount_amount": "133.33",
+                "grand_subtotal": "0.00",
+                "tax_amount": "0.00",
+                "final_line_total": "0.00"
+            }
+        },
+        {
+            "name": "fractional-discount-and-tax",
+            "input": {
+                "unit_price": "19.9999",
+                "quantity": "2.5",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "12.5",
+                "tax_percentage": "19",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "50.00",
+                "items_total": "50.00",
+                "discount_amount": "6.25",
+                "grand_subtotal": "43.75",
+                "tax_amount": "8.31",
+                "final_line_total": "52.06"
+            }
+        },
+        {
+            "name": "rounded-cent-line",
+            "input": {
+                "unit_price": "0.335",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "0",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "0.34",
+                "items_total": "0.34",
+                "discount_amount": "0.00",
+                "grand_subtotal": "0.34",
+                "tax_amount": "0.00",
+                "final_line_total": "0.34"
+            }
+        },
+        {
+            "name": "rounded-tax-line",
+            "input": {
+                "unit_price": "0.05",
+                "quantity": "1",
+                "period_unit": "NONE",
+                "period_quantity": null,
+                "discount_percentage": "0",
+                "tax_percentage": "10",
+                "currency_precision": 2
+            },
+            "expected": {
+                "items_subtotal": "0.05",
+                "items_total": "0.05",
+                "discount_amount": "0.00",
+                "grand_subtotal": "0.05",
+                "tax_amount": "0.01",
+                "final_line_total": "0.06"
+            }
+        }
+    ],
+    "document_cases": [
+        {
+            "name": "empty-draft-totals",
+            "currency_precision": 3,
+            "line_cases": [],
+            "expected": {
+                "items_subtotal": "0.000",
+                "items_total": "0.000",
+                "discount_amount": "0.000",
+                "grand_subtotal": "0.000",
+                "tax_amount": "0.000",
+                "final_total": "0.000"
+            }
+        },
+        {
+            "name": "sum-rounded-lines-without-document-rerounding",
+            "currency_precision": 2,
+            "line_cases": ["rounded-cent-line", "rounded-cent-line"],
+            "expected": {
+                "items_subtotal": "0.68",
+                "items_total": "0.68",
+                "discount_amount": "0.00",
+                "grand_subtotal": "0.68",
+                "tax_amount": "0.00",
+                "final_total": "0.68"
+            }
+        },
+        {
+            "name": "sum-stored-rounded-tax-values",
+            "currency_precision": 2,
+            "line_cases": ["rounded-tax-line", "rounded-tax-line"],
+            "expected": {
+                "items_subtotal": "0.10",
+                "items_total": "0.10",
+                "discount_amount": "0.00",
+                "grand_subtotal": "0.10",
+                "tax_amount": "0.02",
+                "final_total": "0.12"
+            }
+        }
+    ],
+    "valid_transport_cases": [
+        { "name": "zero-decimal", "value": "0", "currency_precision": 0, "expected": "0" },
+        { "name": "two-decimal-padding", "value": "0012.3", "currency_precision": 2, "expected": "12.30" },
+        { "name": "trailing-zero-reduction", "value": "1.23000000", "currency_precision": 2, "expected": "1.23" },
+        { "name": "three-decimal", "value": "0.125000", "currency_precision": 3, "expected": "0.125" },
+        { "name": "eight-decimal-envelope", "value": "9999999999999999999999.12345678", "currency_precision": 8, "expected": "9999999999999999999999.12345678" }
+    ],
+    "invalid_transport_cases": [
+        { "name": "json-number", "value": 12.34, "currency_precision": 2 },
+        { "name": "scientific-notation", "value": "1e2", "currency_precision": 2 },
+        { "name": "negative-value", "value": "-1.00", "currency_precision": 2 },
+        { "name": "currency-scale-loss", "value": "0.001", "currency_precision": 2 },
+        { "name": "storage-scale-overflow", "value": "0.000000000", "currency_precision": 8 },
+        { "name": "integer-envelope-overflow", "value": "10000000000000000000000.00", "currency_precision": 2 },
+        { "name": "invalid-currency-precision", "value": "1.00", "currency_precision": 9 }
+    ],
+    "invalid_line_cases": [
+        {
+            "name": "zero-quantity",
+            "input": { "unit_price": "1", "quantity": "0", "period_unit": "NONE", "period_quantity": null, "discount_percentage": "0", "tax_percentage": "0", "currency_precision": 2 }
+        },
+        {
+            "name": "missing-period-quantity",
+            "input": { "unit_price": "1", "quantity": "1", "period_unit": "MONTH", "period_quantity": null, "discount_percentage": "0", "tax_percentage": "0", "currency_precision": 2 }
+        },
+        {
+            "name": "unexpected-period-quantity",
+            "input": { "unit_price": "1", "quantity": "1", "period_unit": "NONE", "period_quantity": "2", "discount_percentage": "0", "tax_percentage": "0", "currency_precision": 2 }
+        },
+        {
+            "name": "discount-over-one-hundred",
+            "input": { "unit_price": "1", "quantity": "1", "period_unit": "NONE", "period_quantity": null, "discount_percentage": "100.000001", "tax_percentage": "0", "currency_precision": 2 }
+        },
+        {
+            "name": "negative-unit-price",
+            "input": { "unit_price": "-1", "quantity": "1", "period_unit": "NONE", "period_quantity": null, "discount_percentage": "0", "tax_percentage": "0", "currency_precision": 2 }
+        },
+        {
+            "name": "derived-money-overflow",
+            "input": { "unit_price": "9999999999999999999999.99999999", "quantity": "2", "period_unit": "NONE", "period_quantity": null, "discount_percentage": "0", "tax_percentage": "0", "currency_precision": 2 }
+        }
+    ]
+}

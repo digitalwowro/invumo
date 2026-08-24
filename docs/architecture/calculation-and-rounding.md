@@ -1,7 +1,7 @@
 # Calculation, Decimal Precision, and Rounding
 
 Status: Approved architecture decision
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 Invumo uses one deterministic calculation model for quotes, invoices, recurring templates, generated invoices, public pages, PDFs, and transaction validation. The Laravel backend is authoritative; browser calculations exist only to provide an immediate preview of the same rules.
 
@@ -38,12 +38,14 @@ Every quote and invoice stores a snapshot of its currency precision when its cur
 Laravel calculations use `brick/math` and `BigDecimal`. Every required rounding step uses:
 
 ```php
-$value->toScale($scale, RoundingMode::HALF_UP)
+$value->toScale($scale, RoundingMode::HalfUp)
 ```
 
-`RoundingMode::HALF_UP` means round to the nearest value and, on an exact tie, away from zero. Do not substitute BCMath operations whose default truncation would make rounding dependent on individual call sites.
+`RoundingMode::HalfUp` is the `brick/math` 0.18 API for round-to-nearest with exact ties rounded away from zero. Do not substitute BCMath operations whose default truncation would make rounding dependent on individual call sites.
 
 React previews use `decimal.js` configured for the equivalent `Decimal.ROUND_HALF_UP` behavior. Financial values cross the Laravel/Inertia/browser boundary as decimal strings, not JSON numbers. The server recalculates all derived amounts and ignores or rejects client-supplied totals.
+
+The shared Phase 1 implementation lives in backend `Foundation/Money` primitives and framework-neutral browser money helpers. `brick/math` and `decimal.js` are direct runtime dependencies. The browser uses a private high-precision `Decimal` clone rather than changing library-global behavior, and both runtimes reject signs, exponent notation, JSON numbers, invalid precision, scale loss, and storage-envelope overflow at their transport/calculation boundaries.
 
 ## Line calculation order
 
@@ -118,6 +120,8 @@ Maintain shared golden calculation vectors and execute them against the PHP calc
 - Company precision changes not affecting existing snapshots
 - Payment, refund, and adjustment precision validation
 - Identical saved, public-page, and PDF totals that reconcile from printed components
+
+The Phase 1 shared fixture proves the calculation and transport primitives through precisions 0, 2, 3, and 8; below/at/above half boundaries; fractional `NONE`/monthly/yearly lines; discounts and taxes; empty drafts; exact stored-line aggregation; invalid transport; and derived overflow. Quote conversion, recurring resolution, transaction mutation, persistence, public-page, and PDF cases remain required in the phases that introduce those workflows; they reuse these primitives and do not implement another calculation path.
 
 ## References
 

@@ -1,9 +1,12 @@
 <?php
 
-it('protects the English design-system matrix on desktop', function () {
-    $page = visit('/__design-system/en')->on()->desktop();
+use Tests\Support\VisualSnapshot;
 
-    $page->assertSee('Invumo component system')
+it('protects the English design-system matrix on desktop', function () {
+    $page = visit('/__design-system/en')
+        ->on()
+        ->desktop()
+        ->assertSee('Invumo component system')
         ->assertSee('Operational table')
         ->assertSee('File upload states')
         ->assertSee('B/8 · O/0/D · 1/I/l')
@@ -18,7 +21,7 @@ it('protects the English design-system matrix on desktop', function () {
     // PNG rasterization differs across operating systems. GitHub's pinned
     // Ubuntu runner owns the reference while every runner keeps semantic checks.
     if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
-        $page->assertScreenshotMatches();
+        VisualSnapshot::assertMatches($page);
     }
 });
 
@@ -31,7 +34,7 @@ it('protects Romanian expansion and diacritics on desktop', function () {
         ->assertNoJavaScriptErrors();
 
     if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
-        $page->assertScreenshotMatches();
+        VisualSnapshot::assertMatches($page);
     }
 });
 
@@ -44,7 +47,7 @@ it('protects the responsive navigation on a narrow viewport', function () {
         ->assertNoJavaScriptErrors();
 
     if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
-        $page->assertScreenshotMatches(fullPage: false);
+        VisualSnapshot::assertMatches($page, fullPage: false);
     }
 });
 
@@ -56,6 +59,6 @@ it('protects the shared confirmation overlay', function () {
         ->assertNoJavaScriptErrors();
 
     if (getenv('CANONICAL_VISUAL_SNAPSHOTS') === 'true') {
-        $page->assertScreenshotMatches(fullPage: false);
+        VisualSnapshot::assertMatches($page, fullPage: false);
     }
 });

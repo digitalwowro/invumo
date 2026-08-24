@@ -9,12 +9,9 @@ final class ProductionConfiguration
 {
     public function assertSafe(): void
     {
-        if (! app()->isProduction()) {
-            return;
-        }
-
         $tenantConnection = config('database.tenant_connection') ?? config('database.default');
         $violations = array_keys(array_filter([
+            'app.env' => ! app()->isProduction(),
             'app.key' => ! $this->nonEmpty(config('app.key')),
             'app.debug' => config('app.debug') !== false,
             'app.url' => ! str_starts_with((string) config('app.url'), 'https://'),
@@ -51,6 +48,13 @@ final class ProductionConfiguration
             throw new RuntimeException(
                 'Unsafe production configuration: '.implode(', ', $violations).'.',
             );
+        }
+    }
+
+    public function assertSafeWhenProduction(): void
+    {
+        if (app()->isProduction()) {
+            $this->assertSafe();
         }
     }
 

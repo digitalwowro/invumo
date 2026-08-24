@@ -32,4 +32,22 @@ class ApplicationHealthTest extends TestCase
             config()->set('database.tenant_connection', $original);
         }
     }
+
+    public function test_health_reports_down_for_unsafe_production_configuration(): void
+    {
+        $this->app['env'] = 'production';
+        config()->set('app.url', 'http://unsafe.example.test');
+
+        try {
+            $this->getJson('/up')
+                ->assertInternalServerError()
+                ->assertExactJson(['status' => 'down']);
+
+            $this->get('/up')
+                ->assertInternalServerError()
+                ->assertDontSee('app.url');
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
 }

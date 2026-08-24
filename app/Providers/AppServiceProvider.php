@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Foundation\Configuration\ProductionConfiguration;
 use App\Foundation\Diagnostics\ApplicationHealth;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
@@ -34,7 +33,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        app(ProductionConfiguration::class)->assertSafe();
         Event::listen(
             DiagnosingHealth::class,
             fn () => app(ApplicationHealth::class)->diagnose(),

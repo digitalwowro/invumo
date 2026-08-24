@@ -32,9 +32,45 @@ class ProductionConfigurationTest extends TestCase
     {
         config()->set('app.key', null);
 
-        app(ProductionConfiguration::class)->assertSafe();
+        app(ProductionConfiguration::class)->assertSafeWhenProduction();
 
         $this->addToAssertionCount(1);
+    }
+
+    public function test_deployment_command_fails_outside_production_instead_of_silently_skipping(): void
+    {
+        $this->artisan('invumo:production-configuration')
+            ->expectsOutputToContain('app.env')
+            ->assertFailed();
+    }
+
+    public function test_deployment_command_reports_unsafe_keys_without_secret_values(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('database.connections.pgsql.password', '');
+
+        try {
+            $this->artisan('invumo:production-configuration')
+                ->expectsOutputToContain('database.runtime_password')
+                ->doesntExpectOutputToContain('schema-test-secret')
+                ->doesntExpectOutputToContain('mail-test-secret')
+                ->assertFailed();
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_deployment_command_accepts_the_safe_production_contract(): void
+    {
+        $this->setSafeProductionConfiguration();
+
+        try {
+            $this->artisan('invumo:production-configuration')
+                ->expectsOutput('Invumo production configuration is safe.')
+                ->assertSuccessful();
+        } finally {
+            $this->app['env'] = 'testing';
+        }
     }
 
     private function setSafeProductionConfiguration(): void

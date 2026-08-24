@@ -2,14 +2,21 @@
 
 namespace App\Foundation\Diagnostics;
 
+use App\Foundation\Configuration\ProductionConfiguration;
 use App\Foundation\Database\Schema\MigrationDatabaseRole;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class ApplicationHealth
 {
+    public function __construct(
+        private readonly ProductionConfiguration $productionConfiguration,
+    ) {}
+
     public function diagnose(): void
     {
+        $this->productionConfiguration->assertSafeWhenProduction();
+
         $connectionName = (string) (
             config('database.tenant_connection') ?? config('database.default')
         );

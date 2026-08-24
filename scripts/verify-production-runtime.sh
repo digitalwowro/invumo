@@ -22,6 +22,7 @@ fi
 
 cd "${repo_path}"
 
+php artisan invumo:production-configuration --no-interaction
 php artisan migrate:status --database=pgsql_schema --no-interaction >/dev/null
 php artisan schedule:list --no-interaction >/dev/null
 

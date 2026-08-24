@@ -23,6 +23,7 @@ final readonly class CompanyLogoUploadPolicy
     public function __construct(
         private ConfigRepository $config,
         private ValidationFactory $validator,
+        private CompanyLogoRasterStructure $rasterStructure,
     ) {}
 
     public function inspect(UploadedFile $upload): ValidatedCompanyLogoUpload
@@ -56,17 +57,9 @@ final readonly class CompanyLogoUploadPolicy
         $mimeType = $dimensions['mime'];
         $extension = self::EXTENSIONS_BY_MIME[$mimeType] ?? null;
 
-        if ($extension === null || $this->isAnimated($contents, $mimeType)) {
+        if ($extension === null || ! $this->rasterStructure->isValid($contents, $mimeType)) {
             throw ValidationException::withMessages(['logo' => __('validation.image')]);
         }
-
-        $decodedImage = @imagecreatefromstring($contents);
-
-        if ($decodedImage === false) {
-            throw ValidationException::withMessages(['logo' => __('validation.image')]);
-        }
-
-        unset($decodedImage);
 
         $byteSize = strlen($contents);
 
@@ -91,69 +84,5 @@ final readonly class CompanyLogoUploadPolicy
             pixelWidth: $dimensions[0],
             pixelHeight: $dimensions[1],
         );
-    }
-
-    private function isAnimated(string $contents, string $mimeType): bool
-    {
-        return match ($mimeType) {
-            'image/png' => $this->containsPngChunk($contents, 'acTL'),
-            'image/webp' => $this->containsWebpChunk($contents, ['ANIM', 'ANMF']),
-            default => false,
-        };
-    }
-
-    private function containsPngChunk(string $contents, string $target): bool
-    {
-        $offset = 8;
-        $length = strlen($contents);
-
-        while ($offset + 12 <= $length) {
-            $chunkHeader = unpack('Nlength', substr($contents, $offset, 4));
-
-            if ($chunkHeader === false) {
-                return false;
-            }
-
-            $chunkSize = $chunkHeader['length'];
-            $chunkType = substr($contents, $offset + 4, 4);
-
-            if ($chunkType === $target) {
-                return true;
-            }
-
-            $offset += 12 + $chunkSize;
-        }
-
-        return false;
-    }
-
-    /** @param list<string> $targets */
-    private function containsWebpChunk(string $contents, array $targets): bool
-    {
-        if (substr($contents, 0, 4) !== 'RIFF' || substr($contents, 8, 4) !== 'WEBP') {
-            return false;
-        }
-
-        $offset = 12;
-        $length = strlen($contents);
-
-        while ($offset + 8 <= $length) {
-            $chunkType = substr($contents, $offset, 4);
-            $chunkHeader = unpack('Vlength', substr($contents, $offset + 4, 4));
-
-            if ($chunkHeader === false) {
-                return false;
-            }
-
-            $chunkSize = $chunkHeader['length'];
-
-            if (in_array($chunkType, $targets, true)) {
-                return true;
-            }
-
-            $offset += 8 + $chunkSize + ($chunkSize % 2);
-        }
-
-        return false;
     }
 }

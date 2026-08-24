@@ -15,7 +15,7 @@ The current production implementation uses private local storage. Domain and app
 - Reject SVG, GIF, animated formats, malformed files, and files whose content does not match an accepted image MIME type.
 - The server-authoritative maximum is 5 MiB (`5 × 1024 × 1024` bytes).
 - Width and height must each be positive and no greater than 4096 pixels.
-- Validation uses detected file content and decoded image metadata. A browser filename, extension, `Content-Type`, preview, or client-side validation is never authoritative.
+- Validation uses detected file content, bounded PNG/JPEG/WebP container parsing, container-integrity checks, and image metadata. It rejects truncated containers and animation without decoding the complete pixel raster into GD memory. A browser filename, extension, `Content-Type`, preview, or client-side validation is never authoritative.
 - Client-side checks may provide faster feedback but must use rules supplied to the shared `FileUpload` component and must never replace server validation.
 
 The server derives the canonical MIME type and safe extension from the accepted content. Original filenames are neither storage keys nor authorization inputs.
@@ -26,7 +26,7 @@ The server derives the canonical MIME type and safe extension from the accepted 
 - The local disk root is outside `public/`, has no public symbolic link, and does not expose framework temporary-serving routes.
 - Every object key is server generated from the Company UUID, asset UUID, and content-derived extension. It is opaque to the browser and never accepted as request input.
 - Each stored asset records its Company, purpose, disk, object key, detected MIME type, exact byte size, SHA-256 content hash, pixel dimensions, creator, creation time, and optional deletion time.
-- Object bytes are written with private visibility. A write is accepted only after the stored size and SHA-256 hash match the validated upload.
+- Object bytes are written with private visibility. A write is accepted only after the stored size and a stream-calculated SHA-256 hash match the validated upload; verification must not read a second complete copy into memory.
 - UUIDs, disk names, and object keys are identifiers, not access secrets.
 
 `company_assets` is tenant owned, protected by forced PostgreSQL RLS, and linked through the normal same-Company key pattern. Asset metadata is immutable after creation except for the controlled `deleted_at` lifecycle marker.
@@ -71,7 +71,7 @@ The Company-logo workflow, database identity, authorization, public-token rules,
 
 - Private local assets are included in the externally managed off-server backup and restore scope before public launch.
 - Storage failures are reported through the approved operational logger using asset IDs and correlation IDs, never object bytes, original filenames, or secrets.
-- Automated coverage must prove accepted/rejected types, size and dimension limits, content-derived metadata, private verified writes, cleanup after failed persistence, tenant isolation, immutable metadata, and no cross-Company access.
+- Automated coverage must prove accepted/rejected types, size and dimension limits (including a highly compressed 4096 × 4096 image), bounded structural validation without full raster expansion, content-derived metadata, stream-verified private writes, cleanup after failed persistence, tenant isolation, immutable metadata, and no cross-Company access.
 - The shared `FileUpload` component must cover idle, drag, selected, uploading, validation-error, success, replace, and remove states in English and Romanian without page-owned styling.
 
 ## Explicit v1 exclusions

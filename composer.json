@@ -11,7 +11,6 @@
     "license": "MIT",
     "require": {
         "ext-fileinfo": "*",
-        "ext-gd": "*",
         "php": "^8.5",
         "brick/math": "^0.18",
         "inertiajs/inertia-laravel": "^3.0",
@@ -21,6 +20,7 @@
         "laravel/wayfinder": "^0.1.14"
     },
     "require-dev": {
+        "ext-gd": "*",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.0",

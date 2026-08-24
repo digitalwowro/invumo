@@ -68,6 +68,22 @@ class CompanyAssetFoundationTest extends TestCase
         }
     }
 
+    public function test_maximum_dimension_logo_is_inspected_without_expanding_the_raster_in_memory(): void
+    {
+        $contents = $this->maximumDimensionPng();
+
+        $this->assertLessThan(128 * 1024, strlen($contents));
+
+        $validated = app(CompanyLogoUploadPolicy::class)->inspect(
+            $this->upload('compressed-maximum.png', $contents),
+        );
+
+        $this->assertSame('image/png', $validated->mimeType);
+        $this->assertSame(4096, $validated->pixelWidth);
+        $this->assertSame(4096, $validated->pixelHeight);
+        $this->assertSame(strlen($contents), $validated->byteSize);
+    }
+
     public function test_company_assets_refuse_the_public_disk(): void
     {
         config()->set('invumo.company_assets.disk', 'public');
@@ -83,11 +99,16 @@ class CompanyAssetFoundationTest extends TestCase
 
     public function test_logo_policy_rejects_unsupported_malformed_oversized_and_animated_inputs(): void
     {
+        $jpeg = UploadedFile::fake()->image('source.jpg', 4, 3)->getContent();
+        $webp = UploadedFile::fake()->image('source.webp', 4, 3)->getContent();
+
         $invalidUploads = [
             $this->upload('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'),
             UploadedFile::fake()->image('logo.gif'),
             $this->upload('logo.png', 'not an image'),
             $this->upload('truncated.png', substr($this->png(), 0, 40)),
+            $this->upload('truncated.jpg', substr($jpeg, 0, -2)),
+            $this->upload('truncated.webp', substr($webp, 0, -1)),
             $this->upload('large.png', $this->png().str_repeat('x', 5 * 1024 * 1024)),
             $this->upload('wide.png', $this->pngWithWidth(4097)),
             $this->upload('animated.png', $this->animatedPng()),
@@ -179,5 +200,41 @@ class CompanyAssetFoundationTest extends TestCase
         $chunk = pack('N', 8).$chunkBody.pack('N', crc32($chunkBody));
 
         return substr($png, 0, 33).$chunk.substr($png, 33);
+    }
+
+    private function maximumDimensionPng(): string
+    {
+        $compressor = deflate_init(ZLIB_ENCODING_DEFLATE, ['level' => 9]);
+
+        if ($compressor === false) {
+            throw new \RuntimeException('Unable to create the maximum-dimension PNG fixture.');
+        }
+
+        $scanline = "\0".str_repeat("\0", 4096 * 4);
+        $compressed = '';
+
+        for ($row = 0; $row < 4096; $row++) {
+            $part = deflate_add(
+                $compressor,
+                $scanline,
+                $row === 4095 ? ZLIB_FINISH : ZLIB_NO_FLUSH,
+            );
+
+            if ($part === false) {
+                throw new \RuntimeException('Unable to compress the maximum-dimension PNG fixture.');
+            }
+
+            $compressed .= $part;
+        }
+
+        return "\x89PNG\r\n\x1a\n"
+            .$this->pngChunk('IHDR', pack('NNCCCCC', 4096, 4096, 8, 6, 0, 0, 0))
+            .$this->pngChunk('IDAT', $compressed)
+            .$this->pngChunk('IEND', '');
+    }
+
+    private function pngChunk(string $type, string $data): string
+    {
+        return pack('N', strlen($data)).$type.$data.hash('crc32b', $type.$data, true);
     }
 }

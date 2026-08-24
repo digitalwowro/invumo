@@ -32,11 +32,24 @@ final readonly class CompanyAssetStorage
         }
 
         try {
-            $storedContents = $disk->get($key);
+            $storedStream = $disk->readStream($key);
+
+            if (! is_resource($storedStream)) {
+                throw new RuntimeException('The stored Company asset could not be read for verification.');
+            }
+
+            try {
+                $hash = hash_init('sha256');
+                $readBytes = hash_update_stream($hash, $storedStream);
+                $storedHash = hash_final($hash);
+            } finally {
+                fclose($storedStream);
+            }
 
             if (
                 $disk->size($key) !== $upload->byteSize
-                || ! hash_equals($upload->contentSha256, hash('sha256', $storedContents))
+                || $readBytes !== $upload->byteSize
+                || ! hash_equals($upload->contentSha256, $storedHash)
             ) {
                 throw new RuntimeException('The stored Company asset failed its integrity check.');
             }

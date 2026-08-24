@@ -4,7 +4,11 @@ namespace App\Modules\Companies\Support;
 
 final class CompanyLogoRasterStructure
 {
+    private const MAX_CONTAINER_ELEMENTS = 4096;
+
     private const PNG_SIGNATURE = "\x89PNG\r\n\x1a\n";
+
+    private const JPEG_SCAN_MARKER_PATTERN = '/\xFF++(?<marker>[^\x00\xD0-\xD7\xFF])/s';
 
     /** @var list<int> */
     private const JPEG_START_OF_FRAME_MARKERS = [
@@ -33,10 +37,15 @@ final class CompanyLogoRasterStructure
         }
 
         $offset = 8;
+        $elementCount = 0;
         $seenHeader = false;
         $seenImageData = false;
 
         while ($offset + 12 <= $length) {
+            if (++$elementCount > self::MAX_CONTAINER_ELEMENTS) {
+                return false;
+            }
+
             $chunkLength = unpack('Nvalue', substr($contents, $offset, 4));
 
             if ($chunkLength === false || $chunkLength['value'] > $length - $offset - 12) {
@@ -98,37 +107,39 @@ final class CompanyLogoRasterStructure
         }
 
         $offset = 2;
+        $elementCount = 0;
         $inScan = false;
         $seenFrame = false;
         $seenScan = false;
 
         while ($offset < $length) {
-            if ($contents[$offset] !== "\xFF") {
-                if (! $inScan) {
-                    return false;
-                }
-
-                $offset++;
-
-                continue;
-            }
-
-            while ($offset < $length && $contents[$offset] === "\xFF") {
-                $offset++;
-            }
-
-            if ($offset >= $length) {
+            if (++$elementCount > self::MAX_CONTAINER_ELEMENTS) {
                 return false;
             }
 
-            $marker = ord($contents[$offset]);
-            $offset++;
+            if ($inScan) {
+                $markerPosition = $this->nextJpegMarkerAfterScan($contents, $offset);
 
-            if ($inScan && ($marker === 0x00 || ($marker >= 0xD0 && $marker <= 0xD7))) {
-                continue;
+                if ($markerPosition === null) {
+                    return false;
+                }
+
+                [$marker, $offset] = $markerPosition;
+                $inScan = false;
+            } else {
+                if ($contents[$offset] !== "\xFF") {
+                    return false;
+                }
+
+                $offset += strspn($contents, "\xFF", $offset);
+
+                if ($offset >= $length) {
+                    return false;
+                }
+
+                $marker = ord($contents[$offset]);
+                $offset++;
             }
-
-            $inScan = false;
 
             if ($marker === 0xD9) {
                 return $seenFrame && $seenScan && $offset === $length;
@@ -171,6 +182,29 @@ final class CompanyLogoRasterStructure
         return false;
     }
 
+    /** @return array{int, int}|null */
+    private function nextJpegMarkerAfterScan(string $contents, int $offset): ?array
+    {
+        $matches = [];
+        $result = preg_match(
+            self::JPEG_SCAN_MARKER_PATTERN,
+            $contents,
+            $matches,
+            PREG_OFFSET_CAPTURE,
+            $offset,
+        );
+        $markerMatch = $matches['marker'] ?? null;
+
+        if (
+            $result !== 1
+            || ! is_array($markerMatch)
+        ) {
+            return null;
+        }
+
+        return [ord($markerMatch[0]), $markerMatch[1] + 1];
+    }
+
     private function isValidWebp(string $contents): bool
     {
         $length = strlen($contents);
@@ -190,9 +224,14 @@ final class CompanyLogoRasterStructure
         }
 
         $offset = 12;
+        $elementCount = 0;
         $seenImageData = false;
 
         while ($offset + 8 <= $length) {
+            if (++$elementCount > self::MAX_CONTAINER_ELEMENTS) {
+                return false;
+            }
+
             $type = substr($contents, $offset, 4);
             $chunkLength = unpack('Vvalue', substr($contents, $offset + 4, 4));
 

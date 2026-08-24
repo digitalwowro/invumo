@@ -15,7 +15,8 @@ The current production implementation uses private local storage. Domain and app
 - Reject SVG, GIF, animated formats, malformed files, and files whose content does not match an accepted image MIME type.
 - The server-authoritative maximum is 5 MiB (`5 × 1024 × 1024` bytes).
 - Width and height must each be positive and no greater than 4096 pixels.
-- Validation uses detected file content, bounded PNG/JPEG/WebP container parsing, container-integrity checks, and image metadata. It rejects truncated containers and animation without decoding the complete pixel raster into GD memory. A browser filename, extension, `Content-Type`, preview, or client-side validation is never authoritative.
+- Validation uses detected file content, bounded PNG/JPEG/WebP container parsing, container-integrity checks, and image metadata. It rejects truncated containers and animation without decoding the complete pixel raster into GD memory. Parsing uses native bulk traversal for entropy-coded JPEG scan data and rejects any container with more than 4096 structural chunks/markers, bounding PHP-level work for adversarial files within the 5 MiB byte limit. A browser filename, extension, `Content-Type`, preview, or client-side validation is never authoritative.
+- Accepted files must contain exactly one complete image container. PNG `IEND` and JPEG `EOI` must end at the final byte, while WebP must end at its declared RIFF boundary. Trailing padding, metadata, or an appended payload is rejected deliberately as an anti-polyglot rule. A camera/scanner JPEG that writes bytes after `EOI` must be normalized or re-exported before upload even if a permissive decoder would display it.
 - Client-side checks may provide faster feedback but must use rules supplied to the shared `FileUpload` component and must never replace server validation.
 
 The server derives the canonical MIME type and safe extension from the accepted content. Original filenames are neither storage keys nor authorization inputs.
@@ -71,7 +72,7 @@ The Company-logo workflow, database identity, authorization, public-token rules,
 
 - Private local assets are included in the externally managed off-server backup and restore scope before public launch.
 - Storage failures are reported through the approved operational logger using asset IDs and correlation IDs, never object bytes, original filenames, or secrets.
-- Automated coverage must prove accepted/rejected types, size and dimension limits (including a highly compressed 4096 × 4096 image), bounded structural validation without full raster expansion, content-derived metadata, stream-verified private writes, cleanup after failed persistence, tenant isolation, immutable metadata, and no cross-Company access.
+- Automated coverage must prove accepted/rejected types, size and dimension limits (including a highly compressed 4096 × 4096 image and a near-5 MiB JPEG entropy scan), bounded structural validation without full raster expansion or byte-by-byte PHP scan traversal, structural-element budget enforcement, exact container termination, content-derived metadata, stream-verified private writes, cleanup after failed persistence, tenant isolation, immutable metadata, and no cross-Company access.
 - The shared `FileUpload` component must cover idle, drag, selected, uploading, validation-error, success, replace, and remove states in English and Romanian without page-owned styling.
 
 ## Explicit v1 exclusions

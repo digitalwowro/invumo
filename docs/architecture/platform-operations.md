@@ -13,9 +13,9 @@ This contract adds the operational surface required to administer the hosted pla
 - Platform authority never comes from a Company membership, Account ownership, an email-domain rule, a client-provided flag, or a Company role.
 - v1 has one platform role only: `Platform Owner`. Additional platform roles require an explicit later permission design.
 - Granting or revoking Platform Owner is not available through the web UI in v1. A protected application command performs it by exact User identity, requires explicit confirmation, prevents removal of the last active Platform Owner, and records a platform audit event.
-- Platform routes require authentication, verified email, current operator revalidation, and CSRF protection for mutations. Sensitive plan/suspension changes retain their approved guards; starting impersonation is the explicit exception and requires no password re-entry, reason, confirmation, dedicated rate limit, or other additional ceremony.
+- Platform routes require authentication, verified email, current operator revalidation, and CSRF protection for mutations. Sensitive plan/suspension changes retain their approved guards. Starting impersonation likewise requires recent password confirmation and is throttled to 10 attempts per minute, but it does not require a support reason or separate confirmation dialog.
 - Every platform mutation re-reads current authority and locks its target control-plane records inside its transaction. Platform Owner grant/revoke additionally uses one transaction-scoped PostgreSQL advisory lock so concurrent command runs remain serialized without granting UPDATE on the protected operator table. React receives named platform abilities and never infers authority from role strings.
-- TOTP remains deferred from v1. The approved no-reauthentication impersonation flow does not remove verified-email, current-operator, CSRF, audit-attribution, or last-operator safeguards from their applicable boundaries.
+- TOTP remains deferred from v1. The impersonation flow does not remove recent-password, verified-email, current-operator, CSRF, throttling, audit-attribution, or last-operator safeguards from their applicable boundaries.
 
 Platform authority and Company authority are independent. A Platform Owner may also be a Company Owner/Admin/Member, but neither role implies the other.
 
@@ -60,17 +60,19 @@ Platform Operations does not use a general RLS bypass. Tenant business data beco
 
 ## 4. Full-action User impersonation
 
-A Platform Owner may start impersonating a selected existing User directly from Platform Operations. This is full-action impersonation: the resulting application session behaves as the selected User, not as a read-only support preview.
+A Platform Owner may start impersonating a selected existing non-operator User directly from Platform Operations. This is full-action impersonation inside the selected User's ordinary application surface: the resulting application session behaves as that User, not as a read-only support preview.
 
-- Starting impersonation revalidates that the initiating session still belongs to a verified, unsuspended current Platform Owner and uses normal CSRF protection.
-- It requires no recent password confirmation, support reason, confirmation dialog, impersonation-specific duration, or action restriction.
+- Starting impersonation revalidates that the initiating session still belongs to a verified, unsuspended current Platform Owner, requires recent password confirmation, uses normal CSRF protection, and is throttled to 10 attempts per minute.
+- It requires no support reason, separate confirmation dialog, impersonation-specific duration, or restriction on actions ordinarily available to the selected User.
 - The selected User becomes the effective authenticated identity. Navigation, Companies, records, abilities, validation, authorization, suspension behavior, and PostgreSQL RLS resolve exactly as they would for that User.
 - The Platform Owner receives no extra Company ability and no RLS bypass while impersonating. If the selected User cannot access or perform something, neither can the impersonated session.
 - Every action available to the selected User remains available, including mutations and real external effects such as document email, reminder, payment, refund, membership, settings, and deletion workflows where that User's normal role permits them.
 - There is no impersonation-specific timeout. The session lasts until explicit exit, logout, or the ordinary application session lifetime ends.
 - A persistent, unmistakable shared-shell banner identifies the selected User and offers an immediate exit action. Pages may not hide or restyle this indicator.
-- Nested impersonation is prohibited. An already impersonating session cannot start another impersonation, even when the selected User is also a Platform Owner.
-- Any existing User may be selected. An unverified User remains inside the ordinary verification flow with the banner and exit available. A suspended User remains suspended and is confined to a dedicated identity-warning screen whose only application action is exiting impersonation; support entry never weakens the suspension boundary.
+- An active Platform Owner cannot be selected as the target. The target check occurs inside the same advisory-lock-protected transaction used for operator mutations, so a concurrent grant cannot race the decision.
+- Platform Operations is unavailable for the entire impersonated session, even if an operator record appears later. This independently prevents platform-role grants/revocations and every other platform mutation from running under an impersonated identity.
+- Nested impersonation is prohibited. An already impersonating session cannot start another impersonation.
+- Any existing User who is not an active Platform Owner may be selected. An unverified User remains inside the ordinary verification flow with the banner and exit available. A suspended User remains suspended and is confined to a dedicated identity-warning screen whose only application action is exiting impersonation; support entry never weakens the suspension boundary.
 - Exiting restores the original User only if that User still has a verified, unsuspended current Platform Owner record; otherwise the session ends safely at sign-in.
 - Start and explicit end are recorded in platform audit. Every normally audited mutation performed during impersonation records the selected User as the effective actor and the original Platform Owner as the impersonator. Outward customer-facing behavior remains attributable to the selected User.
 
@@ -147,9 +149,10 @@ Tests must prove:
 - an operator record for an unverified, missing, or suspended User does not grant access;
 - ordinary Users receive no platform navigation/props and direct access is denied;
 - platform reads expose only approved control-plane fields and cannot query tenant business rows without Company context;
-- impersonation can start only from a current Platform Owner, regenerates the session, exposes exactly the target User's Companies/abilities/RLS rows, and grants no operator-derived tenant ability;
+- impersonation requires recent password confirmation, respects the 10-per-minute throttle, starts only from a current Platform Owner, rejects an active Platform Owner target, regenerates the session, exposes exactly the target User's Companies/abilities/RLS rows, and grants no operator-derived tenant ability;
 - impersonated sessions can perform every action normally permitted to the selected User, including external effects, while denied actions remain denied;
-- impersonation requires no password/reason/confirmation or special timeout, shows the shared persistent banner, exits safely, and cannot nest;
+- impersonated sessions cannot access Platform Operations even if the effective User gains platform authority after entry;
+- impersonation requires no support reason, separate confirmation dialog, or special timeout, shows the shared persistent banner, exits safely, and cannot nest;
 - platform start/end events and every normally audited impersonated mutation preserve both original Platform Owner and effective User identities;
 - every mutation revalidates current authority, requires its guards, locks the target, and writes one allowlisted platform audit event;
 - plan lifecycle constraints and 7-/30-day expiry lists are correct at exact timestamp boundaries;

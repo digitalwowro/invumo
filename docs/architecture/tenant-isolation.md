@@ -22,7 +22,7 @@ The application must access some records before selecting a tenant:
 
 These tables use strict grants, application authorization, and targeted query paths. They must not contain copied customer/document financial payloads merely to avoid RLS.
 
-The approved Platform Operations pages may query only this bounded control-plane metadata. Platform Owner is not an RLS-bypass role and cannot use an unscoped connection to inspect tenant business tables. Full-action impersonation is the approved support-access path: it leaves the platform control plane, establishes the selected User as the effective identity, and enters Company context only through that User's ordinary active membership and Account eligibility. RLS therefore exposes exactly what the selected User can access, never everything the Platform Owner might want to inspect.
+The approved Platform Operations pages may query only this bounded control-plane metadata. Platform Owner is not an RLS-bypass role and cannot use an unscoped connection to inspect tenant business tables. Full-action impersonation is the approved support-access path after recent password confirmation and throttling: it leaves and blocks the platform control plane, establishes a selected non-operator User as the effective identity, and enters Company context only through that User's ordinary active membership and Account eligibility. RLS therefore exposes exactly what the selected User can access, never everything the Platform Owner might want to inspect.
 
 ### Tenant-owned business data
 
@@ -152,7 +152,7 @@ Required tests prove:
 - Migration privileges remain unavailable to the runtime role
 - Ownership transfer preserves tenant identity and isolation
 - Platform Operations cannot read tenant business rows without full-action impersonation entering a Company context authorized for the selected effective User
-- Impersonation never widens the selected User's Company abilities or RLS visibility, cannot nest, and preserves original-operator attribution on audited mutations
+- Impersonation never widens the selected User's Company abilities or RLS visibility, cannot target an active Platform Owner, blocks all Platform Operations while active, cannot nest, and preserves original-operator attribution on audited mutations
 - Account suspension denies access only to Companies owned by the suspended Account
 
 Run these tests in continuous integration against PostgreSQL. SQLite is not an acceptable substitute for isolation, concurrency, numbering, or scheduling integration tests.

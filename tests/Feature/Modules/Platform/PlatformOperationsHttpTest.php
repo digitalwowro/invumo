@@ -35,9 +35,17 @@ class PlatformOperationsHttpTest extends TestCase
                 ->component('platform/users')
                 ->has('page.items', 1)
                 ->where('page.items.0.email', $target->email)
+                ->where('page.items.0.canImpersonate', true)
                 ->missing('page.items.0.password')
                 ->missing('page.items.0.remember_token')
                 ->where('translations.users.title', 'Users'));
+
+        $this->get(route('platform.users.index', ['q' => $operator->email]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('page.items', 1)
+                ->where('page.items.0.email', $operator->email)
+                ->where('page.items.0.canImpersonate', false));
 
         $this->get(route('platform.accounts.index', ['q' => $target->email]))
             ->assertOk()

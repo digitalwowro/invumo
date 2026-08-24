@@ -61,6 +61,7 @@ export type PlatformUserRow = {
     planStatus: PlanStatus | null;
     companyCount: number;
     isOperator: boolean;
+    canImpersonate: boolean;
     suspendUrl: string;
     reactivateUrl: string;
     impersonateUrl: string;

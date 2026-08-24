@@ -98,35 +98,13 @@ class UserImpersonationTest extends TestCase
         ]);
     }
 
-    public function test_impersonation_requires_no_extra_fields_and_cannot_nest(): void
-    {
-        $operator = $this->platformOwner('operator@example.com');
-        $targetOperator = $this->platformOwner('target@example.com');
-        $third = $this->accountOwner('third@example.com');
-
-        $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $targetOperator), [])
-            ->assertRedirect(route('home'));
-        $this->assertAuthenticatedAs($targetOperator);
-        $this->beginNextRequest();
-
-        $this->get(route('platform.users.index'))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('platformContext.abilities.impersonate_users', false));
-        $this->post(route('platform.users.impersonation.store', $third), [])
-            ->assertConflict();
-
-        $this->assertAuthenticatedAs($targetOperator);
-        $this->assertDatabaseCount('platform_audit_events', 1);
-    }
-
     public function test_exit_logs_out_safely_when_original_operator_is_no_longer_valid(): void
     {
         $operator = $this->platformOwner('operator@example.com');
         $target = $this->accountOwner('target@example.com');
 
         $this->actingAs($operator)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect();
         $this->beginNextRequest();
@@ -142,32 +120,6 @@ class UserImpersonationTest extends TestCase
         ]);
     }
 
-    public function test_platform_mutations_record_both_effective_and_original_operators(): void
-    {
-        $operator = $this->platformOwner('operator@example.com');
-        $targetOperator = $this->platformOwner('target@example.com');
-        $ordinaryUser = $this->accountOwner('ordinary@example.com');
-
-        $this->actingAs($operator)
-            ->post(route('platform.users.impersonation.store', $targetOperator))
-            ->assertRedirect(route('home'));
-        $this->beginNextRequest();
-
-        $this->withSession(['auth.password_confirmed_at' => time()])
-            ->post(route('platform.users.suspension.store', $ordinaryUser), [
-                'reason' => 'Requested account review',
-                'confirmed' => true,
-            ])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('platform_audit_events', [
-            'actor_user_id' => $targetOperator->id,
-            'impersonator_user_id' => $operator->id,
-            'action' => 'user.suspended',
-            'target_id' => $ordinaryUser->id,
-        ]);
-    }
-
     public function test_suspended_target_is_confined_to_the_exit_safe_screen(): void
     {
         $operator = $this->platformOwner('operator@example.com');
@@ -175,6 +127,7 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['suspended_at' => now()])->save();
 
         $this->actingAs($operator)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'));
         $this->beginNextRequest();
@@ -198,6 +151,7 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['email_verified_at' => null])->save();
 
         $this->actingAs($operator)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->post(route('platform.users.impersonation.store', $target))
             ->assertRedirect(route('home'));
         $this->beginNextRequest();

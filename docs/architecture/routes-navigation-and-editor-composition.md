@@ -113,7 +113,7 @@ These routes use a distinct platform shell, current operator revalidation, and t
 | GET    | `/platform/companies`                  | Searchable Company ownership/membership-count list                                   |
 | GET    | `/platform/plan-lifecycle`             | Active/trial/past-due/cancel-at-end/expired/upcoming-expiry operational views        |
 | GET    | `/platform/audit`                      | Reverse-chronological append-only platform audit                                     |
-| POST   | `/platform/users/{user}/impersonation` | Start full-action impersonation as the selected User without extra ceremony           |
+| POST   | `/platform/users/{user}/impersonation` | Start throttled, recently reauthenticated full-action impersonation of a non-operator User |
 | DELETE | `/platform/impersonation`              | Exit impersonation and restore the still-authorized original Platform Owner           |
 | POST   | `/platform/users/{user}/suspension`    | Guarded User suspension                                                              |
 | DELETE | `/platform/users/{user}/suspension`    | Guarded User reactivation                                                            |

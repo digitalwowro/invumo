@@ -131,12 +131,13 @@ export function PlatformUsersTable({
             kind: 'actions',
             render: (user) => (
                 <div className="flex items-center justify-end gap-2">
-                    {platformContext?.abilities.impersonate_users && (
-                        <PlatformImpersonateButton
-                            url={user.impersonateUrl}
-                            label={copy.impersonate}
-                        />
-                    )}
+                    {platformContext?.abilities.impersonate_users &&
+                        user.canImpersonate && (
+                            <PlatformImpersonateButton
+                                url={user.impersonateUrl}
+                                label={copy.impersonate}
+                            />
+                        )}
                     {user.isOperator ? (
                         <SecondaryText>{copy.operator}</SecondaryText>
                     ) : (

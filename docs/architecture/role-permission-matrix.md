@@ -46,7 +46,7 @@ This matrix is independent of the Company-role tables below.
 | View platform audit                                          | Yes            | No                                              | Separate from Company audit                                                                        |
 | Grant/revoke Platform Owner through the web UI               | No             | No                                              | Protected confirmed application command only in v1; last active operator cannot be removed         |
 | Read tenant Customers/documents/Transactions without context | No             | No                                              | Full impersonation must first establish the selected User's authorized Company/RLS context          |
-| Fully impersonate another User                              | Yes            | No                                              | No password/reason/confirmation/special timeout/action limit; target permissions/RLS and dual audit apply |
+| Fully impersonate a non-operator User                      | Yes            | No                                              | Recent password plus throttle; no reason/separate confirmation/special timeout; target permissions/RLS and dual audit apply; Platform Operations is blocked |
 
 ## 3. Already-approved authorization boundaries
 

@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('plan-lifecycle.index');
             Route::get('audit', [PlatformPageController::class, 'audit'])->name('audit.index');
             Route::post('users/{user}/impersonation', [UserImpersonationController::class, 'store'])
+                ->middleware([RequirePassword::class, 'throttle:10,1'])
                 ->name('users.impersonation.store');
 
             Route::post('users/{user}/suspension', [UserSuspensionController::class, 'store'])

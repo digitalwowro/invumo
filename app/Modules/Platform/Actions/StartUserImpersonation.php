@@ -6,12 +6,15 @@ use App\Models\User;
 use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Platform\Data\PlatformAuditEventData;
 use App\Modules\Platform\Policies\PlatformMutationAuthorizer;
+use App\Modules\Platform\Queries\CurrentPlatformOperator;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 final readonly class StartUserImpersonation
 {
     public function __construct(
         private PlatformMutationAuthorizer $authorize,
+        private CurrentPlatformOperator $currentOperator,
         private RecordPlatformAuditEvent $recordAudit,
     ) {}
 
@@ -21,6 +24,10 @@ final readonly class StartUserImpersonation
             ->transaction(function () use ($actor, $targetUserId): User {
                 $lockedActor = $this->authorize->lock($actor);
                 $target = User::query()->whereKey($targetUserId)->lockForUpdate()->firstOrFail();
+
+                if ($this->currentOperator->for($target) !== null) {
+                    throw new AuthorizationException;
+                }
 
                 $this->recordAudit->handle(new PlatformAuditEventData(
                     actorUserId: $lockedActor->id,

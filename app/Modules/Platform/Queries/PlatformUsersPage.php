@@ -42,6 +42,11 @@ final readonly class PlatformUsersPage
                 'planStatus' => $user->account?->plan_status?->value,
                 'companyCount' => $user->company_memberships_count,
                 'isOperator' => (bool) $user->platform_operator_exists,
+                'canImpersonate' => ! (
+                    $user->platform_operator_exists
+                    && $user->email_verified_at !== null
+                    && $user->suspended_at === null
+                ),
                 'suspendUrl' => route('platform.users.suspension.store', $user, false),
                 'reactivateUrl' => route('platform.users.suspension.destroy', $user, false),
                 'impersonateUrl' => route('platform.users.impersonation.store', $user, false),

@@ -19,7 +19,11 @@ final readonly class PlatformContextProps
     {
         $user = $request->user();
 
-        if (! $user instanceof User || $this->currentOperator->for($user) === null) {
+        if (
+            ! $user instanceof User
+            || $this->impersonation->active($request)
+            || $this->currentOperator->for($user) === null
+        ) {
             return [];
         }
 
@@ -43,12 +47,10 @@ final readonly class PlatformContextProps
                     'planLifecycle' => route('platform.plan-lifecycle.index'),
                     'audit' => route('platform.audit.index'),
                 ],
-                'abilities' => array_replace(array_fill_keys(array_map(
+                'abilities' => array_fill_keys(array_map(
                     static fn (PlatformAbility $ability): string => $ability->value,
                     PlatformAbility::cases(),
-                ), true), [
-                    PlatformAbility::ImpersonateUsers->value => ! $this->impersonation->active($request),
-                ]),
+                ), true),
             ],
         ];
     }

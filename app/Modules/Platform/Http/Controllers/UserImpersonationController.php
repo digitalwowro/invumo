@@ -6,6 +6,7 @@ use App\Foundation\Auth\ImpersonationSession;
 use App\Models\User;
 use App\Modules\Platform\Actions\EndUserImpersonation;
 use App\Modules\Platform\Actions\StartUserImpersonation;
+use App\Modules\Platform\Http\Requests\StartUserImpersonationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,7 @@ final readonly class UserImpersonationController
     }
 
     public function store(
-        Request $request,
+        StartUserImpersonationRequest $request,
         string $user,
         ImpersonationSession $impersonation,
         StartUserImpersonation $start,
@@ -81,6 +82,8 @@ final readonly class UserImpersonationController
         $request->session()->regenerate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home')->with('status', __('common.impersonation.ended'));
+        return redirect()
+            ->route('platform.users.index')
+            ->with('status', __('common.impersonation.ended'));
     }
 }

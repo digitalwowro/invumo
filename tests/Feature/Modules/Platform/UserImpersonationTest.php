@@ -37,12 +37,13 @@ class UserImpersonationTest extends TestCase
         $this->actingAs($operator)
             ->withSession([
                 'last_company_id' => $operatorCompany->id,
-                'auth.password_confirmed_at' => time(),
             ]);
         $this->get(route('platform.overview'))->assertOk();
         $sessionBeforeStart = session()->getId();
 
-        $this->post(route('platform.users.impersonation.store', $target))
+        $this->post(route('platform.users.impersonation.store', $target), [
+            'password' => 'password',
+        ])
             ->assertRedirect(route('home'))
             ->assertSessionHas('platform_impersonation.original_user_id', $operator->id)
             ->assertSessionHas('platform_impersonation.original_company_id', $operatorCompany->id)
@@ -76,7 +77,7 @@ class UserImpersonationTest extends TestCase
 
         $sessionBeforeExit = session()->getId();
         $this->delete(route('platform.impersonation.destroy'))
-            ->assertRedirect(route('home'))
+            ->assertRedirect(route('platform.users.index'))
             ->assertSessionMissing('platform_impersonation.original_user_id')
             ->assertSessionHas('last_company_id', $operatorCompany->id);
 
@@ -104,8 +105,9 @@ class UserImpersonationTest extends TestCase
         $target = $this->accountOwner('target@example.com');
 
         $this->actingAs($operator)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->post(route('platform.users.impersonation.store', $target))
+            ->post(route('platform.users.impersonation.store', $target), [
+                'password' => 'password',
+            ])
             ->assertRedirect();
         $this->beginNextRequest();
         PlatformOperator::query()->where('user_id', $operator->id)->delete();
@@ -127,8 +129,9 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['suspended_at' => now()])->save();
 
         $this->actingAs($operator)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->post(route('platform.users.impersonation.store', $target))
+            ->post(route('platform.users.impersonation.store', $target), [
+                'password' => 'password',
+            ])
             ->assertRedirect(route('home'));
         $this->beginNextRequest();
         $this->get(route('home'))
@@ -140,7 +143,8 @@ class UserImpersonationTest extends TestCase
                 ->missing('impersonation.user.id')
                 ->where('impersonation.user.email', $target->email));
 
-        $this->delete(route('platform.impersonation.destroy'))->assertRedirect(route('home'));
+        $this->delete(route('platform.impersonation.destroy'))
+            ->assertRedirect(route('platform.users.index'));
         $this->assertAuthenticatedAs($operator);
     }
 
@@ -151,8 +155,9 @@ class UserImpersonationTest extends TestCase
         $target->forceFill(['email_verified_at' => null])->save();
 
         $this->actingAs($operator)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->post(route('platform.users.impersonation.store', $target))
+            ->post(route('platform.users.impersonation.store', $target), [
+                'password' => 'password',
+            ])
             ->assertRedirect(route('home'));
         $this->beginNextRequest();
 
@@ -164,7 +169,8 @@ class UserImpersonationTest extends TestCase
                 ->where('impersonation.user.email', $target->email)
                 ->missing('impersonation.user.id'));
 
-        $this->delete(route('platform.impersonation.destroy'))->assertRedirect(route('home'));
+        $this->delete(route('platform.impersonation.destroy'))
+            ->assertRedirect(route('platform.users.index'));
         $this->assertAuthenticatedAs($operator);
     }
 

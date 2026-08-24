@@ -135,7 +135,8 @@ export function PlatformUsersTable({
                         user.canImpersonate && (
                             <PlatformImpersonateButton
                                 url={user.impersonateUrl}
-                                label={copy.impersonate}
+                                targetName={user.name}
+                                translations={translations}
                             />
                         )}
                     {user.isOperator ? (

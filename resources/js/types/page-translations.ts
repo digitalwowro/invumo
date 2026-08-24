@@ -47,3 +47,12 @@ export type DashboardTranslations = {
     subtitle: string;
     members: string;
 };
+
+export type ErrorPageTranslations = {
+    page: {
+        headTitle: string;
+        title: string;
+        description: string;
+        action: string;
+    };
+};

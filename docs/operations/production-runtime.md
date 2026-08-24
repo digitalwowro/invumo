@@ -35,6 +35,8 @@ PostgreSQL uses two login roles:
 
 Neither role is a superuser, may create databases or roles, or may bypass RLS. The runtime role cannot create schema objects or read/write the Laravel migration repository. The Phase 1 business-schema foundation now enforces the reusable forced-RLS/restricted-grant contract and isolated PostgreSQL tests; each later feature migration must apply it to its own tenant tables.
 
+Production-like migrations now require `invumo_runtime` before executing any conditional grant path. A missing role aborts with a named configuration error instead of allowing a successful but incomplete migration. Local and isolated testing may omit split roles deliberately; when the role exists, the same grants and denials are applied and verified.
+
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
 
 ## Queue worker
@@ -65,6 +67,8 @@ journalctl --identifier=invumo-scheduler
 ```
 
 The tracked [service installer](../../scripts/install-production-services.sh) installs both user-owned definitions without sudo. The [runtime verifier](../../scripts/verify-production-runtime.sh) checks environment permissions, migrations, system services, queue supervision, scheduler installation, the public health endpoint, and the login redirect without revealing secrets.
+
+Application startup validates the approved production topology—HTTPS/non-debug operation, split PostgreSQL credentials, encrypted secure database sessions, database queue/cache, authenticated SMTP, and English/Romanian localization—without printing configured values. `/up` additionally opens the runtime database connection, verifies that PostgreSQL reports `invumo_runtime`, and fails if any tenant context was inherited. It returns only `up` or `down`. Ordinary web responses carry a server-generated `X-Request-ID`; operational logs accept only bounded machine labels, outcomes, counts/timings, and that correlation identifier. Customer values, record identifiers, free-text reasons, recipients, payloads, tokens, credentials, and exception messages are not accepted as operational-log context.
 
 ## Test isolation in the hosted production checkout
 

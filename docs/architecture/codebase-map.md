@@ -77,6 +77,9 @@ Do not add `Services`, `Managers`, `Helpers`, or repositories as default buckets
 - `Tenancy` — company context and restricted-role/RLS plumbing;
 - `Auth` — request-session identity-transition context shared by Platform and audit boundaries;
 - `Database` — UUIDv7 domain identifiers plus the tested tenant-table migration, exact-decimal storage-envelope, same-Company foreign-key, forced-RLS, and restricted-grant contract;
+- `Configuration` — production-only startup assertions that identify unsafe configuration keys without disclosing their values;
+- `Diagnostics` — database-aware health diagnosis and the bounded operational logging contract;
+- `Http` — framework-independent shared HTTP response behavior such as the Inertia error surface;
 - `Money` — exact-decimal and currency-precision primitives;
 - `Jobs` — tenant-safe dispatch, idempotency, and shared execution context.
 

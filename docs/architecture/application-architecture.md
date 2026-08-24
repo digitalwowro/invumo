@@ -108,6 +108,8 @@ The following rules apply across PHP, React, queued work, tests, operations, and
 6. **Edit authority is not publication authority.** Authorization to inspect or modify files does not authorize committing, pushing, merging, deploying, releasing, sending communications, creating external records, or mutating production data. Each applicable external action requires its own explicit request.
 7. **Integration evidence is labelled accurately.** Integration notes distinguish facts guaranteed by current primary provider documentation, Invumo implementation choices, behavior observed in a real test, and conclusions inferred from tests or experiments. Observations and inferences must not be presented as provider guarantees.
 
+The Phase 1 implementation enforces these cross-cutting boundaries rather than leaving them as conventions. Production boot rejects unsafe configuration by key without including secret values; the public health diagnosis verifies the restricted PostgreSQL runtime identity and absence of inherited tenant context; every web response receives a server-generated UUID correlation header; and application operational events use one namespaced, allowlisted logger that accepts only bounded machine metadata. The module guard rejects direct application logging outside that boundary. Laravel-authored English/Romanian validation catalogues and one shared localized Inertia error response keep validation failures and 403/404/500/503 pages consistent without exposing internal exception messages.
+
 ## Data and integrity foundations
 
 PostgreSQL is authoritative. Use exact decimal arithmetic and never binary floating point for money. Important multi-record operations use explicit database transactions, constraints, and idempotency keys.

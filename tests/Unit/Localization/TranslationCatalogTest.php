@@ -39,7 +39,7 @@ function translationPlaceholders(string $translation): array
 it('keeps English and Romanian authored translation keys and placeholders aligned', function () {
     $projectRoot = dirname(__DIR__, 3);
 
-    foreach (['auth_ui', 'common', 'companies_ui', 'company_invitations_mail', 'dashboard', 'design_system', 'settings_ui'] as $catalogue) {
+    foreach (['auth_ui', 'common', 'companies_ui', 'company_invitations_mail', 'dashboard', 'design_system', 'errors', 'settings_ui', 'validation'] as $catalogue) {
         /** @var array<string, mixed> $english */
         $english = require "{$projectRoot}/lang/en/{$catalogue}.php";
         /** @var array<string, mixed> $romanian */

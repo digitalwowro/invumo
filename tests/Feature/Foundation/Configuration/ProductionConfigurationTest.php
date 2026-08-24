@@ -1,0 +1,67 @@
+<?php
+
+namespace Tests\Feature\Foundation\Configuration;
+
+use App\Foundation\Configuration\ProductionConfiguration;
+use RuntimeException;
+use Tests\TestCase;
+
+class ProductionConfigurationTest extends TestCase
+{
+    public function test_safe_production_contract_passes_without_exposing_secret_values(): void
+    {
+        $this->setSafeProductionConfiguration();
+
+        app(ProductionConfiguration::class)->assertSafe();
+        $this->addToAssertionCount(1);
+
+        config()->set('database.connections.pgsql.password', '');
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('A missing production runtime password must fail validation.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('database.runtime_password', $exception->getMessage());
+            $this->assertStringNotContainsString('test-secret', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_non_production_configuration_is_not_forced_into_production_topology(): void
+    {
+        config()->set('app.key', null);
+
+        app(ProductionConfiguration::class)->assertSafe();
+
+        $this->addToAssertionCount(1);
+    }
+
+    private function setSafeProductionConfiguration(): void
+    {
+        $this->app['env'] = 'production';
+        config()->set([
+            'app.key' => 'base64:test-key',
+            'app.debug' => false,
+            'app.url' => 'https://app.example.com',
+            'app.timezone' => 'UTC',
+            'database.default' => 'pgsql',
+            'database.tenant_connection' => 'pgsql',
+            'database.connections.pgsql.username' => 'invumo_runtime',
+            'database.connections.pgsql.password' => 'test-secret',
+            'database.connections.pgsql_schema.username' => 'invumo_schema',
+            'database.connections.pgsql_schema.password' => 'schema-test-secret',
+            'session.driver' => 'database',
+            'session.encrypt' => true,
+            'session.secure' => true,
+            'session.http_only' => true,
+            'session.same_site' => 'lax',
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.password' => 'mail-test-secret',
+            'mail.from.address' => 'app@example.com',
+            'localization.supported_locales' => ['en', 'ro'],
+        ]);
+    }
+}

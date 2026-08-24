@@ -1,5 +1,6 @@
 <?php
 
+use App\Foundation\Database\Schema\MigrationDatabaseRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -81,17 +82,13 @@ return new class extends Migration
 
     private function grantRuntimePrivileges(): void
     {
-        DB::unprepared(<<<'SQL'
-            DO $$
-            BEGIN
-                IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_runtime') THEN
-                    EXECUTE 'REVOKE ALL ON TABLE users, plans, accounts FROM invumo_runtime';
-                    EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users TO invumo_runtime';
-                    EXECUTE 'GRANT SELECT ON TABLE plans TO invumo_runtime';
-                    EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE accounts TO invumo_runtime';
-                END IF;
-            END
-            $$
-            SQL);
+        if (! MigrationDatabaseRole::runtimeIsAvailable()) {
+            return;
+        }
+
+        DB::statement('REVOKE ALL ON TABLE users, plans, accounts FROM invumo_runtime');
+        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users TO invumo_runtime');
+        DB::statement('GRANT SELECT ON TABLE plans TO invumo_runtime');
+        DB::statement('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE accounts TO invumo_runtime');
     }
 };

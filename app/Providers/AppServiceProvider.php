@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Foundation\Configuration\ProductionConfiguration;
+use App\Foundation\Diagnostics\ApplicationHealth;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -30,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        app(ProductionConfiguration::class)->assertSafe();
+        Event::listen(
+            DiagnosingHealth::class,
+            fn () => app(ApplicationHealth::class)->diagnose(),
+        );
         $this->configureDefaults();
     }
 

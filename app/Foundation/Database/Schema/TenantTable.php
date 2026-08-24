@@ -99,7 +99,7 @@ final class TenantTable
             SQL);
         DB::statement("COMMENT ON TABLE public.{$table} IS 'invumo:tenant-owned'");
 
-        if (DB::table('pg_roles')->where('rolname', 'invumo_runtime')->exists()) {
+        if (MigrationDatabaseRole::runtimeIsAvailable()) {
             DB::statement("REVOKE ALL ON TABLE public.{$table} FROM invumo_runtime");
             DB::statement("GRANT {$privileges} ON TABLE public.{$table} TO invumo_runtime");
         }

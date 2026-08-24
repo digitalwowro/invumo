@@ -1,5 +1,6 @@
 <?php
 
+use App\Foundation\Database\Schema\MigrationDatabaseRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -7,6 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $runtimeIsAvailable = MigrationDatabaseRole::runtimeIsAvailable();
+
         DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
         DB::unprepared(<<<'SQL'
@@ -38,16 +41,19 @@ return new class extends Migration
             REVOKE ALL ON FUNCTION public.invumo_current_company_id() FROM PUBLIC;
             REVOKE ALL ON FUNCTION public.invumo_amount_is_quantized(numeric, smallint) FROM PUBLIC;
 
-            DO $do$
-            BEGIN
-                IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_runtime') THEN
-                    EXECUTE 'GRANT EXECUTE ON FUNCTION public.invumo_current_company_id() TO invumo_runtime';
-                    EXECUTE 'GRANT EXECUTE ON FUNCTION public.invumo_amount_is_quantized(numeric, smallint) TO invumo_runtime';
-                    EXECUTE 'REVOKE ALL ON TABLE public.migrations FROM invumo_runtime';
-                END IF;
-            END
-            $do$;
             SQL);
+
+        if ($runtimeIsAvailable) {
+            DB::statement(
+                'GRANT EXECUTE ON FUNCTION public.invumo_current_company_id() TO invumo_runtime',
+            );
+            DB::statement(<<<'SQL'
+                GRANT EXECUTE ON FUNCTION
+                    public.invumo_amount_is_quantized(numeric, smallint)
+                TO invumo_runtime
+                SQL);
+            DB::statement('REVOKE ALL ON TABLE public.migrations FROM invumo_runtime');
+        }
 
         // Laravel's starter migration uses timestamp without time zone here.
         // Normalize domain instants before any production User data exists.

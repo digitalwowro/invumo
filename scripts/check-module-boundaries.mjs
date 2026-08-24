@@ -38,6 +38,25 @@ function addViolation(file, message) {
 }
 
 function checkPhp(file) {
+    const source = readFileSync(path.join(root, file), 'utf8');
+
+    const directLoggingAllowed = [
+        'app/Foundation/Diagnostics/OperationalLogger.php',
+        'app/Http/Middleware/AttachCorrelationId.php',
+    ].includes(file);
+
+    if (
+        file.startsWith('app/') &&
+        !directLoggingAllowed &&
+        (source.includes('Illuminate\\Support\\Facades\\Log') ||
+            /\blogger\s*\(/.test(source))
+    ) {
+        addViolation(
+            file,
+            'application logs must use the allowlisted OperationalLogger boundary.',
+        );
+    }
+
     if (
         !file.startsWith('app/Modules/') &&
         !file.startsWith('app/Foundation/') &&
@@ -46,7 +65,6 @@ function checkPhp(file) {
         return;
     }
 
-    const source = readFileSync(path.join(root, file), 'utf8');
     const sourceModule = file.match(/^app\/Modules\/([^/]+)\//)?.[1];
     const isFoundation = file.startsWith('app/Foundation/');
     const isIntegration = file.startsWith('app/Integrations/');

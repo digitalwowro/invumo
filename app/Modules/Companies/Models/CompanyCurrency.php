@@ -6,6 +6,8 @@ use App\Foundation\Database\TenantOwnedModel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 /**
+ * @property string $id
+ * @property string $company_id
  * @property string $currency_code
  * @property int $currency_precision
  * @property bool $is_default

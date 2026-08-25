@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
 use App\Modules\Companies\Http\Controllers\CompanyController;
 use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
 use App\Modules\Companies\Http\Controllers\CompanyDocumentDefaultsController;
@@ -121,6 +122,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/taxes/{taxPreset}/archive', [CompanyTaxPresetController::class, 'archive'])
                 ->middleware('throttle:20,1')
                 ->name('company-tax-presets.archive');
+            Route::get('companies/{company}/settings/bank-accounts', [CompanyBankAccountController::class, 'index'])
+                ->name('company-bank-accounts.index');
+            Route::post('companies/{company}/settings/bank-accounts', [CompanyBankAccountController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('company-bank-accounts.store');
+            Route::patch('companies/{company}/settings/bank-accounts/{bankAccount}', [CompanyBankAccountController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-bank-accounts.update');
+            Route::patch('companies/{company}/settings/bank-accounts/{bankAccount}/archive', [CompanyBankAccountController::class, 'archive'])
+                ->middleware('throttle:20,1')
+                ->name('company-bank-accounts.archive');
             Route::get('companies/{company}/settings/members', [CompanyMemberController::class, 'index'])
                 ->name('company-members.index');
             Route::delete('companies/{company}/settings/members/current', [CompanyMemberController::class, 'leave'])

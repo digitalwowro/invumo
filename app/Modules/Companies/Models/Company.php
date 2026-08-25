@@ -76,6 +76,14 @@ class Company extends RuntimeModel
     }
 
     /**
+     * @return HasMany<BankAccount, $this>
+     */
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    /**
      * @return HasMany<NumberSeries, $this>
      */
     public function numberSeries(): HasMany

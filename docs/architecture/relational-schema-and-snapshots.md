@@ -198,14 +198,14 @@ Existing document snapshots retain their currency code/precision if this configu
 ### `bank_accounts`
 
 - `id`, `company_id`
-- user-facing label, bank name, account holder
-- IBAN/account number and SWIFT/BIC
+- required user-facing label up to 120 characters; required bank name and account holder up to 160 characters each
+- required IBAN/account number up to 64 characters and normalized uppercase 8- or 11-character SWIFT/BIC
 - optional same-Company currency reference
-- optional bounded `jsonb` local-routing details
+- optional bounded `jsonb` local-routing details using only `routing_number`, `sort_code`, `bank_code`, `branch_code`, `transit_number`, `institution_number`, `bsb`, and `ifsc`; the flat object has at most eight trimmed non-empty string values of at most 64 characters each
 - `is_default`, `archived_at`
 - partial unique `(company_id)` for the non-archived default
 
-Local routing data is the first intentional `jsonb` business exception because fields vary by banking jurisdiction. Laravel validates an allowlisted key/value object and prevents nested executable or arbitrary provider payloads.
+Local routing data is the first intentional `jsonb` business exception because fields vary by banking jurisdiction. Laravel and PostgreSQL enforce the same allowlisted key/value object and prevent custom keys, nested executable data, and arbitrary provider payloads. Bank labels, institution/account-holder names, account identifiers, SWIFT/BIC, and local-routing values are sensitive audit fields: ordinary append-only audit retains only stable changed-field names, default/archive state, and the non-sensitive currency code when it changes.
 
 ### `company_assets`
 

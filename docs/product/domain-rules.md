@@ -71,7 +71,8 @@ Across the domain, unusual but internally valid workflows should remain possible
 ## Bank accounts
 
 - A company may have multiple bank accounts.
-- Bank account fields include label, bank name, account holder, IBAN/account number, SWIFT/BIC, optional currency, and optional local routing details.
+- Bank accounts require a label, bank name, account holder, IBAN/account number, and normalized uppercase SWIFT/BIC. Currency and local routing details are optional.
+- Local routing details are a flat allowlisted object containing at most these eight fields: routing number, sort code, bank code, branch code, transit number, institution number, BSB, and IFSC. Each retained value is trimmed, non-empty, and at most 64 characters; custom keys, nested values, and provider payloads are rejected.
 - A company may designate a default bank account; each quote or invoice may override it or omit bank details.
 - A quote or invoice stores a snapshot of any bank details presented on the document.
 - Editing, archiving, or deleting the source bank account must not rewrite an existing document snapshot.

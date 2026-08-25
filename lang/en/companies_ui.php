@@ -27,6 +27,7 @@ return [
             'navigation_label' => 'Company settings sections',
             'navigation' => [
                 'profile' => 'Company profile',
+                'documents' => 'Document defaults',
                 'taxes' => 'Taxes',
                 'members' => 'Members',
             ],
@@ -82,6 +83,41 @@ return [
             ],
             'errors' => [
                 'schedule_change_not_confirmed' => 'Confirm the schedule change before saving the new timezone or execution time.',
+            ],
+        ],
+        'documents' => [
+            'head_title' => 'Document defaults',
+            'title' => 'Document defaults',
+            'description' => 'Set the Company fallbacks used when future quotes and invoices do not provide a more specific value.',
+            'policy_title' => 'Language and date defaults',
+            'policy_description' => 'These defaults determine customer-facing language and calendar-day deadlines for future documents.',
+            'content_title' => 'Default document content',
+            'content_description' => 'Keep Terms & Conditions separate from the optional notes shown on quotes and invoices.',
+            'language_placeholder' => 'Select a document language',
+            'save' => 'Save document defaults',
+            'unsaved_warning' => 'You have unsaved document defaults. Leave without saving?',
+            'fields' => [
+                'default_document_language' => 'Default document language',
+                'default_payment_term_days' => 'Payment term days',
+                'default_quote_validity_days' => 'Quote validity days',
+                'default_terms_and_conditions' => 'Terms & Conditions',
+                'default_quote_notes' => 'Quote notes',
+                'default_invoice_notes' => 'Invoice notes',
+            ],
+            'field_descriptions' => [
+                'default_document_language' => 'Used for future customer-facing documents unless a customer or document overrides it.',
+                'default_payment_term_days' => 'Non-negative calendar days from the invoice issue date.',
+                'default_quote_validity_days' => 'Non-negative calendar days from the quote issue date.',
+                'default_terms_and_conditions' => 'Reusable customer-visible terms for future quotes and invoices.',
+                'default_quote_notes' => 'Optional customer-visible notes for future quotes.',
+                'default_invoice_notes' => 'Optional customer-visible notes for future invoices.',
+            ],
+            'language_options' => [
+                'en' => 'English',
+                'ro' => 'Romanian',
+            ],
+            'feedback' => [
+                'saved' => 'Document defaults saved.',
             ],
         ],
         'taxes' => [

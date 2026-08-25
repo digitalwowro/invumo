@@ -91,6 +91,69 @@ final class CompanyConfigurationTenantIsolationTest extends TestCase
         });
     }
 
+    public function test_runtime_cannot_read_or_update_another_company_document_defaults(): void
+    {
+        $companyA = $this->company('Alpha SRL');
+        $companyB = $this->company('Beta SRL');
+        $settingsBId = app(TenantContext::class)->runAsSystem(
+            $companyB->id,
+            fn (): string => CompanySetting::query()->firstOrFail()->id,
+        );
+
+        app(TenantContext::class)->runAsSystem($companyA->id, function () use ($settingsBId): void {
+            $this->assertNull(CompanySetting::query()->find($settingsBId));
+            $this->assertSame(0, CompanySetting::query()->whereKey($settingsBId)->update([
+                'default_document_language' => 'ro',
+            ]));
+        });
+
+        app(TenantContext::class)->runAsSystem($companyB->id, function (): void {
+            $this->assertNull(CompanySetting::query()->firstOrFail()->default_document_language);
+        });
+    }
+
+    public function test_database_rejects_unsupported_default_document_language(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(QueryException::class);
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => CompanySetting::query()->firstOrFail()->update([
+                'default_document_language' => 'de',
+            ]),
+        );
+    }
+
+    public function test_database_rejects_negative_document_day_defaults(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(QueryException::class);
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => CompanySetting::query()->firstOrFail()->update([
+                'default_payment_term_days' => -1,
+            ]),
+        );
+    }
+
+    public function test_database_rejects_negative_quote_validity_days(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(QueryException::class);
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => CompanySetting::query()->firstOrFail()->update([
+                'default_quote_validity_days' => -1,
+            ]),
+        );
+    }
+
     private function company(string $name): Company
     {
         $user = User::factory()->create();

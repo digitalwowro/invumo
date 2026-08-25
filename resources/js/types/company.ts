@@ -1,3 +1,4 @@
+import type { CompanyDocumentDefaultsTranslations } from '@/types/company-document-defaults';
 import type { CompanyTaxPresetTranslations } from '@/types/company-tax';
 
 export type CompanySummary = {
@@ -88,7 +89,7 @@ export type CompanyConfiguration = {
 };
 
 export type CompanySettingsNavigationItem = {
-    key: 'profile' | 'taxes' | 'members';
+    key: 'profile' | 'documents' | 'taxes' | 'members';
     href: string;
 };
 
@@ -122,6 +123,7 @@ export type CompanySettingsTranslations = {
         feedback: { saved: string };
         errors: { schedule_change_not_confirmed: string };
     };
+    documents: CompanyDocumentDefaultsTranslations;
     taxes: CompanyTaxPresetTranslations;
 };
 

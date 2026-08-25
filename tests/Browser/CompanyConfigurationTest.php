@@ -26,13 +26,19 @@ function configuredCompanyForBrowser(string $language = 'en'): array
     ]);
     $company = app(CreateCompany::class)->handle($account, $owner, 'Browser SRL');
 
-    app(TenantContext::class)->runAsSystem($company->id, function (): void {
+    app(TenantContext::class)->runAsSystem($company->id, function () use ($language): void {
         CompanySetting::query()->firstOrFail()->update([
             'legal_name' => 'Browser Legal SRL',
             'country_code' => 'RO',
             'timezone' => 'Europe/Bucharest',
             'automation_local_time' => '09:00',
             'currency_display_style' => 'CODE',
+            'default_document_language' => $language,
+            'default_payment_term_days' => 14,
+            'default_quote_validity_days' => 30,
+            'default_terms_and_conditions' => 'Payment is due according to the agreed terms.',
+            'default_quote_notes' => 'Thank you for considering this quote.',
+            'default_invoice_notes' => 'Thank you for your business.',
         ]);
         CompanyCurrency::query()->create([
             'currency_code' => 'RON',
@@ -43,6 +49,18 @@ function configuredCompanyForBrowser(string $language = 'en'): array
     });
 
     return [$owner, $company];
+}
+
+function openCompanyDocumentDefaults(User $owner, Company $company, bool $mobile = false): mixed
+{
+    $page = visit('/login')->on();
+    $page = $mobile ? $page->iPhone15() : $page->desktop();
+
+    return $page
+        ->type('Email address', $owner->email)
+        ->type('Password', 'password')
+        ->click('Log in')
+        ->navigate(route('company-document-defaults.edit', $company, false));
 }
 
 function openCompanyConfiguration(User $owner, Company $company, bool $mobile = false): mixed
@@ -94,6 +112,39 @@ it('keeps Romanian Company settings usable on a narrow viewport', function () {
         ->assertSee('Fusul orar al companiei')
         ->assertSee('Moneda implicită')
         ->assertSee('RON')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('saves document defaults without a stale unsaved warning', function () {
+    [$owner, $company] = configuredCompanyForBrowser();
+
+    openCompanyDocumentDefaults($owner, $company)
+        ->assertSee('Document defaults')
+        ->assertValue('Payment term days', '14')
+        ->assertValue('Quote validity days', '30')
+        ->assertValue('Terms & Conditions', 'Payment is due according to the agreed terms.')
+        ->type('Payment term days', '21')
+        ->type('Quote notes', 'Updated quote note.')
+        ->click('Save document defaults')
+        ->assertSee('Document defaults saved.')
+        ->assertValue('Payment term days', '21')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues()
+        ->click('Taxes')
+        ->assertPathIs(route('company-tax-presets.index', $company, false))
+        ->assertSee('Tax presets');
+});
+
+it('keeps Romanian document defaults usable on a narrow viewport', function () {
+    [$owner, $company] = configuredCompanyForBrowser('ro');
+
+    openCompanyDocumentDefaults($owner, $company, mobile: true)
+        ->assertSee('Valori implicite pentru documente')
+        ->assertSee('Limba implicită a documentelor')
+        ->assertSee('Termen de plată în zile')
+        ->assertSee('Termeni și condiții')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });

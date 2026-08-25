@@ -5,6 +5,7 @@ import PasswordInput from '@/components/app/password-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 type SafeInputProps = Omit<
     ComponentProps<typeof Input>,
@@ -63,6 +64,45 @@ export function TextField({
             {inheritedCaption && (
                 <FieldDescription id={inheritedId}>
                     {inheritedCaption}
+                </FieldDescription>
+            )}
+            <InputError id={errorId} message={error} />
+        </Field>
+    );
+}
+
+type TextareaFieldProps = BaseFieldProps & {
+    textarea: Omit<
+        ComponentProps<typeof Textarea>,
+        'className' | 'style' | 'id'
+    >;
+};
+
+export function TextareaField({
+    id: suppliedId,
+    label,
+    description,
+    error,
+    textarea,
+}: TextareaFieldProps) {
+    const generatedId = useId();
+    const id = suppliedId ?? generatedId;
+    const descriptionId = description ? `${id}-description` : undefined;
+    const errorId = error ? `${id}-error` : undefined;
+    const describedBy = [descriptionId, errorId].filter(Boolean).join(' ');
+
+    return (
+        <Field data-invalid={Boolean(error)} data-disabled={textarea.disabled}>
+            <FieldLabel htmlFor={id}>{label}</FieldLabel>
+            <Textarea
+                {...textarea}
+                id={id}
+                aria-invalid={Boolean(error)}
+                aria-describedby={describedBy || undefined}
+            />
+            {description && (
+                <FieldDescription id={descriptionId}>
+                    {description}
                 </FieldDescription>
             )}
             <InputError id={errorId} message={error} />

@@ -2,6 +2,7 @@
 
 use App\Modules\Companies\Http\Controllers\CompanyController;
 use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
+use App\Modules\Companies\Http\Controllers\CompanyDocumentDefaultsController;
 use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
 use App\Modules\Companies\Http\Controllers\CompanyMemberController;
@@ -98,6 +99,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/profile', [CompanySettingsController::class, 'update'])
                 ->middleware('throttle:20,1')
                 ->name('company-settings.profile.update');
+            Route::get('companies/{company}/settings/documents', [CompanyDocumentDefaultsController::class, 'edit'])
+                ->name('company-document-defaults.edit');
+            Route::patch('companies/{company}/settings/documents', [CompanyDocumentDefaultsController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-document-defaults.update');
             Route::get('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'index'])
                 ->name('company-tax-presets.index');
             Route::post('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'store'])

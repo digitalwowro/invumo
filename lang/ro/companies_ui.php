@@ -27,6 +27,7 @@ return [
             'navigation_label' => 'Secțiunile setărilor companiei',
             'navigation' => [
                 'profile' => 'Profilul companiei',
+                'documents' => 'Valori implicite pentru documente',
                 'taxes' => 'Taxe',
                 'members' => 'Membri',
             ],
@@ -82,6 +83,41 @@ return [
             ],
             'errors' => [
                 'schedule_change_not_confirmed' => 'Confirmă schimbarea programului înainte de a salva noul fus orar sau noua oră de execuție.',
+            ],
+        ],
+        'documents' => [
+            'head_title' => 'Valori implicite pentru documente',
+            'title' => 'Valori implicite pentru documente',
+            'description' => 'Stabilește valorile companiei folosite când ofertele și facturile viitoare nu au o valoare mai specifică.',
+            'policy_title' => 'Limbă și termene implicite',
+            'policy_description' => 'Aceste valori stabilesc limba documentelor pentru clienți și termenele în zile calendaristice.',
+            'content_title' => 'Conținut implicit pentru documente',
+            'content_description' => 'Păstrează Termenii și condițiile separat de notele opționale afișate pe oferte și facturi.',
+            'language_placeholder' => 'Alege limba documentelor',
+            'save' => 'Salvează valorile implicite',
+            'unsaved_warning' => 'Ai valori implicite nesalvate pentru documente. Ieși fără să salvezi?',
+            'fields' => [
+                'default_document_language' => 'Limba implicită a documentelor',
+                'default_payment_term_days' => 'Termen de plată în zile',
+                'default_quote_validity_days' => 'Valabilitatea ofertei în zile',
+                'default_terms_and_conditions' => 'Termeni și condiții',
+                'default_quote_notes' => 'Note pentru ofertă',
+                'default_invoice_notes' => 'Note pentru factură',
+            ],
+            'field_descriptions' => [
+                'default_document_language' => 'Folosită pentru documentele viitoare destinate clienților, dacă un client sau document nu o înlocuiește.',
+                'default_payment_term_days' => 'Număr nenegativ de zile calendaristice de la data emiterii facturii.',
+                'default_quote_validity_days' => 'Număr nenegativ de zile calendaristice de la data emiterii ofertei.',
+                'default_terms_and_conditions' => 'Termeni reutilizabili, vizibili clienților, pentru oferte și facturi viitoare.',
+                'default_quote_notes' => 'Note opționale, vizibile clienților, pentru ofertele viitoare.',
+                'default_invoice_notes' => 'Note opționale, vizibile clienților, pentru facturile viitoare.',
+            ],
+            'language_options' => [
+                'en' => 'Engleză',
+                'ro' => 'Română',
+            ],
+            'feedback' => [
+                'saved' => 'Valorile implicite pentru documente au fost salvate.',
             ],
         ],
         'taxes' => [

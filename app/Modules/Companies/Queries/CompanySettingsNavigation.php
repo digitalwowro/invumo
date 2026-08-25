@@ -33,6 +33,10 @@ final readonly class CompanySettingsNavigation
                 'href' => route('company-settings.profile.edit', $company, false),
             ];
             $items[] = [
+                'key' => 'documents',
+                'href' => route('company-document-defaults.edit', $company, false),
+            ];
+            $items[] = [
                 'key' => 'taxes',
                 'href' => route('company-tax-presets.index', $company, false),
             ];

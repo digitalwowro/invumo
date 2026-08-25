@@ -294,7 +294,7 @@ Quotes calculate deterministically, preserve every required snapshot, render con
 
 ### Tasks
 
-- [ ] Implement invoice CRUD with one mutable current public/PDF representation and immutable already-delivered email artifacts; permanent deletion of a transaction-free Invoice that was already issued, sent, or shared must use the approved highest-friction confirmation pattern.
+- [ ] Implement Invoice create/read/update behavior with one mutable current public/PDF representation and immutable already-delivered email artifacts; defer permanent deletion until the Phase 7 transaction model can enforce the complete approved guard.
 - [ ] Reuse the shared editor, calculations, numbering, renderer, and PDF pipeline.
 - [ ] Implement Draft/Issued lifecycle, zero-total Paid behavior, derived payment state, day-offset due-date validation, and overdue flag; defer cancellation and reopening until transactions exist in Phase 7.
 - [ ] Implement quote-to-one-or-many-invoices with normal Accepted conversion, confirmed Owner/Admin Draft/Sent/Expired overrides, Rejected blocking, Draft-only unused unlinking with permanent provenance afterward, quoted/invoiced/remaining allocation, and customer-reference inheritance.
@@ -303,15 +303,15 @@ Quotes calculate deterministically, preserve every required snapshot, render con
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                                                                                        | Quality boundary                                                                                                                                                     |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 6A    | Independent Invoice Draft CRUD using the shared editor, snapshots, calculations, numbering, renderer/PDF, due-date offset, customer reference, and initial operational list                  | Proves reuse through one usable independent-Invoice path before adding lifecycle or Quote provenance complexity                                                      |
-| 6B    | Draft/Issued lifecycle, zero-total Paid behavior, derived overdue/payment state, list filters, and guarded deletion/current-representation behavior                                          | Completes only lifecycle rules that can be evaluated without transactions; cancellation and reopening are absent until their full Phase 7 invariant is implementable |
-| 6C    | Quote-to-one-or-many-Invoice conversion, confirmed non-Accepted overrides, Rejected blocking, allocation totals, customer-reference inheritance, and constrained unlink/provenance lifecycle | Standalone cross-aggregate workflow because conversion and unlinking lock and mutate both Quote and Invoice state                                                    |
+| Batch | Scope                                                                                                                                                                                              | Quality boundary                                                                                                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6A    | Independent Invoice Draft create/read/update behavior using the shared editor, snapshots, calculations, numbering, renderer/PDF, due-date offset, customer reference, and initial operational list | Proves reuse through one usable independent-Invoice path before adding lifecycle or Quote provenance complexity                                                                             |
+| 6B    | Draft/Issued lifecycle, zero-total Paid behavior, derived overdue/payment state, list filters, and current-representation behavior                                                                 | Completes only lifecycle rules that can be evaluated without transactions; cancellation, reopening, and permanent deletion are absent until their full Phase 7 invariants are implementable |
+| 6C    | Quote-to-one-or-many-Invoice conversion, confirmed non-Accepted overrides, Rejected blocking, allocation totals, customer-reference inheritance, and constrained unlink/provenance lifecycle       | Standalone cross-aggregate workflow because conversion and unlinking lock and mutate both Quote and Invoice state                                                                           |
 
 ### Acceptance gate
 
-Independent and quote-derived invoices produce the same authoritative calculations and snapshots, and Draft/Issued, zero-total payment, and overdue behavior is correct around company-local dates. Cancellation is not exposed or certified until Phase 7.
+Independent and quote-derived invoices produce the same authoritative calculations and snapshots, and Draft/Issued, zero-total payment, and overdue behavior is correct around company-local dates. Cancellation, reopening, and permanent deletion are not exposed or certified until Phase 7.
 
 ## Phase 7 — Payments
 
@@ -324,21 +324,23 @@ Independent and quote-derived invoices produce the same authoritative calculatio
 - [ ] Implement invoice transaction records with explicit payment, refund, and adjustment direction.
 - [ ] Implement partial payments, cash-only refund capacity, non-refundable adjustments, overpayment prevention, and outstanding-balance derivation.
 - [ ] Implement derived invoice payment state.
-- [ ] Implement the complete Cancelled lifecycle with the zero-net-paid precondition, post-cancellation transaction blocking, authorized reopening, history retention, deletion constraints, and the expected Member-to-Owner/Admin escalation when an Adjustment is required to reach zero net paid.
+- [ ] Implement the complete Cancelled lifecycle with the zero-net-paid precondition, post-cancellation transaction blocking, authorized reopening, history retention, and the expected Member-to-Owner/Admin escalation when an Adjustment is required to reach zero net paid.
+- [ ] Implement permanent Invoice deletion only when zero transaction rows exist, with the approved highest-friction confirmation for previously issued, sent, shared, or customer-acted documents and the required cleanup/history retention.
 - [ ] Implement the company Transactions screen with operational list controls.
 - [ ] Add transaction authorization, audit coverage, precision validation, reconciliation tests, and tenant-isolation tests.
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                                                         | Quality boundary                                                                                                                                            |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 7A    | Payment, refund, and adjustment CRUD with exact reconciliation, partial-payment/refund capacity, overpayment prevention, and derived Invoice payment state    | Amount mutation and Invoice-state derivation must commit atomically and use one authoritative calculation path                                              |
-| 7B    | Complete cancellation/reopening workflow, zero-net-paid guard, post-cancellation blocking, Adjustment escalation, history retention, and deletion constraints | Implements and reviews the approved cancellation invariant once, after transaction state exists; no provisional Phase 6 cancellation path is replaced later |
-| 7C    | Company Transactions operational list with search, filtering, sorting, and pagination                                                                         | Read-focused slice after transaction semantics stabilize; it must expose existing state without introducing new mutation paths                              |
+| Batch | Scope                                                                                                                                                      | Quality boundary                                                                                                                                            |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7A    | Payment, refund, and adjustment CRUD with exact reconciliation, partial-payment/refund capacity, overpayment prevention, and derived Invoice payment state | Amount mutation and Invoice-state derivation must commit atomically and use one authoritative calculation path                                              |
+| 7B    | Complete cancellation/reopening workflow, zero-net-paid guard, post-cancellation blocking, Adjustment escalation, and history retention                    | Implements and reviews the approved cancellation invariant once, after transaction state exists; no provisional Phase 6 cancellation path is replaced later |
+| 7C    | Permanent Invoice deletion with a locked zero-transaction check, strengthened confirmation, dependent cleanup, and retained minimal history                | Implements and reviews the destructive invariant once, after transaction rows exist; no provisional Phase 6 deletion path is replaced later                 |
+| 7D    | Company Transactions operational list with search, filtering, sorting, and pagination                                                                      | Read-focused slice after transaction semantics stabilize; it must expose existing state without introducing new mutation paths                              |
 
 ### Acceptance gate
 
-Transaction history reconciles exactly to invoice balance and state under create, edit, delete, adjustment, and refund paths. Cancellation cannot retain a positive net-paid balance, accept new transactions, or erase linked history.
+Transaction history reconciles exactly to invoice balance and state under create, edit, delete, adjustment, and refund paths. Cancellation cannot retain a positive net-paid balance, accept new transactions, or erase linked history. Permanent Invoice deletion is blocked by any transaction row and preserves the approved minimal history after confirmed cleanup.
 
 ## Phase 8 — Public documents
 

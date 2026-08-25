@@ -34,6 +34,10 @@ type FileUploadProps = {
     labels: FileUploadLabels;
     value: File | null;
     onChange: (file: File | null) => void;
+    existingFile?: { name: string; previewUrl?: string } | null;
+    selectedPreviewUrl?: string;
+    previewAlt?: string;
+    onRemoveExisting?: () => void;
     accept?: string;
     description?: string;
     error?: string;
@@ -49,6 +53,10 @@ export function FileUpload({
     labels,
     value,
     onChange,
+    existingFile,
+    selectedPreviewUrl,
+    previewAlt,
+    onRemoveExisting,
     accept,
     description,
     error,
@@ -59,6 +67,8 @@ export function FileUpload({
     const input = useRef<HTMLInputElement>(null);
     const [dragging, setDragging] = useState(false);
     const unavailable = disabled || uploading;
+    const displayedFile = value ?? existingFile;
+    const previewUrl = value ? selectedPreviewUrl : existingFile?.previewUrl;
 
     function selectFile(file: File | null) {
         if (!unavailable) {
@@ -81,7 +91,11 @@ export function FileUpload({
             input.current.value = '';
         }
 
-        selectFile(null);
+        if (value) {
+            selectFile(null);
+        } else {
+            onRemoveExisting?.();
+        }
     }
 
     const state = uploading
@@ -90,7 +104,7 @@ export function FileUpload({
           ? 'error'
           : successMessage
             ? 'success'
-            : value
+            : displayedFile
               ? 'selected'
               : 'idle';
 
@@ -147,7 +161,7 @@ export function FileUpload({
 
                 {uploading ? (
                     <Spinner className="size-6" />
-                ) : value ? (
+                ) : displayedFile ? (
                     <Icon iconNode={FileImageIcon} className="size-6" />
                 ) : (
                     <Icon iconNode={UploadCloudIcon} className="size-6" />
@@ -157,9 +171,9 @@ export function FileUpload({
                     <p className="text-sm font-medium">
                         {uploading ? labels.uploading : labels.dropPrompt}
                     </p>
-                    {value && (
+                    {displayedFile && (
                         <p className="text-sm text-muted-foreground">
-                            {labels.selected}: {value.name}
+                            {labels.selected}: {displayedFile.name}
                         </p>
                     )}
                     {successMessage && !uploading && (
@@ -173,6 +187,14 @@ export function FileUpload({
                     )}
                 </div>
 
+                {previewUrl && previewAlt && (
+                    <img
+                        src={previewUrl}
+                        alt={previewAlt}
+                        className="max-h-24 max-w-full rounded-md border border-border bg-background object-contain p-2"
+                    />
+                )}
+
                 <div className="flex flex-wrap justify-center gap-2">
                     <Button
                         type="button"
@@ -180,9 +202,9 @@ export function FileUpload({
                         disabled={unavailable}
                         onClick={() => input.current?.click()}
                     >
-                        {value ? labels.replace : labels.choose}
+                        {displayedFile ? labels.replace : labels.choose}
                     </Button>
-                    {value && (
+                    {displayedFile && (value || onRemoveExisting) && (
                         <Button
                             type="button"
                             variant="ghost"

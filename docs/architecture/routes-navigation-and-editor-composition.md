@@ -204,9 +204,19 @@ The permission matrix controls each mutation. Members may manage Payments and Re
 
 Settings use bounded offset pagination only where a list is naturally small. They do not reuse operational keyset pagination merely for visual consistency.
 
+The authenticated Company-appearance surface is fixed as:
+
+```text
+GET  /companies/{company}/settings/appearance
+POST /companies/{company}/settings/appearance
+GET  /companies/{company}/settings/appearance/logo
+```
+
+The mutation uses `POST` because a logo replacement is multipart. The logo response resolves only the current live settings reference through the authenticated Company context and `manage_company_settings` ability; it never accepts an asset key or filesystem path from the browser.
+
 ### 4.4 Deferred route contracts
 
-Public Quote/Invoice, PDF, email-provider webhook, upload-serving, and provider-callback routes are not fixed here. Public document pages will remain on the `app.invumo.com` SaaS host rather than the separate `invumo.com` marketing website, but their exact path and bootstrap contract remains blocked by the named token, renderer, upload, or integration gate. The internal route map reserves no insecure public-ID shortcut.
+Public Quote/Invoice, PDF, public-asset, email-provider webhook, and provider-callback routes are not fixed here. Public document pages will remain on the `app.invumo.com` SaaS host rather than the separate `invumo.com` marketing website, but their exact path and bootstrap contract remains blocked by the named token, renderer, upload, or integration gate. The internal route map reserves no insecure public-ID shortcut.
 
 ## 5. Operational-list contract
 

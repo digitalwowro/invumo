@@ -48,6 +48,10 @@ final readonly class CompanySettingsNavigation
                 'key' => 'bank_accounts',
                 'href' => route('company-bank-accounts.index', $company, false),
             ];
+            $items[] = [
+                'key' => 'appearance',
+                'href' => route('company-appearance.edit', $company, false),
+            ];
         }
 
         if ($this->authorization->allows($membership->role, CompanyAbility::ViewCompany)) {

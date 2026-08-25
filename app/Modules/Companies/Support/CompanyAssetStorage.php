@@ -64,7 +64,11 @@ final readonly class CompanyAssetStorage
 
     public function delete(StoredCompanyAsset $asset): void
     {
-        $this->filesystems->disk($asset->disk)->delete($asset->key);
+        $disk = $this->filesystems->disk($asset->disk);
+
+        if ($disk->exists($asset->key) && ! $disk->delete($asset->key)) {
+            throw new RuntimeException('The Company asset could not be deleted from private storage.');
+        }
     }
 
     private function diskName(): string

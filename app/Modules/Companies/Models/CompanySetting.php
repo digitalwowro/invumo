@@ -5,6 +5,7 @@ namespace App\Modules\Companies\Models;
 use App\Foundation\Database\TenantOwnedModel;
 use App\Modules\Companies\Data\CurrencyDisplayStyle;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string $automation_local_time
@@ -15,6 +16,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $default_terms_and_conditions
  * @property string|null $default_quote_notes
  * @property string|null $default_invoice_notes
+ * @property string $primary_brand_color
+ * @property string|null $logo_asset_id
+ * @property-read CompanyAsset|null $logoAsset
  */
 #[Fillable([
     'legal_name',
@@ -41,9 +45,17 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'default_terms_and_conditions',
     'default_quote_notes',
     'default_invoice_notes',
+    'primary_brand_color',
+    'logo_asset_id',
 ])]
 class CompanySetting extends TenantOwnedModel
 {
+    /** @return BelongsTo<CompanyAsset, $this> */
+    public function logoAsset(): BelongsTo
+    {
+        return $this->belongsTo(CompanyAsset::class, 'logo_asset_id');
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {

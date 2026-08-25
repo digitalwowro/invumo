@@ -5,9 +5,25 @@ namespace App\Modules\Companies\Models;
 use App\Foundation\Database\TenantOwnedModel;
 use App\Models\User;
 use App\Modules\Companies\Data\CompanyAssetPurpose;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $company_id
+ * @property CompanyAssetPurpose $purpose
+ * @property string $storage_disk
+ * @property string $storage_key
+ * @property string $mime_type
+ * @property int $byte_size
+ * @property string $content_sha256
+ * @property int $pixel_width
+ * @property int $pixel_height
+ * @property string|null $created_by_user_id
+ * @property CarbonImmutable $created_at
+ * @property CarbonImmutable|null $deleted_at
+ */
 #[Fillable([
     'purpose',
     'storage_disk',

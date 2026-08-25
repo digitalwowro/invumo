@@ -1,3 +1,4 @@
+import type { CompanyAppearanceTranslations } from '@/types/company-appearance';
 import type { CompanyBankAccountTranslations } from '@/types/company-bank-account';
 import type { CompanyDocumentDefaultsTranslations } from '@/types/company-document-defaults';
 import type { CompanyNumberSeriesTranslations } from '@/types/company-number-series';
@@ -97,6 +98,7 @@ export type CompanySettingsNavigationItem = {
         | 'numbering'
         | 'taxes'
         | 'bank_accounts'
+        | 'appearance'
         | 'members';
     href: string;
 };
@@ -135,6 +137,7 @@ export type CompanySettingsTranslations = {
     numbering: CompanyNumberSeriesTranslations;
     taxes: CompanyTaxPresetTranslations;
     bank_accounts: CompanyBankAccountTranslations;
+    appearance: CompanyAppearanceTranslations;
 };
 
 export type CompanyRole = 'OWNER' | 'ADMIN' | 'MEMBER';

@@ -609,6 +609,8 @@ On narrow screens, settings navigation collapses through the shared responsive n
 
 Company appearance uses one `BrandColourField` and shared outward-document preview. Presets, custom-hex validation, contrast fallback, and preview state belong to that component/service boundary. Selecting a Company colour must never recolour the settings page or any other authenticated UI.
 
+The outward-brand resolver persists canonical uppercase `#RRGGBB` values and owns the only raw Company-colour literals outside the global application tokens. New Companies use neutral ink `#14181C`; Ink, Navy, Forest, Burgundy, and Violet are reusable shortcuts, not a closed enum. The resolver chooses whichever of black or white has greater contrast for text on the brand-colour background. For ordinary outward text and rules on white, it uses the chosen colour only when the applicable contrast threshold passes and otherwise falls back to neutral ink. Every outward renderer and the shared live preview consume this same result shape.
+
 ### 10.14 Authentication and onboarding
 
 Authentication, verification, recovery, invitation acceptance, first-Company creation, and empty-account onboarding use one `AuthShell`/`OnboardingShell` family. They use the same fonts, tokens, fields, actions, feedback, and accessibility contract without the authenticated sidebar.

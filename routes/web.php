@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Companies\Http\Controllers\CompanyAppearanceController;
 use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
 use App\Modules\Companies\Http\Controllers\CompanyController;
 use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
@@ -133,6 +134,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/bank-accounts/{bankAccount}/archive', [CompanyBankAccountController::class, 'archive'])
                 ->middleware('throttle:20,1')
                 ->name('company-bank-accounts.archive');
+            Route::get('companies/{company}/settings/appearance', [CompanyAppearanceController::class, 'edit'])
+                ->name('company-appearance.edit');
+            Route::post('companies/{company}/settings/appearance', [CompanyAppearanceController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-appearance.update');
+            Route::get('companies/{company}/settings/appearance/logo', [CompanyAppearanceController::class, 'logo'])
+                ->middleware('throttle:60,1')
+                ->name('company-appearance.logo');
             Route::get('companies/{company}/settings/members', [CompanyMemberController::class, 'index'])
                 ->name('company-members.index');
             Route::delete('companies/{company}/settings/members/current', [CompanyMemberController::class, 'leave'])

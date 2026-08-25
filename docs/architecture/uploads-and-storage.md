@@ -41,7 +41,7 @@ No Company asset is served by a public storage URL.
 - PDF and email rendering read bytes through the backend storage boundary after the surrounding document operation has established tenant authorization.
 - Responses use the stored canonical MIME type, `X-Content-Type-Options: nosniff`, and context-appropriate private or public cache policy. The browser never supplies a filesystem path or object key.
 
-The internal serving endpoint belongs with the Phase 2 Company-logo workflow. Public serving belongs with the Phase 8 token workflow. This Phase 1 foundation deliberately exposes neither an orphan-producing upload endpoint nor a public asset endpoint.
+The Phase 2 workflow exposes one authenticated current-logo endpoint under Company appearance. It resolves the live settings reference server-side, requires `manage_company_settings`, streams through RLS with private/no-store caching and `nosniff`, and accepts no asset identifier or path from the browser. Public serving remains with the Phase 8 token workflow and must not reuse this internal route. There is no standalone orphan-producing upload endpoint.
 
 ## Replacement, removal, and cleanup
 

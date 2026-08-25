@@ -993,9 +993,11 @@ Appearance settings remain intentionally small:
 - A custom color picker/hex value
 - A simple document/public-page preview
 
+New Companies start with neutral ink `#14181C`. The safe preset shortcuts are Ink `#14181C`, Navy `#1E3A5F`, Forest `#1F5D42`, Burgundy `#7F1D1D`, and Violet `#5B3A8E`. Presets do not restrict the persisted value: a Company may save any canonical uppercase `#RRGGBB` color, and future presets can be added without a schema or data migration.
+
 Apply the primary brand color to outward-facing PDFs, public quote/invoice pages, and restrained transactional email accents. Do not theme the internal Invumo dashboard or application per company.
 
-Validate custom colors and maintain readable foreground/background contrast. Use a safe fallback when the chosen color cannot be used accessibly in a particular context.
+Validate custom colors and maintain readable foreground/background contrast. The shared resolver selects black or white for the best foreground contrast on a colored background. If the chosen color is unsafe against white for outward text or rules, use neutral ink for that context while preserving the Company's saved color.
 
 ## 30. Settings hierarchy
 

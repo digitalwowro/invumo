@@ -55,6 +55,38 @@ describe('FileUpload', () => {
         ).toBeEnabled();
     });
 
+    it('shows and removes an existing persisted file', async () => {
+        const user = userEvent.setup();
+        const removeExisting = vi.fn();
+
+        render(
+            <FileUpload
+                id="company-logo"
+                name="logo"
+                label="Company logo"
+                labels={labels}
+                value={null}
+                onChange={vi.fn()}
+                existingFile={{
+                    name: 'Current Company logo',
+                    previewUrl: '/private/logo',
+                }}
+                previewAlt="Company logo preview"
+                onRemoveExisting={removeExisting}
+            />,
+        );
+
+        expect(
+            screen.getByText('Selected: Current Company logo'),
+        ).toBeInTheDocument();
+        expect(screen.getByAltText('Company logo preview')).toHaveAttribute(
+            'src',
+            '/private/logo',
+        );
+        await user.click(screen.getByRole('button', { name: 'Remove image' }));
+        expect(removeExisting).toHaveBeenCalledOnce();
+    });
+
     it('exposes uploading, validation-error, and success states', () => {
         const onChange = vi.fn();
         const file = new File(['logo'], 'logo.webp', { type: 'image/webp' });

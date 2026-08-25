@@ -506,11 +506,12 @@ Recurring template
 
 - v1 supports a company logo and one primary brand color.
 - Company-logo files follow the approved raster validation, private Laravel storage, controlled serving, immutable replacement/cleanup, and local-to-S3 migration contract in [`../architecture/uploads-and-storage.md`](../architecture/uploads-and-storage.md).
-- Offer safe presets and a custom color/hex input.
+- New Companies default to neutral ink `#14181C`. The built-in shortcuts are Ink `#14181C`, Navy `#1E3A5F`, Forest `#1F5D42`, Burgundy `#7F1D1D`, and Violet `#5B3A8E`; these are UI conveniences rather than a closed Company-color enum.
+- Companies may instead save any custom color in canonical uppercase `#RRGGBB` notation. Adding or changing presets later requires no schema or data migration because the final hex value is persisted.
 - Provide a simple outward-facing document/public-page preview.
 - Apply the brand color to PDFs, public document pages, and restrained transactional email accents.
 - Do not apply company themes to the internal Invumo application.
-- Validate custom colors and choose accessible foreground colors or a safe fallback for each rendered context.
+- The shared outward-theme resolver chooses black or white for the best contrast on a brand-color background. When the chosen color cannot meet the required contrast against white for outward text or rules, that context falls back to neutral ink while preserving the saved Company color.
 - v1 excludes custom fonts, print padding/scale/logo-size controls, custom favicons, Pay buttons, viewer-facing Share buttons, fixed-per-page footers, signature/stamp images, and Invumo-branding removal controls.
 - v1 also excludes credit notes, automatic late fees, payment-processing fees, tax-inclusive pricing, user-editable system translation dictionaries, PDF QR codes, PDF invoice-status labels, and arbitrary footer-element builders.
 

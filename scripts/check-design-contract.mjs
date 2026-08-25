@@ -47,6 +47,10 @@ const ignoredFilenameDirectories = new Set([
     'vendor',
 ]);
 const productNameTypo = new RegExp(`\\b${'invum'}a\\b`, 'i');
+const outwardColorResolverFiles = new Set([
+    'resources/js/domain/companies/outward-brand-theme.ts',
+    'resources/js/domain/companies/outward-brand-theme.test.ts',
+]);
 
 const rules = [
     {
@@ -196,6 +200,13 @@ for (const root of roots) {
         }
 
         for (const rule of rules) {
+            if (
+                rule.name === 'raw colour value' &&
+                outwardColorResolverFiles.has(projectPath)
+            ) {
+                continue;
+            }
+
             rule.pattern.lastIndex = 0;
 
             for (const match of source.matchAll(rule.pattern)) {

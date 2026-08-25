@@ -39,7 +39,7 @@ Production-like migrations now require `invumo_runtime` before executing any con
 
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
 
-Verified on 2026-08-24: all Phase 1 migrations through `2026_08_24_123000_create_company_assets` ran in production through the `pgsql_schema` connection as the `invumo` operating-system user. Post-migration readiness, private configuration/view caches, the user-owned queue worker, restricted runtime access, and the complete runtime verifier all passed. Later feature migrations remain just-in-time work owned by their phases.
+Verified on 2026-08-25: all migrations through `2026_08_25_150000_create_number_series` ran in production through the `pgsql_schema` connection as the `invumo` operating-system user. This includes the Phase 2 Company configuration, tax presets, bounded document defaults, and versioned number-series settings. The restricted runtime role has only the approved number-series privileges, forced RLS is active, every existing Company has the two approved default series, and production configuration plus the complete runtime verifier passed. Later feature migrations remain just-in-time work owned by their approved batches.
 
 ## Queue worker
 

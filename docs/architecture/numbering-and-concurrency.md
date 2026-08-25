@@ -1,7 +1,7 @@
 # Document Numbering and Concurrency
 
 Status: Approved architecture decision  
-Last updated: 2026-08-22
+Last updated: 2026-08-25
 
 This specification defines automatic quote and invoice numbering. It preserves the product's flexible manual-numbering rules while ensuring that two concurrent automatic creations cannot receive the same suggestion.
 
@@ -9,13 +9,15 @@ This specification defines automatic quote and invoice numbering. It preserves t
 
 Each company has separate Quote and Invoice number series. A series supports:
 
-- Literal prefix and suffix
-- Optional company-local four-digit year token
-- Exactly one numeric sequence token
-- Numeric zero-padding
+- Company-editable literal text around the approved tokens, up to 120 characters with no control characters or unrecognized braces
+- Exactly one `{NUMBER}` token; it is mandatory and may appear only once
+- An optional `{YEAR}` token that may appear at most once and resolves automatically to the current four-digit Company-local year
+- Numeric zero-padding from 1 through 12 digits, configured separately from the pattern and defaulting to 4
 - Reset policy: never or company-local calendar year
 
-The presence of a year token does not implicitly reset the numeric sequence. Reset behavior is an explicit setting. v1 does not provide arbitrary expressions, multiple counters in one format, month/day resets, or a numbering rules engine.
+The default Quote pattern is `Q-{YEAR}-{NUMBER}` and the default Invoice pattern is `I-{YEAR}-{NUMBER}`. These are starting values, not enforced formats: for example, a Company may choose `INV-{NUMBER}`. The presence of `{YEAR}` does not implicitly reset the numeric sequence. Reset behavior is an explicit setting and defaults to never. v1 does not provide arbitrary expressions, multiple counters in one format, month/day tokens or resets, or a numbering rules engine.
+
+The settings preview resolves `{YEAR}` on the server from the configured IANA Company timezone; the browser may reproduce that server-provided preview context but never supplies an authoritative year or falls back to UTC/browser time. Assigned document numbers remain persisted values and do not mutate when the calendar year changes.
 
 The numeric period is `ALL` for a non-resetting series or the four-digit company-local year for an annual series. A new Draft starts with the current company-local date as its initial issue date, and that date determines the period. Changing or clearing the issue date later never silently renumbers the document; the user may explicitly request a new number from the appropriate period.
 
@@ -31,6 +33,8 @@ The relational model must include the equivalent of:
 - An idempotent document-creation key so a retried browser request returns the same Draft instead of consuming another number
 
 Table and column names may change in the relational-model review, but these state boundaries may not.
+
+Changing a series retires its active configuration and creates a new active configuration version. Existing documents and later counters retain their original series relationship; settings changes never rewrite historical configuration. Raw editable patterns are excluded from append-only audit payloads because literal text is Company-authored free-form content. Audit records retain the document type, stable changed-field names, padding, and reset policy.
 
 Document numbers intentionally do not have an unconditional unique constraint because an authorized user may confirm a duplicate. Add a non-unique lookup index covering company, document type, and rendered number so duplicate detection is reliable and fast.
 

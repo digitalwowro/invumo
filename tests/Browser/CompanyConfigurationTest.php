@@ -75,6 +75,18 @@ function openCompanyConfiguration(User $owner, Company $company, bool $mobile = 
         ->navigate(route('company-settings.profile.edit', $company, false));
 }
 
+function openCompanyNumbering(User $owner, Company $company, bool $mobile = false): mixed
+{
+    $page = visit('/login')->on();
+    $page = $mobile ? $page->iPhone15() : $page->desktop();
+
+    return $page
+        ->type('Email address', $owner->email)
+        ->type('Password', 'password')
+        ->click('Log in')
+        ->navigate(route('company-number-series.edit', $company, false));
+}
+
 it('renders configured Company defaults accessibly on desktop', function () {
     [$owner, $company] = configuredCompanyForBrowser();
 
@@ -152,6 +164,40 @@ it('keeps Romanian document defaults usable on a narrow viewport', function () {
         ->assertSee('Limba implicită a documentelor')
         ->assertSee('Termen de plată în zile')
         ->assertSee('Termeni și condiții')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('previews and saves custom Company numbering on desktop', function () {
+    [$owner, $company] = configuredCompanyForBrowser();
+    $year = now('Europe/Bucharest')->year;
+
+    openCompanyNumbering($owner, $company)
+        ->assertSee('Document numbering')
+        ->assertValue('Quote number pattern', 'Q-{YEAR}-{NUMBER}')
+        ->assertSee("Q-{$year}-0001")
+        ->assertValue('Invoice number pattern', 'I-{YEAR}-{NUMBER}')
+        ->type('Quote number pattern', 'O-{YEAR}-{NUMBER}')
+        ->type('Quote number padding', '6')
+        ->assertSee("O-{$year}-000001")
+        ->click('Save numbering settings')
+        ->assertSee('Numbering settings saved.')
+        ->assertValue('Quote number pattern', 'O-{YEAR}-{NUMBER}')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues()
+        ->click('Taxes')
+        ->assertPathIs(route('company-tax-presets.index', $company, false))
+        ->assertSee('Tax presets');
+});
+
+it('keeps Romanian numbering usable on a narrow viewport', function () {
+    [$owner, $company] = configuredCompanyForBrowser('ro');
+
+    openCompanyNumbering($owner, $company, mobile: true)
+        ->assertSee('Numerotarea documentelor')
+        ->assertSee('Modelul numărului ofertei')
+        ->assertSee('Modelul numărului facturii')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

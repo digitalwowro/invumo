@@ -2,14 +2,18 @@
 
 namespace App\Modules\Companies\Actions;
 
+use App\Foundation\Documents\DocumentNumberPattern;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Companies\Data\CompanyRole;
+use App\Modules\Companies\Data\NumberSeriesDocumentType;
+use App\Modules\Companies\Data\NumberSeriesResetPolicy;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Companies\Models\NumberSeries;
 use App\Modules\Identity\Models\Account;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -44,6 +48,15 @@ final readonly class CreateCompany
                         'legal_name' => $company->name,
                         'automation_local_time' => '09:00:00',
                     ]);
+
+                    foreach (NumberSeriesDocumentType::cases() as $documentType) {
+                        NumberSeries::query()->create([
+                            'document_type' => $documentType,
+                            'format_pattern' => $documentType->defaultPattern(),
+                            'padding' => DocumentNumberPattern::DEFAULT_PADDING,
+                            'reset_policy' => NumberSeriesResetPolicy::Never,
+                        ]);
+                    }
 
                     $this->recordAuditEvent->handle(new AuditEventData(
                         actorType: AuditActorType::User,

@@ -1,4 +1,5 @@
 import type { CompanyDocumentDefaultsTranslations } from '@/types/company-document-defaults';
+import type { CompanyNumberSeriesTranslations } from '@/types/company-number-series';
 import type { CompanyTaxPresetTranslations } from '@/types/company-tax';
 
 export type CompanySummary = {
@@ -89,7 +90,7 @@ export type CompanyConfiguration = {
 };
 
 export type CompanySettingsNavigationItem = {
-    key: 'profile' | 'documents' | 'taxes' | 'members';
+    key: 'profile' | 'documents' | 'numbering' | 'taxes' | 'members';
     href: string;
 };
 
@@ -124,6 +125,7 @@ export type CompanySettingsTranslations = {
         errors: { schedule_change_not_confirmed: string };
     };
     documents: CompanyDocumentDefaultsTranslations;
+    numbering: CompanyNumberSeriesTranslations;
     taxes: CompanyTaxPresetTranslations;
 };
 

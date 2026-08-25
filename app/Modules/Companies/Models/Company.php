@@ -76,6 +76,14 @@ class Company extends RuntimeModel
     }
 
     /**
+     * @return HasMany<NumberSeries, $this>
+     */
+    public function numberSeries(): HasMany
+    {
+        return $this->hasMany(NumberSeries::class);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

@@ -204,7 +204,9 @@ Quotes and Invoices carry a monotonically increasing edit version. Saving from a
 - Do not silently reuse a removed number without clear user intent.
 - Keep numbering configurable without building an unnecessarily complex rules engine.
 - Quote and invoice sequences are separate per company.
-- v1 supports literal prefix/suffix, optional company-local year, one padded numeric component, and an explicit no-reset or annual-reset policy. A year in the format does not imply reset.
+- Each Company may customize separate Quote and Invoice patterns. Defaults are `Q-{YEAR}-{NUMBER}` and `I-{YEAR}-{NUMBER}`; `{NUMBER}` is mandatory exactly once, `{YEAR}` is optional at most once and resolves automatically to the current four-digit Company-local year, padding is separately configurable from 1–12 with a default of 4, and the pattern is bounded to 120 characters without control characters or unknown braces.
+- Reset policy is explicit, defaults to never, and may instead use the Company-local calendar year. `{YEAR}` does not imply annual reset.
+- Settings previews use the server-resolved Company timezone and must not fall back to the browser timezone or UTC. Persisted assigned numbers never change merely because the year changes.
 - Clicking New creates a persisted Draft. Automatic allocation and Draft insertion share one transaction and one idempotent creation key.
 - Lock the relevant company/document-type/period counter row using `SELECT ... FOR UPDATE`, allocate the next unoccupied automatic candidate, insert the Draft, advance the counter, and commit.
 - Manual duplicates remain possible after explicit warning. Manual numbering, renumbering, and deletion do not change the counter automatically.

@@ -218,7 +218,7 @@ The accepted upload, private-serving, replacement, cleanup, and storage-migratio
 
 ### `number_series` and `number_counters`
 
-`number_series` stores Company, document type, format tokens, padding, reset policy, and active configuration. It is unique per Company/document type for the active configuration.
+`number_series` stores Company, document type, format pattern, padding, reset policy, and retirement time. Exactly one active row exists per Company/document type; changing settings retires the prior row and creates a new active configuration so later counters and historical documents can retain their original series relationship. Quote and Invoice defaults are `Q-{YEAR}-{NUMBER}` and `I-{YEAR}-{NUMBER}` with padding 4 and no reset. Database constraints mirror the application envelope: pattern length at most 120, `{NUMBER}` exactly once, `{YEAR}` at most once, no control characters or unknown braces, padding 1–12, and reset policy `NEVER` or `ANNUAL`.
 
 `number_counters` stores series, period key, and positive next numeric value, with unique `(company_id, number_series_id, period_key)`. Allocation locks this row with `SELECT ... FOR UPDATE` exactly as defined by the approved numbering specification.
 

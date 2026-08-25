@@ -6,6 +6,7 @@ use App\Modules\Companies\Http\Controllers\CompanyDocumentDefaultsController;
 use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
 use App\Modules\Companies\Http\Controllers\CompanyMemberController;
+use App\Modules\Companies\Http\Controllers\CompanyNumberSeriesController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
 use App\Modules\Companies\Http\Controllers\CompanySettingsController;
 use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
@@ -104,6 +105,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/documents', [CompanyDocumentDefaultsController::class, 'update'])
                 ->middleware('throttle:20,1')
                 ->name('company-document-defaults.update');
+            Route::get('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'edit'])
+                ->name('company-number-series.edit');
+            Route::patch('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-number-series.update');
             Route::get('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'index'])
                 ->name('company-tax-presets.index');
             Route::post('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'store'])

@@ -463,12 +463,12 @@ Requirements:
 - Record meaningful numbering changes in audit history.
 - Do not silently reuse numbers without clear user intent.
 - Warn whenever a quote or invoice number duplicates another non-deleted document in the same company and document type; do not silently block an intentional override.
-- Support configurable formats such as `INV-2026-0001` and `Q-2026-0001`.
+- Start each Company with `Q-{YEAR}-{NUMBER}` for Quotes and `I-{YEAR}-{NUMBER}` for Invoices, while allowing each pattern to be customized independently, for example `INV-{NUMBER}`.
 - Avoid overengineering the numbering engine.
 
 Quote and invoice sequences are separate per company. Numeric-component parsing, reset periods, manual-override behavior, and concurrency control are defined below and in the approved architecture specification. Manual changes must not silently move the sequence backwards.
 
-The approved mechanism is a per-company/per-document-type number series with a counter row per reset period. v1 supports no reset or company-local annual reset, exactly one numeric sequence component, optional year, literals, and padding. The year token does not imply a reset.
+The approved mechanism is a per-company/per-document-type number series with a counter row per reset period. A pattern is at most 120 characters, permits literal text, requires `{NUMBER}` exactly once, permits `{YEAR}` at most once, and rejects control characters and unknown braces. `{YEAR}` resolves automatically to the current four-digit Company-local year. Padding is a separate 1–12 setting with a default of 4. Reset policy defaults to never and may instead be Company-local annual; the year token does not imply a reset. Settings previews are server-anchored to the Company timezone, and assigned numbers remain persisted rather than changing when the year changes.
 
 Clicking New Quote or New Invoice creates a persisted Draft and allocates its number in the same PostgreSQL transaction. The allocator locks the relevant counter row with `SELECT ... FOR UPDATE`, finds the next unoccupied automatic candidate, inserts the Draft, advances the counter, and commits. A unique idempotent creation key makes a retried request return the same Draft. This is an assigned number, not an unreserved browser preview.
 

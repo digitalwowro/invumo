@@ -8,12 +8,16 @@ export type CompanySummary = {
     id: string;
     name: string;
     dashboardUrl: string;
+    customersUrl: string;
     settingsUrl: string;
     membersUrl: string;
 };
 
 export type CompanyAbilities = {
     view_company: boolean;
+    view_customers: boolean;
+    manage_customers: boolean;
+    delete_customers: boolean;
     manage_company_settings: boolean;
     manage_members: boolean;
     manage_catalog: boolean;

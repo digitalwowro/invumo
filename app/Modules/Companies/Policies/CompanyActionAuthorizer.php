@@ -3,12 +3,13 @@
 namespace App\Modules\Companies\Policies;
 
 use App\Models\User;
+use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyMembership;
 use Illuminate\Auth\Access\AuthorizationException;
 
-final readonly class CompanyActionAuthorizer
+final readonly class CompanyActionAuthorizer implements AuthorizesCompanyActions
 {
     public function __construct(private CompanyAuthorization $authorization) {}
 

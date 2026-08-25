@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { LayoutGrid, Settings } from 'lucide-react';
+import { LayoutGrid, Settings, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AppSidebarBrand } from '@/components/app/app-sidebar-brand';
 import { NavMain } from '@/components/app/nav-main';
@@ -35,6 +35,14 @@ export function AppSidebar({
         href: homeUrl,
         icon: LayoutGrid,
     });
+
+    if (companyContext.current && companyContext.abilities.view_customers) {
+        mainNavItems.push({
+            title: t('navigation.customers'),
+            href: companyContext.current.customersUrl,
+            icon: Users,
+        });
+    }
 
     if (
         !companyContext.current ||

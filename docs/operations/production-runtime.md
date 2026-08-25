@@ -39,7 +39,9 @@ Production-like migrations now require `invumo_runtime` before executing any con
 
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
 
-Verified on 2026-08-25: all migrations through `2026_08_25_150000_create_number_series` ran in production through the `pgsql_schema` connection as the `invumo` operating-system user. This includes the Phase 2 Company configuration, tax presets, bounded document defaults, and versioned number-series settings. The restricted runtime role has only the approved number-series privileges, forced RLS is active, every existing Company has the two approved default series, and production configuration plus the complete runtime verifier passed. Later feature migrations remain just-in-time work owned by their approved batches.
+Verified on 2026-08-25: all current migrations through `2026_08_25_210000_create_customers` are applied. During the Batch 3A closeout, a destructive migration command combined a `testing` CLI environment override with cached production database targets and rebuilt the pre-launch schema. The owner explicitly chose account re-bootstrap instead of external-backup restoration because no external users or customer business data existed. Two verified personal Accounts were recreated from the owner-supplied credentials: one protected Platform Owner and one ordinary User. After the app returned to service, the ordinary User recreated one valid Company through the application. Batch closeout observed no Customer rows. Credential, role, migration, forced-RLS, configuration, queue, and runtime-health checks passed before normal work resumed.
+
+Destructive Artisan database commands now fail closed unless Laravel is in the `testing` environment and both `pgsql` and `pgsql_schema` target database names end in `_test`. This remains enforced even when a caller supplies a CLI environment override, so cached production connection targets cannot become eligible for `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback`, or `db:wipe`.
 
 ## Queue worker
 
@@ -76,7 +78,7 @@ The assertion is intentionally absent from service-provider boot. This keeps Art
 
 ## Test isolation in the hosted production checkout
 
-Automated tests must never use the live `invumo` database. Both Laravel PostgreSQL connections are forced to `invumo_test` by `phpunit.xml`, and the base Laravel test case aborts before database-reset traits run unless the application environment is `testing` and every PostgreSQL connection name ends in `_test`. This guard also blocks a direct `php artisan test` invocation while production configuration remains cached.
+Automated tests must never use the live `invumo` database. Both Laravel PostgreSQL connections are forced to `invumo_test` by `phpunit.xml`, and the base Laravel test case aborts before database-reset traits run unless the application environment is `testing` and every PostgreSQL connection name ends in `_test`. Independently, Laravel prohibits every destructive database command unless that same environment-and-database-name contract is satisfied. These guards also block direct test or destructive Artisan invocations while production configuration remains cached, including invocations that supply `--env=testing`.
 
 The one-time root-administered [test-database bootstrap](../../scripts/bootstrap-test-database.sh) creates the physically separate `invumo_test` database under the existing schema/runtime roles without reading, changing, copying, or dropping production data. Application tests still run as `invumo`, not root.
 

@@ -5,6 +5,9 @@ namespace App\Modules\Companies\Data;
 enum CompanyAbility: string
 {
     case ViewCompany = 'view_company';
+    case ViewCustomers = 'view_customers';
+    case ManageCustomers = 'manage_customers';
+    case DeleteCustomers = 'delete_customers';
     case ManageCompanySettings = 'manage_company_settings';
     case ManageMembers = 'manage_members';
     case ManageCatalog = 'manage_catalog';

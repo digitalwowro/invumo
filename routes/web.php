@@ -12,6 +12,7 @@ use App\Modules\Companies\Http\Controllers\CompanyNumberSeriesController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
 use App\Modules\Companies\Http\Controllers\CompanySettingsController;
 use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
+use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
@@ -95,6 +96,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('company.context')
         ->scopeBindings()
         ->group(function (): void {
+            Route::get('companies/{company}/customers', [CustomerController::class, 'index'])
+                ->name('customers.index');
+            Route::get('companies/{company}/customers/create', [CustomerController::class, 'create'])
+                ->name('customers.create');
+            Route::post('companies/{company}/customers', [CustomerController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('customers.store');
+            Route::get('companies/{company}/customers/{customer}', [CustomerController::class, 'show'])
+                ->name('customers.show');
+            Route::patch('companies/{company}/customers/{customer}', [CustomerController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('customers.update');
+            Route::post('companies/{company}/customers/{customer}/archive', [CustomerController::class, 'archive'])
+                ->middleware('throttle:20,1')
+                ->name('customers.archive');
+            Route::post('companies/{company}/customers/{customer}/restore', [CustomerController::class, 'restore'])
+                ->middleware('throttle:20,1')
+                ->name('customers.restore');
+            Route::delete('companies/{company}/customers/{customer}', [CustomerController::class, 'destroy'])
+                ->middleware('throttle:10,1')
+                ->name('customers.destroy');
+
             Route::get('companies/{company}/settings', [CompanySettingsController::class, 'index'])
                 ->name('company-settings.index');
             Route::get('companies/{company}/settings/profile', [CompanySettingsController::class, 'edit'])

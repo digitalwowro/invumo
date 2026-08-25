@@ -16,7 +16,11 @@ final readonly class CompanyAuthorization
                 CompanyAbility::TransferOwnership,
                 CompanyAbility::DeleteCompany,
             ], true),
-            CompanyRole::Member => $ability === CompanyAbility::ViewCompany,
+            CompanyRole::Member => in_array($ability, [
+                CompanyAbility::ViewCompany,
+                CompanyAbility::ViewCustomers,
+                CompanyAbility::ManageCustomers,
+            ], true),
         };
     }
 

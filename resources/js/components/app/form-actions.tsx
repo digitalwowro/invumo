@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 type FormActionsProps = {
     children: ReactNode;
     align?: 'start' | 'end' | 'stretch';
+    separated?: boolean;
 };
 
 const alignmentClasses = {
@@ -13,11 +14,15 @@ const alignmentClasses = {
     stretch: '[&>*]:w-full',
 } as const;
 
-export function FormActions({ children, align = 'end' }: FormActionsProps) {
+export function FormActions({
+    children,
+    align = 'end',
+    separated = false,
+}: FormActionsProps) {
     return (
         <div
             data-slot="form-actions"
-            className={`flex flex-wrap items-center gap-2 ${alignmentClasses[align]}`}
+            className={`flex flex-wrap items-center gap-2 ${alignmentClasses[align]} ${separated ? 'border-t border-divider pt-6' : ''}`}
         >
             {children}
         </div>

@@ -15,7 +15,9 @@ type ChoiceFieldProps = {
     description?: string;
     error?: string;
     defaultValue?: string;
+    onValueChange?: (value: string) => void;
     required?: boolean;
+    disabled?: boolean;
     options: ChoiceOption[];
 };
 
@@ -26,7 +28,9 @@ export function ChoiceField({
     description,
     error,
     defaultValue = '',
+    onValueChange,
     required,
+    disabled,
     options,
 }: ChoiceFieldProps) {
     const generatedId = useId();
@@ -47,11 +51,13 @@ export function ChoiceField({
                 onValueChange={(nextValue) => {
                     if (nextValue || !required) {
                         setValue(nextValue);
+                        onValueChange?.(nextValue);
                     }
                 }}
                 aria-labelledby={labelId}
                 aria-describedby={describedBy || undefined}
                 aria-invalid={Boolean(error)}
+                disabled={disabled}
             >
                 {options.map((option) => (
                     <ToggleGroupItem key={option.value} value={option.value}>
@@ -59,7 +65,12 @@ export function ChoiceField({
                     </ToggleGroupItem>
                 ))}
             </ToggleGroup>
-            <input type="hidden" name={name} value={value} />
+            <input
+                type="hidden"
+                name={name}
+                value={value}
+                disabled={disabled}
+            />
             {description && (
                 <FieldDescription id={descriptionId}>
                     {description}

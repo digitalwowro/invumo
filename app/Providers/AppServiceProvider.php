@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Foundation\Database\DestructiveCommandSafety;
 use App\Foundation\Diagnostics\ApplicationHealth;
 use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
+use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
+use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Events\DiagnosingHealth;
@@ -26,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
             VerifiesTenantMembership::class,
             CompanyMembershipVerifier::class,
         );
+        $this->app->bind(AuthorizesCompanyActions::class, CompanyActionAuthorizer::class);
         $this->app->singleton(TenantJobExecution::class);
         $this->app->singleton(TenantContext::class);
     }
@@ -49,9 +53,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Date::use(CarbonImmutable::class);
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        $destructiveCommandSafety = app(DestructiveCommandSafety::class);
+
+        DB::prohibitDestructiveCommands(! $destructiveCommandSafety->permits(
+            app()->environment(),
+            [
+                config('database.connections.pgsql.database'),
+                config('database.connections.pgsql_schema.database'),
+            ],
+        ));
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)

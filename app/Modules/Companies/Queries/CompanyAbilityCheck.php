@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Modules\Companies\Queries;
+
+use App\Models\User;
+use App\Modules\Companies\Data\CompanyAbility;
+use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanyMembership;
+use App\Modules\Companies\Policies\CompanyAuthorization;
+
+final readonly class CompanyAbilityCheck
+{
+    public function __construct(private CompanyAuthorization $authorization) {}
+
+    public function allows(User $actor, Company $company, CompanyAbility $ability): bool
+    {
+        $membership = CompanyMembership::query()
+            ->where('company_id', $company->id)
+            ->where('user_id', $actor->id)
+            ->first();
+
+        return $membership !== null
+            && $this->authorization->allows($membership->role, $ability);
+    }
+}

@@ -1,0 +1,186 @@
+{
+    "contract": {
+        "default_color": "#14181C",
+        "text_contrast_minimum": 4.5,
+        "rule_contrast_minimum": 3.0
+    },
+    "valid_cases": [
+        {
+            "name": "default neutral ink",
+            "input": "#14181C",
+            "expected": {
+                "accent_color": "#14181C",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#14181C",
+                "rule_color": "#14181C"
+            }
+        },
+        {
+            "name": "navy preset",
+            "input": "#1E3A5F",
+            "expected": {
+                "accent_color": "#1E3A5F",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#1E3A5F",
+                "rule_color": "#1E3A5F"
+            }
+        },
+        {
+            "name": "forest preset",
+            "input": "#1F5D42",
+            "expected": {
+                "accent_color": "#1F5D42",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#1F5D42",
+                "rule_color": "#1F5D42"
+            }
+        },
+        {
+            "name": "burgundy preset",
+            "input": "#7F1D1D",
+            "expected": {
+                "accent_color": "#7F1D1D",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#7F1D1D",
+                "rule_color": "#7F1D1D"
+            }
+        },
+        {
+            "name": "violet preset",
+            "input": "#5B3A8E",
+            "expected": {
+                "accent_color": "#5B3A8E",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#5B3A8E",
+                "rule_color": "#5B3A8E"
+            }
+        },
+        {
+            "name": "pure black",
+            "input": "#000000",
+            "expected": {
+                "accent_color": "#000000",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#000000",
+                "rule_color": "#000000"
+            }
+        },
+        {
+            "name": "pure white",
+            "input": "#FFFFFF",
+            "expected": {
+                "accent_color": "#FFFFFF",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#14181C"
+            }
+        },
+        {
+            "name": "bright yellow falls back",
+            "input": "#FFFF00",
+            "expected": {
+                "accent_color": "#FFFF00",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#14181C"
+            }
+        },
+        {
+            "name": "orange remains safe for rules only",
+            "input": "#E55300",
+            "expected": {
+                "accent_color": "#E55300",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#E55300"
+            }
+        },
+        {
+            "name": "foreground boundary prefers white below crossover",
+            "input": "#757575",
+            "expected": {
+                "accent_color": "#757575",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#757575",
+                "rule_color": "#757575"
+            }
+        },
+        {
+            "name": "foreground boundary prefers black above crossover",
+            "input": "#767676",
+            "expected": {
+                "accent_color": "#767676",
+                "on_accent_color": "#000000",
+                "text_color": "#767676",
+                "rule_color": "#767676"
+            }
+        },
+        {
+            "name": "normal text threshold fallback",
+            "input": "#777777",
+            "expected": {
+                "accent_color": "#777777",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#777777"
+            }
+        },
+        {
+            "name": "rule threshold remains safe",
+            "input": "#949494",
+            "expected": {
+                "accent_color": "#949494",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#949494"
+            }
+        },
+        {
+            "name": "rule threshold fallback",
+            "input": "#959595",
+            "expected": {
+                "accent_color": "#959595",
+                "on_accent_color": "#000000",
+                "text_color": "#14181C",
+                "rule_color": "#14181C"
+            }
+        },
+        {
+            "name": "sRGB linear branch boundary",
+            "input": "#0A0A0A",
+            "expected": {
+                "accent_color": "#0A0A0A",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#0A0A0A",
+                "rule_color": "#0A0A0A"
+            }
+        },
+        {
+            "name": "sRGB exponential branch boundary",
+            "input": "#0B0B0B",
+            "expected": {
+                "accent_color": "#0B0B0B",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#0B0B0B",
+                "rule_color": "#0B0B0B"
+            }
+        },
+        {
+            "name": "arbitrary custom color",
+            "input": "#123ABC",
+            "expected": {
+                "accent_color": "#123ABC",
+                "on_accent_color": "#FFFFFF",
+                "text_color": "#123ABC",
+                "rule_color": "#123ABC"
+            }
+        }
+    ],
+    "invalid_cases": [
+        { "name": "lowercase hex", "input": "#abcdef" },
+        { "name": "missing hash", "input": "14181C" },
+        { "name": "short hex", "input": "#FFF" },
+        { "name": "invalid channel", "input": "#GGGGGG" },
+        { "name": "trailing content", "input": "#14181C00" }
+    ]
+}

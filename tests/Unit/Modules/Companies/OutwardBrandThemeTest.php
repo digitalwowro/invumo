@@ -9,39 +9,67 @@ use PHPUnit\Framework\TestCase;
 
 final class OutwardBrandThemeTest extends TestCase
 {
-    /** @return iterable<string, array{string, string, string, string}> */
-    public static function themes(): iterable
+    public function test_runtime_contract_matches_the_shared_vectors(): void
     {
-        yield 'dark ink uses white foreground and its own accents' => [
-            '#14181C', '#FFFFFF', '#14181C', '#14181C',
-        ];
-        yield 'bright yellow uses black foreground and neutral outward text' => [
-            '#FFFF00', '#000000', '#14181C', '#14181C',
-        ];
-        yield 'medium orange remains usable for rules but not normal text' => [
-            '#E55300', '#000000', '#14181C', '#E55300',
-        ];
+        $contract = self::fixture()['contract'];
+
+        self::assertSame($contract['default_color'], OutwardBrandTheme::DEFAULT_COLOR);
+        self::assertSame($contract['text_contrast_minimum'], OutwardBrandTheme::TEXT_CONTRAST_MINIMUM);
+        self::assertSame($contract['rule_contrast_minimum'], OutwardBrandTheme::RULE_CONTRAST_MINIMUM);
     }
 
-    #[DataProvider('themes')]
-    public function test_it_resolves_accessible_outward_colors(
-        string $color,
-        string $onAccent,
-        string $text,
-        string $rule,
-    ): void {
-        $theme = OutwardBrandTheme::resolve($color);
+    /** @param array{name: string, input: string, expected: array<string, string>} $case */
+    #[DataProvider('validThemes')]
+    public function test_it_matches_the_shared_theme_vectors(array $case): void
+    {
+        self::assertTrue(OutwardBrandTheme::accepts($case['input']));
 
-        self::assertSame($color, $theme->accentColor);
-        self::assertSame($onAccent, $theme->onAccentColor);
-        self::assertSame($text, $theme->textColor);
-        self::assertSame($rule, $theme->ruleColor);
+        $theme = OutwardBrandTheme::resolve($case['input']);
+
+        self::assertSame($case['expected'], [
+            'accent_color' => $theme->accentColor,
+            'on_accent_color' => $theme->onAccentColor,
+            'text_color' => $theme->textColor,
+            'rule_color' => $theme->ruleColor,
+        ]);
     }
 
-    public function test_it_rejects_noncanonical_colors(): void
+    /** @param array{name: string, input: string} $case */
+    #[DataProvider('invalidThemes')]
+    public function test_it_rejects_the_shared_invalid_vectors(array $case): void
     {
+        self::assertFalse(OutwardBrandTheme::accepts($case['input']));
+
         $this->expectException(InvalidArgumentException::class);
 
-        OutwardBrandTheme::resolve('#abcdef');
+        OutwardBrandTheme::resolve($case['input']);
+    }
+
+    public static function validThemes(): iterable
+    {
+        yield from self::namedCases('valid_cases');
+    }
+
+    public static function invalidThemes(): iterable
+    {
+        yield from self::namedCases('invalid_cases');
+    }
+
+    private static function namedCases(string $key): iterable
+    {
+        foreach (self::fixture()[$key] as $case) {
+            yield $case['name'] => [$case];
+        }
+    }
+
+    private static function fixture(): array
+    {
+        $contents = file_get_contents(
+            dirname(__DIR__, 3).'/Fixtures/Branding/outward-brand-theme-vectors.json',
+        );
+
+        self::assertNotFalse($contents);
+
+        return json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
     }
 }

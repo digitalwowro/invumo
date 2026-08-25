@@ -9,6 +9,10 @@ final class OutwardBrandTheme
 {
     public const DEFAULT_COLOR = '#14181C';
 
+    public const TEXT_CONTRAST_MINIMUM = 4.5;
+
+    public const RULE_CONTRAST_MINIMUM = 3.0;
+
     private const BLACK = '#000000';
 
     private const WHITE = '#FFFFFF';
@@ -30,8 +34,8 @@ final class OutwardBrandTheme
         return new ResolvedOutwardBrandTheme(
             accentColor: $color,
             onAccentColor: $whiteContrast >= $blackContrast ? self::WHITE : self::BLACK,
-            textColor: $whiteContrast >= 4.5 ? $color : self::DEFAULT_COLOR,
-            ruleColor: $whiteContrast >= 3.0 ? $color : self::DEFAULT_COLOR,
+            textColor: $whiteContrast >= self::TEXT_CONTRAST_MINIMUM ? $color : self::DEFAULT_COLOR,
+            ruleColor: $whiteContrast >= self::RULE_CONTRAST_MINIMUM ? $color : self::DEFAULT_COLOR,
         );
     }
 

@@ -13,11 +13,13 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyAsset;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Support\CompanyAssetStorage;
+use App\Modules\Companies\Support\OutwardBrandTheme;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -223,6 +225,25 @@ final class CompanyAppearanceHttpTest extends TestCase
                 $this->addToAssertionCount(1);
             }
         });
+    }
+
+    public function test_database_default_matches_the_shared_outward_theme_contract(): void
+    {
+        $contents = file_get_contents(
+            base_path('tests/Fixtures/Branding/outward-brand-theme-vectors.json'),
+        );
+        $this->assertNotFalse($contents);
+        $fixture = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+
+        $columnDefault = DB::connection('pgsql_schema')
+            ->table('information_schema.columns')
+            ->where('table_schema', 'public')
+            ->where('table_name', 'company_settings')
+            ->where('column_name', 'primary_brand_color')
+            ->value('column_default');
+
+        $this->assertSame(OutwardBrandTheme::DEFAULT_COLOR, $fixture['contract']['default_color']);
+        $this->assertSame("'{$fixture['contract']['default_color']}'::text", $columnDefault);
     }
 
     private function save(Company $company, UploadedFile $logo): void

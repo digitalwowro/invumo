@@ -1,4 +1,6 @@
 export const DEFAULT_OUTWARD_BRAND_COLOR = '#14181C';
+export const OUTWARD_BRAND_TEXT_CONTRAST_MINIMUM = 4.5;
+export const OUTWARD_BRAND_RULE_CONTRAST_MINIMUM = 3;
 
 const BLACK = '#000000';
 const WHITE = '#FFFFFF';
@@ -28,8 +30,14 @@ export function resolveOutwardBrandTheme(color: string): OutwardBrandTheme {
     return {
         accentColor: color,
         onAccentColor: whiteContrast >= blackContrast ? WHITE : BLACK,
-        textColor: whiteContrast >= 4.5 ? color : DEFAULT_OUTWARD_BRAND_COLOR,
-        ruleColor: whiteContrast >= 3 ? color : DEFAULT_OUTWARD_BRAND_COLOR,
+        textColor:
+            whiteContrast >= OUTWARD_BRAND_TEXT_CONTRAST_MINIMUM
+                ? color
+                : DEFAULT_OUTWARD_BRAND_COLOR,
+        ruleColor:
+            whiteContrast >= OUTWARD_BRAND_RULE_CONTRAST_MINIMUM
+                ? color
+                : DEFAULT_OUTWARD_BRAND_COLOR,
     };
 }
 

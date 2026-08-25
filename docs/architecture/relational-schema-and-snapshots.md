@@ -258,7 +258,7 @@ Rules are defaults. Invoice schedule rows later copy the values needed for stabl
 - structured billing/legal address and country
 - tax-registration label/identifier
 - business-registration label/number
-- internal notes
+- internal notes, limited to 5,000 characters
 - optional same-Company defaults for currency and tax preset
 - optional document language and non-negative payment-term days
 - delivery mode: `SECURE_LINK` or `ATTACH_PDF`

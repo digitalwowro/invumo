@@ -297,7 +297,7 @@ Customer identity also supports:
 - Optional external customer reference/code
 - Tax registration label and identifier
 - Business registration label and number
-- Internal customer notes
+- Internal customer notes, limited to 5,000 characters
 
 From the quote, invoice, or recurring-invoice-template editor, the user must be able to create a new customer without abandoning the document/template. Open the complete customer form in a vertically scrollable modal, preserve the in-progress work, and automatically select the newly created customer after a successful save.
 
@@ -318,7 +318,7 @@ Do not add an ambiguous free-form `legal info` field. Use structured registratio
 
 Do not add customer tags or a customer-specific date-format preference in v1. Document date formatting follows document language/locale.
 
-Internal customer notes must never appear automatically on quotes, invoices, PDFs, public pages, or emails.
+Internal customer notes are limited to 5,000 characters and must never appear automatically on quotes, invoices, PDFs, public pages, or emails.
 
 Quotes and invoices must snapshot customer identity, address, and registration information used on the document. Later customer edits must not silently rewrite existing documents.
 

@@ -348,6 +348,8 @@ Each entry supports:
 - Optional default billing period unit: None/N/A, Month, or Year
 - Active or archived state
 
+Catalog input is bounded for operational search, snapshots, and later document rendering: name 160 characters, internal code/SKU 120, default unit 80, description 5,000, and list search 120. These limits apply at both Laravel and PostgreSQL boundaries.
+
 A missing default price means “enter the price on the document”; it is distinct from an explicit zero price.
 
 Quote, invoice, and recurring-invoice editors must provide searchable product/service selection. Search at least by name and internal code/SKU, and include description when practical. Users must also remain free to enter document lines manually without creating catalog entries.
@@ -361,6 +363,8 @@ When selected, the product/service name and optional description initialize the 
 Copy the default price only when its currency matches the document currency. On a mismatch, copy the non-price defaults and require the user to enter or confirm the price. Never convert the price automatically because v1 has no foreign-exchange behavior.
 
 Only Owner/Admin roles should manage catalog entries by default; the permission matrix may allow Members to search and use active entries. Once used, archive entries rather than hard-deleting them by default.
+
+An active or archived Customer/Product default keeps its referenced Company currency or tax preset available until the reference is changed, cleared, or the dependent record is permanently removed. Source changes fail closed instead of silently replacing a stored choice with a fallback.
 
 Do not include in v1:
 

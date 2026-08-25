@@ -218,6 +218,7 @@ return [
             'errors' => [
                 'percentage_invalid' => 'Procentul trebuie să fie un număr nenegativ cu cel mult 6 zecimale.',
                 'archived' => 'Predefinirile de taxe arhivate nu pot fi modificate.',
+                'default_dependency' => 'Această predefinire de taxă este folosită de valorile implicite ale unui client sau produs/serviciu. Modifică acele valori înainte de arhivare.',
             ],
         ],
         'bank_accounts' => [

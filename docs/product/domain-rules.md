@@ -94,7 +94,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Each customer has one structured billing/legal address: address line 1, optional address line 2, city, state/province/region, postal code, and country.
 - Customer identity supports phone, an optional general/primary email, optional external reference/code, tax registration label and identifier, and business registration label and number. An Individual's primary email may be its default recipient; Company recipients normally resolve from contacts or an explicitly stored address.
 - Customer defaults include currency, document language, payment terms, tax preset, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
-- Customer currency, document-language, payment-term, and tax overrides are nullable. An unset or no-longer-available Customer source resolves from the current active Company default without rewriting the stored Customer record. Newly selected currencies must be active, newly selected tax presets must be unarchived, document languages must be authored supported locales, and payment-term days use the approved application-date-range envelope.
+- Customer currency, document-language, payment-term, and tax overrides are nullable. An unset Customer source resolves from the current active Company default without rewriting the stored Customer record. A referenced currency cannot be deactivated and a referenced tax preset cannot be archived until every Customer override is changed or cleared; Laravel returns a dependency warning and PostgreSQL independently rejects the invalid transition. Newly selected currencies must be active, newly selected tax presets must be unarchived, document languages must be authored supported locales, and payment-term days use the approved application-date-range envelope.
 - Saved ordered Customer recipient rows are the authoritative recipient preference and resolve Contact-backed rows from the Contact's current valid email. An empty list remains unresolved until a valid recipient is selected; sending still requires at least one valid `TO` recipient.
 - PDF email-delivery mode is secure link only or attach PDF.
 - The Company PDF email-delivery fallback defaults to secure link only and may be changed by an Owner/Admin. Resolution remains per-send override, then Customer preference, then Company fallback.
@@ -116,6 +116,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 
 - v1 includes a lightweight, company-scoped Products & Services library for reusable line defaults; it is not inventory software.
 - Each entry has a required name; optional description, internal code/SKU, default unit, default tax preset, and default period unit; optional default unit price with a required ISO currency; and active/archived state.
+- Names are limited to 160 Unicode characters, internal codes/SKUs to 120, units to 80, descriptions to 5,000, and catalog searches to 120. Laravel and PostgreSQL enforce the same persisted envelopes.
 - A missing default price means “enter on the document” and is distinct from an explicit zero price.
 - Quote, invoice, and recurring-invoice editors provide searchable selection of active entries while still allowing fully manual lines.
 - Users may create a product/service inline from those editors without losing document progress; successful creation selects it automatically, and validation failures retain both forms.
@@ -125,6 +126,8 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Copy a default price only when its currency matches the document currency. On mismatch, copy non-price defaults and require manual price entry or confirmation; never perform FX conversion.
 - Owner/Admin roles manage entries by default. Members may search and use active entries subject to the approved permission matrix.
 - Archive a previously used entry rather than hard-deleting it by default.
+- A referenced Company currency cannot become inactive and a referenced tax preset cannot be archived while any Customer or Product/Service still stores that default. The root source mutation reports the dependency, and deferred PostgreSQL validation independently prevents direct or concurrent writes from creating silent fallback state.
+- Catalog audit records retain changed-field names and only non-sensitive operational facts: price presence, currency code, period unit, tax-presence, and archive/delete state. They never retain product/service name, description, internal code/SKU, unit, price, or tax-preset name.
 - v1 excludes product URLs/customer-visible product links, inventory and stock movements, tags/categories, variants, bundles, supplier/purchasing data, cost/margin tracking, tiered/customer-specific price lists, product images, and catalog CSV import/export.
 
 ## Default resolution and snapshot timing
@@ -322,7 +325,7 @@ Each company maintains reusable tax-rate presets:
 - Optional default designation
 - Active or archived state
 
-Users may add, edit, and archive presets. Referenced presets should be archived rather than hard-deleted.
+Users may add, edit, and archive presets. Referenced presets should be archived rather than hard-deleted, but Customer defaults must first be changed or cleared so their stored explicit choice never silently becomes a Company fallback.
 
 Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
 

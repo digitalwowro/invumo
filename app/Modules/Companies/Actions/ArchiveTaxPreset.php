@@ -8,11 +8,13 @@ use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
+use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Exceptions\TaxPresetException;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use App\Modules\Customers\Models\Customer;
 use Illuminate\Support\Facades\DB;
 
 final readonly class ArchiveTaxPreset
@@ -37,14 +39,34 @@ final readonly class ArchiveTaxPreset
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageCompanySettings);
 
-        $locked = TaxPreset::query()
+        $presets = TaxPreset::query()
             ->where('company_id', $company->id)
-            ->whereKey($presetId)
+            ->orderBy('id')
             ->lockForUpdate()
-            ->firstOrFail();
+            ->get();
+        $locked = $presets->firstWhere('id', $presetId);
+
+        if (! $locked instanceof TaxPreset) {
+            abort(404);
+        }
 
         if ($locked->archived_at !== null) {
             throw TaxPresetException::archived();
+        }
+
+        $dependentCustomers = Customer::query()
+            ->where('tax_preset_id', $locked->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+        $dependentProducts = ProductService::query()
+            ->where('tax_preset_id', $locked->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+
+        if ($dependentCustomers->isNotEmpty() || $dependentProducts->isNotEmpty()) {
+            throw TaxPresetException::defaultDependency();
         }
 
         $wasDefault = $locked->is_default;

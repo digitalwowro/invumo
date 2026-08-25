@@ -75,6 +75,42 @@ final class CustomerDefaultsDatabaseTest extends TestCase
         ));
     }
 
+    public function test_database_rejects_making_referenced_default_sources_unavailable(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->companyFor($owner);
+        [$customer, $currency, $taxPreset] = $this->tenant($company, function (): array {
+            $currency = CompanyCurrency::query()->create([
+                'currency_code' => 'RON', 'currency_precision' => 2,
+                'is_default' => true, 'active' => true,
+            ]);
+            $taxPreset = TaxPreset::query()->create([
+                'name' => 'VAT', 'percentage' => '19', 'is_default' => true,
+            ]);
+            $customer = Customer::query()->create([
+                'type' => 'COMPANY', 'legal_name' => 'Protected Defaults SRL',
+                'currency_id' => $currency->id, 'tax_preset_id' => $taxPreset->id,
+            ]);
+
+            return [$customer, $currency, $taxPreset];
+        });
+
+        $this->assertDatabaseCheckFailure(
+            $company,
+            fn () => TaxPreset::query()->findOrFail($taxPreset->id)->update(['archived_at' => now()]),
+            '23514',
+        );
+        $this->assertDatabaseCheckFailure(
+            $company,
+            fn () => CompanyCurrency::query()->findOrFail($currency->id)->update(['active' => false]),
+            '23514',
+        );
+        $this->tenant($company, function () use ($customer, $currency, $taxPreset): void {
+            $this->assertSame($currency->id, Customer::query()->findOrFail($customer->id)->currency_id);
+            $this->assertSame($taxPreset->id, Customer::query()->findOrFail($customer->id)->tax_preset_id);
+        });
+    }
+
     /** @param Closure(): mixed $operation */
     private function assertDatabaseCheckFailure(
         Company $company,

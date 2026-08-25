@@ -80,7 +80,7 @@ final class CustomerDefaultsHttpTest extends TestCase
                 ->where('resolvedDefaults.taxPreset.percentage', '5')
                 ->where('resolvedDefaults.taxPreset.source', 'CUSTOMER'));
 
-        $this->tenant($company, function () use ($records): void {
+        $this->tenant($company, function (): void {
             $event = AuditEvent::query()
                 ->where('action', 'company.customer_defaults.updated')
                 ->sole();
@@ -91,7 +91,15 @@ final class CustomerDefaultsHttpTest extends TestCase
             $encoded = $event->toJson();
             $this->assertStringNotContainsString('Client SRL', $encoded);
             $this->assertStringNotContainsString('billing@example.com', $encoded);
+        });
 
+        $this->patch(route('customer-defaults.update', [$company, $records['customer']]), [
+            'currency_id' => 'INHERIT',
+            'document_language' => 'INHERIT',
+            'payment_term_days' => '',
+            'tax_preset_id' => 'INHERIT',
+        ])->assertRedirect();
+        $this->tenant($company, function () use ($records): void {
             CompanyCurrency::query()->findOrFail($records['eur']->id)->update(['active' => false]);
             TaxPreset::query()->findOrFail($records['reducedTax']->id)->update(['archived_at' => now()]);
         });
@@ -103,12 +111,6 @@ final class CustomerDefaultsHttpTest extends TestCase
                 ->where('resolvedDefaults.taxPreset.percentage', '19')
                 ->where('resolvedDefaults.taxPreset.source', 'COMPANY'));
 
-        $this->patch(route('customer-defaults.update', [$company, $records['customer']]), [
-            'currency_id' => 'INHERIT',
-            'document_language' => 'INHERIT',
-            'payment_term_days' => '',
-            'tax_preset_id' => 'INHERIT',
-        ])->assertRedirect();
         $this->tenant($company, function () use ($records): void {
             $customer = Customer::query()->findOrFail($records['customer']->id);
             $this->assertNull($customer->currency_id);

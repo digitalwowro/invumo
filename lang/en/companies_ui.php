@@ -218,6 +218,7 @@ return [
             'errors' => [
                 'percentage_invalid' => 'The percentage must be a non-negative number with up to 6 decimal places.',
                 'archived' => 'Archived tax presets cannot be changed.',
+                'default_dependency' => 'This tax preset is used by a Customer or Product/Service default. Change those defaults before archiving it.',
             ],
         ],
         'bank_accounts' => [

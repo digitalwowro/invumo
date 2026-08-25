@@ -51,7 +51,7 @@ This matrix is independent of the Company-role tables below.
 ## 3. Already-approved authorization boundaries
 
 - Each Company has exactly one Owner. An invitation or ordinary role change may assign only Admin or Member; Owner changes only through the ownership-transfer workflow.
-- Only Owner/Admin manage Products & Services by default. Members may search and use active catalog entries.
+- Only Owner/Admin manage Products & Services and receive its management destination. Members receive the separate named ability to search and use active catalog entries inside permitted editors.
 - Accepted is the ordinary Quote-to-Invoice path. Only Owner/Admin may confirm conversion from Draft, Sent, or Expired. Rejected must first be corrected to an allowed state.
 - Backward number-counter realignment requires Owner/Admin permission, confirmation, reuse preview, and audit history.
 - Public Quote decisions are authenticated by the valid public-link workflow, not by a Company role.

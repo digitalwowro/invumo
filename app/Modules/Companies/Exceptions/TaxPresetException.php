@@ -16,6 +16,11 @@ final class TaxPresetException extends RuntimeException
         return new self('archived');
     }
 
+    public static function defaultDependency(): self
+    {
+        return new self('default_dependency');
+    }
+
     public function reason(): string
     {
         return $this->errorReason;

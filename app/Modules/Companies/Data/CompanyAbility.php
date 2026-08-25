@@ -10,6 +10,7 @@ enum CompanyAbility: string
     case DeleteCustomers = 'delete_customers';
     case ManageCompanySettings = 'manage_company_settings';
     case ManageMembers = 'manage_members';
+    case ViewCatalog = 'view_catalog';
     case ManageCatalog = 'manage_catalog';
     case ManageAdjustments = 'manage_adjustments';
     case ManageRecurringAutomation = 'manage_recurring_automation';

@@ -20,6 +20,7 @@ final readonly class CompanyAuthorization
                 CompanyAbility::ViewCompany,
                 CompanyAbility::ViewCustomers,
                 CompanyAbility::ManageCustomers,
+                CompanyAbility::ViewCatalog,
             ], true),
         };
     }

@@ -264,7 +264,7 @@ Rules are defaults. Invoice schedule rows later copy the values needed for stabl
 - optional PDF email-attachment mode: `SECURE_LINK_ONLY` or `ATTACH_PDF`; `NULL` inherits the current Company fallback
 - `archived_at`
 
-Type-dependent `CHECK` constraints require the appropriate name fields, while a named Laravel action performs the complete create/update validation. Currency and tax references use same-Company composite foreign keys. A newly selected Customer currency must be active and a newly selected tax preset must be unarchived. If a previously selected source later becomes unavailable, resolution uses the current active Company default rather than copying or silently mutating the stored Customer choice. Document language is limited by Laravel's authored locale configuration, its database column uses the shared bounded locale-code format, and payment-term days use the same `0..3,652,058` envelope as Company document defaults.
+Type-dependent `CHECK` constraints require the appropriate name fields, while a named Laravel action performs the complete create/update validation. Currency and tax references use same-Company composite foreign keys. A newly selected Customer currency must be active and a newly selected tax preset must be unarchived. A referenced currency cannot be deactivated and a referenced tax preset cannot be archived until every Customer override is changed or cleared; the Company-setting Action locks dependants in stable UUID order and a deferred database trigger independently preserves the invariant. Document language is limited by Laravel's authored locale configuration, its database column uses the shared bounded locale-code format, and payment-term days use the same `0..3,652,058` envelope as Company document defaults.
 
 ### `customer_contacts`
 
@@ -302,6 +302,10 @@ Customer permanent deletion is restricted while documents or recurring templates
 - `archived_at`
 
 A missing price remains different from explicit zero. Search covers name and internal code and may include description. Document/template lines retain an optional source reference for traceability, but copied fields are authoritative snapshots and never update from this row.
+
+The database bounds name to 160 characters, internal code/SKU to 120, unit to 80, and description to 5,000; the operational search input is bounded to 120 in Laravel. Price and currency are an exact nullable pair, price is non-negative and must match the selected active Company's `0..8` precision, period is checked to `NONE`, `MONTH`, or `YEAR`, and currency/tax references are same-Company.
+
+An active or archived Customer/Product default prevents its referenced currency from becoming inactive and its referenced tax preset from being archived until the stored reference changes, clears, or is deleted. Source Actions lock complete source sets and dependent rows in stable UUID order for a localized dependency response. Deferred constraint triggers independently reject unavailable sources and invalid cross-row currency precision at commit, including direct and concurrent writes.
 
 Hard deletion is restricted while a line or active template still references the product. Archiving is the normal path for a used entry.
 
@@ -594,6 +598,8 @@ When an idempotency reference is present, a partial unique constraint over Compa
 Audit `jsonb` is intentional because event shapes differ. Every action constructs its before/after values through an explicit action-specific field allowlist; it must never copy a request, model, exception context, or provider response wholesale. The action that supplies the payload owns the semantic safety of every selected value and must test its exact permitted fields. It excludes secrets, plaintext public tokens, raw provider payloads, credentials, and unnecessary recipient/customer data.
 
 Raw before/after values are retained only when they are non-sensitive operational state needed to explain durable application behavior after the live record changes. Examples include lifecycle states, authorization roles, operational booleans/enums, timezone and execution time, currency code/precision/display style, and opaque domain identifiers when the relationship itself must survive. Direct person or business identity values, names that may identify a sole trader, contact details, structured address values, registration or tax identifiers, recipient/customer data, and free-form customer or document content are never copied into ordinary append-only audit payloads.
+
+Product/service audit follows the same rule: changed-field names plus price-presence, currency code, period, tax-presence, archive, and delete facts are permitted; product/service names, descriptions, codes/SKUs, units, prices, and tax-preset names are excluded.
 
 For a sensitive-field edit, the audit event retains the action, target UUID, actor/time, and an allowlisted list of stable field names that changed, but not the old or new values, hashes, masked fragments, or other value fingerprints. This applies to Company configuration and to later Customer/contact actions. Each action test must assert both the exact retained keys and the absence of representative sensitive values.
 

@@ -106,6 +106,7 @@ class CompanyAccessTest extends TestCase
             ->get(route('companies.dashboard', $company))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('companyContext.abilities.view_company', true)
+                ->where('companyContext.abilities.view_catalog', true)
                 ->where('companyContext.abilities.manage_members', false)
                 ->where('companyContext.abilities.manage_catalog', false));
 

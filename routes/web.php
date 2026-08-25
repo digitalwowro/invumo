@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Catalog\Http\Controllers\ProductServiceController;
 use App\Modules\Companies\Http\Controllers\CompanyAppearanceController;
 use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
 use App\Modules\Companies\Http\Controllers\CompanyController;
@@ -99,6 +100,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('company.context')
         ->scopeBindings()
         ->group(function (): void {
+            Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
+                ->name('catalog.index');
+            Route::post('companies/{company}/products', [ProductServiceController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('catalog.store');
+            Route::patch('companies/{company}/products/{productService}', [ProductServiceController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('catalog.update');
+            Route::post('companies/{company}/products/{productService}/archive', [ProductServiceController::class, 'archive'])
+                ->middleware('throttle:20,1')
+                ->name('catalog.archive');
+            Route::post('companies/{company}/products/{productService}/restore', [ProductServiceController::class, 'restore'])
+                ->middleware('throttle:20,1')
+                ->name('catalog.restore');
+            Route::delete('companies/{company}/products/{productService}', [ProductServiceController::class, 'destroy'])
+                ->middleware('throttle:10,1')
+                ->name('catalog.destroy');
+
             Route::get('companies/{company}/customers', [CustomerController::class, 'index'])
                 ->name('customers.index');
             Route::get('companies/{company}/customers/create', [CustomerController::class, 'create'])

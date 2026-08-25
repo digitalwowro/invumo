@@ -68,6 +68,14 @@ class Company extends RuntimeModel
     }
 
     /**
+     * @return HasMany<TaxPreset, $this>
+     */
+    public function taxPresets(): HasMany
+    {
+        return $this->hasMany(TaxPreset::class);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

@@ -32,6 +32,10 @@ final readonly class CompanySettingsNavigation
                 'key' => 'profile',
                 'href' => route('company-settings.profile.edit', $company, false),
             ];
+            $items[] = [
+                'key' => 'taxes',
+                'href' => route('company-tax-presets.index', $company, false),
+            ];
         }
 
         if ($this->authorization->allows($membership->role, CompanyAbility::ViewCompany)) {

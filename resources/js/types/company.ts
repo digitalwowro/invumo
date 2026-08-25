@@ -1,3 +1,5 @@
+import type { CompanyTaxPresetTranslations } from '@/types/company-tax';
+
 export type CompanySummary = {
     id: string;
     name: string;
@@ -86,7 +88,7 @@ export type CompanyConfiguration = {
 };
 
 export type CompanySettingsNavigationItem = {
-    key: 'profile' | 'members';
+    key: 'profile' | 'taxes' | 'members';
     href: string;
 };
 
@@ -120,6 +122,7 @@ export type CompanySettingsTranslations = {
         feedback: { saved: string };
         errors: { schedule_change_not_confirmed: string };
     };
+    taxes: CompanyTaxPresetTranslations;
 };
 
 export type CompanyRole = 'OWNER' | 'ADMIN' | 'MEMBER';

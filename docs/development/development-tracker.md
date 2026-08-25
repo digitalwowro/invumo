@@ -42,6 +42,7 @@ The phase tasks and acceptance gates remain the only completion status. The batc
 
 - Every feature batch is a usable vertical slice across schema, persistence, validation, authorization, Action/Query boundaries, audit or side effects, localized responsive UI, tenant isolation, and proportionate automated tests.
 - Cross-cutting coverage tasks are implemented inside every feature batch and receive one final phase-level review; they are never postponed as a testing or hardening batch.
+- Phase 11 audit presentation and Phase 12 release verification consume evidence completed by the owning feature batches. If either exposes missing audit/privacy behavior or automated coverage, reopen the owning phase task and fix it there; a later phase cannot certify the gap retroactively.
 - A batch may combine task parts only when they share one aggregate, permission boundary, default-resolution rule, and user workflow. Concurrency, destructive lifecycle, file/provider effects, and security bootstrap boundaries stay separate when combining them would increase review or rollback risk.
 - A batch does not approve an unresolved product or technical choice, authorize a production/external mutation, or permit schema-first scaffolding without usable behavior. Resolve named gates and obtain each required approval before that part begins.
 - The final feature batch is followed by the phase acceptance gate and full repository quality gate. Any fixes found there are evidence work, not a new feature batch.
@@ -184,21 +185,21 @@ Passed on 2026-08-24. Authentication, email verification, recovery, and secure-s
 - [x] Implement currency settings and display/precision configuration.
 - [x] Implement tax presets.
 - [ ] Implement default document language, payment terms, quote validity, Terms & Conditions, and quote/invoice note defaults.
-- [ ] Implement numbering-series settings and reset-period counter records.
+- [ ] Implement Quote and Invoice numbering-series settings and preview; create counter records only with their first allocation consumer in Phase 5.
 - [ ] Implement bank accounts and default selection.
 - [ ] Implement company logo and primary brand color.
-- [ ] Implement email and public-link defaults required by later phases.
+- [ ] Implement the default email attachment mode required by later phases.
 - [ ] Add settings authorization, validation, audit coverage, and tenant-isolation tests.
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                          | Quality boundary                                                                                                                                                                                   |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2A    | Default document language, payment-term days, Quote-validity days, Terms & Conditions, and separate Quote/Invoice notes        | One Company-settings aggregate and future-document snapshot boundary; use a dedicated Action/page instead of enlarging the existing profile workflow                                               |
-| 2B    | Quote and Invoice number-series configuration plus the reset-period counter persistence boundary                               | Standalone because format validation, company-local annual periods, stable locking, and counter constraints form a concurrency boundary; allocation and history-aware realignment wait for Phase 5 |
-| 2C    | Bank-account CRUD, same-Company currency selection, bounded local-routing details, archive lifecycle, and default reassignment | Standalone because banking data, snapshot retention, sensitive audit policy, JSON validation, and default locking require focused review                                                           |
-| 2D    | Company logo, authenticated private serving, immutable replacement/removal cleanup, primary brand colour, and outward preview  | Standalone because filesystem effects, after-commit cleanup, asset retention, and contrast resolution must remain atomic and independently testable                                                |
-| 2E    | Default email attachment mode and public-link enabled/validity settings                                                        | Standalone from document content defaults; do not invent unspecified initial values or cross the later provider/public-token design gates                                                          |
+| Batch | Scope                                                                                                                          | Quality boundary                                                                                                                                     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2A    | Default document language, payment-term days, Quote-validity days, Terms & Conditions, and separate Quote/Invoice notes        | One Company-settings aggregate and future-document snapshot boundary; use a dedicated Action/page instead of enlarging the existing profile workflow |
+| 2B    | Quote and Invoice number-series configuration, validation, and company-local format preview                                    | A usable settings slice only; no counter row or locking scaffold is persisted before Phase 5 provides the first allocation consumer                  |
+| 2C    | Bank-account CRUD, same-Company currency selection, bounded local-routing details, archive lifecycle, and default reassignment | Standalone because banking data, snapshot retention, sensitive audit policy, JSON validation, and default locking require focused review             |
+| 2D    | Company logo, authenticated private serving, immutable replacement/removal cleanup, primary brand colour, and outward preview  | Standalone because filesystem effects, after-commit cleanup, asset retention, and contrast resolution must remain atomic and independently testable  |
+| 2E    | Default email attachment mode                                                                                                  | Supplies the approved Company fallback for Phase 3 delivery preferences; public-link settings move behind the Phase 8 token design gate              |
 
 ### Acceptance gate
 
@@ -265,7 +266,7 @@ Active entries can initialize detached, editable line data with safe currency-mi
 - [ ] Before finalizing the `document_lines` position constraint and drag-and-drop action, select and document either a deferred unique constraint or a collision-free update strategy; preserve atomic final-order uniqueness and test swaps, moves, concurrency, and stale editors.
 - [ ] Implement manual lines, searchable product/service selection, and inline customer/product creation without losing editor progress.
 - [ ] Implement customer, product/service, tax, bank, Terms & Conditions, notes, currency-precision, and settings snapshots.
-- [ ] Implement locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes.
+- [ ] Implement reset-period counter records and locked counter-row numbering with idempotent persisted Draft creation, first applied to quotes.
 - [ ] Implement quote CRUD, non-negative day-offset validity, lifecycle, derived expiry, one mutable current public/PDF representation, and operational list controls.
 - [ ] Implement the optional customer reference / PO number, including list search and customer-facing rendering when present.
 - [ ] Build the shared outward-facing renderer and complete the pure-PHP PDF compatibility proof before committing to the renderer.
@@ -295,22 +296,22 @@ Quotes calculate deterministically, preserve every required snapshot, render con
 
 - [ ] Implement invoice CRUD with one mutable current public/PDF representation and immutable already-delivered email artifacts; permanent deletion of a transaction-free Invoice that was already issued, sent, or shared must use the approved highest-friction confirmation pattern.
 - [ ] Reuse the shared editor, calculations, numbering, renderer, and PDF pipeline.
-- [ ] Implement Draft/Issued/Cancelled lifecycle, zero-total Paid behavior, derived payment state, day-offset due-date validation, and overdue flag.
+- [ ] Implement Draft/Issued lifecycle, zero-total Paid behavior, derived payment state, day-offset due-date validation, and overdue flag; defer cancellation and reopening until transactions exist in Phase 7.
 - [ ] Implement quote-to-one-or-many-invoices with normal Accepted conversion, confirmed Owner/Admin Draft/Sent/Expired overrides, Rejected blocking, Draft-only unused unlinking with permanent provenance afterward, quoted/invoiced/remaining allocation, and customer-reference inheritance.
 - [ ] Implement invoice search, filtering, sorting, pagination, and operational list controls.
 - [ ] Add invoice authorization, audit coverage, state tests, calculation tests, and tenant-isolation tests.
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                                                                                        | Quality boundary                                                                                                                           |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 6A    | Independent Invoice Draft CRUD using the shared editor, snapshots, calculations, numbering, renderer/PDF, due-date offset, customer reference, and initial operational list                  | Proves reuse through one usable independent-Invoice path before adding lifecycle or Quote provenance complexity                            |
-| 6B    | Draft/Issued/Cancelled lifecycle, zero-total Paid behavior, derived overdue/payment state, list filters, and guarded deletion/current-representation behavior                                | Keeps state transitions and destructive rules under one explicit Invoice transaction boundary; Phase 7 later adds transaction-aware guards |
-| 6C    | Quote-to-one-or-many-Invoice conversion, confirmed non-Accepted overrides, Rejected blocking, allocation totals, customer-reference inheritance, and constrained unlink/provenance lifecycle | Standalone cross-aggregate workflow because conversion and unlinking lock and mutate both Quote and Invoice state                          |
+| Batch | Scope                                                                                                                                                                                        | Quality boundary                                                                                                                                                     |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6A    | Independent Invoice Draft CRUD using the shared editor, snapshots, calculations, numbering, renderer/PDF, due-date offset, customer reference, and initial operational list                  | Proves reuse through one usable independent-Invoice path before adding lifecycle or Quote provenance complexity                                                      |
+| 6B    | Draft/Issued lifecycle, zero-total Paid behavior, derived overdue/payment state, list filters, and guarded deletion/current-representation behavior                                          | Completes only lifecycle rules that can be evaluated without transactions; cancellation and reopening are absent until their full Phase 7 invariant is implementable |
+| 6C    | Quote-to-one-or-many-Invoice conversion, confirmed non-Accepted overrides, Rejected blocking, allocation totals, customer-reference inheritance, and constrained unlink/provenance lifecycle | Standalone cross-aggregate workflow because conversion and unlinking lock and mutate both Quote and Invoice state                                                    |
 
 ### Acceptance gate
 
-Independent and quote-derived invoices produce the same authoritative calculations and snapshots, and invoice lifecycle/payment/overdue state behaves correctly around company-local dates.
+Independent and quote-derived invoices produce the same authoritative calculations and snapshots, and Draft/Issued, zero-total payment, and overdue behavior is correct around company-local dates. Cancellation is not exposed or certified until Phase 7.
 
 ## Phase 7 — Payments
 
@@ -323,17 +324,17 @@ Independent and quote-derived invoices produce the same authoritative calculatio
 - [ ] Implement invoice transaction records with explicit payment, refund, and adjustment direction.
 - [ ] Implement partial payments, cash-only refund capacity, non-refundable adjustments, overpayment prevention, and outstanding-balance derivation.
 - [ ] Implement derived invoice payment state.
-- [ ] Implement transaction-aware cancellation guards, post-cancellation transaction blocking, authorized reopening under the approved state rules, history retention, deletion constraints, and the expected Member-to-Owner/Admin escalation when an Adjustment is required to reach zero net paid.
+- [ ] Implement the complete Cancelled lifecycle with the zero-net-paid precondition, post-cancellation transaction blocking, authorized reopening, history retention, deletion constraints, and the expected Member-to-Owner/Admin escalation when an Adjustment is required to reach zero net paid.
 - [ ] Implement the company Transactions screen with operational list controls.
 - [ ] Add transaction authorization, audit coverage, precision validation, reconciliation tests, and tenant-isolation tests.
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                                                      | Quality boundary                                                                                                               |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 7A    | Payment, refund, and adjustment CRUD with exact reconciliation, partial-payment/refund capacity, overpayment prevention, and derived Invoice payment state | Amount mutation and Invoice-state derivation must commit atomically and use one authoritative calculation path                 |
-| 7B    | Transaction-aware cancellation, post-cancellation blocking, reopening, Adjustment escalation, history retention, and deletion constraints                  | Standalone lifecycle integration because it changes existing Invoice authorization and destructive rules                       |
-| 7C    | Company Transactions operational list with search, filtering, sorting, and pagination                                                                      | Read-focused slice after transaction semantics stabilize; it must expose existing state without introducing new mutation paths |
+| Batch | Scope                                                                                                                                                         | Quality boundary                                                                                                                                            |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7A    | Payment, refund, and adjustment CRUD with exact reconciliation, partial-payment/refund capacity, overpayment prevention, and derived Invoice payment state    | Amount mutation and Invoice-state derivation must commit atomically and use one authoritative calculation path                                              |
+| 7B    | Complete cancellation/reopening workflow, zero-net-paid guard, post-cancellation blocking, Adjustment escalation, history retention, and deletion constraints | Implements and reviews the approved cancellation invariant once, after transaction state exists; no provisional Phase 6 cancellation path is replaced later |
+| 7C    | Company Transactions operational list with search, filtering, sorting, and pagination                                                                         | Read-focused slice after transaction semantics stabilize; it must expose existing state without introducing new mutation paths                              |
 
 ### Acceptance gate
 
@@ -348,6 +349,7 @@ Transaction history reconciles exactly to invoice balance and state under create
 ### Tasks
 
 - [ ] Complete the public-token design gate before implementing public access.
+- [ ] Implement Company public-link enabled/validity defaults under the approved token, expiry, revocation, and regeneration semantics.
 - [ ] Implement unpredictable hashed secure links.
 - [ ] Implement transaction-local token-hash bootstrap into the correct RLS tenant context.
 - [ ] Implement expiry, revocation, and regeneration.
@@ -357,11 +359,11 @@ Transaction history reconciles exactly to invoice balance and state under create
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                                                                                               | Quality boundary                                                                                                                                              |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 8A    | Complete and explicitly approve the public-token design gate                                                                                                                        | No public route, token persistence, or bootstrap implementation begins before entropy/hash, lookup, expiry, regeneration, rate-limit, and RLS rules are fixed |
-| 8B    | Read-only public Quote/Invoice access: hashed links, transaction-local RLS bootstrap, viewing/downloading, expiry, revocation, regeneration, lifecycle enforcement, and rate limits | Combines the token foundation with a usable read path so no unaudited or orphaned security scaffold ships                                                     |
-| 8C    | Public Quote acceptance/rejection with required identity, validity checks, idempotency, replay protection, and audit attribution                                                    | Customer-triggered mutation remains separate from read access because it changes Quote lifecycle and has a stricter abuse boundary                            |
+| Batch | Scope                                                                                                                                                                                                          | Quality boundary                                                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 8A    | Complete and explicitly approve the public-token design gate                                                                                                                                                   | No public route, token persistence, or bootstrap implementation begins before entropy/hash, lookup, expiry, regeneration, rate-limit, and RLS rules are fixed |
+| 8B    | Company public-link defaults plus read-only Quote/Invoice access: hashed links, transaction-local RLS bootstrap, viewing/downloading, expiry, revocation, regeneration, lifecycle enforcement, and rate limits | Combines settings with their first usable token-governed read path so Phase 2 does not persist behavior before its security semantics are approved            |
+| 8C    | Public Quote acceptance/rejection with required identity, validity checks, idempotency, replay protection, and audit attribution                                                                               | Customer-triggered mutation remains separate from read access because it changes Quote lifecycle and has a stricter abuse boundary                            |
 
 ### Acceptance gate
 
@@ -441,21 +443,21 @@ Templates are identifiable without customer-visible naming, generated invoices p
 ### Tasks
 
 - [ ] Implement the currency-grouped operational dashboard without cross-currency aggregation.
-- [ ] Implement searchable audit-history UI and review audit completeness across prior phases.
+- [ ] Implement searchable audit-history UI over audit behavior and privacy evidence already completed by each owning feature batch.
 - [ ] Complete archive/delete flows, dependency warnings, and user-data deletion paths.
 - [ ] Review and complete ownership-transfer and membership-management UX.
 - [ ] Add authorization, tenant-isolation, audit-integrity, destructive-action, and browser tests.
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                      | Quality boundary                                                                                                                                         |
-| ----- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 11A   | Currency-grouped operational dashboard with no cross-currency aggregation                                  | Read-only operational slice with explicit amount grouping and bounded queries                                                                            |
-| 11B   | Searchable Company audit history plus completeness/privacy review across prior phases                      | Audit visibility and retained-payload safety are reviewed together without changing business aggregates opportunistically                                |
-| 11C   | Membership-management and ownership-transfer UX completion                                                 | Governance review remains separate from general data deletion and preserves its existing exceptional confirmation rules                                  |
-| 11D   | Customer, Product/Service, tax-preset, and bank-account archive/delete completion with dependency warnings | Reviews source/reference lifecycle together while keeping every mutation in its owning module Action                                                     |
-| 11E   | Quote, Invoice, transaction, delivery, and recurring-template deletion/retention completion                | Financial and customer-visible history has stricter retention and cleanup rules than source/reference records and receives a separate destructive review |
-| 11F   | Explicit User, Company, and Account erasure paths with retained-history redaction and ordered cleanup      | Highest-risk destructive workflow remains isolated from ordinary archive/delete work and requires dedicated recovery and audit evidence                  |
+| Batch | Scope                                                                                                      | Quality boundary                                                                                                                                                         |
+| ----- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 11A   | Currency-grouped operational dashboard with no cross-currency aggregation                                  | Read-only operational slice with explicit amount grouping and bounded queries                                                                                            |
+| 11B   | Searchable Company audit-history UI with bounded filters and privacy-safe presentation                     | Presentation consumes already-verified events; any missing or unsafe owning-module audit behavior reopens that earlier phase instead of becoming Phase 11 hardening work |
+| 11C   | Membership-management and ownership-transfer UX completion                                                 | Governance review remains separate from general data deletion and preserves its existing exceptional confirmation rules                                                  |
+| 11D   | Customer, Product/Service, tax-preset, and bank-account archive/delete completion with dependency warnings | Reviews source/reference lifecycle together while keeping every mutation in its owning module Action                                                                     |
+| 11E   | Quote, Invoice, transaction, delivery, and recurring-template deletion/retention completion                | Financial and customer-visible history has stricter retention and cleanup rules than source/reference records and receives a separate destructive review                 |
+| 11F   | Explicit User, Company, and Account erasure paths with retained-history redaction and ordered cleanup      | Highest-risk destructive workflow remains isolated from ordinary archive/delete work and requires dedicated recovery and audit evidence                                  |
 
 ### Acceptance gate
 
@@ -471,7 +473,7 @@ Users can understand operational state and safely complete every destructive, da
 
 - [ ] Complete English and Romanian translation coverage.
 - [ ] Complete accessibility, responsive behavior, and cross-browser refinement.
-- [ ] Complete the critical-path, edge-case, concurrency, scheduling, calculation, and tenant-isolation test suites.
+- [ ] Re-run the already-complete critical-path, edge-case, concurrency, scheduling, calculation, and tenant-isolation suites against the release candidate; any missing coverage reopens its owning phase.
 - [ ] Complete the security review and abuse/rate-limit verification.
 - [ ] Verify production migrations and restricted database roles.
 - [ ] Verify evidence that the externally managed off-server database/file backup and full-restore process is active and usable.
@@ -482,17 +484,17 @@ Users can understand operational state and safely complete every destructive, da
 
 ### Planned implementation batches
 
-| Batch | Scope                                                                                                         | Quality boundary                                                                                                                         |
-| ----- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 12A   | Final English/Romanian coverage plus accessibility, responsive, zoom, and supported-browser refinement        | One user-facing quality matrix across the same critical workflows and shared components                                                  |
-| 12B   | Close critical-path, edge-case, concurrency, scheduling, calculation, and tenant-isolation automated coverage | Test-completeness batch only after feature behavior is stable; failures return to the owning module rather than creating generic fixes   |
-| 12C   | Security review and abuse/rate-limit verification                                                             | Independent adversarial review with findings fixed and reverified before operational release approval                                    |
-| 12D   | Separate development/production environments and repeatable release/rollback procedure                        | Standalone operational change with explicit environment, secret, and deployment authorization boundaries                                 |
-| 12E   | Production migration and restricted-role verification                                                         | Database rollout evidence remains separately authorized from application release and never follows automatically from a passing test run |
-| 12F   | Off-server database/file backup and full-restore evidence                                                     | Recovery testing is isolated because it can affect retained data and infrastructure and requires explicit operational authorization      |
-| 12G   | Externally managed rollback process and recovery-ownership evidence                                           | Release rollback is verified separately from backup restoration so neither result is inferred from the other                             |
-| 12H   | Uptime/error alert delivery, health endpoint, queue-worker, and scheduler supervision evidence                | Related observability checks may be reviewed together without changing application or production state implicitly                        |
-| 12I   | Final English/Romanian end-to-end acceptance against the successful-v1 definition                             | Last gate after application, security, database, release, and recovery evidence are complete                                             |
+| Batch | Scope                                                                                                                                           | Quality boundary                                                                                                                         |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 12A   | Final English/Romanian coverage plus accessibility, responsive, zoom, and supported-browser refinement                                          | One user-facing quality matrix across the same critical workflows and shared components                                                  |
+| 12B   | Release-candidate execution of the already-complete critical-path, edge-case, concurrency, scheduling, calculation, and tenant-isolation suites | Verification only: it cannot defer or backfill known feature coverage, and every discovered gap reopens the owning phase task            |
+| 12C   | Security review and abuse/rate-limit verification                                                                                               | Independent adversarial review with findings fixed and reverified before operational release approval                                    |
+| 12D   | Separate development/production environments and repeatable release/rollback procedure                                                          | Standalone operational change with explicit environment, secret, and deployment authorization boundaries                                 |
+| 12E   | Production migration and restricted-role verification                                                                                           | Database rollout evidence remains separately authorized from application release and never follows automatically from a passing test run |
+| 12F   | Off-server database/file backup and full-restore evidence                                                                                       | Recovery testing is isolated because it can affect retained data and infrastructure and requires explicit operational authorization      |
+| 12G   | Externally managed rollback process and recovery-ownership evidence                                                                             | Release rollback is verified separately from backup restoration so neither result is inferred from the other                             |
+| 12H   | Uptime/error alert delivery, health endpoint, queue-worker, and scheduler supervision evidence                                                  | Related observability checks may be reviewed together without changing application or production state implicitly                        |
+| 12I   | Final English/Romanian end-to-end acceptance against the successful-v1 definition                                                               | Last gate after application, security, database, release, and recovery evidence are complete                                             |
 
 ### Acceptance gate
 

@@ -90,11 +90,13 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Individual customers use first and last name.
 - Company customers use a company/legal name and may have multiple contacts.
 - Contacts may be designated as primary contact and billing contact/default recipient.
+- A Customer has at most one active primary Contact and one active billing Contact. Contacts may be stored without email, but delivery may reference only an active Contact with a valid email; recipient addresses are deduplicated case-insensitively across To, CC, and BCC.
 - Each customer has one structured billing/legal address: address line 1, optional address line 2, city, state/province/region, postal code, and country.
 - Customer identity supports phone, an optional general/primary email, optional external reference/code, tax registration label and identifier, and business registration label and number. An Individual's primary email may be its default recipient; Company recipients normally resolve from contacts or an explicitly stored address.
 - Customer defaults include currency, document language, payment terms, tax preset, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
 - PDF email-delivery mode is secure link only or attach PDF.
 - The Company PDF email-delivery fallback defaults to secure link only and may be changed by an Owner/Admin. Resolution remains per-send override, then Customer preference, then Company fallback.
+- A Customer PDF email-delivery preference is optional. An unset preference inherits the current Company fallback rather than copying it.
 - Internal customer notes are limited to 5,000 characters and are never rendered automatically on documents, public pages, or email.
 - v1 excludes separate shipping/service addresses, customer tags, customer-specific manual date formats, and an ambiguous free-form legal-info field.
 - A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.

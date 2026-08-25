@@ -261,7 +261,7 @@ Rules are defaults. Invoice schedule rows later copy the values needed for stabl
 - internal notes, limited to 5,000 characters
 - optional same-Company defaults for currency and tax preset
 - optional document language and non-negative payment-term days
-- delivery mode: `SECURE_LINK` or `ATTACH_PDF`
+- optional PDF email-attachment mode: `SECURE_LINK_ONLY` or `ATTACH_PDF`; `NULL` inherits the current Company fallback
 - `archived_at`
 
 Type-dependent `CHECK` constraints require the appropriate name fields, while a named Laravel action performs the complete create/update validation.
@@ -269,10 +269,12 @@ Type-dependent `CHECK` constraints require the appropriate name fields, while a 
 ### `customer_contacts`
 
 - `id`, `company_id`, `customer_id`
-- name, email, phone, position/title
+- required name up to 160 characters; optional normalized email up to 254 characters, phone up to 50 characters, and position/title up to 160 characters
 - `is_primary`, `is_billing`
 - display order and `archived_at`
 - partial unique `(company_id, customer_id)` for each active primary and active billing designation
+
+Contacts may exist without an email, but only an active Contact with a valid current email may be selected as a delivery recipient. Archiving removes active primary/billing designations and is blocked while the Contact remains selected as a recipient. Direct permanent deletion is restricted to an archived, unreferenced Contact and uses the same Owner/Admin destructive permission as Customer deletion.
 
 ### `customer_delivery_recipients`
 
@@ -281,7 +283,7 @@ Type-dependent `CHECK` constraints require the appropriate name fields, while a 
 - optional same-Company contact reference, or an explicit email/name
 - display order
 
-A `CHECK` requires exactly one recipient source: a Contact or explicit email. Resolution reads the Contact's current valid email or the stored explicit address. At least one valid `TO` is required only when sending, not merely to save a Customer.
+A `CHECK` requires exactly one recipient source: a Contact or explicit email. Resolution reads the Contact's current valid email or the stored explicit address. Resolved email addresses are case-insensitively unique across `TO`, `CC`, and `BCC`; Contact email edits and archives revalidate the same invariant. At least one valid `TO` is required only when sending, not merely to save a Customer.
 
 Customer permanent deletion is restricted while documents or recurring templates still reference it. Archiving remains the normal historical path. Once dependants are removed, the Customer delete cascades only to its owned contacts and delivery-recipient settings.
 

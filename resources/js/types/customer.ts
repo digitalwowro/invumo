@@ -102,7 +102,29 @@ export type CustomerTranslations = {
         open_customer: string;
     };
     create: Record<string, string>;
-    workspace: Record<string, string>;
+    workspace: Record<string, unknown> & {
+        head_title: string;
+        description: string;
+        save: string;
+        back: string;
+        active: string;
+        archived: string;
+        archived_notice: string;
+        archive: string;
+        archive_title: string;
+        archive_description: string;
+        confirm_archive: string;
+        restore: string;
+        restore_title: string;
+        restore_description: string;
+        confirm_restore: string;
+        delete: string;
+        delete_title: string;
+        delete_description: string;
+        confirm_delete: string;
+        navigation_label: string;
+        navigation: { overview: string; contacts: string };
+    };
     form: {
         identity_title: string;
         identity_description: string;
@@ -119,4 +141,107 @@ export type CustomerTranslations = {
         types: Record<CustomerType, string>;
         fields: Record<string, string>;
     };
+    contacts: CustomerContactTranslations;
+    delivery: CustomerDeliveryTranslations;
+};
+
+export type CustomerContact = {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    positionTitle: string | null;
+    isPrimary: boolean;
+    isBilling: boolean;
+    archived: boolean;
+    updateUrl: string | null;
+    archiveUrl: string | null;
+    restoreUrl: string | null;
+    deleteUrl: string | null;
+};
+
+export type CustomerContactFormData = {
+    name: string;
+    email: string;
+    phone: string;
+    position_title: string;
+    is_primary: boolean;
+    is_billing: boolean;
+};
+
+export type DeliveryRecipientRole = 'TO' | 'CC' | 'BCC';
+
+export type CustomerDeliveryRecipient = {
+    id: string;
+    role: DeliveryRecipientRole;
+    contactId: string | null;
+    explicitName: string | null;
+    explicitEmail: string | null;
+};
+
+export type CustomerDeliveryRecipientForm = {
+    key: string;
+    role: DeliveryRecipientRole;
+    source: 'contact' | 'explicit';
+    contact_id: string;
+    explicit_name: string;
+    explicit_email: string;
+};
+
+export type CustomerContactTranslations = Record<string, unknown> & {
+    head_title: string;
+    description: string;
+    title: string;
+    list_description: string;
+    create_title: string;
+    create_description: string;
+    create: string;
+    edit: string;
+    edit_title: string;
+    edit_description: string;
+    save: string;
+    unsaved_warning: string;
+    columns: Record<string, string>;
+    fields: Record<string, string>;
+    field_descriptions: Record<string, string>;
+    primary: string;
+    billing: string;
+    active: string;
+    archived: string;
+    not_available: string;
+    empty_title: string;
+    empty_description: string;
+    archive: string;
+    archive_title: string;
+    archive_description: string;
+    confirm_archive: string;
+    restore: string;
+    restore_title: string;
+    restore_description: string;
+    confirm_restore: string;
+    delete: string;
+    delete_title: string;
+    delete_description: string;
+    confirm_delete: string;
+};
+
+export type CustomerDeliveryTranslations = Record<string, unknown> & {
+    title: string;
+    description: string;
+    save: string;
+    unsaved_warning: string;
+    mode_label: string;
+    mode_description: string;
+    inherit_mode: string;
+    modes: Record<'SECURE_LINK_ONLY' | 'ATTACH_PDF', string>;
+    recipients_title: string;
+    recipients_description: string;
+    add_recipient: string;
+    remove_recipient: string;
+    recipient_number: string;
+    contact_source: string;
+    explicit_source: string;
+    select_contact: string;
+    roles: Record<DeliveryRecipientRole, string>;
+    fields: Record<string, string>;
 };

@@ -3,6 +3,7 @@
 namespace App\Modules\Customers\Models;
 
 use App\Foundation\Database\TenantOwnedModel;
+use App\Foundation\Delivery\EmailAttachmentMode;
 use App\Modules\Customers\Data\CustomerType;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $business_registration_label
  * @property string|null $business_registration_number
  * @property string|null $internal_notes
+ * @property EmailAttachmentMode|null $email_attachment_mode
  * @property CarbonImmutable|null $archived_at
  */
 #[Fillable([
@@ -35,7 +37,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'external_reference', 'address_line_1', 'address_line_2', 'city', 'region',
     'postal_code', 'country_code', 'tax_registration_label',
     'tax_registration_identifier', 'business_registration_label',
-    'business_registration_number', 'internal_notes', 'archived_at',
+    'business_registration_number', 'internal_notes', 'email_attachment_mode',
+    'archived_at',
 ])]
 class Customer extends TenantOwnedModel
 {
@@ -51,6 +54,7 @@ class Customer extends TenantOwnedModel
     {
         return [
             'type' => CustomerType::class,
+            'email_attachment_mode' => EmailAttachmentMode::class,
             'archived_at' => 'immutable_datetime',
         ];
     }

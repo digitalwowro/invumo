@@ -54,13 +54,55 @@ final class CustomerListHttpTest extends TestCase
             ->where('customers.items.0.displayName', 'Archived Romanian SRL')
             ->where('customers.items.0.archived', true));
 
-        $this->get(route('customers.index', [
+        $nameAscending = $this->get(route('customers.index', [
             'company' => $company,
             'status' => 'all',
             'sort' => 'name_asc',
-        ]))->assertInertia(fn (Assert $page) => $page
+        ]));
+        $nameAscending->assertInertia(fn (Assert $page) => $page
             ->has('customers.items', 25)
             ->where('customers.nextUrl', fn (mixed $value): bool => is_string($value)));
+
+        $this->get((string) $nameAscending->inertiaProps('customers.nextUrl'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('customers.items', 3)
+                ->where('customers.items.0.displayName', 'Customer 25 SRL')
+                ->where('customers.previousUrl', fn (mixed $value): bool => is_string($value)));
+
+        $nameDescending = $this->get(route('customers.index', [
+            'company' => $company,
+            'status' => 'all',
+            'sort' => 'name_desc',
+        ]));
+
+        $this->get((string) $nameDescending->inertiaProps('customers.nextUrl'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('customers.items', 3)
+                ->where('customers.items.0.displayName', 'Customer 02 SRL'));
+    }
+
+    public function test_search_treats_like_metacharacters_as_literals(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->companyFor($owner);
+
+        foreach (['Discount 50% SRL', 'Discount 500 SRL', 'Code A_B SRL', 'Code ACB SRL'] as $name) {
+            $this->create($company, ['legal_name' => $name]);
+        }
+
+        $this->actingAs($owner);
+
+        $this->get(route('customers.index', ['company' => $company, 'q' => '50%']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('customers.items', 1)
+                ->where('customers.items.0.displayName', 'Discount 50% SRL'));
+
+        $this->get(route('customers.index', ['company' => $company, 'q' => 'A_B']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('customers.items', 1)
+                ->where('customers.items.0.displayName', 'Code A_B SRL'));
     }
 
     public function test_cross_company_customer_routes_are_not_visible(): void

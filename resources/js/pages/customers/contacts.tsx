@@ -1,61 +1,69 @@
 import { Head, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
-import { FormActions } from '@/components/app/form-actions';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
+import { SectionHeader } from '@/components/app/section-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
-import { CustomerForm } from '@/features/customers/components/customer-form';
-import { CustomerLifecycleActions } from '@/features/customers/components/customer-lifecycle-actions';
+import { CustomerContactCreateForm } from '@/features/customers/components/customer-contact-create-form';
+import { CustomerContactTable } from '@/features/customers/components/customer-contact-table';
+import { CustomerDeliveryForm } from '@/features/customers/components/customer-delivery-form';
 import { CustomerWorkspaceNavigation } from '@/features/customers/components/customer-workspace-navigation';
 import { interpolate } from '@/lib/translations';
 import type {
+    CustomerContact,
+    CustomerDeliveryRecipient,
     CustomerFieldLimits,
     CustomerOption,
-    CustomerRecord,
     CustomerTranslations,
 } from '@/types/customer';
 
 type Props = {
-    customer: CustomerRecord & {
+    customer: {
         id: string;
         displayName: string;
         archived: boolean;
+        emailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF' | null;
     };
-    abilities: { update: boolean; delete: boolean };
-    indexUrl: string;
+    contacts: CustomerContact[];
+    recipients: CustomerDeliveryRecipient[];
+    recipientContactOptions: CustomerOption[];
+    emailAttachmentModeOptions: CustomerOption[];
+    recipientRoleOptions: CustomerOption[];
+    companyEmailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
+    abilities: { manage: boolean; delete: boolean };
     overviewUrl: string;
     contactsUrl: string;
-    updateUrl: string | null;
-    archiveUrl: string | null;
-    restoreUrl: string | null;
-    deleteUrl: string | null;
-    countryOptions: CustomerOption[];
-    customerTypeOptions: CustomerOption[];
+    indexUrl: string;
+    storeContactUrl: string | null;
+    updateDeliveryUrl: string | null;
     limits: CustomerFieldLimits;
     status?: string;
     translations: CustomerTranslations;
 };
 
-export default function CustomerWorkspace({
+export default function CustomerContacts({
     customer,
-    indexUrl,
+    contacts,
+    recipients,
+    recipientContactOptions,
+    emailAttachmentModeOptions,
+    recipientRoleOptions,
+    companyEmailAttachmentMode,
     overviewUrl,
     contactsUrl,
-    updateUrl,
-    archiveUrl,
-    restoreUrl,
-    deleteUrl,
-    countryOptions,
-    customerTypeOptions,
+    indexUrl,
+    storeContactUrl,
+    updateDeliveryUrl,
     limits,
     status,
     translations,
 }: Props) {
     const { i18n, errors } = usePage().props;
-    const labels = translations.workspace;
+    const workspace = translations.workspace;
+    const labels = translations.contacts;
 
     return (
         <>
@@ -79,58 +87,67 @@ export default function CustomerWorkspace({
                                     }
                                     label={
                                         customer.archived
-                                            ? labels.archived
-                                            : labels.active
+                                            ? workspace.archived
+                                            : workspace.active
                                     }
                                 />
                                 <ActionLink href={indexUrl} variant="secondary">
                                     <ArrowLeft aria-hidden="true" />
-                                    {labels.back}
+                                    {workspace.back}
                                 </ActionLink>
                             </Cluster>
                         }
                     />
                     <CustomerWorkspaceNavigation
-                        active="overview"
+                        active="contacts"
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
-                        label={labels.navigation_label}
-                        labels={labels.navigation}
+                        label={workspace.navigation_label}
+                        labels={workspace.navigation}
                     />
                     {status && <SystemMessage title={status} tone="money" />}
-                    {errors.customer && (
-                        <SystemMessage title={errors.customer} tone="error" />
+                    {errors.contact && (
+                        <SystemMessage title={errors.contact} tone="error" />
                     )}
                     {customer.archived && (
                         <SystemMessage
-                            title={labels.archived_notice}
+                            title={workspace.archived_notice}
                             tone="warning"
                         />
                     )}
-                    <CustomerForm
-                        customer={customer}
-                        actionUrl={updateUrl ?? indexUrl}
-                        method="patch"
-                        submitLabel={labels.save}
-                        countryOptions={countryOptions}
-                        customerTypeOptions={customerTypeOptions}
-                        limits={limits}
-                        labels={translations.form}
-                        disabled={!updateUrl}
-                        unsavedWarning={translations.form.unsaved_warning}
-                    />
-                    <FormActions separated>
-                        <CustomerLifecycleActions
-                            archiveUrl={archiveUrl}
-                            restoreUrl={restoreUrl}
-                            deleteUrl={deleteUrl}
+                    {storeContactUrl && (
+                        <CustomerContactCreateForm
+                            storeUrl={storeContactUrl}
+                            limits={limits}
+                            labels={labels}
+                        />
+                    )}
+                    <Stack gap="lg">
+                        <SectionHeader
+                            title={labels.title}
+                            description={labels.list_description}
+                        />
+                        <CustomerContactTable
+                            contacts={contacts}
+                            limits={limits}
                             labels={labels}
                             cancelLabel={i18n.common.actions.cancel}
                             closeLabel={
                                 i18n.common.accessibility.close_navigation
                             }
                         />
-                    </FormActions>
+                    </Stack>
+                    <CustomerDeliveryForm
+                        updateUrl={updateDeliveryUrl}
+                        emailAttachmentMode={customer.emailAttachmentMode}
+                        companyEmailAttachmentMode={companyEmailAttachmentMode}
+                        recipients={recipients}
+                        contactOptions={recipientContactOptions}
+                        roleOptions={recipientRoleOptions}
+                        modeOptions={emailAttachmentModeOptions}
+                        limits={limits}
+                        labels={translations.delivery}
+                    />
                 </Stack>
             </PageFrame>
         </>

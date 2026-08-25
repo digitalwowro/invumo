@@ -128,6 +128,36 @@ it('keeps Romanian Company settings usable on a narrow viewport', function () {
         ->assertNoAccessibilityIssues();
 });
 
+it('does not treat navigation hover prefetch as leaving an unsaved form', function () {
+    [$owner, $company] = configuredCompanyForBrowser();
+    $page = openCompanyConfiguration($owner, $company);
+
+    $page->script(<<<'JS'
+        () => {
+            window.__invumoConfirmCalls = 0;
+            window.confirm = () => {
+                window.__invumoConfirmCalls += 1;
+
+                return false;
+            };
+        }
+        JS);
+
+    $page
+        ->assertScript('window.__invumoConfirmCalls === 0')
+        ->type('Workspace name', 'Unsaved workspace name')
+        ->hover('Dashboard')
+        ->wait(0.2)
+        ->assertScript('window.__invumoConfirmCalls === 0')
+        ->hover('Customers')
+        ->wait(0.2)
+        ->assertScript('window.__invumoConfirmCalls === 0')
+        ->click('Customers')
+        ->assertScript('window.__invumoConfirmCalls === 1')
+        ->assertPathIs(route('company-settings.profile.edit', $company, false))
+        ->assertNoJavaScriptErrors();
+});
+
 it('saves document defaults without a stale unsaved warning', function () {
     [$owner, $company] = configuredCompanyForBrowser();
     $boundsAreExposed = <<<'JS'

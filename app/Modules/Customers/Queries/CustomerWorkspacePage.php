@@ -36,6 +36,8 @@ final readonly class CustomerWorkspacePage
             'customer' => $this->customer($customer),
             'abilities' => ['update' => $canManage && ! $archived, 'delete' => $canDelete],
             'indexUrl' => route('customers.index', $company, false),
+            'overviewUrl' => route('customers.show', [$company, $customer], false),
+            'contactsUrl' => route('customer-contacts.index', [$company, $customer], false),
             'updateUrl' => $canManage && ! $archived
                 ? route('customers.update', [$company, $customer], false)
                 : null,

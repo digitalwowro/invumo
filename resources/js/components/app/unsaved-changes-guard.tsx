@@ -17,7 +17,10 @@ export function UnsavedChangesGuard({ active, message }: Props) {
             event.returnValue = '';
         };
         const removeBeforeVisit = router.on('before', (event) => {
-            if (event.detail.visit.method !== 'get') {
+            if (
+                event.detail.visit.method !== 'get' ||
+                event.detail.visit.prefetch
+            ) {
                 return;
             }
 

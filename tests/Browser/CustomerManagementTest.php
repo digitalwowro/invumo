@@ -92,3 +92,52 @@ it('keeps Romanian Company Customer creation usable on a narrow viewport', funct
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });
+
+it('manages Customer contacts and delivery defaults on desktop', function () {
+    [$owner, $company] = companyForCustomerBrowser();
+
+    openCustomerCreate($owner, $company)
+        ->type('First name', 'Ada')
+        ->type('Last name', 'Lovelace')
+        ->click('Create customer')
+        ->click('Contacts and delivery')
+        ->assertSee('Delivery defaults')
+        ->click('Attach PDF')
+        ->click('Add recipient')
+        ->type('Recipient name', 'Accounts')
+        ->type('Recipient email', 'accounts@example.com')
+        ->click('Save delivery defaults')
+        ->assertSee('Delivery defaults saved.')
+        ->type('Name', 'Grace Hopper')
+        ->type('Email', 'grace@example.com')
+        ->type('Position or title', 'Finance Director')
+        ->click('Primary contact')
+        ->click('Billing contact')
+        ->click('@customer-contact-create')
+        ->assertSee('Contact added.')
+        ->assertSee('Grace Hopper')
+        ->assertSee('Primary')
+        ->assertSee('Billing')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('keeps Romanian contacts and recipients usable on a narrow viewport', function () {
+    [$owner, $company] = companyForCustomerBrowser('ro');
+
+    openCustomerCreate($owner, $company, mobile: true)
+        ->click('Companie')
+        ->type('Denumirea companiei sau numele juridic', 'Client Contact SRL')
+        ->click('Creează clientul')
+        ->click('Contacte și livrare')
+        ->assertSee('Valori implicite de livrare')
+        ->click('Adaugă destinatar')
+        ->type('Numele destinatarului', 'Contabilitate')
+        ->type('Emailul destinatarului', 'contabilitate@example.com')
+        ->click('Salvează valorile de livrare')
+        ->assertSee('Valorile implicite de livrare au fost salvate.')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});

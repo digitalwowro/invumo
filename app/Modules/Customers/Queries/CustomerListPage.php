@@ -20,6 +20,13 @@ final readonly class CustomerListPage
         coalesce(business_registration_number, '')
         SQL;
 
+    private const DISPLAY_NAME_EXPRESSION = <<<'SQL'
+        CASE
+            WHEN type = 'COMPANY' THEN legal_name
+            ELSE first_name || ' ' || last_name
+        END
+        SQL;
+
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private CustomerFormOptions $options,
@@ -69,7 +76,10 @@ final readonly class CustomerListPage
     private function applyFilters(Builder $query, array $filters): void
     {
         if ($filters['q'] !== '') {
-            $query->whereRaw('('.self::SEARCH_EXPRESSION.') ILIKE ?', ['%'.$filters['q'].'%']);
+            $query->whereRaw(
+                '('.self::SEARCH_EXPRESSION.") ILIKE ? ESCAPE '!'",
+                [$this->literalSearchPattern($filters['q'])],
+            );
         }
 
         match ($filters['status']) {
@@ -86,21 +96,34 @@ final readonly class CustomerListPage
     /** @param Builder<Customer> $query */
     private function applySort(Builder $query, string $sort): void
     {
-        $name = "CASE WHEN type = 'COMPANY' THEN legal_name ELSE first_name || ' ' || last_name END";
-
         match ($sort) {
-            'name_asc' => $query
-                ->select('customers.*')
-                ->selectRaw("{$name} AS display_sort_name")
-                ->orderBy('display_sort_name')
-                ->orderBy('id'),
-            'name_desc' => $query
-                ->select('customers.*')
-                ->selectRaw("{$name} AS display_sort_name")
-                ->orderByDesc('display_sort_name')
-                ->orderByDesc('id'),
+            'name_asc' => $this->applyNameSort($query, false),
+            'name_desc' => $this->applyNameSort($query, true),
             default => $query->orderByDesc('updated_at')->orderByDesc('id'),
         };
+    }
+
+    /** @param Builder<Customer> $query */
+    private function applyNameSort(Builder $query, bool $descending): void
+    {
+        $source = Customer::query()
+            ->select('customers.*')
+            ->selectRaw(self::DISPLAY_NAME_EXPRESSION.' AS display_sort_name');
+
+        $query->fromSub($source, 'customers');
+
+        if ($descending) {
+            $query->orderByDesc('display_sort_name')->orderByDesc('id');
+
+            return;
+        }
+
+        $query->orderBy('display_sort_name')->orderBy('id');
+    }
+
+    private function literalSearchPattern(string $search): string
+    {
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
     }
 
     /** @return array<string, mixed> */

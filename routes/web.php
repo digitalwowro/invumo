@@ -12,7 +12,9 @@ use App\Modules\Companies\Http\Controllers\CompanyNumberSeriesController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
 use App\Modules\Companies\Http\Controllers\CompanySettingsController;
 use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
+use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
+use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
@@ -103,6 +105,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('companies/{company}/customers', [CustomerController::class, 'store'])
                 ->middleware('throttle:20,1')
                 ->name('customers.store');
+            Route::get('companies/{company}/customers/{customer}/contacts', [CustomerContactController::class, 'index'])
+                ->name('customer-contacts.index');
             Route::get('companies/{company}/customers/{customer}', [CustomerController::class, 'show'])
                 ->name('customers.show');
             Route::patch('companies/{company}/customers/{customer}', [CustomerController::class, 'update'])
@@ -117,6 +121,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('companies/{company}/customers/{customer}', [CustomerController::class, 'destroy'])
                 ->middleware('throttle:10,1')
                 ->name('customers.destroy');
+            Route::post('companies/{company}/customers/{customer}/contacts', [CustomerContactController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('customer-contacts.store');
+            Route::patch('companies/{company}/customers/{customer}/contacts/{contact}', [CustomerContactController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('customer-contacts.update');
+            Route::post('companies/{company}/customers/{customer}/contacts/{contact}/archive', [CustomerContactController::class, 'archive'])
+                ->middleware('throttle:20,1')
+                ->name('customer-contacts.archive');
+            Route::post('companies/{company}/customers/{customer}/contacts/{contact}/restore', [CustomerContactController::class, 'restore'])
+                ->middleware('throttle:20,1')
+                ->name('customer-contacts.restore');
+            Route::delete('companies/{company}/customers/{customer}/contacts/{contact}', [CustomerContactController::class, 'destroy'])
+                ->middleware('throttle:10,1')
+                ->name('customer-contacts.destroy');
+            Route::patch('companies/{company}/customers/{customer}/delivery', [CustomerDeliveryController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('customer-delivery.update');
 
             Route::get('companies/{company}/settings', [CompanySettingsController::class, 'index'])
                 ->name('company-settings.index');

@@ -14,6 +14,7 @@ use App\Modules\Companies\Http\Controllers\CompanySettingsController;
 use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
 use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
+use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
@@ -107,6 +108,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('customers.store');
             Route::get('companies/{company}/customers/{customer}/contacts', [CustomerContactController::class, 'index'])
                 ->name('customer-contacts.index');
+            Route::get('companies/{company}/customers/{customer}/defaults', [CustomerDefaultsController::class, 'index'])
+                ->name('customer-defaults.index');
             Route::get('companies/{company}/customers/{customer}', [CustomerController::class, 'show'])
                 ->name('customers.show');
             Route::patch('companies/{company}/customers/{customer}', [CustomerController::class, 'update'])
@@ -139,6 +142,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/customers/{customer}/delivery', [CustomerDeliveryController::class, 'update'])
                 ->middleware('throttle:20,1')
                 ->name('customer-delivery.update');
+            Route::patch('companies/{company}/customers/{customer}/defaults', [CustomerDefaultsController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('customer-defaults.update');
 
             Route::get('companies/{company}/settings', [CompanySettingsController::class, 'index'])
                 ->name('company-settings.index');

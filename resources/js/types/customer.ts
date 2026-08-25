@@ -1,8 +1,11 @@
+import type { CustomerDefaultsTranslations } from '@/types/customer-defaults';
+
 export type CustomerType = 'INDIVIDUAL' | 'COMPANY';
 
 export type CustomerOption = {
     value: string;
     label: string;
+    disabled?: boolean;
 };
 
 export type CustomerFieldLimits = {
@@ -123,7 +126,7 @@ export type CustomerTranslations = {
         delete_description: string;
         confirm_delete: string;
         navigation_label: string;
-        navigation: { overview: string; contacts: string };
+        navigation: { overview: string; contacts: string; defaults: string };
     };
     form: {
         identity_title: string;
@@ -143,6 +146,7 @@ export type CustomerTranslations = {
     };
     contacts: CustomerContactTranslations;
     delivery: CustomerDeliveryTranslations;
+    defaults: CustomerDefaultsTranslations;
 };
 
 export type CustomerContact = {

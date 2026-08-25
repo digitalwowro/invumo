@@ -3,17 +3,19 @@ import { Cluster } from '@/components/app/layout';
 import { Button } from '@/components/ui/button';
 
 type Props = {
-    active: 'overview' | 'contacts';
+    active: 'overview' | 'contacts' | 'defaults';
     overviewUrl: string;
     contactsUrl: string;
+    defaultsUrl: string;
     label: string;
-    labels: { overview: string; contacts: string };
+    labels: { overview: string; contacts: string; defaults: string };
 };
 
 export function CustomerWorkspaceNavigation({
     active,
     overviewUrl,
     contactsUrl,
+    defaultsUrl,
     label,
     labels,
 }: Props) {
@@ -46,6 +48,20 @@ export function CustomerWorkspaceNavigation({
                         }
                     >
                         {labels.contacts}
+                    </Link>
+                </Button>
+                <Button
+                    asChild
+                    size="sm"
+                    variant={active === 'defaults' ? 'secondary' : 'ghost'}
+                >
+                    <Link
+                        href={defaultsUrl}
+                        aria-current={
+                            active === 'defaults' ? 'page' : undefined
+                        }
+                    >
+                        {labels.defaults}
                     </Link>
                 </Button>
             </Cluster>

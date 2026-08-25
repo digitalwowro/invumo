@@ -1,8 +1,12 @@
 <?php
 
+use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanyCurrency;
+use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -38,6 +42,30 @@ function openCustomerCreate(User $owner, Company $company, bool $mobile = false)
         ->type('Password', 'password')
         ->click('Log in')
         ->navigate(route('customers.create', $company, false));
+}
+
+function configureCustomerDefaultsBrowser(Company $company): void
+{
+    app(TenantContext::class)->runAsSystem($company->id, function (): void {
+        CompanySetting::query()->firstOrFail()->update([
+            'default_document_language' => 'ro',
+            'default_payment_term_days' => 30,
+        ]);
+        CompanyCurrency::query()->create([
+            'currency_code' => 'RON', 'currency_precision' => 2,
+            'is_default' => true, 'active' => true,
+        ]);
+        CompanyCurrency::query()->create([
+            'currency_code' => 'EUR', 'currency_precision' => 2,
+            'is_default' => false, 'active' => true,
+        ]);
+        TaxPreset::query()->create([
+            'name' => 'TVA standard', 'percentage' => '19', 'is_default' => true,
+        ]);
+        TaxPreset::query()->create([
+            'name' => 'TVA redus', 'percentage' => '5', 'is_default' => false,
+        ]);
+    });
 }
 
 it('manages an Individual Customer lifecycle on desktop', function () {
@@ -137,6 +165,30 @@ it('keeps Romanian contacts and recipients usable on a narrow viewport', functio
         ->type('Emailul destinatarului', 'contabilitate@example.com')
         ->click('Salvează valorile de livrare')
         ->assertSee('Valorile implicite de livrare au fost salvate.')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('manages resolved Customer defaults on a narrow Romanian viewport', function () {
+    [$owner, $company] = companyForCustomerBrowser('ro');
+    configureCustomerDefaultsBrowser($company);
+
+    openCustomerCreate($owner, $company, mobile: true)
+        ->type('Prenume', 'Ada')
+        ->type('Nume', 'Lovelace')
+        ->click('Creează clientul')
+        ->click('Valori implicite')
+        ->assertSee('Valorile implicite ale clientului')
+        ->assertSee('Valori implicite rezolvate')
+        ->assertSee('RON · 2 zecimale')
+        ->assertSee('Română')
+        ->assertSee('30 zile')
+        ->assertSee('TVA standard · 19%')
+        ->type('Zile pentru termenul de plată', '45')
+        ->click('Salvează valorile clientului')
+        ->assertSee('Valorile implicite ale clientului au fost salvate.')
+        ->assertSee('45 zile')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

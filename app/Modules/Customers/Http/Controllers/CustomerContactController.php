@@ -60,7 +60,7 @@ final class CustomerContactController extends Controller
         try {
             $update->handle($company, $request->user(), $customer, $contact, $request->contact());
         } catch (CustomerContactException $exception) {
-            $this->validationError($exception);
+            $this->validationError($exception, true);
         }
 
         return back()->with('status', __('customers_ui.feedback.contact_updated'));
@@ -114,10 +114,17 @@ final class CustomerContactController extends Controller
         return back()->with('status', __('customers_ui.feedback.contact_deleted'));
     }
 
-    private function validationError(CustomerContactException $exception): never
-    {
+    private function validationError(
+        CustomerContactException $exception,
+        bool $emailField = false,
+    ): never {
+        $field = $emailField && in_array($exception->reason(), [
+            'contact_recipient_dependency',
+            'contact_duplicate_recipient',
+        ], true) ? 'email' : 'contact';
+
         throw ValidationException::withMessages([
-            'contact' => __("customers_ui.errors.{$exception->reason()}"),
+            $field => __("customers_ui.errors.{$exception->reason()}"),
         ]);
     }
 }

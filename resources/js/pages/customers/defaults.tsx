@@ -1,63 +1,60 @@
 import { Head, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
-import { FormActions } from '@/components/app/form-actions';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
-import { CustomerForm } from '@/features/customers/components/customer-form';
-import { CustomerLifecycleActions } from '@/features/customers/components/customer-lifecycle-actions';
+import { CustomerDefaultsForm } from '@/features/customers/components/customer-defaults-form';
+import { CustomerResolvedDefaults } from '@/features/customers/components/customer-resolved-defaults';
 import { CustomerWorkspaceNavigation } from '@/features/customers/components/customer-workspace-navigation';
 import { interpolate } from '@/lib/translations';
+import type { CustomerTranslations } from '@/types/customer';
 import type {
-    CustomerFieldLimits,
-    CustomerOption,
-    CustomerRecord,
-    CustomerTranslations,
-} from '@/types/customer';
+    CustomerDefaultOption,
+    CustomerDefaultsRecord,
+    CustomerResolvedDefaults as ResolvedDefaults,
+} from '@/types/customer-defaults';
 
 type Props = {
-    customer: CustomerRecord & {
-        id: string;
-        displayName: string;
-        archived: boolean;
-    };
-    abilities: { update: boolean; delete: boolean };
+    customer: { id: string; displayName: string; archived: boolean };
+    defaults: CustomerDefaultsRecord;
+    resolvedDefaults: ResolvedDefaults;
+    currencyOptions: CustomerDefaultOption[];
+    languageOptions: CustomerDefaultOption[];
+    taxPresetOptions: CustomerDefaultOption[];
+    companyPaymentTermDays: string | null;
+    maxPaymentTermDays: number;
+    updateUrl: string | null;
     indexUrl: string;
     overviewUrl: string;
     contactsUrl: string;
     defaultsUrl: string;
-    updateUrl: string | null;
-    archiveUrl: string | null;
-    restoreUrl: string | null;
-    deleteUrl: string | null;
-    countryOptions: CustomerOption[];
-    customerTypeOptions: CustomerOption[];
-    limits: CustomerFieldLimits;
     status?: string;
     translations: CustomerTranslations;
 };
 
-export default function CustomerWorkspace({
+export default function CustomerDefaults({
     customer,
+    defaults,
+    resolvedDefaults,
+    currencyOptions,
+    languageOptions,
+    taxPresetOptions,
+    companyPaymentTermDays,
+    maxPaymentTermDays,
+    updateUrl,
     indexUrl,
     overviewUrl,
     contactsUrl,
     defaultsUrl,
-    updateUrl,
-    archiveUrl,
-    restoreUrl,
-    deleteUrl,
-    countryOptions,
-    customerTypeOptions,
-    limits,
     status,
     translations,
 }: Props) {
-    const { i18n, errors } = usePage().props;
-    const labels = translations.workspace;
+    const { errors } = usePage().props;
+    const labels = translations.defaults;
+    const workspace = translations.workspace;
 
     return (
         <>
@@ -81,59 +78,49 @@ export default function CustomerWorkspace({
                                     }
                                     label={
                                         customer.archived
-                                            ? labels.archived
-                                            : labels.active
+                                            ? workspace.archived
+                                            : workspace.active
                                     }
                                 />
                                 <ActionLink href={indexUrl} variant="secondary">
                                     <ArrowLeft aria-hidden="true" />
-                                    {labels.back}
+                                    {workspace.back}
                                 </ActionLink>
                             </Cluster>
                         }
                     />
                     <CustomerWorkspaceNavigation
-                        active="overview"
+                        active="defaults"
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
                         defaultsUrl={defaultsUrl}
-                        label={labels.navigation_label}
-                        labels={labels.navigation}
+                        label={workspace.navigation_label}
+                        labels={workspace.navigation}
                     />
                     {status && <SystemMessage title={status} tone="money" />}
-                    {errors.customer && (
-                        <SystemMessage title={errors.customer} tone="error" />
+                    {errors.defaults && (
+                        <SystemMessage title={errors.defaults} tone="error" />
                     )}
                     {customer.archived && (
                         <SystemMessage
-                            title={labels.archived_notice}
+                            title={workspace.archived_notice}
                             tone="warning"
                         />
                     )}
-                    <CustomerForm
-                        customer={customer}
-                        actionUrl={updateUrl ?? indexUrl}
-                        method="patch"
-                        submitLabel={labels.save}
-                        countryOptions={countryOptions}
-                        customerTypeOptions={customerTypeOptions}
-                        limits={limits}
-                        labels={translations.form}
-                        disabled={!updateUrl}
-                        unsavedWarning={translations.form.unsaved_warning}
+                    <CustomerDefaultsForm
+                        defaults={defaults}
+                        currencyOptions={currencyOptions}
+                        languageOptions={languageOptions}
+                        taxPresetOptions={taxPresetOptions}
+                        companyPaymentTermDays={companyPaymentTermDays}
+                        maxPaymentTermDays={maxPaymentTermDays}
+                        updateUrl={updateUrl}
+                        labels={labels}
                     />
-                    <FormActions separated>
-                        <CustomerLifecycleActions
-                            archiveUrl={archiveUrl}
-                            restoreUrl={restoreUrl}
-                            deleteUrl={deleteUrl}
-                            labels={labels}
-                            cancelLabel={i18n.common.actions.cancel}
-                            closeLabel={
-                                i18n.common.accessibility.close_navigation
-                            }
-                        />
-                    </FormActions>
+                    <CustomerResolvedDefaults
+                        resolved={resolvedDefaults}
+                        labels={labels}
+                    />
                 </Stack>
             </PageFrame>
         </>

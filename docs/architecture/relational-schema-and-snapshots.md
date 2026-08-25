@@ -264,7 +264,7 @@ Rules are defaults. Invoice schedule rows later copy the values needed for stabl
 - optional PDF email-attachment mode: `SECURE_LINK_ONLY` or `ATTACH_PDF`; `NULL` inherits the current Company fallback
 - `archived_at`
 
-Type-dependent `CHECK` constraints require the appropriate name fields, while a named Laravel action performs the complete create/update validation.
+Type-dependent `CHECK` constraints require the appropriate name fields, while a named Laravel action performs the complete create/update validation. Currency and tax references use same-Company composite foreign keys. A newly selected Customer currency must be active and a newly selected tax preset must be unarchived. If a previously selected source later becomes unavailable, resolution uses the current active Company default rather than copying or silently mutating the stored Customer choice. Document language is limited by Laravel's authored locale configuration, its database column uses the shared bounded locale-code format, and payment-term days use the same `0..3,652,058` envelope as Company document defaults.
 
 ### `customer_contacts`
 
@@ -283,7 +283,7 @@ Contacts may exist without an email, but only an active Contact with a valid cur
 - optional same-Company contact reference, or an explicit email/name
 - display order
 
-A `CHECK` requires exactly one recipient source: a Contact or explicit email. Resolution reads the Contact's current valid email or the stored explicit address. Resolved email addresses are case-insensitively unique across `TO`, `CC`, and `BCC`; Contact email edits and archives revalidate the same invariant. At least one valid `TO` is required only when sending, not merely to save a Customer.
+A `CHECK` requires exactly one recipient source: a Contact or explicit email. Resolution reads the Contact's current valid email or the stored explicit address. Resolved email addresses are case-insensitively unique across `TO`, `CC`, and `BCC`; Contact email edits and archives revalidate the same invariant. The saved ordered rows are the authoritative Customer recipient preference; an empty list remains unresolved. At least one valid `TO` is required only when sending, not merely to save a Customer.
 
 Customer permanent deletion is restricted while documents or recurring templates still reference it. Archiving remains the normal historical path. Once dependants are removed, the Customer delete cascades only to its owned contacts and delivery-recipient settings.
 

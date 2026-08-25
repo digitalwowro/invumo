@@ -38,6 +38,7 @@ final readonly class CustomerWorkspacePage
             'indexUrl' => route('customers.index', $company, false),
             'overviewUrl' => route('customers.show', [$company, $customer], false),
             'contactsUrl' => route('customer-contacts.index', [$company, $customer], false),
+            'defaultsUrl' => route('customer-defaults.index', [$company, $customer], false),
             'updateUrl' => $canManage && ! $archived
                 ? route('customers.update', [$company, $customer], false)
                 : null,

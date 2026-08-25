@@ -77,7 +77,7 @@ final class CustomerContactDeliveryHttpTest extends TestCase
         $this->patch(
             route('customer-contacts.update', [$company, $customer, $ada]),
             $this->contact('Ada Lovelace', 'grace@example.com', billing: true),
-        )->assertSessionHasErrors('contact');
+        )->assertSessionHasErrors('email');
         $this->post(route('customer-contacts.archive', [$company, $customer, $ada]))
             ->assertSessionHasErrors('contact');
 

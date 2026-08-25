@@ -30,6 +30,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $business_registration_number
  * @property string|null $internal_notes
  * @property EmailAttachmentMode|null $email_attachment_mode
+ * @property string|null $currency_id
+ * @property string|null $document_language
+ * @property int|null $payment_term_days
+ * @property string|null $tax_preset_id
  * @property CarbonImmutable|null $archived_at
  */
 #[Fillable([
@@ -38,6 +42,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'postal_code', 'country_code', 'tax_registration_label',
     'tax_registration_identifier', 'business_registration_label',
     'business_registration_number', 'internal_notes', 'email_attachment_mode',
+    'currency_id', 'document_language', 'payment_term_days', 'tax_preset_id',
     'archived_at',
 ])]
 class Customer extends TenantOwnedModel
@@ -55,6 +60,7 @@ class Customer extends TenantOwnedModel
         return [
             'type' => CustomerType::class,
             'email_attachment_mode' => EmailAttachmentMode::class,
+            'payment_term_days' => 'integer',
             'archived_at' => 'immutable_datetime',
         ];
     }

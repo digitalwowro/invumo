@@ -36,6 +36,7 @@ type Props = {
     abilities: { manage: boolean; delete: boolean };
     overviewUrl: string;
     contactsUrl: string;
+    defaultsUrl: string;
     indexUrl: string;
     storeContactUrl: string | null;
     updateDeliveryUrl: string | null;
@@ -54,6 +55,7 @@ export default function CustomerContacts({
     companyEmailAttachmentMode,
     overviewUrl,
     contactsUrl,
+    defaultsUrl,
     indexUrl,
     storeContactUrl,
     updateDeliveryUrl,
@@ -102,6 +104,7 @@ export default function CustomerContacts({
                         active="contacts"
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
+                        defaultsUrl={defaultsUrl}
                         label={workspace.navigation_label}
                         labels={workspace.navigation}
                     />

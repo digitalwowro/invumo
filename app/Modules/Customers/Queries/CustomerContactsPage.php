@@ -80,6 +80,7 @@ final readonly class CustomerContactsPage
             'abilities' => ['manage' => $canManage, 'delete' => $canDelete],
             'overviewUrl' => route('customers.show', [$company, $customer], false),
             'contactsUrl' => route('customer-contacts.index', [$company, $customer], false),
+            'defaultsUrl' => route('customer-defaults.index', [$company, $customer], false),
             'indexUrl' => route('customers.index', $company, false),
             'storeContactUrl' => $canManage
                 ? route('customer-contacts.store', [$company, $customer], false)

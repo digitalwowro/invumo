@@ -6,11 +6,13 @@ import { CompanyDocumentPolicyFields } from '@/features/companies/components/com
 import type { CompanyOption } from '@/types/company';
 import type {
     CompanyDocumentDefaults,
+    CompanyDocumentLimits,
     CompanyDocumentDefaultsTranslations,
 } from '@/types/company-document-defaults';
 
 type Props = {
     defaults: CompanyDocumentDefaults;
+    limits: CompanyDocumentLimits;
     languageOptions: CompanyOption[];
     updateUrl: string;
     labels: CompanyDocumentDefaultsTranslations;
@@ -18,6 +20,7 @@ type Props = {
 
 export function CompanyDocumentDefaultsForm({
     defaults,
+    limits,
     languageOptions,
     updateUrl,
     labels,
@@ -37,12 +40,14 @@ export function CompanyDocumentDefaultsForm({
                     />
                     <CompanyDocumentPolicyFields
                         defaults={defaults}
+                        limits={limits}
                         languageOptions={languageOptions}
                         errors={errors}
                         labels={labels}
                     />
                     <CompanyDocumentContentFields
                         defaults={defaults}
+                        limits={limits}
                         errors={errors}
                         labels={labels}
                         processing={processing}

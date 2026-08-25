@@ -12,6 +12,7 @@ describe('TextareaField', () => {
                 textarea={{
                     name: 'default_terms_and_conditions',
                     defaultValue: 'Payment is due on receipt.',
+                    maxLength: 20_000,
                 }}
             />,
         );
@@ -25,5 +26,6 @@ describe('TextareaField', () => {
             'Shown on future documents. Review this content.',
         );
         expect(textarea).toHaveAttribute('aria-invalid', 'true');
+        expect(textarea).toHaveAttribute('maxlength', '20000');
     });
 });

@@ -3,12 +3,14 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Modules\Identity\Actions\RegisterUser;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Identity\Notifications\VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
+use LogicException;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -51,6 +53,33 @@ class RegistrationTest extends TestCase
         $this->assertSame('free', $account->plan()->firstOrFail()->code);
         $this->assertTrue(Plan::query()->where('code', 'free')->where('active', true)->exists());
         Notification::assertSentTo($user, VerifyEmailNotification::class);
+    }
+
+    public function test_registration_action_accepts_a_configured_locale(): void
+    {
+        Notification::fake();
+        config()->set('localization.supported_locales', ['en', 'ro', 'pt_BR']);
+
+        $user = app(RegisterUser::class)->handle(
+            name: 'French User',
+            email: 'french@example.com',
+            password: 'password',
+            languageCode: 'pt_BR',
+        );
+
+        $this->assertSame('pt_BR', $user->language_code);
+    }
+
+    public function test_registration_action_rejects_an_unconfigured_locale(): void
+    {
+        $this->expectException(LogicException::class);
+
+        app(RegisterUser::class)->handle(
+            name: 'Unsupported User',
+            email: 'unsupported@example.com',
+            password: 'password',
+            languageCode: 'de',
+        );
     }
 
     public function test_registration_rejects_email_case_variants(): void

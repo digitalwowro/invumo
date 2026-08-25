@@ -170,6 +170,10 @@ One row per Company, enforced by unique `company_id`:
 
 The reusable records below carry the single default designation for currency, tax, and bank selection; do not duplicate those references in `company_settings`. The logo reference is nullable during setup.
 
+Payment-term and Quote-validity offsets use PostgreSQL `integer` and the derived `0..3,652,058` full application-date-range constraint; later resolution also checks the issue-date-specific result before performing accepted date arithmetic. Default Terms & Conditions are limited to 20,000 characters, and each default Quote/Invoice note is limited to 5,000 characters. Every Customer/document override and persisted snapshot uses the same content envelope.
+
+The database constrains locale codes only to the safe bounded structural shape accepted by the localization foundation. `config/localization.php` remains the sole supported-locale allowlist, so PostgreSQL does not duplicate `en`, `ro`, or any future authored catalogue.
+
 ### `company_currencies`
 
 - `id`, `company_id`

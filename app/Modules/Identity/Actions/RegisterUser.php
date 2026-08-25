@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Actions;
 
+use App\Foundation\Localization\SupportedLocales;
 use App\Models\User;
 use App\Modules\Identity\Data\PlanStatus;
 use App\Modules\Identity\Models\Plan;
@@ -16,6 +17,10 @@ final readonly class RegisterUser
         string $password,
         string $languageCode = 'en',
     ): User {
+        if (! SupportedLocales::includes($languageCode)) {
+            throw new LogicException('The user language is not supported.');
+        }
+
         return DB::connection(config('database.tenant_connection'))
             ->transaction(function () use ($name, $email, $password, $languageCode): User {
                 $plan = Plan::query()

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Companies;
 
+use App\Foundation\Documents\DocumentFieldLimits;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Models\AuditEvent;
@@ -41,6 +42,18 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
                 ->where('documentDefaults.documentLanguage', null)
                 ->where('documentDefaults.paymentTermDays', null)
                 ->where('documentDefaults.quoteValidityDays', '30')
+                ->where(
+                    'documentLimits.maxDayOffset',
+                    DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
+                )
+                ->where(
+                    'documentLimits.termsAndConditionsCharacters',
+                    DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS,
+                )
+                ->where(
+                    'documentLimits.notesCharacters',
+                    DocumentFieldLimits::NOTES_CHARACTERS,
+                )
                 ->where('companySettingsNavigation.1.key', 'documents')
                 ->where('languageOptions.0.value', 'en')
                 ->where('languageOptions.0.label', 'English')
@@ -172,6 +185,68 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
         $this->assertStringContainsString(
             'Valoarea selectată',
             $response->getSession()->get('errors')->first('default_document_language'),
+        );
+    }
+
+    public function test_document_bounds_accept_the_domain_limits_and_reject_larger_values(): void
+    {
+        $owner = $this->accountOwner();
+        $company = $this->companyFor($owner);
+        $atLimit = $this->validDefaults([
+            'default_payment_term_days' => (string) DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
+            'default_quote_validity_days' => (string) DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
+            'default_terms_and_conditions' => str_repeat('ț', DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS),
+            'default_quote_notes' => str_repeat('ă', DocumentFieldLimits::NOTES_CHARACTERS),
+            'default_invoice_notes' => str_repeat('î', DocumentFieldLimits::NOTES_CHARACTERS),
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('company-document-defaults.update', $company), $atLimit)
+            ->assertRedirect()
+            ->assertSessionDoesntHaveErrors();
+
+        $response = $this->patch(
+            route('company-document-defaults.update', $company),
+            $this->validDefaults([
+                'default_payment_term_days' => (string) (DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET + 1),
+                'default_quote_validity_days' => (string) (DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET + 1),
+                'default_terms_and_conditions' => str_repeat('x', DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS + 1),
+                'default_quote_notes' => str_repeat('x', DocumentFieldLimits::NOTES_CHARACTERS + 1),
+                'default_invoice_notes' => str_repeat('x', DocumentFieldLimits::NOTES_CHARACTERS + 1),
+            ]),
+        );
+
+        $response->assertSessionHasErrors([
+            'default_payment_term_days',
+            'default_quote_validity_days',
+            'default_terms_and_conditions',
+            'default_quote_notes',
+            'default_invoice_notes',
+        ]);
+    }
+
+    public function test_new_configured_document_locale_needs_no_database_allowlist_change(): void
+    {
+        config()->set('localization.supported_locales', ['en', 'ro', 'pt_BR']);
+        $owner = $this->accountOwner();
+        $company = $this->companyFor($owner);
+
+        $this->actingAs($owner)
+            ->patch(
+                route('company-document-defaults.update', $company),
+                $this->validDefaults(['default_document_language' => 'pt_BR']),
+            )
+            ->assertRedirect()
+            ->assertSessionDoesntHaveErrors();
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            function (): void {
+                $settings = CompanySetting::query()->firstOrFail();
+
+                $this->assertSame('pt_BR', $settings->default_document_language);
+                $settings->update(['default_document_language' => 'en']);
+            },
         );
     }
 

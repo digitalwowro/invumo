@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Foundation\Localization\SupportedLocales;
 use App\Modules\Companies\Queries\CompanyContextProps;
 use App\Modules\Platform\Queries\ImpersonationContextProps;
 use App\Modules\Platform\Queries\PlatformContextProps;
@@ -52,7 +53,7 @@ class HandleInertiaRequests extends Middleware
             ...app(ImpersonationContextProps::class)->for($request),
             'i18n' => [
                 'locale' => app()->getLocale(),
-                'supportedLocales' => config('localization.supported_locales'),
+                'supportedLocales' => SupportedLocales::all(),
                 'common' => app(CommonTranslationBag::class)->toArray(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

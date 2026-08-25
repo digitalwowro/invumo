@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Companies;
 
+use App\Foundation\Documents\DocumentFieldLimits;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Companies\Actions\CreateCompany;
@@ -14,6 +15,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 final class CompanyConfigurationTenantIsolationTest extends TestCase
@@ -112,7 +114,7 @@ final class CompanyConfigurationTenantIsolationTest extends TestCase
         });
     }
 
-    public function test_database_rejects_unsupported_default_document_language(): void
+    public function test_database_rejects_malformed_default_document_language(): void
     {
         $company = $this->company('Alpha SRL');
 
@@ -121,7 +123,7 @@ final class CompanyConfigurationTenantIsolationTest extends TestCase
         app(TenantContext::class)->runAsSystem(
             $company->id,
             fn () => CompanySetting::query()->firstOrFail()->update([
-                'default_document_language' => 'de',
+                'default_document_language' => '../de',
             ]),
         );
     }
@@ -152,6 +154,64 @@ final class CompanyConfigurationTenantIsolationTest extends TestCase
                 'default_quote_validity_days' => -1,
             ]),
         );
+    }
+
+    #[DataProvider('outOfBoundsDocumentDefaults')]
+    public function test_database_rejects_document_defaults_outside_the_domain_envelope(
+        string $field,
+        int|string $value,
+    ): void {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(QueryException::class);
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => CompanySetting::query()->firstOrFail()->update([$field => $value]),
+        );
+    }
+
+    public function test_document_day_offsets_use_integer_storage(): void
+    {
+        $columns = DB::connection('pgsql_schema')
+            ->table('information_schema.columns')
+            ->where('table_schema', 'public')
+            ->where('table_name', 'company_settings')
+            ->whereIn('column_name', [
+                'default_payment_term_days',
+                'default_quote_validity_days',
+            ])
+            ->pluck('data_type', 'column_name');
+
+        $this->assertSame('integer', $columns['default_payment_term_days']);
+        $this->assertSame('integer', $columns['default_quote_validity_days']);
+    }
+
+    /** @return array<string, array{string, int|string}> */
+    public static function outOfBoundsDocumentDefaults(): array
+    {
+        return [
+            'payment term exceeds the application date range' => [
+                'default_payment_term_days',
+                DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET + 1,
+            ],
+            'quote validity exceeds the application date range' => [
+                'default_quote_validity_days',
+                DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET + 1,
+            ],
+            'Terms and Conditions exceed the approved renderer envelope' => [
+                'default_terms_and_conditions',
+                str_repeat('x', DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS + 1),
+            ],
+            'Quote notes exceed the approved renderer envelope' => [
+                'default_quote_notes',
+                str_repeat('x', DocumentFieldLimits::NOTES_CHARACTERS + 1),
+            ],
+            'Invoice notes exceed the approved renderer envelope' => [
+                'default_invoice_notes',
+                str_repeat('x', DocumentFieldLimits::NOTES_CHARACTERS + 1),
+            ],
+        ];
     }
 
     private function company(string $name): Company

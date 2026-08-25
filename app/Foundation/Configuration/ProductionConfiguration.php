@@ -3,6 +3,7 @@
 namespace App\Foundation\Configuration;
 
 use App\Foundation\Database\Schema\MigrationDatabaseRole;
+use App\Foundation\Localization\SupportedLocales;
 use RuntimeException;
 
 final class ProductionConfiguration
@@ -49,8 +50,7 @@ final class ProductionConfiguration
             'mail.default' => config('mail.default') !== 'smtp',
             'mail.smtp_password' => ! $this->nonEmpty(config('mail.mailers.smtp.password')),
             'mail.from' => filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL) === false,
-            'localization.supported_locales' => config('localization.supported_locales')
-                !== ['en', 'ro'],
+            'localization.supported_locales' => ! SupportedLocales::configurationIsValid(),
         ]));
 
         if ($violations !== []) {

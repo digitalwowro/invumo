@@ -7,6 +7,12 @@ export type CompanyDocumentDefaults = {
     invoiceNotes: string | null;
 };
 
+export type CompanyDocumentLimits = {
+    maxDayOffset: number;
+    termsAndConditionsCharacters: number;
+    notesCharacters: number;
+};
+
 export type CompanyDocumentDefaultsTranslations = {
     head_title: string;
     title: string;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Foundation\Localization\SupportedLocales;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ final readonly class SetApplicationLocale
     {
         $user = $request->user();
         $locale = $user instanceof User ? $user->language_code : config('app.locale');
-        $supported = config('localization.supported_locales', []);
+        $supported = SupportedLocales::all();
 
         app()->setLocale(in_array($locale, $supported, true) ? $locale : config('app.fallback_locale'));
 

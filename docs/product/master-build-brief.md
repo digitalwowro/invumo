@@ -632,6 +632,8 @@ Payment terms and quote validity are stored as a non-negative whole number of ca
 
 There is no arbitrary v1 maximum offset. The resulting stored date must remain inside the inclusive application date range `0001-01-01` through `9999-12-31`.
 
+Persisted offsets are technically bounded from `0` through `3,652,058`, the total number of days in that approved application range. This is not a shorter business-policy maximum; every derived date must still fit the issue-date-specific remaining range before it is accepted.
+
 The invoice due date and quote valid-until date derive automatically from the applicable day offset but remain editable. Neither resolved date may be before its document's issue date.
 
 Terms & Conditions are separate customer-visible document content, not payment-term logic and not general notes.
@@ -641,6 +643,7 @@ Terms & Conditions are separate customer-visible document content, not payment-t
 - The user may override the content per quote or invoice.
 - Quote and invoice notes use their respective company default and remain overridable per document.
 - Notes, Terms & Conditions, and structured payment terms must remain distinct concepts. Notes are an ordinary customer-visible document block, not a fixed PDF footer or arbitrary footer builder.
+- Terms & Conditions allow at most 20,000 characters; Quote and Invoice notes allow at most 5,000 characters each. Company defaults, Customer overrides, document overrides, and stored snapshots share these limits.
 
 ## 19. Transactions and payments
 
@@ -745,6 +748,8 @@ Launch languages:
 - Romanian
 
 Adding languages later should be straightforward.
+
+The supported-locale list in `config/localization.php` is the only application allowlist. PostgreSQL validates a safe bounded locale-code shape without embedding a second list of supported languages, so adding an authored locale does not require a catalogue-only database migration.
 
 Initial document-language precedence is document choice, customer default, then company default. The signed-in user's application language affects the internal UI only and never silently changes a customer document's language.
 

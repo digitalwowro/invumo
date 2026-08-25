@@ -2,6 +2,8 @@
 
 namespace App\Modules\Companies\Queries;
 
+use App\Foundation\Documents\DocumentFieldLimits;
+use App\Foundation\Localization\SupportedLocales;
 use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
@@ -50,8 +52,13 @@ final readonly class CompanyDocumentDefaultsPage
                     'value' => $locale,
                     'label' => __("companies_ui.settings.documents.language_options.{$locale}"),
                 ],
-                config('localization.supported_locales'),
+                SupportedLocales::all(),
             ),
+            'documentLimits' => [
+                'maxDayOffset' => DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
+                'termsAndConditionsCharacters' => DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS,
+                'notesCharacters' => DocumentFieldLimits::NOTES_CHARACTERS,
+            ],
         ];
     }
 }

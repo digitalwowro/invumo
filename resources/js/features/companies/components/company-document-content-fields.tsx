@@ -4,11 +4,13 @@ import { FormSection } from '@/components/app/form-section';
 import { Grid, Stack } from '@/components/app/layout';
 import type {
     CompanyDocumentDefaults,
+    CompanyDocumentLimits,
     CompanyDocumentDefaultsTranslations,
 } from '@/types/company-document-defaults';
 
 type Props = {
     defaults: CompanyDocumentDefaults;
+    limits: CompanyDocumentLimits;
     errors: Record<string, string>;
     labels: CompanyDocumentDefaultsTranslations;
     processing: boolean;
@@ -16,6 +18,7 @@ type Props = {
 
 export function CompanyDocumentContentFields({
     defaults,
+    limits,
     errors,
     labels,
     processing,
@@ -43,6 +46,7 @@ export function CompanyDocumentContentFields({
                     textarea={{
                         name: 'default_terms_and_conditions',
                         defaultValue: defaults.termsAndConditions ?? undefined,
+                        maxLength: limits.termsAndConditionsCharacters,
                         rows: 6,
                     }}
                 />
@@ -57,6 +61,7 @@ export function CompanyDocumentContentFields({
                         textarea={{
                             name: 'default_quote_notes',
                             defaultValue: defaults.quoteNotes ?? undefined,
+                            maxLength: limits.notesCharacters,
                             rows: 5,
                         }}
                     />
@@ -70,6 +75,7 @@ export function CompanyDocumentContentFields({
                         textarea={{
                             name: 'default_invoice_notes',
                             defaultValue: defaults.invoiceNotes ?? undefined,
+                            maxLength: limits.notesCharacters,
                             rows: 5,
                         }}
                     />

@@ -118,12 +118,20 @@ it('keeps Romanian Company settings usable on a narrow viewport', function () {
 
 it('saves document defaults without a stale unsaved warning', function () {
     [$owner, $company] = configuredCompanyForBrowser();
+    $boundsAreExposed = <<<'JS'
+        document.querySelector('[name=default_payment_term_days]').max === '3652058'
+            && document.querySelector('[name=default_quote_validity_days]').max === '3652058'
+            && document.querySelector('[name=default_terms_and_conditions]').maxLength === 20000
+            && document.querySelector('[name=default_quote_notes]').maxLength === 5000
+            && document.querySelector('[name=default_invoice_notes]').maxLength === 5000
+        JS;
 
     openCompanyDocumentDefaults($owner, $company)
         ->assertSee('Document defaults')
         ->assertValue('Payment term days', '14')
         ->assertValue('Quote validity days', '30')
         ->assertValue('Terms & Conditions', 'Payment is due according to the agreed terms.')
+        ->assertScript($boundsAreExposed)
         ->type('Payment term days', '21')
         ->type('Quote notes', 'Updated quote note.')
         ->click('Save document defaults')

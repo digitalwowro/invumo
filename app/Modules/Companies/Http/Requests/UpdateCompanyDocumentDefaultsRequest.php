@@ -2,6 +2,8 @@
 
 namespace App\Modules\Companies\Http\Requests;
 
+use App\Foundation\Documents\DocumentFieldLimits;
+use App\Foundation\Localization\SupportedLocales;
 use App\Modules\Companies\Data\CompanyDocumentDefaultsData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,17 +28,35 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
             'default_document_language' => [
                 'required',
                 'string',
-                Rule::in(config('localization.supported_locales')),
+                Rule::in(SupportedLocales::all()),
             ],
             'default_payment_term_days' => [
-                'required', 'integer', 'min:0', 'max:'.PHP_INT_MAX,
+                'required',
+                'integer',
+                'min:0',
+                'max:'.DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
             ],
             'default_quote_validity_days' => [
-                'required', 'integer', 'min:0', 'max:'.PHP_INT_MAX,
+                'required',
+                'integer',
+                'min:0',
+                'max:'.DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
             ],
-            'default_terms_and_conditions' => ['nullable', 'string'],
-            'default_quote_notes' => ['nullable', 'string'],
-            'default_invoice_notes' => ['nullable', 'string'],
+            'default_terms_and_conditions' => [
+                'nullable',
+                'string',
+                'max:'.DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS,
+            ],
+            'default_quote_notes' => [
+                'nullable',
+                'string',
+                'max:'.DocumentFieldLimits::NOTES_CHARACTERS,
+            ],
+            'default_invoice_notes' => [
+                'nullable',
+                'string',
+                'max:'.DocumentFieldLimits::NOTES_CHARACTERS,
+            ],
         ];
     }
 
@@ -66,7 +86,7 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
         $normalized = [];
 
         if (is_string($language)) {
-            $normalized['default_document_language'] = strtolower(trim($language));
+            $normalized['default_document_language'] = trim($language);
         }
 
         foreach (['default_payment_term_days', 'default_quote_validity_days'] as $field) {

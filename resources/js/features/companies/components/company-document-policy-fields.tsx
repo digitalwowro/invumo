@@ -5,11 +5,13 @@ import { SelectField } from '@/components/app/select-field';
 import type { CompanyOption } from '@/types/company';
 import type {
     CompanyDocumentDefaults,
+    CompanyDocumentLimits,
     CompanyDocumentDefaultsTranslations,
 } from '@/types/company-document-defaults';
 
 type Props = {
     defaults: CompanyDocumentDefaults;
+    limits: CompanyDocumentLimits;
     languageOptions: CompanyOption[];
     errors: Record<string, string>;
     labels: CompanyDocumentDefaultsTranslations;
@@ -17,6 +19,7 @@ type Props = {
 
 export function CompanyDocumentPolicyFields({
     defaults,
+    limits,
     languageOptions,
     errors,
     labels,
@@ -52,6 +55,7 @@ export function CompanyDocumentPolicyFields({
                         name: 'default_payment_term_days',
                         defaultValue: defaults.paymentTermDays ?? undefined,
                         min: 0,
+                        max: limits.maxDayOffset,
                         step: 1,
                         inputMode: 'numeric',
                         required: true,
@@ -69,6 +73,7 @@ export function CompanyDocumentPolicyFields({
                         name: 'default_quote_validity_days',
                         defaultValue: defaults.quoteValidityDays,
                         min: 0,
+                        max: limits.maxDayOffset,
                         step: 1,
                         inputMode: 'numeric',
                         required: true,

@@ -73,6 +73,37 @@ class ProductionConfigurationTest extends TestCase
         }
     }
 
+    public function test_supported_locale_catalogue_can_expand_without_a_database_allowlist(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('localization.supported_locales', ['en', 'ro', 'pt_BR']);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->addToAssertionCount(1);
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_supported_locale_catalogue_rejects_unsafe_or_duplicate_codes(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('localization.supported_locales', ['en', '../ro', 'en']);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('An unsafe supported-locale catalogue was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString(
+                'localization.supported_locales',
+                $exception->getMessage(),
+            );
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
     public function test_queue_connection_and_visibility_timeout_must_match_the_worker_contract(): void
     {
         $this->setSafeProductionConfiguration();

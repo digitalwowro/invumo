@@ -1,4 +1,4 @@
-export type SupportedLocale = 'en' | 'ro';
+export type SupportedLocale = string;
 
 export type CommonTranslations = {
     navigation: {

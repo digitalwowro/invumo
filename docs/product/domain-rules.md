@@ -354,6 +354,8 @@ Payment terms and quote validity are non-negative whole calendar-day offsets fro
 
 There is no arbitrary maximum offset. A resolved date must remain within the inclusive application range `0001-01-01` through `9999-12-31`.
 
+Persisted day offsets use the full application-date-range envelope of `0` through `3,652,058` days. This is a technical safety bound equal to the number of days between the minimum and maximum supported dates, not a shorter business-policy maximum. Resolving an offset still validates the result against the issue-date-specific remaining range before date arithmetic is accepted.
+
 Terms & Conditions are separate from structured payment terms and document notes:
 
 - A company may define default customer-visible Terms & Conditions.
@@ -363,6 +365,7 @@ Terms & Conditions are separate from structured payment terms and document notes
 - Generated public pages and PDFs display the document's stored Terms & Conditions.
 - Quote and invoice notes inherit their respective company defaults and may be overridden per document.
 - Notes are a normal customer-visible document block, not a fixed PDF footer or arbitrary footer element.
+- Terms & Conditions are limited to 20,000 characters. Quote and Invoice notes are each limited to 5,000 characters. The same limits apply to Company defaults and every later Customer/document override or snapshot.
 
 ## Payments and refunds
 
@@ -488,6 +491,7 @@ Recurring template
 
 - Launch languages are English and Romanian.
 - Laravel language files are the only authored translation source; React receives resolved common and page-specific strings through Inertia props without a separate client catalog.
+- `config/localization.php` is the sole supported-locale allowlist. Database constraints validate only a bounded locale-code shape and never duplicate the configured language catalogue.
 - Both UI and generated documents are localized.
 - Additional languages should be straightforward to add.
 - Initial document-language precedence is document choice, customer default, then company default.

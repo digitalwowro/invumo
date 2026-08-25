@@ -20,7 +20,7 @@ Build Invumo as one modular Laravel application with a React/TypeScript interfac
 | Database                        | PostgreSQL 18                                                                                                                      |
 | Frontend build                  | Vite                                                                                                                               |
 | Styling and components          | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md) |
-| Localization                    | Laravel `lang/en` and `lang/ro` files as the only authored source; resolved strings passed to React through Inertia props          |
+| Localization                    | Laravel language files as the only authored string source and `config/localization.php` as the sole supported-locale allowlist; resolved strings passed to React through Inertia props |
 | Package management              | Composer and npm with committed lockfiles                                                                                          |
 | Automated testing               | Pest 4, Vitest, and Pest Browser backed by Playwright                                                                              |
 | Code quality                    | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier                                                            |

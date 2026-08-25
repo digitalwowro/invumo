@@ -4,10 +4,14 @@ import { SectionHeader } from '@/components/app/section-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { CompanyDocumentDefaultsForm } from '@/features/companies/components/company-document-defaults-form';
 import type { CompaniesUiTranslations, CompanyOption } from '@/types/company';
-import type { CompanyDocumentDefaults } from '@/types/company-document-defaults';
+import type {
+    CompanyDocumentDefaults,
+    CompanyDocumentLimits,
+} from '@/types/company-document-defaults';
 
 type Props = {
     documentDefaults: CompanyDocumentDefaults;
+    documentLimits: CompanyDocumentLimits;
     languageOptions: CompanyOption[];
     updateUrl: string;
     status?: string;
@@ -16,6 +20,7 @@ type Props = {
 
 export default function CompanyDocuments({
     documentDefaults,
+    documentLimits,
     languageOptions,
     updateUrl,
     status,
@@ -34,6 +39,7 @@ export default function CompanyDocuments({
                 {status && <SystemMessage title={status} tone="money" />}
                 <CompanyDocumentDefaultsForm
                     defaults={documentDefaults}
+                    limits={documentLimits}
                     languageOptions={languageOptions}
                     updateUrl={updateUrl}
                     labels={labels}

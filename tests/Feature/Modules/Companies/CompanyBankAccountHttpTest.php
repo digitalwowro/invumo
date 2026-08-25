@@ -37,6 +37,7 @@ final class CompanyBankAccountHttpTest extends TestCase
 
         $this->post(route('company-bank-accounts.store', $company), [
             ...$this->payload(),
+            'swift_bic' => '',
             'currency_id' => $currency->id,
             'local_routing_details' => [
                 'bank_code' => 'ROBU',
@@ -48,11 +49,13 @@ final class CompanyBankAccountHttpTest extends TestCase
             $company->id,
             fn (): BankAccount => BankAccount::query()->firstOrFail(),
         );
+        $this->assertNull($account->swift_bic);
 
         $this->get(route('company-bank-accounts.index', $company))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('bankAccounts.0.label', 'Main operating account')
                 ->where('bankAccounts.0.currencyCode', 'RON')
+                ->where('bankAccounts.0.swiftBic', null)
                 ->where('bankAccounts.0.localRoutingDetails.bank_code', 'ROBU')
                 ->where('bankAccounts.0.isDefault', true)
                 ->where('bankAccounts.0.archived', false));

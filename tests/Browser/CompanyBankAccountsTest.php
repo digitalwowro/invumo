@@ -88,7 +88,6 @@ it('keeps Romanian bank settings usable on a narrow viewport', function () {
         ->type('Numele băncii', 'Banca Exemplu')
         ->type('Titularul contului', 'Bank Browser SRL')
         ->type('IBAN sau număr de cont', 'RO49AAAA1B31007593840000')
-        ->type('SWIFT/BIC', 'AAAAROBUXXX')
         ->type('Codul sucursalei', 'BUC-01')
         ->click('Adaugă contul bancar')
         ->assertSee('Contul bancar a fost adăugat.')

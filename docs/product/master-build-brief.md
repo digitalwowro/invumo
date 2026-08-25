@@ -264,7 +264,7 @@ Changing the selected customer on an in-progress document must show the resultin
 Bank accounts are part of company settings.
 
 - A company can have multiple bank accounts.
-- Each account requires a user-facing label, bank name, account holder, IBAN/account number, and normalized uppercase SWIFT/BIC, with an optional same-Company currency association.
+- Each account requires a user-facing label, bank name, account holder, and IBAN/account number. Normalized uppercase SWIFT/BIC and the same-Company currency association are optional.
 - Optional local routing details are limited to routing number, sort code, bank code, branch code, transit number, institution number, BSB, and IFSC. They remain a flat allowlisted object with at most eight trimmed non-empty values of at most 64 characters each; custom keys and nested/provider payloads are not accepted.
 - A company may designate one default bank account. A quote or invoice may select a different account or omit bank details.
 - Relevant bank information must be selectable for and displayable on quotes and invoices.

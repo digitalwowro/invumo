@@ -87,11 +87,13 @@ export function BankAccountTable({
                                 copyLabel={labels.copy_value}
                                 copiedLabel={labels.value_copied}
                             />
-                            <BankValue
-                                value={account.swiftBic}
-                                copyLabel={labels.copy_value}
-                                copiedLabel={labels.value_copied}
-                            />
+                            {account.swiftBic === null ? null : (
+                                <BankValue
+                                    value={account.swiftBic}
+                                    copyLabel={labels.copy_value}
+                                    copiedLabel={labels.value_copied}
+                                />
+                            )}
                         </Stack>
                     ),
                 },

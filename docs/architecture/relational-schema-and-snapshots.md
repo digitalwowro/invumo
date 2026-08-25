@@ -199,7 +199,7 @@ Existing document snapshots retain their currency code/precision if this configu
 
 - `id`, `company_id`
 - required user-facing label up to 120 characters; required bank name and account holder up to 160 characters each
-- required IBAN/account number up to 64 characters and normalized uppercase 8- or 11-character SWIFT/BIC
+- required IBAN/account number up to 64 characters; optional normalized uppercase 8- or 11-character SWIFT/BIC
 - optional same-Company currency reference
 - optional bounded `jsonb` local-routing details using only `routing_number`, `sort_code`, `bank_code`, `branch_code`, `transit_number`, `institution_number`, `bsb`, and `ifsc`; the flat object has at most eight trimmed non-empty string values of at most 64 characters each
 - `is_default`, `archived_at`

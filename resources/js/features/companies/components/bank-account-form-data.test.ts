@@ -34,7 +34,7 @@ describe('bank account form data', () => {
                 bankName: 'Bank',
                 accountHolder: 'Holder',
                 accountNumber: 'ACCOUNT',
-                swiftBic: 'AAAAROBUXXX',
+                swiftBic: null,
                 currencyId: null,
                 currencyCode: null,
                 localRoutingDetails: { routing_number: '123' },
@@ -48,6 +48,7 @@ describe('bank account form data', () => {
 
         expect(data.local_routing_details.routing_number).toBe('123');
         expect(data.local_routing_details.ifsc).toBe('');
+        expect(data.swift_bic).toBe('');
         expect(data.is_default).toBe(true);
     });
 });

@@ -12,7 +12,7 @@ final readonly class BankAccountData
         public string $bankName,
         public string $accountHolder,
         public string $accountNumber,
-        public string $swiftBic,
+        public ?string $swiftBic,
         public ?string $currencyId,
         public array $localRoutingDetails,
         public bool $isDefault,

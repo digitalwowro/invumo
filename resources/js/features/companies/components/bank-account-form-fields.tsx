@@ -83,10 +83,10 @@ export function BankAccountFormFields({
                 />
                 <TextField
                     label={labels.fields.swift_bic}
+                    description={labels.field_descriptions.swift_bic}
                     error={errors.swift_bic}
                     input={{
                         value: data.swift_bic,
-                        required: true,
                         maxLength: 11,
                         autoCapitalize: 'characters',
                         onChange: (event) =>

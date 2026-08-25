@@ -14,7 +14,7 @@ export type BankAccount = {
     bankName: string;
     accountHolder: string;
     accountNumber: string;
-    swiftBic: string;
+    swiftBic: string | null;
     currencyId: string | null;
     currencyCode: string | null;
     localRoutingDetails: Partial<Record<BankRoutingField, string>>;
@@ -81,7 +81,10 @@ export type CompanyBankAccountTranslations = {
         | 'is_default',
         string
     >;
-    field_descriptions: Record<'currency_id' | 'is_default', string>;
+    field_descriptions: Record<
+        'swift_bic' | 'currency_id' | 'is_default',
+        string
+    >;
     routing_fields: Record<BankRoutingField, string>;
     feedback: Record<'created' | 'updated' | 'archived', string>;
     errors: Record<

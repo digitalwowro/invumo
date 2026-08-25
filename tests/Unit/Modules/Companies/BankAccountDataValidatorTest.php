@@ -26,6 +26,15 @@ final class BankAccountDataValidatorTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    public function test_swift_bic_is_optional_but_malformed_values_are_rejected(): void
+    {
+        (new BankAccountDataValidator)->validate($this->data([], null));
+        $this->addToAssertionCount(1);
+
+        $this->expectException(BankAccountException::class);
+        (new BankAccountDataValidator)->validate($this->data([], 'INVALID'));
+    }
+
     /** @param array<string, mixed> $routing */
     #[DataProvider('invalidRoutingProvider')]
     public function test_unknown_nested_or_unbounded_routing_values_are_rejected(
@@ -45,14 +54,16 @@ final class BankAccountDataValidatorTest extends TestCase
     }
 
     /** @param array<string, mixed> $routing */
-    private function data(array $routing): BankAccountData
-    {
+    private function data(
+        array $routing,
+        ?string $swiftBic = 'AAAAROBUXXX',
+    ): BankAccountData {
         return new BankAccountData(
             label: 'Main',
             bankName: 'Bank',
             accountHolder: 'Holder',
             accountNumber: 'ACCOUNT',
-            swiftBic: 'AAAAROBUXXX',
+            swiftBic: $swiftBic,
             currencyId: null,
             localRoutingDetails: $routing,
             isDefault: false,

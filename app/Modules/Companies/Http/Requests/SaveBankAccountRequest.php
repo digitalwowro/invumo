@@ -24,7 +24,7 @@ final class SaveBankAccountRequest extends FormRequest
             'account_holder' => ['bail', 'required', 'string', 'max:160'],
             'account_number' => ['bail', 'required', 'string', 'max:64'],
             'swift_bic' => [
-                'required', 'string', 'regex:/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/',
+                'nullable', 'string', 'regex:/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/',
             ],
             'currency_id' => [
                 'nullable', 'uuid',
@@ -74,7 +74,7 @@ final class SaveBankAccountRequest extends FormRequest
             bankName: (string) $this->validated('bank_name'),
             accountHolder: (string) $this->validated('account_holder'),
             accountNumber: (string) $this->validated('account_number'),
-            swiftBic: (string) $this->validated('swift_bic'),
+            swiftBic: $this->optionalString('swift_bic'),
             currencyId: $this->optionalString('currency_id'),
             localRoutingDetails: $routing,
             isDefault: $this->boolean('is_default'),

@@ -78,6 +78,7 @@ final class BankAccountAuditTest extends TestCase
             );
             $this->assertSensitiveValuesAbsent([$created, $updated, $archived]);
             $this->assertContains('account_number', $updated->after['changed_fields']);
+            $this->assertContains('swift_bic', $updated->after['changed_fields']);
             $this->assertContains(
                 'local_routing_details',
                 $updated->after['changed_fields'],
@@ -172,7 +173,7 @@ final class BankAccountAuditTest extends TestCase
             'account_number' => $label === 'Private account'
                 ? 'RO49AAAA1B31007593840000'
                 : 'REPLACEMENT-123',
-            'swift_bic' => 'AAAAROBUXXX',
+            'swift_bic' => $label === 'Private account' ? null : 'AAAAROBUXXX',
             'currency_id' => $currencyId,
             'local_routing_details' => [
                 'routing_number' => $label === 'Private account'

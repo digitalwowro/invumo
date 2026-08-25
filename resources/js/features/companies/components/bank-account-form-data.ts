@@ -37,7 +37,7 @@ export function bankAccountFormData(
         bank_name: account.bankName,
         account_holder: account.accountHolder,
         account_number: account.accountNumber,
-        swift_bic: account.swiftBic,
+        swift_bic: account.swiftBic ?? '',
         currency_id: account.currencyId ?? '',
         local_routing_details: routingValues(
             fields,

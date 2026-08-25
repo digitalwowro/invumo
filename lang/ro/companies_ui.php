@@ -257,6 +257,7 @@ return [
                 'is_default' => 'Folosește ca valoare implicită a companiei',
             ],
             'field_descriptions' => [
+                'swift_bic' => 'Opțional pentru conturile naționale care nu folosesc un identificator internațional de rutare.',
                 'currency_id' => 'Limitează opțional acest cont la o monedă activă a companiei.',
                 'is_default' => 'Documentele viitoare folosesc acest cont când nu se aplică o alegere mai specifică.',
             ],

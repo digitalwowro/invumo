@@ -103,6 +103,26 @@ final class BankAccountTenantIsolationTest extends TestCase
         }
     }
 
+    public function test_database_allows_missing_swift_bic_but_rejects_malformed_values(): void
+    {
+        $company = $this->company('Alpha SRL');
+        $account = app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn (): BankAccount => BankAccount::query()->create([
+                ...$this->values(), 'swift_bic' => null,
+            ]),
+        );
+        $this->assertNull($account->swift_bic);
+
+        $this->expectException(QueryException::class);
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn (): BankAccount => BankAccount::query()->create([
+                ...$this->values('Invalid'), 'swift_bic' => 'INVALID',
+            ]),
+        );
+    }
+
     public function test_database_allows_only_one_active_default_and_no_archived_default(): void
     {
         $company = $this->company('Alpha SRL');

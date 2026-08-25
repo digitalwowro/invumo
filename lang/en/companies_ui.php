@@ -257,6 +257,7 @@ return [
                 'is_default' => 'Use as the Company default',
             ],
             'field_descriptions' => [
+                'swift_bic' => 'Optional for domestic accounts that do not use an international routing identifier.',
                 'currency_id' => 'Optionally limit this account to one active Company currency.',
                 'is_default' => 'Future documents use this account when no more specific choice applies.',
             ],

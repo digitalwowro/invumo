@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $bank_name
  * @property string $account_holder
  * @property string $account_number
- * @property string $swift_bic
+ * @property string|null $swift_bic
  * @property string|null $currency_id
  * @property array<string, string>|null $local_routing_details
  * @property bool $is_default

@@ -15,7 +15,10 @@ final readonly class BankAccountDataValidator
         $this->bounded($data->accountHolder, 160);
         $this->bounded($data->accountNumber, 64);
 
-        if (preg_match('/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/', $data->swiftBic) !== 1) {
+        if (
+            $data->swiftBic !== null
+            && preg_match('/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/', $data->swiftBic) !== 1
+        ) {
             throw BankAccountException::routingDetailsInvalid();
         }
 

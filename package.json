@@ -14,6 +14,7 @@
         "modules:check": "node scripts/check-module-boundaries.mjs",
         "test:unit": "vitest run",
         "test:unit:watch": "vitest",
+        "visual-snapshots:check": "node scripts/check-visual-snapshot-evidence.mjs",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {

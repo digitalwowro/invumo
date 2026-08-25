@@ -1,0 +1,61 @@
+{
+    "version": 1,
+    "baselines": [
+        {
+            "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_Romanian_expansion_and_diacritics_on_desktop.snap",
+            "pngSha256": "1338b409f042ba4e9077ad96b21961f61c3ebffee2b02852ad1e959d85c1cf5f",
+            "reviewedOn": "2026-08-25",
+            "causeCommit": "a989b0d",
+            "baselineCommit": "903295c",
+            "screens": ["Romanian design-system gallery on desktop"],
+            "intendedChanges": [
+                "Operational-table columns size from their content instead of equal fixed widths",
+                "Amounts, statuses, and actions retain readable compact widths without page overflow"
+            ],
+            "renderingInspected": true,
+            "inspectionEvidence": "Viewed the GitHub Ubuntu actual and difference PNGs from Actions run 32823698233; confirmed the Romanian table change matched the shared table code change before adopting the runner-produced actual image."
+        },
+        {
+            "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_English_design_system_matrix_on_desktop.snap",
+            "pngSha256": "6bdae5516d391297317af696ddc02a0117d410298d70d5a610121ede3e7e5923",
+            "reviewedOn": "2026-08-25",
+            "causeCommit": "a989b0d",
+            "baselineCommit": "903295c",
+            "screens": ["English design-system gallery on desktop"],
+            "intendedChanges": [
+                "Operational-table columns size from their content instead of equal fixed widths",
+                "Amounts, statuses, and actions retain readable compact widths without page overflow"
+            ],
+            "renderingInspected": true,
+            "inspectionEvidence": "Viewed the GitHub Ubuntu actual and difference PNGs from Actions run 32823698233; confirmed the English table change matched the shared table code change before adopting the runner-produced actual image."
+        },
+        {
+            "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_responsive_navigation_on_a_narrow_viewport.snap",
+            "pngSha256": "654046b8d4209c66d120063e475204314490a4730eef562d37ea148d86e8614b",
+            "reviewedOn": "2026-08-25",
+            "causeCommit": "e15ac51",
+            "baselineCommit": "e15ac51",
+            "screens": ["English design-system navigation sheet on iPhone 15"],
+            "intendedChanges": [
+                "Retain the established narrow navigation-sheet baseline unchanged while bootstrapping the evidence registry"
+            ],
+            "renderingInspected": true,
+            "inspectionEvidence": "Decoded and viewed the current canonical PNG at original resolution during the evidence-registry bootstrap; confirmed the navigation sheet, backdrop, labels, and viewport containment are intentional."
+        },
+        {
+            "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_shared_confirmation_overlay.snap",
+            "pngSha256": "8454b528135f42cbcb46a3193697759bbc11dc0851032fba2043eff731361db9",
+            "reviewedOn": "2026-08-25",
+            "causeCommit": "e15ac51",
+            "baselineCommit": "e15ac51",
+            "screens": [
+                "English shared destructive confirmation overlay on desktop"
+            ],
+            "intendedChanges": [
+                "Retain the established confirmation-overlay baseline unchanged while bootstrapping the evidence registry"
+            ],
+            "renderingInspected": true,
+            "inspectionEvidence": "Decoded and viewed the current canonical PNG at original resolution during the evidence-registry bootstrap; confirmed the overlay, backdrop, dialog hierarchy, actions, and surrounding gallery state are intentional."
+        }
+    ]
+}

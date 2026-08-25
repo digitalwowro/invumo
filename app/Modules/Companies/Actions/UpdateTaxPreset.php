@@ -14,6 +14,7 @@ use App\Modules\Companies\Exceptions\TaxPresetException;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateTaxPreset
@@ -48,11 +49,16 @@ final readonly class UpdateTaxPreset
     ): TaxPreset {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageCompanySettings);
 
-        $locked = TaxPreset::query()
+        $presets = TaxPreset::query()
             ->where('company_id', $company->id)
-            ->whereKey($presetId)
+            ->orderBy('id')
             ->lockForUpdate()
-            ->firstOrFail();
+            ->get();
+        $locked = $presets->firstWhere('id', $presetId);
+
+        if ($locked === null) {
+            throw (new ModelNotFoundException)->setModel(TaxPreset::class, [$presetId]);
+        }
 
         if ($locked->archived_at !== null) {
             throw TaxPresetException::archived();
@@ -71,10 +77,11 @@ final readonly class UpdateTaxPreset
         }
 
         if ($data->isDefault && ! $locked->is_default) {
-            TaxPreset::query()
-                ->whereKeyNot($locked->id)
-                ->where('is_default', true)
-                ->update(['is_default' => false]);
+            foreach ($presets as $preset) {
+                if ($preset->id !== $locked->id && $preset->is_default) {
+                    $preset->update(['is_default' => false]);
+                }
+            }
         }
 
         $locked->update($after);

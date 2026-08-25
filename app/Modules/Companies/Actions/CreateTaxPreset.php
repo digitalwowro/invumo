@@ -38,7 +38,17 @@ final readonly class CreateTaxPreset
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageCompanySettings);
 
         if ($data->isDefault) {
-            TaxPreset::query()->where('is_default', true)->update(['is_default' => false]);
+            $presets = TaxPreset::query()
+                ->where('company_id', $company->id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($presets as $preset) {
+                if ($preset->is_default) {
+                    $preset->update(['is_default' => false]);
+                }
+            }
         }
 
         $preset = TaxPreset::query()->create([

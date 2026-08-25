@@ -12,7 +12,9 @@ use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -118,6 +120,42 @@ final class CompanyTaxPresetHttpTest extends TestCase
         });
     }
 
+    public function test_default_reassignment_locks_tax_presets_in_stable_uuid_order(): void
+    {
+        $owner = $this->accountOwner();
+        $company = $this->companyFor($owner);
+        $this->actingAs($owner);
+
+        $presets = app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => collect([
+                TaxPreset::query()->create([
+                    'name' => 'Standard', 'percentage' => '19', 'is_default' => true,
+                ]),
+                TaxPreset::query()->create([
+                    'name' => 'Reduced', 'percentage' => '9', 'is_default' => false,
+                ]),
+            ]),
+        );
+        $queries = [];
+        DB::connection(config('database.tenant_connection'))->listen(
+            static function (QueryExecuted $query) use (&$queries): void {
+                $queries[] = $query->sql;
+            },
+        );
+
+        $this->patch(route('company-tax-presets.update', [$company, $presets[1]]), [
+            'name' => 'Reduced', 'percentage' => '9', 'is_default' => true,
+        ])->assertRedirect();
+        $this->assertOrderedPresetLockPrecedesMutation($queries);
+
+        $queries = [];
+        $this->post(route('company-tax-presets.store', $company), [
+            'name' => 'Zero', 'percentage' => '0', 'is_default' => true,
+        ])->assertRedirect();
+        $this->assertOrderedPresetLockPrecedesMutation($queries);
+    }
+
     public function test_admin_is_allowed_while_member_and_cross_company_access_are_denied(): void
     {
         $owner = $this->accountOwner();
@@ -205,5 +243,33 @@ final class CompanyTaxPresetHttpTest extends TestCase
     private function addMember(Company $company, User $user, CompanyRole $role): CompanyMembership
     {
         return $company->memberships()->create(['user_id' => $user->id, 'role' => $role]);
+    }
+
+    /** @param list<string> $queries */
+    private function assertOrderedPresetLockPrecedesMutation(array $queries): void
+    {
+        $lockIndex = null;
+        $mutationIndex = null;
+
+        foreach ($queries as $index => $query) {
+            if (
+                str_contains($query, 'from "tax_presets"')
+                && str_contains($query, 'order by "id" asc')
+                && str_contains($query, 'for update')
+            ) {
+                $lockIndex ??= $index;
+            }
+
+            if (
+                str_starts_with($query, 'update "tax_presets"')
+                || str_starts_with($query, 'insert into "tax_presets"')
+            ) {
+                $mutationIndex ??= $index;
+            }
+        }
+
+        $this->assertNotNull($lockIndex, 'Missing ordered tax preset lock query.');
+        $this->assertNotNull($mutationIndex, 'Missing tax preset mutation query.');
+        $this->assertLessThan($mutationIndex, $lockIndex);
     }
 }

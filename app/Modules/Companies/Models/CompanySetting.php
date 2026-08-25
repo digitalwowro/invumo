@@ -3,6 +3,7 @@
 namespace App\Modules\Companies\Models;
 
 use App\Foundation\Database\TenantOwnedModel;
+use App\Foundation\Delivery\EmailAttachmentMode;
 use App\Modules\Companies\Data\CurrencyDisplayStyle;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $default_terms_and_conditions
  * @property string|null $default_quote_notes
  * @property string|null $default_invoice_notes
+ * @property EmailAttachmentMode $default_email_attachment_mode
  * @property string $primary_brand_color
  * @property string|null $logo_asset_id
  * @property-read CompanyAsset|null $logoAsset
@@ -45,6 +47,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'default_terms_and_conditions',
     'default_quote_notes',
     'default_invoice_notes',
+    'default_email_attachment_mode',
     'primary_brand_color',
     'logo_asset_id',
 ])]
@@ -63,6 +66,7 @@ class CompanySetting extends TenantOwnedModel
             'currency_display_style' => CurrencyDisplayStyle::class,
             'default_payment_term_days' => 'integer',
             'default_quote_validity_days' => 'integer',
+            'default_email_attachment_mode' => EmailAttachmentMode::class,
         ];
     }
 }

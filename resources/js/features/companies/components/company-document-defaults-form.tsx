@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { CompanyDocumentContentFields } from '@/features/companies/components/company-document-content-fields';
+import { CompanyDocumentDeliveryFields } from '@/features/companies/components/company-document-delivery-fields';
 import { CompanyDocumentPolicyFields } from '@/features/companies/components/company-document-policy-fields';
 import type { CompanyOption } from '@/types/company';
 import type {
@@ -14,6 +15,7 @@ type Props = {
     defaults: CompanyDocumentDefaults;
     limits: CompanyDocumentLimits;
     languageOptions: CompanyOption[];
+    attachmentModeOptions: CompanyOption[];
     updateUrl: string;
     labels: CompanyDocumentDefaultsTranslations;
 };
@@ -22,6 +24,7 @@ export function CompanyDocumentDefaultsForm({
     defaults,
     limits,
     languageOptions,
+    attachmentModeOptions,
     updateUrl,
     labels,
 }: Props) {
@@ -42,6 +45,12 @@ export function CompanyDocumentDefaultsForm({
                         defaults={defaults}
                         limits={limits}
                         languageOptions={languageOptions}
+                        errors={errors}
+                        labels={labels}
+                    />
+                    <CompanyDocumentDeliveryFields
+                        defaults={defaults}
+                        attachmentModeOptions={attachmentModeOptions}
                         errors={errors}
                         labels={labels}
                     />

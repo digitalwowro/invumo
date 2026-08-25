@@ -13,6 +13,7 @@ type Props = {
     documentDefaults: CompanyDocumentDefaults;
     documentLimits: CompanyDocumentLimits;
     languageOptions: CompanyOption[];
+    emailAttachmentModeOptions: CompanyOption[];
     updateUrl: string;
     status?: string;
     translations: CompaniesUiTranslations;
@@ -22,6 +23,7 @@ export default function CompanyDocuments({
     documentDefaults,
     documentLimits,
     languageOptions,
+    emailAttachmentModeOptions,
     updateUrl,
     status,
     translations,
@@ -41,6 +43,7 @@ export default function CompanyDocuments({
                     defaults={documentDefaults}
                     limits={documentLimits}
                     languageOptions={languageOptions}
+                    attachmentModeOptions={emailAttachmentModeOptions}
                     updateUrl={updateUrl}
                     labels={labels}
                 />

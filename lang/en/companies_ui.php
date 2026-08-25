@@ -96,6 +96,8 @@ return [
             'policy_description' => 'These defaults determine customer-facing language and calendar-day deadlines for future documents.',
             'content_title' => 'Default document content',
             'content_description' => 'Keep Terms & Conditions separate from the optional notes shown on quotes and invoices.',
+            'delivery_title' => 'Email delivery',
+            'delivery_description' => 'Choose the Company fallback used when a customer or individual send does not provide a delivery preference.',
             'language_placeholder' => 'Select a document language',
             'save' => 'Save document defaults',
             'unsaved_warning' => 'You have unsaved document defaults. Leave without saving?',
@@ -106,6 +108,7 @@ return [
                 'default_terms_and_conditions' => 'Terms & Conditions',
                 'default_quote_notes' => 'Quote notes',
                 'default_invoice_notes' => 'Invoice notes',
+                'default_email_attachment_mode' => 'Default PDF delivery',
             ],
             'field_descriptions' => [
                 'default_document_language' => 'Used for future customer-facing documents unless a customer or document overrides it.',
@@ -114,6 +117,11 @@ return [
                 'default_terms_and_conditions' => 'Reusable customer-visible terms for future quotes and invoices.',
                 'default_quote_notes' => 'Optional customer-visible notes for future quotes.',
                 'default_invoice_notes' => 'Optional customer-visible notes for future invoices.',
+                'default_email_attachment_mode' => 'Secure link only is safer and avoids attaching a copy. Customer and per-send choices can override this default.',
+            ],
+            'email_attachment_mode_options' => [
+                'SECURE_LINK_ONLY' => 'Secure link only',
+                'ATTACH_PDF' => 'Attach PDF',
             ],
             'language_options' => [
                 'en' => 'English',

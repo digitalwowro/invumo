@@ -196,7 +196,7 @@ The permission matrix controls each mutation. Members may manage Payments and Re
 - Taxes;
 - Bank accounts;
 - Appearance for outward documents;
-- Numbering and document defaults;
+- Numbering and document defaults, including the Company PDF-delivery fallback;
 - Reminders;
 - Email templates/defaults;
 - Members and invitations;

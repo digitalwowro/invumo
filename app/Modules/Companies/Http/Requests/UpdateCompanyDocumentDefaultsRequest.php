@@ -2,6 +2,7 @@
 
 namespace App\Modules\Companies\Http\Requests;
 
+use App\Foundation\Delivery\EmailAttachmentMode;
 use App\Foundation\Documents\DocumentFieldLimits;
 use App\Foundation\Localization\SupportedLocales;
 use App\Modules\Companies\Data\CompanyDocumentDefaultsData;
@@ -57,6 +58,10 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
                 'string',
                 'max:'.DocumentFieldLimits::NOTES_CHARACTERS,
             ],
+            'default_email_attachment_mode' => [
+                'required',
+                Rule::enum(EmailAttachmentMode::class),
+            ],
         ];
     }
 
@@ -77,6 +82,9 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
             termsAndConditions: $this->optionalContent('default_terms_and_conditions'),
             quoteNotes: $this->optionalContent('default_quote_notes'),
             invoiceNotes: $this->optionalContent('default_invoice_notes'),
+            emailAttachmentMode: EmailAttachmentMode::from(
+                (string) $this->validated('default_email_attachment_mode'),
+            ),
         );
     }
 

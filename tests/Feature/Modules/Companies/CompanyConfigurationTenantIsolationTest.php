@@ -156,6 +156,21 @@ final class CompanyConfigurationTenantIsolationTest extends TestCase
         );
     }
 
+    public function test_database_rejects_unknown_email_attachment_modes(): void
+    {
+        $company = $this->company('Alpha SRL');
+
+        $this->expectException(QueryException::class);
+
+        app(TenantContext::class)->runAsSystem(
+            $company->id,
+            fn () => DB::connection(config('database.tenant_connection'))
+                ->table('company_settings')
+                ->where('company_id', $company->id)
+                ->update(['default_email_attachment_mode' => 'INLINE']),
+        );
+    }
+
     #[DataProvider('outOfBoundsDocumentDefaults')]
     public function test_database_rejects_document_defaults_outside_the_domain_envelope(
         string $field,

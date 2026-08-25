@@ -94,6 +94,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Customer identity supports phone, an optional general/primary email, optional external reference/code, tax registration label and identifier, and business registration label and number. An Individual's primary email may be its default recipient; Company recipients normally resolve from contacts or an explicitly stored address.
 - Customer defaults include currency, document language, payment terms, tax preset, billing recipient, CC recipients, BCC recipients, and PDF email-delivery mode.
 - PDF email-delivery mode is secure link only or attach PDF.
+- The Company PDF email-delivery fallback defaults to secure link only and may be changed by an Owner/Admin. Resolution remains per-send override, then Customer preference, then Company fallback.
 - Internal customer notes are never rendered automatically on documents, public pages, or email.
 - v1 excludes separate shipping/service addresses, customer tags, customer-specific manual date formats, and an ambiguous free-form legal-info field.
 - A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.

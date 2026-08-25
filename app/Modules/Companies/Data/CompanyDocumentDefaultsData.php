@@ -2,6 +2,8 @@
 
 namespace App\Modules\Companies\Data;
 
+use App\Foundation\Delivery\EmailAttachmentMode;
+
 final readonly class CompanyDocumentDefaultsData
 {
     public function __construct(
@@ -11,5 +13,6 @@ final readonly class CompanyDocumentDefaultsData
         public ?string $termsAndConditions,
         public ?string $quoteNotes,
         public ?string $invoiceNotes,
+        public EmailAttachmentMode $emailAttachmentMode,
     ) {}
 }

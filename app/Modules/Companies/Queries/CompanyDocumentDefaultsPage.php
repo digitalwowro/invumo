@@ -2,6 +2,7 @@
 
 namespace App\Modules\Companies\Queries;
 
+use App\Foundation\Delivery\EmailAttachmentMode;
 use App\Foundation\Documents\DocumentFieldLimits;
 use App\Foundation\Localization\SupportedLocales;
 use App\Models\User;
@@ -46,6 +47,7 @@ final readonly class CompanyDocumentDefaultsPage
                 'termsAndConditions' => $settings->default_terms_and_conditions,
                 'quoteNotes' => $settings->default_quote_notes,
                 'invoiceNotes' => $settings->default_invoice_notes,
+                'emailAttachmentMode' => $settings->default_email_attachment_mode->value,
             ],
             'languageOptions' => array_map(
                 fn (string $locale): array => [
@@ -53,6 +55,13 @@ final readonly class CompanyDocumentDefaultsPage
                     'label' => __("companies_ui.settings.documents.language_options.{$locale}"),
                 ],
                 SupportedLocales::all(),
+            ),
+            'emailAttachmentModeOptions' => array_map(
+                fn (EmailAttachmentMode $mode): array => [
+                    'value' => $mode->value,
+                    'label' => __("companies_ui.settings.documents.email_attachment_mode_options.{$mode->value}"),
+                ],
+                EmailAttachmentMode::cases(),
             ),
             'documentLimits' => [
                 'maxDayOffset' => DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,

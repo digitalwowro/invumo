@@ -5,6 +5,7 @@ export type CompanyDocumentDefaults = {
     termsAndConditions: string | null;
     quoteNotes: string | null;
     invoiceNotes: string | null;
+    emailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
 };
 
 export type CompanyDocumentLimits = {
@@ -21,6 +22,8 @@ export type CompanyDocumentDefaultsTranslations = {
     policy_description: string;
     content_title: string;
     content_description: string;
+    delivery_title: string;
+    delivery_description: string;
     language_placeholder: string;
     save: string;
     unsaved_warning: string;
@@ -31,6 +34,7 @@ export type CompanyDocumentDefaultsTranslations = {
         default_terms_and_conditions: string;
         default_quote_notes: string;
         default_invoice_notes: string;
+        default_email_attachment_mode: string;
     };
     field_descriptions: {
         default_document_language: string;
@@ -39,7 +43,12 @@ export type CompanyDocumentDefaultsTranslations = {
         default_terms_and_conditions: string;
         default_quote_notes: string;
         default_invoice_notes: string;
+        default_email_attachment_mode: string;
     };
+    email_attachment_mode_options: Record<
+        'SECURE_LINK_ONLY' | 'ATTACH_PDF',
+        string
+    >;
     language_options: Record<'en' | 'ro', string>;
     feedback: { saved: string };
 };

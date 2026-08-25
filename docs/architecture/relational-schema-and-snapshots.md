@@ -164,7 +164,7 @@ One row per Company, enforced by unique `company_id`:
 - default Terms & Conditions, Invoice notes, and Quote notes
 - currency display style: `CODE` or `SYMBOL`
 - primary brand color
-- default email attachment mode
+- required default email attachment mode: `SECURE_LINK_ONLY` or `ATTACH_PDF`, defaulting to `SECURE_LINK_ONLY`
 - default public-link validity days and enabled state
 - optional same-Company logo-asset reference
 

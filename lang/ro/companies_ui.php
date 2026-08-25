@@ -96,6 +96,8 @@ return [
             'policy_description' => 'Aceste valori stabilesc limba documentelor pentru clienți și termenele în zile calendaristice.',
             'content_title' => 'Conținut implicit pentru documente',
             'content_description' => 'Păstrează Termenii și condițiile separat de notele opționale afișate pe oferte și facturi.',
+            'delivery_title' => 'Livrare prin e-mail',
+            'delivery_description' => 'Alege valoarea companiei folosită când un client sau o trimitere individuală nu stabilește o preferință de livrare.',
             'language_placeholder' => 'Alege limba documentelor',
             'save' => 'Salvează valorile implicite',
             'unsaved_warning' => 'Ai valori implicite nesalvate pentru documente. Ieși fără să salvezi?',
@@ -106,6 +108,7 @@ return [
                 'default_terms_and_conditions' => 'Termeni și condiții',
                 'default_quote_notes' => 'Note pentru ofertă',
                 'default_invoice_notes' => 'Note pentru factură',
+                'default_email_attachment_mode' => 'Livrarea implicită a PDF-ului',
             ],
             'field_descriptions' => [
                 'default_document_language' => 'Folosită pentru documentele viitoare destinate clienților, dacă un client sau document nu o înlocuiește.',
@@ -114,6 +117,11 @@ return [
                 'default_terms_and_conditions' => 'Termeni reutilizabili, vizibili clienților, pentru oferte și facturi viitoare.',
                 'default_quote_notes' => 'Note opționale, vizibile clienților, pentru ofertele viitoare.',
                 'default_invoice_notes' => 'Note opționale, vizibile clienților, pentru facturile viitoare.',
+                'default_email_attachment_mode' => 'Doar linkul securizat este mai sigur și evită atașarea unei copii. Opțiunile clientului și ale trimiterii pot înlocui această valoare implicită.',
+            ],
+            'email_attachment_mode_options' => [
+                'SECURE_LINK_ONLY' => 'Doar link securizat',
+                'ATTACH_PDF' => 'Atașează PDF-ul',
             ],
             'language_options' => [
                 'en' => 'Engleză',

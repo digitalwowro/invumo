@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Companies;
 
+use App\Foundation\Delivery\EmailAttachmentMode;
 use App\Foundation\Documents\DocumentFieldLimits;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
@@ -33,6 +34,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             $this->assertNull($settings->default_payment_term_days);
             $this->assertSame(30, $settings->default_quote_validity_days);
             $this->assertNull($settings->default_terms_and_conditions);
+            $this->assertSame(EmailAttachmentMode::SecureLinkOnly, $settings->default_email_attachment_mode);
         });
 
         $this->actingAs($owner)
@@ -42,6 +44,9 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
                 ->where('documentDefaults.documentLanguage', null)
                 ->where('documentDefaults.paymentTermDays', null)
                 ->where('documentDefaults.quoteValidityDays', '30')
+                ->where('documentDefaults.emailAttachmentMode', 'SECURE_LINK_ONLY')
+                ->where('emailAttachmentModeOptions.0.label', 'Secure link only')
+                ->where('emailAttachmentModeOptions.1.value', 'ATTACH_PDF')
                 ->where(
                     'documentLimits.maxDayOffset',
                     DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
@@ -65,6 +70,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('translations.settings.layout.navigation.documents', 'Valori implicite pentru documente')
                 ->where('translations.settings.documents.language_options.ro', 'Română')
+                ->where('translations.settings.documents.email_attachment_mode_options.ATTACH_PDF', 'Atașează PDF-ul')
                 ->where('languageOptions.0.label', 'Engleză'));
     }
 
@@ -91,15 +97,18 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             $this->assertSame($payload['default_terms_and_conditions'], $settings->default_terms_and_conditions);
             $this->assertSame($payload['default_quote_notes'], $settings->default_quote_notes);
             $this->assertSame($payload['default_invoice_notes'], $settings->default_invoice_notes);
+            $this->assertSame(EmailAttachmentMode::AttachPdf, $settings->default_email_attachment_mode);
             $this->assertSame('ro', $event->after['default_document_language']);
             $this->assertSame(14, $event->after['default_payment_term_days']);
             $this->assertSame(45, $event->after['default_quote_validity_days']);
+            $this->assertSame('ATTACH_PDF', $event->after['default_email_attachment_mode']);
             $this->assertEqualsCanonicalizing(
                 [
                     'changed_fields',
                     'default_document_language',
                     'default_payment_term_days',
                     'default_quote_validity_days',
+                    'default_email_attachment_mode',
                 ],
                 array_keys($event->after ?? []),
             );
@@ -173,6 +182,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
                 'default_payment_term_days' => '-1',
                 'default_quote_validity_days' => '1.5',
                 'default_terms_and_conditions' => [],
+                'default_email_attachment_mode' => 'INLINE',
             ]),
         );
 
@@ -181,6 +191,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             'default_payment_term_days',
             'default_quote_validity_days',
             'default_terms_and_conditions',
+            'default_email_attachment_mode',
         ]);
         $this->assertStringContainsString(
             'Valoarea selectată',
@@ -260,6 +271,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             'default_terms_and_conditions' => "Confidential terms\nSecond line",
             'default_quote_notes' => 'Private quote note',
             'default_invoice_notes' => 'Private invoice note',
+            'default_email_attachment_mode' => 'ATTACH_PDF',
         ], $overrides);
     }
 

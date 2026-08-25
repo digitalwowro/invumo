@@ -248,7 +248,7 @@ Company defaults include:
 - Default quote notes
 - Document numbering settings
 - Currency precision settings
-- Email defaults
+- Default PDF email-delivery mode: secure link only or attach PDF; new Companies default to secure link only
 - Public-link defaults
 
 ### Default resolution and snapshot timing
@@ -820,6 +820,8 @@ Delivery preferences include:
 - Optional multiple CC recipients
 - Optional multiple BCC recipients
 - Secure-link-only or attach-PDF mode
+
+The Company fallback defaults to secure link only. Owner/Admin may change it to attach PDF; later Customer and per-send choices follow the precedence above.
 
 The send composer must display the resolved recipients and attachment choice before sending and allow the user to override them for that send.
 

@@ -21,6 +21,7 @@ final readonly class UpdateCompanyDocumentDefaults
         'default_document_language',
         'default_payment_term_days',
         'default_quote_validity_days',
+        'default_email_attachment_mode',
     ];
 
     public function __construct(
@@ -84,6 +85,7 @@ final readonly class UpdateCompanyDocumentDefaults
             'default_terms_and_conditions' => $settings->default_terms_and_conditions,
             'default_quote_notes' => $settings->default_quote_notes,
             'default_invoice_notes' => $settings->default_invoice_notes,
+            'default_email_attachment_mode' => $settings->default_email_attachment_mode->value,
         ];
     }
 
@@ -97,6 +99,7 @@ final readonly class UpdateCompanyDocumentDefaults
             'default_terms_and_conditions' => $data->termsAndConditions,
             'default_quote_notes' => $data->quoteNotes,
             'default_invoice_notes' => $data->invoiceNotes,
+            'default_email_attachment_mode' => $data->emailAttachmentMode->value,
         ];
     }
 

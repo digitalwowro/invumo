@@ -131,7 +131,7 @@ return [
             'invoice_description' => 'Configurează modul în care Invumo numerotează automat facturile viitoare.',
             'pattern_description' => 'Include {NUMBER} exact o dată. {YEAR} este opțional și afișează întotdeauna anul curent al companiei.',
             'padding_description' => 'Numărul minim de cifre pentru {NUMBER}, între 1 și 12. Valorile mai mari ale secvenței nu sunt trunchiate.',
-            'reset_policy_description' => 'Marcajul pentru an nu resetează secvența. Alege Anual doar dacă numerotarea trebuie reluată în fiecare an local al companiei.',
+            'reset_policy_description' => 'Marcajul pentru an nu resetează secvența. Resetarea anuală necesită {YEAR}, astfel încât numerele să rămână distincte între ani.',
             'preview_label' => 'Previzualizarea formatului curent',
             'preview_invalid' => 'Introdu un model și o completare valide pentru a vedea previzualizarea.',
             'preview_timezone_required' => 'Setează fusul orar al companiei înainte de a previzualiza un model care folosește {YEAR}.',
@@ -157,6 +157,7 @@ return [
             ],
             'errors' => [
                 'pattern_invalid' => 'Folosește {NUMBER} exact o dată, {YEAR} cel mult o dată și niciun alt marcaj între acolade.',
+                'annual_requires_year' => 'Resetarea anuală necesită {YEAR} în modelul numărului.',
                 'invalid_configuration' => 'Introdu un model și o completare valide pentru număr.',
                 'timezone_required' => 'Setează fusul orar al companiei înainte de a folosi {YEAR} sau resetarea anuală.',
             ],

@@ -48,12 +48,21 @@ type OperationalTableProps<Row> = {
 };
 
 const cellClasses: Record<ColumnKind, string> = {
-    identity: 'min-w-44 font-semibold text-foreground',
-    text: 'min-w-40 text-foreground',
+    identity: 'min-w-44 max-w-80 font-semibold text-foreground',
+    text: 'min-w-40 max-w-96 text-foreground',
     data: 'font-data text-[13px] leading-5 tabular-nums',
-    amount: 'font-data text-right text-[13px] leading-5 tabular-nums',
-    status: 'w-px',
-    actions: 'w-px text-right',
+    amount: 'font-data whitespace-nowrap text-right text-[13px] leading-5 tabular-nums',
+    status: 'w-px whitespace-nowrap',
+    actions: 'w-px whitespace-nowrap text-right',
+};
+
+const headClasses: Record<ColumnKind, string | undefined> = {
+    identity: undefined,
+    text: undefined,
+    data: 'whitespace-nowrap',
+    amount: 'whitespace-nowrap text-right',
+    status: 'w-px whitespace-nowrap',
+    actions: 'w-px whitespace-nowrap text-right',
 };
 
 function stateContent(
@@ -125,17 +134,13 @@ export function OperationalTable<Row>({
                 <div className="border-b border-divider p-4">{toolbar}</div>
             )}
 
-            <Table aria-label={ariaLabel} className="min-w-[52rem]">
+            <Table aria-label={ariaLabel}>
                 <TableHeader>
                     <TableRow>
                         {columns.map((column) => (
                             <TableHead
                                 key={column.key}
-                                className={
-                                    column.kind === 'amount'
-                                        ? 'text-right'
-                                        : undefined
-                                }
+                                className={headClasses[column.kind ?? 'text']}
                             >
                                 <MetaLabel>{column.label}</MetaLabel>
                             </TableHead>
@@ -162,7 +167,13 @@ export function OperationalTable<Row>({
                                             cellClasses[column.kind ?? 'text']
                                         }
                                     >
-                                        {column.render(row)}
+                                        {column.kind === 'actions' ? (
+                                            <div className="ml-auto w-max">
+                                                {column.render(row)}
+                                            </div>
+                                        ) : (
+                                            column.render(row)
+                                        )}
                                     </TableCell>
                                 ))}
                             </TableRow>

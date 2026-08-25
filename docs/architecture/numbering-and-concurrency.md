@@ -15,7 +15,7 @@ Each company has separate Quote and Invoice number series. A series supports:
 - Numeric zero-padding from 1 through 12 digits, configured separately from the pattern and defaulting to 4
 - Reset policy: never or company-local calendar year
 
-The default Quote pattern is `Q-{YEAR}-{NUMBER}` and the default Invoice pattern is `I-{YEAR}-{NUMBER}`. These are starting values, not enforced formats: for example, a Company may choose `INV-{NUMBER}`. The presence of `{YEAR}` does not implicitly reset the numeric sequence. Reset behavior is an explicit setting and defaults to never. v1 does not provide arbitrary expressions, multiple counters in one format, month/day tokens or resets, or a numbering rules engine.
+The default Quote pattern is `Q-{YEAR}-{NUMBER}` and the default Invoice pattern is `I-{YEAR}-{NUMBER}`. These are starting values, not enforced formats: for example, a Company may choose `INV-{NUMBER}` with no reset. The presence of `{YEAR}` does not implicitly reset the numeric sequence, but an annual reset requires `{YEAR}` so a restarted counter cannot render the same numbers in different years. Reset behavior is an explicit setting and defaults to never. v1 does not provide arbitrary expressions, multiple counters in one format, month/day tokens or resets, or a numbering rules engine.
 
 The settings preview resolves `{YEAR}` on the server from the configured IANA Company timezone; the browser may reproduce that server-provided preview context but never supplies an authoritative year or falls back to UTC/browser time. Assigned document numbers remain persisted values and do not mutate when the calendar year changes.
 
@@ -91,6 +91,7 @@ Automated integration tests must cover:
 - Quote and Invoice counters remain independent
 - Company counters remain independent
 - Annual-boundary races create one counter row and distinct numbers
+- Annual reset cannot be configured without `{YEAR}` at request, Action, or database boundaries
 - A repeated creation request with the same idempotency key returns the same Draft
 - Transaction failure rolls back the document and counter change together
 - A manual high number is skipped by later automatic allocation when necessary

@@ -533,7 +533,7 @@ Every asynchronous region defines shared loading, empty, partial-error, retry, s
 - selectable-row and bulk-action behavior;
 - pagination and per-page controls;
 - loading, empty, no-results, and error states;
-- responsive minimum widths and horizontal scrolling;
+- content-driven column sizing, responsive minimum widths, and horizontal scrolling;
 - row navigation, keyboard focus, trailing chevron, and overflow action behavior;
 - numeric alignment and secondary-line treatments.
 
@@ -545,12 +545,14 @@ Required behavior:
 - The identifying value remains plain ink rather than a coloured link.
 - The trailing chevron is the persistent navigation cue.
 - The overflow button stops row navigation and owns secondary actions.
-- Number and Customer columns keep usable minimum widths.
+- Columns use content-driven sizing by default; pages do not assign equal or arbitrary percentage widths.
+- Identity and long-text columns keep shared usable minimum and maximum widths, wrapping safely when their content reaches the cap.
+- Status, amount, and action columns remain compact; badges and action groups do not wrap merely to satisfy an artificial column width.
 - Monetary columns align right and use `MoneyValue`.
 - Selected rows use the neutral selection token.
 - Bulk actions appear in the standard ink band.
 - Every present and future table uses the shared `Table`/`OperationalTable` containment boundary; page-level horizontal overflow is prohibited.
-- Long values and action groups wrap within bounded desktop columns. A viewport narrower than the approved readable table width scrolls the table region horizontally; it does not hide totals or crush names.
+- A viewport narrower than the content's readable width scrolls the table region horizontally; it does not hide totals, crush names, stack actions, or widen the document.
 
 Feature-specific column definitions and filters are data configuration. Their appearance is not configurable by the page.
 

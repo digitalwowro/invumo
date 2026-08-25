@@ -130,6 +130,7 @@ final class NumberSeriesTenantIsolationTest extends TestCase
             'control character' => ["Q-\n-{NUMBER}", 4, 'NEVER'],
             'oversized padding' => ['Q-{NUMBER}', 13, 'NEVER'],
             'unknown reset policy' => ['Q-{NUMBER}', 4, 'MONTHLY'],
+            'annual reset without year token' => ['Q-{NUMBER}', 4, 'ANNUAL'],
         ];
     }
 

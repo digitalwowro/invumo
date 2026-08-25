@@ -89,6 +89,15 @@ describe('TaxPresetTable', () => {
         expect(
             screen.getByRole('region', { name: 'Saved tax presets' }),
         ).toHaveClass('max-w-full', 'overflow-x-auto');
+        expect(
+            screen.getByRole('table', { name: 'Saved tax presets' }),
+        ).toHaveClass('table-auto');
+        expect(
+            screen.getByRole('columnheader', { name: 'Name' }),
+        ).not.toHaveClass('w-px');
+        expect(
+            screen.getByRole('columnheader', { name: 'Actions' }),
+        ).toHaveClass('w-px', 'whitespace-nowrap');
         expect(screen.getByText('19.125%')).toBeInTheDocument();
         expect(
             screen.getByRole('button', { name: 'Edit' }),

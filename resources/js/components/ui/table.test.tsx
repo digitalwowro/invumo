@@ -26,7 +26,7 @@ describe("Table", () => {
       "0"
     )
     expect(screen.getByRole("table", { name: "Invoices" })).toHaveClass(
-      "table-fixed"
+      "table-auto"
     )
     expect(screen.getByRole("cell")).toHaveClass("[overflow-wrap:anywhere]")
   })

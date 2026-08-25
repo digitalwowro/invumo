@@ -186,6 +186,16 @@ final class CompanyNumberSeriesHttpTest extends TestCase
             'Folosește {NUMBER} exact o dată',
             $response->getSession()->get('errors')->first('quote.pattern'),
         );
+
+        $this->actingAs($owner)->patch(
+            route('company-number-series.update', $company),
+            $this->configuration(['invoice' => [
+                'pattern' => 'INV-{NUMBER}',
+                'reset_policy' => 'ANNUAL',
+            ]]),
+        )->assertSessionHasErrors([
+            'invoice.pattern' => 'Resetarea anuală necesită {YEAR} în modelul numărului.',
+        ]);
     }
 
     public function test_year_and_annual_changes_require_company_timezone(): void
@@ -215,7 +225,17 @@ final class CompanyNumberSeriesHttpTest extends TestCase
                 'padding' => '5',
                 'reset_policy' => 'ANNUAL',
             ]]),
-        )->assertSessionHasErrors('quote.reset_policy');
+        )->assertSessionHasErrors([
+            'quote.pattern' => 'Annual reset requires {YEAR} in the number pattern.',
+        ]);
+
+        $this->patch(
+            route('company-number-series.update', $company),
+            $this->configuration(['quote' => [
+                'padding' => '5',
+                'reset_policy' => 'ANNUAL',
+            ]]),
+        )->assertSessionHasErrors('quote.pattern');
     }
 
     /** @return array<string, mixed> */

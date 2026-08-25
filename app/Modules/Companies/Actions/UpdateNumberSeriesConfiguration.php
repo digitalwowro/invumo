@@ -113,6 +113,7 @@ final readonly class UpdateNumberSeriesConfiguration
                 ! DocumentNumberPattern::accepts($data->pattern)
                 || $data->padding < DocumentNumberPattern::MIN_PADDING
                 || $data->padding > DocumentNumberPattern::MAX_PADDING
+                || ! $data->resetPolicy->acceptsPattern($data->pattern)
             ) {
                 $invalid[] = "{$data->documentType->key()}.pattern";
             }

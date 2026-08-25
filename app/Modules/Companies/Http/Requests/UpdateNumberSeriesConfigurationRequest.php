@@ -10,6 +10,7 @@ use App\Modules\Companies\Data\NumberSeriesResetPolicy;
 use App\Modules\Companies\Rules\DocumentNumberPatternRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 final class UpdateNumberSeriesConfigurationRequest extends FormRequest
 {
@@ -31,6 +32,32 @@ final class UpdateNumberSeriesConfigurationRequest extends FormRequest
             'invoice.padding' => $this->paddingRules(),
             'invoice.reset_policy' => $this->resetPolicyRules(),
         ];
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            foreach (NumberSeriesDocumentType::cases() as $documentType) {
+                $key = $documentType->key();
+                $pattern = $this->input("{$key}.pattern");
+                $resetPolicy = NumberSeriesResetPolicy::tryFrom(
+                    (string) $this->input("{$key}.reset_policy"),
+                );
+
+                if (
+                    is_string($pattern)
+                    && DocumentNumberPattern::accepts($pattern)
+                    && $resetPolicy !== null
+                    && ! $resetPolicy->acceptsPattern($pattern)
+                ) {
+                    $validator->errors()->add(
+                        "{$key}.pattern",
+                        __('companies_ui.settings.numbering.errors.annual_requires_year'),
+                    );
+                }
+            }
+        }];
     }
 
     /** @return array<string, string> */

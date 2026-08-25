@@ -131,7 +131,7 @@ return [
             'invoice_description' => 'Configure how Invumo numbers future Invoices automatically.',
             'pattern_description' => 'Include {NUMBER} exactly once. {YEAR} is optional and always renders the current Company-local year.',
             'padding_description' => 'Minimum digits shown for {NUMBER}, from 1 to 12. Larger sequence values are never truncated.',
-            'reset_policy_description' => 'A year token does not reset the sequence. Choose Annual only when numbering should restart each Company-local year.',
+            'reset_policy_description' => 'A year token does not reset the sequence. Annual reset requires {YEAR} so numbers remain distinct across years.',
             'preview_label' => 'Current format preview',
             'preview_invalid' => 'Enter a valid pattern and padding to see a preview.',
             'preview_timezone_required' => 'Set the Company timezone before previewing a pattern that uses {YEAR}.',
@@ -157,6 +157,7 @@ return [
             ],
             'errors' => [
                 'pattern_invalid' => 'Use {NUMBER} exactly once, {YEAR} at most once, and no other brace tokens.',
+                'annual_requires_year' => 'Annual reset requires {YEAR} in the number pattern.',
                 'invalid_configuration' => 'Enter a valid number pattern and padding.',
                 'timezone_required' => 'Set the Company timezone before using {YEAR} or annual reset.',
             ],

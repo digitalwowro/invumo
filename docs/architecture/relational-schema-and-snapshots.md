@@ -320,9 +320,9 @@ Common current representation:
 - nullable `customer_id` for incomplete Drafts
 - rendered number, assignment source (`AUTOMATIC` or `MANUAL`), optional series/period/numeric allocation metadata
 - unique client creation/idempotency key within `(company_id, kind)`
-- nullable issue date
+- nullable issue date plus a generated non-null sort date used only for stable keyset pagination (`0001-01-01` represents an unset issue date)
 - nullable currency code, currency precision, and document language
-- optional customer reference / PO number
+- optional customer reference / PO number, trimmed and limited to 120 Unicode characters
 - Terms & Conditions and notes
 - current calculated subtotal, tax total, and total
 - positive monotonic `edit_version`
@@ -336,7 +336,7 @@ Rendered numbers have a non-unique lookup index `(company_id, kind, rendered_num
 - lifecycle: `DRAFT`, `SENT`, `ACCEPTED`, or `REJECTED`
 - nullable non-negative validity-days offset and nullable `valid_until`
 
-The composite foreign key includes the constant kind, so an Invoice base row cannot receive a Quote subtype. If both dates are present, `valid_until >= issue_date` is enforced. Expired remains derived.
+The composite foreign key includes the constant kind, so an Invoice base row cannot receive a Quote subtype. The day offset uses the shared `0..3,652,058` technical envelope. If both dates are present, `valid_until >= issue_date` is enforced by application validation and a deferred cross-table constraint trigger. Expired remains derived from the Company-local date and is never persisted as a lifecycle value.
 
 ### `invoices`
 
@@ -406,12 +406,13 @@ Committed line positions are a dense one-based sequence with no gaps. PostgreSQL
 
 The position constraint is `DEFERRABLE INITIALLY IMMEDIATE`. Ordinary direct writes therefore retain statement-level collision checking. The owning save Action uses this exact short transaction boundary:
 
-1. lock the Document row and reject a submitted version that is no longer current;
-2. lock submitted Tax-preset sources, submitted Product/Service sources, and then all persisted document lines, each set in stable UUID order; validate source availability and that the aggregate command may update/delete only the complete owned line set;
-3. execute `SET CONSTRAINTS document_lines_company_document_position_unique DEFERRED`;
-4. reconcile inserts, UUID-addressed updates, deletions, and the complete dense `1..n` final order without using `(company_id, document_id, position)` as an `ON CONFLICT` arbiter;
-5. execute `SET CONSTRAINTS document_lines_company_document_position_unique IMMEDIATE` immediately after the last line write, forcing final uniqueness validation at the line boundary rather than at transaction commit;
-6. persist the authoritative totals/document fields, increment the aggregate version once, record audit, and commit.
+1. lock Company settings, currencies, Tax presets, and Bank accounts before the aggregate, with each dependent configuration set in stable UUID order; if Customer sources must be reapplied, consume that already-locked configuration and then lock the Customer plus its contacts/recipients;
+2. lock the Document row and reject a submitted version that is no longer current;
+3. lock submitted Product/Service sources and then all persisted document lines, each set in stable UUID order; validate source availability and that the aggregate command may update/delete only the complete owned line set;
+4. execute `SET CONSTRAINTS document_lines_company_document_position_unique DEFERRED`;
+5. reconcile inserts, UUID-addressed updates, deletions, and the complete dense `1..n` final order without using `(company_id, document_id, position)` as an `ON CONFLICT` arbiter;
+6. execute `SET CONSTRAINTS document_lines_company_document_position_unique IMMEDIATE` immediately after the last line write, forcing final uniqueness validation at the line boundary rather than at transaction commit;
+7. persist the authoritative totals/document fields, increment the aggregate version once, record audit, and commit.
 
 This explicit deferred/immediate bracket avoids temporary-position values and extra rewrite passes without widening deferred checking across later document mutations. It also preserves the existing single aggregate-save contract instead of adding a second reorder transaction that could race with other editor changes. Two concurrent saves carrying the same version serialize on the Document lock; the first succeeds and increments the version, while the second fails stale before touching lines. Phase 5 Batch 5B implements this exact boundary and its integration coverage includes swaps, first/last moves, insert/delete compaction, malformed or cross-Document line sets, direct duplicate rejection, exactly-one-wins concurrent saves, stale editors, and atomic rollback.
 
@@ -670,6 +671,8 @@ At minimum:
 
 Use keyset pagination for growing operational lists. Offset pagination is acceptable only for bounded settings lists.
 
+Nullable business sort fields must not be used directly as cursor parameters. The Quote list uses the stored generated `issue_sort_date = coalesce(issue_date, DATE '0001-01-01')` plus Document UUID, so every cursor predicate references real non-null columns and remains valid on PostgreSQL after the first page.
+
 The v1 partial-search implementation enables PostgreSQL's official `pg_trgm` extension and uses trigram indexes for Customer names/references, Product names/codes/descriptions, document number/customer reference, and recurring-template internal name. Company filters and status/date indexes remain separate and can be combined by PostgreSQL.
 
 ### Lock order
@@ -681,6 +684,8 @@ Named actions acquire locks in this order when the records apply:
 3. primary aggregate (Quote, Invoice, or recurring template);
 4. dependent provenance/transaction/reminder rows in stable UUID order;
 5. audit and `job_dispatches` inserts.
+
+Quote Draft creation and update use one shared configuration lock boundary: Company settings, all currencies, all Tax presets, and all Bank accounts are locked before the Document aggregate. Customer resolution and source application consume those locked rows instead of conditionally reacquiring configuration after the Document lock. This order applies whether or not the request carries a Customer confirmation token.
 
 Ownership transfer uses its own control-plane specialization: lock the Company, the current/destination Accounts in stable UUID order, then the current/destination memberships in stable UUID order before changing the former-Owner outcome, sole Owner role, and `owning_account_id` in one transaction. The deferred matching-Owner constraint validates the final state at commit.
 

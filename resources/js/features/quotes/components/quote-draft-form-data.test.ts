@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+    addCalendarDays,
     blankQuoteLine,
+    changeQuoteDetail,
     customerFromQuote,
     quoteFormData,
 } from '@/features/quotes/components/quote-draft-form-data';
@@ -11,6 +13,11 @@ const quote: QuoteDraft = {
     id: 'quote-1',
     number: 'Q-2026-0001',
     issueDate: '2026-08-26',
+    validityDays: 30,
+    validUntil: '2026-09-25',
+    customerReference: 'PO-42',
+    lifecycle: 'DRAFT',
+    status: 'DRAFT',
     customer: { id: 'customer-1', displayName: 'Customer SRL' },
     currencyCode: 'RON',
     currencyPrecision: 2,
@@ -72,6 +79,19 @@ describe('Quote Draft source form data', () => {
         ).toMatchObject({
             productServiceId: 'product-1',
             taxPresetId: null,
+        });
+    });
+
+    it('derives calendar validity without crossing the supported year range', () => {
+        expect(addCalendarDays('2026-12-31', '1')).toBe('2027-01-01');
+        expect(addCalendarDays('2028-02-28', '1')).toBe('2028-02-29');
+        expect(addCalendarDays('9999-12-31', '1')).toBe('');
+
+        expect(
+            changeQuoteDetail(quoteFormData(quote), 'validityDays', '45'),
+        ).toMatchObject({
+            validityDays: '45',
+            validUntil: '2026-10-10',
         });
     });
 });

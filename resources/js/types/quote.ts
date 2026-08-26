@@ -17,6 +17,8 @@ import type {
 
 export type QuotePeriodUnit = DocumentPeriodUnit;
 export type QuoteLine = DocumentLineDraft;
+export type QuoteLifecycle = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED';
+export type QuoteDisplayStatus = QuoteLifecycle | 'EXPIRED';
 
 export type QuoteTaxDefault = {
     id: string | null;
@@ -76,6 +78,11 @@ export type QuoteDraft = {
     id: string;
     number: string;
     issueDate: string | null;
+    validityDays: number | null;
+    validUntil: string | null;
+    customerReference: string | null;
+    lifecycle: QuoteLifecycle;
+    status: QuoteDisplayStatus;
     customer: { id: string; displayName: string } | null;
     currencyCode: string | null;
     currencyPrecision: number | null;
@@ -100,6 +107,42 @@ export type QuoteDraft = {
 export type QuoteLimits = DocumentLineLimits & {
     termsAndConditions: number;
     notes: number;
+    customerReference: number;
+    maxDayOffset: number;
+};
+
+export type QuoteRow = {
+    id: string;
+    number: string;
+    customerName: string | null;
+    customerReference: string | null;
+    issueDate: string | null;
+    validUntil: string | null;
+    lifecycle: QuoteLifecycle;
+    status: QuoteDisplayStatus;
+    total: string | null;
+    currencyCode: string | null;
+    editUrl: string;
+    deleteUrl: string;
+    deleteHighRisk: boolean;
+    canDelete: boolean;
+};
+
+export type QuoteCursorPage = {
+    items: QuoteRow[];
+    previousUrl: string | null;
+    nextUrl: string | null;
+};
+
+export type QuoteFilters = {
+    q: string;
+    status: 'all' | QuoteDisplayStatus;
+    issueFrom: string;
+    issueTo: string;
+    validFrom: string;
+    validTo: string;
+    sort: 'issue_desc' | 'issue_asc' | 'recent';
+    perPage: number;
 };
 
 export type QuoteCustomerFormOptions = {
@@ -140,6 +183,9 @@ export type QuoteTranslations = {
         currency_required: string;
         customer_section: string;
         customer_description: string;
+        details_section: string;
+        details_description: string;
+        customer_reference_description: string;
         select_customer: string;
         change_customer: string;
         clear_customer: string;
@@ -187,6 +233,38 @@ export type QuoteTranslations = {
         fields: Record<string, string>;
         periods: Record<QuotePeriodUnit, string>;
     };
+    index: {
+        head_title: string;
+        title: string;
+        description: string;
+        create: string;
+        search_label: string;
+        search_placeholder: string;
+        status_label: string;
+        issue_from: string;
+        issue_to: string;
+        valid_from: string;
+        valid_to: string;
+        sort_label: string;
+        per_page_label: string;
+        clear: string;
+        previous: string;
+        next: string;
+        not_available: string;
+        loading: string;
+        empty_title: string;
+        empty_description: string;
+        no_results_title: string;
+        no_results_description: string;
+        error_title: string;
+        error_description: string;
+        columns: Record<string, string>;
+        status_options: Record<string, string>;
+        sort_options: Record<string, string>;
+        statuses: Record<QuoteDisplayStatus, string>;
+    };
+    lifecycle: Record<string, string>;
+    deletion: Record<string, string>;
     feedback: Record<string, string>;
     errors: Record<string, string>;
 };

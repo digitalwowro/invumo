@@ -2,6 +2,7 @@ import type {
     QuoteCustomerSelection,
     QuoteDraft,
     QuoteLine,
+    QuoteProductDefaults,
     QuoteTaxDefault,
 } from '@/types/quote';
 
@@ -11,6 +12,10 @@ export type QuoteEditorData = {
     customerConfirmationToken: string | null;
     currencyCode: string | null;
     documentLanguage: string | null;
+    issueDate: string;
+    validityDays: string;
+    validUntil: string;
+    customerReference: string;
     bankAccountId: string | null;
     termsAndConditions: string;
     notes: string;
@@ -41,6 +46,10 @@ export const quoteFormData = (quote: QuoteDraft): QuoteEditorData => ({
     customerConfirmationToken: null,
     currencyCode: quote.currencyCode,
     documentLanguage: quote.documentLanguage,
+    issueDate: quote.issueDate ?? '',
+    validityDays: quote.validityDays === null ? '' : String(quote.validityDays),
+    validUntil: quote.validUntil ?? '',
+    customerReference: quote.customerReference ?? '',
     bankAccountId: quote.bankAccount?.id ?? null,
     termsAndConditions: quote.termsAndConditions ?? '',
     notes: quote.notes ?? '',
@@ -70,3 +79,74 @@ export const customerFromQuote = (
     recipientCount: quote.recipientCount,
     confirmationToken: null,
 });
+
+export const applyCustomerDefaults = (
+    current: QuoteEditorData,
+    selection: QuoteCustomerSelection,
+): QuoteEditorData => ({
+    ...current,
+    customerId: selection.customerId,
+    customerConfirmationToken: selection.confirmationToken,
+    currencyCode: selection.currencyCode,
+    documentLanguage: selection.documentLanguage,
+});
+
+export const applyProductDefaults = (
+    lines: QuoteLine[],
+    index: number,
+    defaults: QuoteProductDefaults,
+    fallbackTax: QuoteTaxDefault | null,
+): QuoteLine[] =>
+    lines.map((line, itemIndex) =>
+        itemIndex === index
+            ? {
+                  ...line,
+                  productServiceId: defaults.sourceProductServiceId,
+                  description: defaults.description,
+                  itemPrice: defaults.unitPrice ?? '',
+                  unit: defaults.unit ?? '',
+                  periodUnit: defaults.periodUnit,
+                  taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
+                  taxPercentage:
+                      defaults.tax?.percentage ??
+                      fallbackTax?.percentage ??
+                      '0',
+                  taxPresetId:
+                      defaults.tax?.sourceTaxPresetId ??
+                      fallbackTax?.id ??
+                      null,
+                  priceStatus: defaults.priceStatus,
+              }
+            : line,
+    );
+
+export function addCalendarDays(issueDate: string, days: string): string {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(issueDate) || !/^\d+$/.test(days)) {
+        return '';
+    }
+
+    const date = new Date(`${issueDate}T00:00:00.000Z`);
+    const offset = Number(days);
+
+    if (Number.isNaN(date.valueOf()) || !Number.isSafeInteger(offset)) {
+        return '';
+    }
+
+    date.setUTCDate(date.getUTCDate() + offset);
+
+    return date.getUTCFullYear() > 9999 ? '' : date.toISOString().slice(0, 10);
+}
+
+export function changeQuoteDetail(
+    current: QuoteEditorData,
+    field: 'issueDate' | 'validityDays' | 'validUntil' | 'customerReference',
+    value: string,
+): QuoteEditorData {
+    const next = { ...current, [field]: value };
+
+    if (field === 'issueDate' || field === 'validityDays') {
+        next.validUntil = addCalendarDays(next.issueDate, next.validityDays);
+    }
+
+    return next;
+}

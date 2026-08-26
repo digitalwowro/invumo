@@ -1,9 +1,13 @@
 import { Head } from '@inertiajs/react';
-import { Stack } from '@/components/app/layout';
+import { ActionLink } from '@/components/app/action-link';
+import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
+import { StatusBadge } from '@/components/domain/status-badge';
+import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
+import { QuoteLifecycleDialog } from '@/features/quotes/components/quote-lifecycle-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
@@ -18,11 +22,16 @@ import type {
     QuoteSourceUrls,
     QuoteTranslations,
 } from '@/types/quote';
+import type { Status } from '@/types/status';
 
 type Props = {
     quote: QuoteDraft;
     limits: QuoteLimits;
     updateUrl: string;
+    lifecycleUrl: string;
+    deleteUrl: string;
+    indexUrl: string;
+    quoteAbilities: { correctLifecycle: boolean; delete: boolean };
     sourceUrls: QuoteSourceUrls;
     inlineCustomerStoreUrl: string;
     inlineProductStoreUrl: string;
@@ -44,6 +53,10 @@ export default function EditQuote({
     quote,
     limits,
     updateUrl,
+    lifecycleUrl,
+    deleteUrl,
+    indexUrl,
+    quoteAbilities,
     status,
     translations,
     customerTranslations,
@@ -58,6 +71,34 @@ export default function EditQuote({
                     <PageHeader
                         title={`${translations.edit.title} ${quote.number}`}
                         subtitle={translations.edit.description}
+                        actions={
+                            <>
+                                <StatusBadge
+                                    status={
+                                        quote.status.toLowerCase() as Status
+                                    }
+                                    label={
+                                        translations.index.statuses[
+                                            quote.status
+                                        ]
+                                    }
+                                />
+                                {quoteAbilities.correctLifecycle && (
+                                    <QuoteLifecycleDialog
+                                        lifecycle={quote.lifecycle}
+                                        url={lifecycleUrl}
+                                        labels={translations.lifecycle}
+                                    />
+                                )}
+                                {quoteAbilities.delete && (
+                                    <QuoteDeleteDialog
+                                        url={deleteUrl}
+                                        highRisk={quote.lifecycle !== 'DRAFT'}
+                                        labels={translations.deletion}
+                                    />
+                                )}
+                            </>
+                        }
                     />
                     {status && <SystemMessage title={status} tone="money" />}
                     <SystemMessage
@@ -79,6 +120,11 @@ export default function EditQuote({
                         catalogLabels={catalogTranslations}
                         {...sourceProps}
                     />
+                    <Cluster>
+                        <ActionLink href={indexUrl} variant="ghost">
+                            {translations.index.title}
+                        </ActionLink>
+                    </Cluster>
                 </Stack>
             </PageFrame>
         </>

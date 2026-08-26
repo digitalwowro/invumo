@@ -77,7 +77,7 @@ final readonly class CompanyContextProps
             'dashboardUrl' => route('companies.dashboard', $membership->company_id, false),
             'customersUrl' => route('customers.index', $membership->company_id, false),
             'catalogUrl' => route('catalog.index', $membership->company_id, false),
-            'quotesUrl' => route('quotes.create', $membership->company_id, false),
+            'quotesUrl' => route('quotes.index', $membership->company_id, false),
             'settingsUrl' => $canManageSettings
                 ? route('company-settings.profile.edit', $membership->company_id, false)
                 : route('company-members.index', $membership->company_id, false),

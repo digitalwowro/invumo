@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Modules\Quotes\Exceptions;
+
+use DomainException;
+
+final class QuoteDeletionException extends DomainException
+{
+    public static function confirmationRequired(): self
+    {
+        return new self('delete_confirmation_required');
+    }
+
+    public static function highRiskConfirmationRequired(): self
+    {
+        return new self('delete_high_risk_confirmation_required');
+    }
+
+    public function reason(): string
+    {
+        return $this->getMessage();
+    }
+}

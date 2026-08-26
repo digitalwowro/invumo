@@ -2,6 +2,7 @@
 
 namespace App\Modules\Quotes\Http\Requests;
 
+use App\Foundation\Documents\DocumentCalendar;
 use App\Foundation\Documents\DocumentFieldLimits as DocumentContentLimits;
 use App\Foundation\Localization\SupportedLocales;
 use App\Foundation\Money\DecimalRules;
@@ -12,6 +13,7 @@ use App\Modules\Quotes\Data\QuoteDraftData;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 
 final class UpdateQuoteDraftRequest extends FormRequest
@@ -30,6 +32,16 @@ final class UpdateQuoteDraftRequest extends FormRequest
             'customer_confirmation_token' => ['present', 'nullable', 'string', 'size:64', 'regex:/^[0-9a-f]{64}$/'],
             'currency_code' => ['present', 'nullable', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
             'document_language' => ['present', 'nullable', 'string', Rule::in(SupportedLocales::all())],
+            'issue_date' => ['present', 'nullable', 'date_format:Y-m-d'],
+            'validity_days' => [
+                'present', 'nullable', 'integer', 'min:0',
+                'max:'.DocumentContentLimits::MAX_CALENDAR_DAY_OFFSET,
+            ],
+            'valid_until' => ['present', 'nullable', 'date_format:Y-m-d'],
+            'customer_reference' => [
+                'present', 'nullable', 'string',
+                'max:'.DocumentContentLimits::CUSTOMER_REFERENCE_CHARACTERS,
+            ],
             'bank_account_id' => ['present', 'nullable', 'uuid'],
             'terms_and_conditions' => ['present', 'nullable', 'string', 'max:'.DocumentContentLimits::TERMS_AND_CONDITIONS_CHARACTERS],
             'notes' => ['present', 'nullable', 'string', 'max:'.DocumentContentLimits::NOTES_CHARACTERS],
@@ -66,6 +78,12 @@ final class UpdateQuoteDraftRequest extends FormRequest
             ),
             currencyCode: $this->stringOrNull($this->validated('currency_code')),
             documentLanguage: $this->stringOrNull($this->validated('document_language')),
+            issueDate: $this->stringOrNull($this->validated('issue_date')),
+            validityDays: $this->validated('validity_days') === null
+                ? null
+                : (int) $this->validated('validity_days'),
+            validUntil: $this->stringOrNull($this->validated('valid_until')),
+            customerReference: $this->stringOrNull($this->validated('customer_reference')),
             bankAccountId: $this->stringOrNull($this->validated('bank_account_id')),
             termsAndConditions: $this->stringOrNull($this->validated('terms_and_conditions')),
             notes: $this->stringOrNull($this->validated('notes')),
@@ -95,6 +113,10 @@ final class UpdateQuoteDraftRequest extends FormRequest
             'customer_confirmation_token' => $this->nullableInput('customer_confirmation_token'),
             'currency_code' => $this->uppercaseInput('currency_code'),
             'document_language' => $this->nullableInput('document_language'),
+            'issue_date' => $this->nullableInput('issue_date'),
+            'validity_days' => $this->nullableInput('validity_days'),
+            'valid_until' => $this->nullableInput('valid_until'),
+            'customer_reference' => $this->nullableInput('customer_reference'),
             'bank_account_id' => $this->nullableInput('bank_account_id'),
             'terms_and_conditions' => $this->nullableInput('terms_and_conditions', false),
             'notes' => $this->nullableInput('notes', false),
@@ -115,6 +137,28 @@ final class UpdateQuoteDraftRequest extends FormRequest
                 return $line;
             }, $lines) : $lines,
         ]);
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $issueDate = $this->input('issue_date');
+            $validUntil = $this->input('valid_until');
+            $validityDays = $this->input('validity_days');
+
+            if (is_string($issueDate) && is_numeric($validityDays)) {
+                try {
+                    DocumentCalendar::addDays($issueDate, (int) $validityDays);
+                } catch (InvalidArgumentException) {
+                    $validator->errors()->add('validity_days', __('quotes_ui.errors.validity_out_of_range'));
+                }
+            }
+
+            if (is_string($issueDate) && is_string($validUntil) && $validUntil < $issueDate) {
+                $validator->errors()->add('valid_until', __('quotes_ui.errors.valid_until_before_issue'));
+            }
+        }];
     }
 
     private function decimal(string $kind): Closure

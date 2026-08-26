@@ -179,3 +179,59 @@ export function DestructiveFormDialog({
         </Dialog>
     );
 }
+
+type FormDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    triggerLabel: string;
+    title: string;
+    description: string;
+    cancelLabel: string;
+    confirmLabel: string;
+    closeLabel: string;
+    formId: string;
+    processing: boolean;
+    children: ReactNode;
+};
+
+export function FormDialog({
+    open,
+    onOpenChange,
+    triggerLabel,
+    title,
+    description,
+    cancelLabel,
+    confirmLabel,
+    closeLabel,
+    formId,
+    processing,
+    children,
+}: FormDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>
+                <Button type="button" variant="secondary">
+                    {triggerLabel}
+                </Button>
+            </DialogTrigger>
+            <DialogContent closeLabel={closeLabel}>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <div className="min-h-0 overflow-y-auto">{children}</div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                            {cancelLabel}
+                        </Button>
+                    </DialogClose>
+                    <Button type="submit" form={formId} disabled={processing}>
+                        {processing && <Spinner />}
+                        {confirmLabel}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

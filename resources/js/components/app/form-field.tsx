@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 type SafeInputProps = Omit<
     ComponentProps<typeof Input>,
     'className' | 'style' | 'id'
->;
+> & { 'data-test'?: string };
 
 type BaseFieldProps = {
     id?: string;

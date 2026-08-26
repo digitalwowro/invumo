@@ -3,9 +3,9 @@
 namespace App\Modules\Documents\Actions;
 
 use App\Modules\Catalog\Models\ProductService;
-use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Documents\Data\DocumentLineData;
 use App\Modules\Documents\Data\DocumentSourceFailure;
+use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use App\Modules\Documents\Models\DocumentLine;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -15,16 +15,14 @@ final class LockDocumentLineSources
      * @param  list<DocumentLineData>  $lines
      * @return Collection<int, DocumentLine>
      */
-    public function lockSourcesAndLines(string $documentId, array $lines): Collection
-    {
+    public function lockSourcesAndLines(
+        string $documentId,
+        array $lines,
+        LockedDocumentConfiguration $configuration,
+    ): Collection {
         $productIds = $this->ids($lines, fn (DocumentLineData $line): ?string => $line->productServiceId);
         $taxIds = $this->ids($lines, fn (DocumentLineData $line): ?string => $line->taxPresetId);
-        $foundTaxes = TaxPreset::query()
-            ->whereKey($taxIds)
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get()
-            ->keyBy('id');
+        $foundTaxes = $configuration->taxPresets->whereIn('id', $taxIds)->keyBy('id');
         $foundProducts = ProductService::query()
             ->whereKey($productIds)
             ->orderBy('id')

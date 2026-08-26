@@ -2,12 +2,8 @@
 
 namespace App\Modules\Quotes\Actions;
 
-use App\Foundation\Money\DecimalRules;
-use App\Foundation\Money\DocumentCalculator;
-use App\Foundation\Money\LineAmounts;
-use App\Foundation\Money\LineCalculationInput;
-use App\Foundation\Money\LineCalculator;
-use App\Foundation\Money\PeriodUnit;
+use App\Foundation\Documents\DocumentCalendar;
+use App\Foundation\Documents\DocumentFieldLimits as DocumentContentLimits;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
@@ -21,14 +17,15 @@ use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
 use App\Modules\Documents\Actions\ApplyDocumentCustomer;
 use App\Modules\Documents\Actions\ApplyDocumentDraftSources;
+use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Actions\LockDocumentLineSources;
-use App\Modules\Documents\Data\DocumentFieldLimits;
+use App\Modules\Documents\Actions\PersistDocumentLines;
 use App\Modules\Documents\Data\DocumentKind;
-use App\Modules\Documents\Data\DocumentLineData;
+use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use App\Modules\Documents\Models\Document;
-use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Quotes\Data\QuoteDraftData;
 use App\Modules\Quotes\Exceptions\QuoteDraftException;
+use App\Modules\Quotes\Models\Quote;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -37,12 +34,12 @@ final readonly class UpdateQuoteDraft
     public function __construct(
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
-        private LineCalculator $lineCalculator,
-        private DocumentCalculator $documentCalculator,
         private ResolveDocumentCustomer $resolveCustomer,
+        private LockDocumentConfiguration $lockConfiguration,
         private ApplyDocumentCustomer $applyCustomer,
         private ApplyDocumentDraftSources $applyDraftSources,
         private LockDocumentLineSources $sourceGuard,
+        private PersistDocumentLines $persistLines,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -61,7 +58,8 @@ final readonly class UpdateQuoteDraft
     private function update(Company $company, User $actor, string $documentId, QuoteDraftData $data): Document
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageQuotes);
-        $selection = $this->customerSelection($data);
+        $configuration = $this->lockConfiguration->handle();
+        $selection = $this->customerSelection($data, $configuration);
         $document = Document::query()
             ->whereKey($documentId)
             ->where('kind', DocumentKind::Quote)
@@ -72,11 +70,19 @@ final readonly class UpdateQuoteDraft
             throw QuoteDraftException::stale();
         }
 
+        $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $this->assertValidDates($data);
+        $changedFields = $this->changedFields($document, $quote, $data, $selection !== null);
+
         if ($selection === null && $document->customer_id !== $data->customerId) {
             throw QuoteDraftException::customerConfirmationRequired();
         }
 
-        $persisted = $this->sourceGuard->lockSourcesAndLines($document->id, $data->lines);
+        $persisted = $this->sourceGuard->lockSourcesAndLines(
+            $document->id,
+            $data->lines,
+            $configuration,
+        );
 
         if ($selection instanceof ResolvedDocumentCustomer) {
             $this->applyCustomer->handle($document, $selection);
@@ -89,59 +95,39 @@ final readonly class UpdateQuoteDraft
             $data->bankAccountId,
             $data->termsAndConditions,
             $data->notes,
+            $configuration,
         );
-
-        $submittedIds = array_values(array_filter(array_map(
-            fn (DocumentLineData $line): ?string => $line->id,
-            $data->lines,
-        )));
-
-        if (count($submittedIds) !== count(array_unique($submittedIds))
-            || array_diff($submittedIds, $persisted->modelKeys()) !== []) {
-            throw QuoteDraftException::lineSetInvalid();
-        }
+        $document->fill([
+            'issue_date' => $data->issueDate,
+            'customer_reference' => $data->customerReference,
+        ]);
 
         $connection = DB::connection(config('database.tenant_connection'));
-        $connection->statement('SET CONSTRAINTS document_lines_company_document_position_unique DEFERRED');
-        $amounts = [];
-        $retainedIds = [];
+        $linePersistence = $this->persistLines->handle($document, $persisted, $data->lines);
 
-        foreach ($data->lines as $index => $lineData) {
-            $line = $lineData->id === null
-                ? new DocumentLine
-                : $persisted->firstWhere('id', $lineData->id);
-
-            if (! $line instanceof DocumentLine) {
-                throw QuoteDraftException::lineSetInvalid();
-            }
-
-            [$attributes, $calculation] = $this->lineAttributes($lineData, $document->currency_precision);
-            $line->fill(['document_id' => $document->id, 'position' => $index + 1, ...$attributes]);
-            $line->save();
-            $retainedIds[] = $line->id;
-
-            if ($calculation instanceof LineAmounts) {
-                $amounts[] = $calculation;
-            }
-        }
-
-        DocumentLine::query()
-            ->where('document_id', $document->id)
-            ->whereNotIn('id', $retainedIds)
-            ->delete();
-
-        $connection->statement('SET CONSTRAINTS document_lines_company_document_position_unique IMMEDIATE');
-        $totals = $document->currency_precision === null
-            ? ['grand_subtotal' => '0', 'tax_amount' => '0', 'final_total' => '0']
-            : $this->documentCalculator->calculate($amounts, $document->currency_precision)->toArray();
-
+        $connection->statement(<<<'SQL'
+            SET CONSTRAINTS
+                quote_validity_integrity_trigger,
+                document_quote_validity_integrity_trigger
+            DEFERRED
+            SQL);
         $document->update([
-            'subtotal' => $totals['grand_subtotal'],
-            'tax_total' => $totals['tax_amount'],
-            'total' => $totals['final_total'],
+            'subtotal' => $linePersistence->subtotal,
+            'tax_total' => $linePersistence->taxTotal,
+            'total' => $linePersistence->total,
             'edit_version' => $document->edit_version + 1,
             'content_version' => $document->content_version + 1,
         ]);
+        $quote->update([
+            'validity_days' => $data->validityDays,
+            'valid_until' => $data->validUntil,
+        ]);
+        $connection->statement(<<<'SQL'
+            SET CONSTRAINTS
+                quote_validity_integrity_trigger,
+                document_quote_validity_integrity_trigger
+            IMMEDIATE
+            SQL);
 
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
@@ -151,98 +137,34 @@ final readonly class UpdateQuoteDraft
             targetId: $document->id,
             after: AuditPayload::fromAllowedFields([
                 'line_count' => count($data->lines),
-                'complete_line_count' => count($amounts),
+                'complete_line_count' => $linePersistence->completeLineCount,
                 'edit_version' => $document->edit_version,
                 'customer_selection_applied' => $selection !== null,
-            ], ['line_count', 'complete_line_count', 'edit_version', 'customer_selection_applied']),
+                'changed_fields' => $changedFields,
+            ], [
+                'line_count', 'complete_line_count', 'edit_version',
+                'customer_selection_applied', 'changed_fields',
+            ]),
         ));
 
         return $document->refresh();
     }
 
-    /** @return array{array<string, mixed>, LineAmounts|null} */
-    private function lineAttributes(DocumentLineData $data, ?int $precision): array
-    {
-        try {
-            if ($data->itemPrice !== null) {
-                DecimalRules::moneySource($data->itemPrice);
-            }
-            if ($data->quantity !== null) {
-                DecimalRules::quantity($data->quantity);
-            }
-            if ($data->periodQuantity !== null) {
-                DecimalRules::quantity($data->periodQuantity);
-            }
-            DecimalRules::percentage($data->discountPercentage, true);
-            DecimalRules::percentage($data->taxPercentage);
-
-            if (($data->periodUnit === PeriodUnit::None && $data->periodQuantity !== null)
-                || ! $this->validText($data->description, DocumentFieldLimits::DESCRIPTION, false)
-                || ! $this->validText($data->unit, DocumentFieldLimits::UNIT)
-                || ! $this->validText($data->taxName, DocumentFieldLimits::TAX_NAME)) {
-                throw new InvalidArgumentException;
-            }
-        } catch (InvalidArgumentException) {
-            throw QuoteDraftException::lineInvalid();
-        }
-
-        $complete = $precision !== null
-            && $data->itemPrice !== null
-            && $data->quantity !== null
-            && ($data->periodUnit === PeriodUnit::None || $data->periodQuantity !== null);
-
-        $calculation = $complete ? $this->lineCalculator->calculate(new LineCalculationInput(
-            unitPrice: (string) $data->itemPrice,
-            quantity: (string) $data->quantity,
-            periodUnit: $data->periodUnit,
-            periodQuantity: $data->periodQuantity,
-            discountPercentage: $data->discountPercentage,
-            taxPercentage: $data->taxPercentage,
-            currencyPrecision: $precision,
-        )) : null;
-
-        return [[
-            'product_service_id' => $data->productServiceId,
-            'description' => $data->description,
-            'item_price' => $data->itemPrice,
-            'quantity' => $data->quantity,
-            'unit' => $data->unit,
-            'period_unit' => $data->periodUnit,
-            'period_quantity' => $data->periodQuantity,
-            'discount_percentage' => $data->discountPercentage,
-            'tax_name' => $data->taxName,
-            'tax_percentage' => $data->taxPercentage,
-            'tax_preset_id' => $data->taxPresetId,
-            ...$this->nullableAmounts($calculation),
-        ], $calculation];
-    }
-
-    private function customerSelection(QuoteDraftData $data): ?ResolvedDocumentCustomer
-    {
+    private function customerSelection(
+        QuoteDraftData $data,
+        LockedDocumentConfiguration $configuration,
+    ): ?ResolvedDocumentCustomer {
         if ($data->customerConfirmationToken === null) {
             return null;
         }
 
-        $selection = $this->resolveCustomer->for($data->customerId, true);
+        $selection = $this->resolveCustomer->forLocked($data->customerId, $configuration);
 
         if (! hash_equals($selection->confirmationToken, $data->customerConfirmationToken)) {
             throw QuoteDraftException::customerDefaultsChanged();
         }
 
         return $selection;
-    }
-
-    /** @return array<string, string|null> */
-    private function nullableAmounts(?LineAmounts $amounts): array
-    {
-        return $amounts?->toArray() ?? [
-            'items_subtotal' => null,
-            'items_total' => null,
-            'discount_amount' => null,
-            'grand_subtotal' => null,
-            'tax_amount' => null,
-            'final_line_total' => null,
-        ];
     }
 
     private function validText(?string $value, int $maximum, bool $trimmed = true): bool
@@ -252,5 +174,52 @@ final readonly class UpdateQuoteDraft
             && mb_strlen($value) <= $maximum
             && (! $trimmed || trim($value) === $value)
         );
+    }
+
+    private function assertValidDates(QuoteDraftData $data): void
+    {
+        try {
+            if ($data->issueDate !== null && $data->validityDays !== null) {
+                DocumentCalendar::addDays($data->issueDate, $data->validityDays);
+            }
+        } catch (InvalidArgumentException) {
+            throw QuoteDraftException::detailsInvalid();
+        }
+
+        if ($data->issueDate !== null
+            && $data->validUntil !== null
+            && $data->validUntil < $data->issueDate) {
+            throw QuoteDraftException::detailsInvalid();
+        }
+
+        if (! $this->validText(
+            $data->customerReference,
+            DocumentContentLimits::CUSTOMER_REFERENCE_CHARACTERS,
+        )) {
+            throw QuoteDraftException::detailsInvalid();
+        }
+    }
+
+    /** @return list<string> */
+    private function changedFields(
+        Document $document,
+        Quote $quote,
+        QuoteDraftData $data,
+        bool $customerSelectionApplied,
+    ): array {
+        $changed = [
+            'customer_id' => $customerSelectionApplied,
+            'currency_code' => $document->currency_code !== $data->currencyCode,
+            'document_language' => $document->document_language !== $data->documentLanguage,
+            'issue_date' => $document->issue_date?->toDateString() !== $data->issueDate,
+            'validity_days' => $quote->validity_days !== $data->validityDays,
+            'valid_until' => $quote->valid_until?->toDateString() !== $data->validUntil,
+            'customer_reference' => $document->customer_reference !== $data->customerReference,
+            'terms_and_conditions' => $document->terms_and_conditions !== $data->termsAndConditions,
+            'notes' => $document->notes !== $data->notes,
+            'lines' => true,
+        ];
+
+        return array_keys(array_filter($changed));
     }
 }

@@ -7,7 +7,11 @@ import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { QuoteCustomerControls } from '@/features/quotes/components/quote-customer-controls';
 import { QuoteDefaultsSection } from '@/features/quotes/components/quote-defaults-section';
+import { QuoteDetailsSection } from '@/features/quotes/components/quote-details-section';
 import {
+    applyCustomerDefaults,
+    applyProductDefaults,
+    changeQuoteDetail,
     customerFromQuote,
     quoteFormData,
 } from '@/features/quotes/components/quote-draft-form-data';
@@ -86,42 +90,12 @@ export function QuoteDraftEditor(props: Props) {
     const applyCustomer = (selection: QuoteCustomerSelection) => {
         setCustomer(selection);
         setPrecision(selection.currencyPrecision);
-        form.setData((current) => ({
-            ...current,
-            customerId: selection.customerId,
-            customerConfirmationToken: selection.confirmationToken,
-            currencyCode: selection.currencyCode,
-            documentLanguage: selection.documentLanguage,
-        }));
+        form.setData((current) => applyCustomerDefaults(current, selection));
     };
 
     const applyProduct = (index: number, defaults: QuoteProductDefaults) => {
         changeLines((lines) =>
-            lines.map((line, itemIndex) =>
-                itemIndex === index
-                    ? {
-                          ...line,
-                          productServiceId: defaults.sourceProductServiceId,
-                          description: defaults.description,
-                          itemPrice: defaults.unitPrice ?? '',
-                          unit: defaults.unit ?? '',
-                          periodUnit: defaults.periodUnit,
-                          taxName:
-                              defaults.tax?.name ??
-                              customer.taxDefault?.name ??
-                              '',
-                          taxPercentage:
-                              defaults.tax?.percentage ??
-                              customer.taxDefault?.percentage ??
-                              '0',
-                          taxPresetId:
-                              defaults.tax?.sourceTaxPresetId ??
-                              customer.taxDefault?.id ??
-                              null,
-                          priceStatus: defaults.priceStatus,
-                      }
-                    : line,
-            ),
+            applyProductDefaults(lines, index, defaults, customer.taxDefault),
         );
     };
 
@@ -136,6 +110,16 @@ export function QuoteDraftEditor(props: Props) {
         }
     };
 
+    const changeDetail = (field: string, value: string) => {
+        form.setData((current) =>
+            changeQuoteDetail(
+                current,
+                field as Parameters<typeof changeQuoteDetail>[1],
+                value,
+            ),
+        );
+    };
+
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.transform((data) => ({
@@ -144,6 +128,11 @@ export function QuoteDraftEditor(props: Props) {
             customer_confirmation_token: data.customerConfirmationToken,
             currency_code: data.currencyCode,
             document_language: data.documentLanguage,
+            issue_date: data.issueDate || null,
+            validity_days:
+                data.validityDays === '' ? null : Number(data.validityDays),
+            valid_until: data.validUntil || null,
+            customer_reference: data.customerReference || null,
             bank_account_id: data.bankAccountId,
             terms_and_conditions: data.termsAndConditions,
             notes: data.notes,
@@ -204,6 +193,16 @@ export function QuoteDraftEditor(props: Props) {
                         customer={customer}
                         labels={props.labels}
                         onSelect={() => setCustomerSelector(true)}
+                    />
+                    <QuoteDetailsSection
+                        issueDate={form.data.issueDate}
+                        validityDays={form.data.validityDays}
+                        validUntil={form.data.validUntil}
+                        customerReference={form.data.customerReference}
+                        limits={props.limits}
+                        labels={props.labels}
+                        errors={errors}
+                        onChange={changeDetail}
                     />
                     <QuoteDefaultsSection
                         customer={customer}

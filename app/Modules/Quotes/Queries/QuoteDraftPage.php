@@ -12,6 +12,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
@@ -23,7 +24,10 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
+use App\Modules\Quotes\Data\QuoteDisplayStatus;
+use App\Modules\Quotes\Models\Quote;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 
 final readonly class QuoteDraftPage
@@ -61,6 +65,9 @@ final readonly class QuoteDraftPage
             ->whereKey($documentId)
             ->where('kind', DocumentKind::Quote)
             ->firstOrFail();
+        $quote = Quote::query()->whereKey($document->id)->firstOrFail();
+        $settings = CompanySetting::query()->firstOrFail();
+        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
         $lines = DocumentLine::query()
             ->where('document_id', $document->id)
             ->orderBy('position')
@@ -114,6 +121,15 @@ final readonly class QuoteDraftPage
                 'id' => $document->id,
                 'number' => $document->rendered_number,
                 'issueDate' => $document->issue_date?->toDateString(),
+                'validityDays' => $quote->validity_days,
+                'validUntil' => $quote->valid_until?->toDateString(),
+                'customerReference' => $document->customer_reference,
+                'lifecycle' => $quote->lifecycle->value,
+                'status' => QuoteDisplayStatus::resolve(
+                    $quote->lifecycle,
+                    $quote->valid_until,
+                    $localDate,
+                )->value,
                 'customer' => $customer === null ? null : [
                     'id' => $customer->id,
                     'displayName' => $customer->displayName(),
@@ -156,6 +172,13 @@ final readonly class QuoteDraftPage
                 ])->values(),
             ],
             'updateUrl' => route('quotes.update', [$company, $document], false),
+            'lifecycleUrl' => route('quotes.lifecycle.update', [$company, $document], false),
+            'deleteUrl' => route('quotes.destroy', [$company, $document], false),
+            'indexUrl' => route('quotes.index', $company, false),
+            'quoteAbilities' => [
+                'correctLifecycle' => $this->abilities->allows($actor, $company, CompanyAbility::ManageQuotes),
+                'delete' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteQuotes),
+            ],
             'sourceUrls' => [
                 'customerSearch' => route('quote-sources.customers.index', $company, false),
                 'companyCustomerDefaults' => route('quote-sources.customers.company-defaults', $company, false),
@@ -192,6 +215,8 @@ final readonly class QuoteDraftPage
                 'taxName' => DocumentFieldLimits::TAX_NAME,
                 'termsAndConditions' => DocumentContentLimits::TERMS_AND_CONDITIONS_CHARACTERS,
                 'notes' => DocumentContentLimits::NOTES_CHARACTERS,
+                'customerReference' => DocumentContentLimits::CUSTOMER_REFERENCE_CHARACTERS,
+                'maxDayOffset' => DocumentContentLimits::MAX_CALENDAR_DAY_OFFSET,
             ],
         ];
     }

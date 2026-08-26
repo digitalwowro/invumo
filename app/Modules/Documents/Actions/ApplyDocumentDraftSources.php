@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Actions;
 use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Documents\Data\DocumentSourceFailure;
+use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentBankSnapshot;
 
@@ -17,6 +18,7 @@ final class ApplyDocumentDraftSources
         ?string $bankAccountId,
         ?string $termsAndConditions,
         ?string $notes,
+        LockedDocumentConfiguration $configuration,
     ): void {
         $bankSnapshot = DocumentBankSnapshot::query()
             ->where('document_id', $document->id)
@@ -24,17 +26,13 @@ final class ApplyDocumentDraftSources
             ->first();
         $currencyChanged = $currencyCode !== $document->currency_code;
         $bankChanged = $bankAccountId !== $bankSnapshot?->bank_account_id;
-        $currencies = ($currencyChanged || $bankChanged)
-            ? CompanyCurrency::query()->orderBy('id')->lockForUpdate()->get()
-            : null;
-        $bankAccounts = $bankChanged
-            ? BankAccount::query()->orderBy('id')->lockForUpdate()->get()
-            : null;
 
         if ($currencyChanged) {
             $currency = $currencyCode === null
                 ? null
-                : $currencies?->where('active', true)->firstWhere('currency_code', $currencyCode);
+                : $configuration->currencies
+                    ->where('active', true)
+                    ->firstWhere('currency_code', $currencyCode);
 
             if ($currencyCode !== null && ! $currency instanceof CompanyCurrency) {
                 throw DocumentSourceFailure::currencyUnavailable();
@@ -62,9 +60,9 @@ final class ApplyDocumentDraftSources
             return;
         }
 
-        $bankAccount = $bankAccounts
-            ?->whereNull('archived_at')
-            ?->firstWhere('id', $bankAccountId);
+        $bankAccount = $configuration->bankAccounts
+            ->whereNull('archived_at')
+            ->firstWhere('id', $bankAccountId);
 
         if (! $bankAccount instanceof BankAccount) {
             throw DocumentSourceFailure::bankUnavailable();
@@ -72,7 +70,7 @@ final class ApplyDocumentDraftSources
 
         $bankCurrency = $bankAccount->currency_id === null
             ? null
-            : $currencies?->firstWhere('id', $bankAccount->currency_id);
+            : $configuration->currencies->firstWhere('id', $bankAccount->currency_id);
 
         DocumentBankSnapshot::query()->create([
             'document_id' => $document->id,

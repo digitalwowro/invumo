@@ -14,6 +14,7 @@ enum CompanyAbility: string
     case ManageCatalog = 'manage_catalog';
     case ViewQuotes = 'view_quotes';
     case ManageQuotes = 'manage_quotes';
+    case DeleteQuotes = 'delete_quotes';
     case ManageNumberCounters = 'manage_number_counters';
     case ManageAdjustments = 'manage_adjustments';
     case ManageRecurringAutomation = 'manage_recurring_automation';

@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Modules\Quotes\Actions;
+
+use App\Foundation\Tenancy\TenantContext;
+use App\Models\User;
+use App\Modules\Audit\Actions\RecordAuditEvent;
+use App\Modules\Audit\Data\AuditActorType;
+use App\Modules\Audit\Data\AuditEventData;
+use App\Modules\Audit\Data\AuditPayload;
+use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
+use App\Modules\Companies\Data\CompanyAbility;
+use App\Modules\Companies\Models\Company;
+use App\Modules\Documents\Data\DocumentKind;
+use App\Modules\Documents\Data\DocumentNumberEventType;
+use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentNumberEvent;
+use App\Modules\Quotes\Data\QuoteDeletionData;
+use App\Modules\Quotes\Data\QuoteLifecycle;
+use App\Modules\Quotes\Exceptions\QuoteDeletionException;
+use App\Modules\Quotes\Models\Quote;
+use Illuminate\Support\Facades\DB;
+
+final readonly class DeleteQuote
+{
+    public function __construct(
+        private TenantContext $tenantContext,
+        private AuthorizesCompanyActions $authorizer,
+        private RecordAuditEvent $recordAuditEvent,
+    ) {}
+
+    public function handle(
+        Company $company,
+        User $actor,
+        string $documentId,
+        QuoteDeletionData $data,
+    ): void {
+        $this->tenantContext->runForMember(
+            $actor,
+            $company->id,
+            fn (): mixed => DB::connection(config('database.tenant_connection'))->transaction(
+                fn (): bool => $this->delete($company, $actor, $documentId, $data),
+                3,
+            ),
+        );
+    }
+
+    private function delete(
+        Company $company,
+        User $actor,
+        string $documentId,
+        QuoteDeletionData $data,
+    ): bool {
+        $this->authorizer->authorize($actor, $company, CompanyAbility::DeleteQuotes);
+        $document = Document::query()
+            ->whereKey($documentId)
+            ->where('kind', DocumentKind::Quote)
+            ->lockForUpdate()
+            ->firstOrFail();
+        $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+
+        if (! $data->confirmed) {
+            throw QuoteDeletionException::confirmationRequired();
+        }
+
+        $highRisk = $quote->lifecycle !== QuoteLifecycle::Draft;
+
+        if ($highRisk && ! $data->confirmedHighRisk) {
+            throw QuoteDeletionException::highRiskConfirmationRequired();
+        }
+
+        $audit = $this->recordAuditEvent->handle(new AuditEventData(
+            actorType: AuditActorType::User,
+            actorUserId: $actor->id,
+            action: 'company.quote.deleted',
+            targetType: 'Quote',
+            targetId: $document->id,
+            before: AuditPayload::fromAllowedFields([
+                'lifecycle' => $quote->lifecycle->value,
+                'had_customer' => $document->customer_id !== null,
+            ], ['lifecycle', 'had_customer']),
+        ));
+        DocumentNumberEvent::query()->create([
+            'document_id' => $document->id,
+            'document_kind' => DocumentKind::Quote,
+            'rendered_number' => $document->rendered_number,
+            'event_type' => DocumentNumberEventType::Deleted,
+            'assignment_source' => $document->assignment_source,
+            'occurred_at' => now(),
+            'related_audit_event_id' => $audit->id,
+        ]);
+        $document->delete();
+
+        return true;
+    }
+}

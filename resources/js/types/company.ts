@@ -26,6 +26,7 @@ export type CompanyAbilities = {
     manage_catalog: boolean;
     view_quotes: boolean;
     manage_quotes: boolean;
+    delete_quotes: boolean;
     manage_number_counters: boolean;
     manage_adjustments: boolean;
     manage_recurring_automation: boolean;

@@ -13,6 +13,7 @@ use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
+use App\Modules\Quotes\Models\Quote;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
@@ -120,6 +121,69 @@ final class QuoteDraftDatabaseTest extends TestCase
                 'updated_at' => now(),
             ]);
         });
+    }
+
+    public function test_database_enforces_quote_reference_offset_and_date_pair(): void
+    {
+        [$company, $document] = $this->quote();
+
+        app(TenantContext::class)->runAsSystem($company->id, function () use ($document): void {
+            $connection = DB::connection(config('database.tenant_connection'));
+
+            foreach ([
+                fn () => Document::query()->whereKey($document->id)->update([
+                    'customer_reference' => str_repeat('x', 121),
+                ]),
+                fn () => Quote::query()->whereKey($document->id)->update([
+                    'validity_days' => 3_652_059,
+                ]),
+                fn () => Quote::query()->whereKey($document->id)->update([
+                    'valid_until' => '2026-08-25',
+                ]),
+            ] as $invalidWrite) {
+                try {
+                    $connection->transaction($invalidWrite);
+                    $this->fail('Invalid Quote operational data must fail at the database boundary.');
+                } catch (QueryException $exception) {
+                    $this->assertSame('23514', $exception->errorInfo[0]);
+                }
+            }
+
+            $this->assertNull(Document::query()->findOrFail($document->id)->customer_reference);
+            $this->assertSame(30, Quote::query()->findOrFail($document->id)->validity_days);
+        });
+    }
+
+    public function test_validity_backfill_enters_each_forced_rls_company_context(): void
+    {
+        [$companyA, $quoteA] = $this->quote();
+        [$companyB, $quoteB] = $this->quote();
+
+        foreach ([[$companyA, $quoteA], [$companyB, $quoteB]] as [$company, $quote]) {
+            app(TenantContext::class)->runAsSystem($company->id, fn () => Quote::query()
+                ->whereKey($quote->id)
+                ->update(['validity_days' => null, 'valid_until' => null]));
+        }
+
+        $defaultConnection = DB::getDefaultConnection();
+
+        try {
+            DB::setDefaultConnection('pgsql_schema');
+            $migration = require database_path('migrations/2026_08_26_041000_backfill_quote_validity_with_tenant_context.php');
+            $migration->up();
+        } finally {
+            DB::setDefaultConnection($defaultConnection);
+        }
+
+        foreach ([[$companyA, $quoteA], [$companyB, $quoteB]] as [$company, $quote]) {
+            app(TenantContext::class)->runAsSystem($company->id, function () use ($quote): void {
+                $stored = Quote::query()->findOrFail($quote->id);
+                $this->assertSame(30, $stored->validity_days);
+                $this->assertNotNull($stored->valid_until);
+            });
+        }
+
+        $this->assertSame(0, DB::connection('pgsql_schema')->table('quotes')->count());
     }
 
     /** @return array{Company, Document} */

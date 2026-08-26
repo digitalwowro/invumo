@@ -4,6 +4,7 @@ namespace App\Modules\Quotes\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Documents\Data\DocumentLineFailure;
 use App\Modules\Documents\Data\DocumentNumberAllocationException;
 use App\Modules\Documents\Data\DocumentSourceFailure;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
@@ -84,12 +85,13 @@ final class QuoteDraftController extends Controller
     ): RedirectResponse {
         try {
             $update->handle($company, $request->user(), $quote, $request->draft());
-        } catch (QuoteDraftException|DocumentSourceFailure $exception) {
+        } catch (QuoteDraftException|DocumentSourceFailure|DocumentLineFailure $exception) {
             $field = match ($exception->reason()) {
                 'stale' => 'edit_version',
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
                 'currency_unavailable' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
+                'details_invalid' => 'valid_until',
                 default => 'lines',
             };
 

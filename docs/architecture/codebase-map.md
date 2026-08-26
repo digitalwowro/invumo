@@ -117,7 +117,7 @@ Laravel entry points / Inertia pages
 
 `Platform` may coordinate approved control-plane mutations through the owning `Identity` or `Companies` module Action when that domain owns the invariant. It never mutates another module's models as an authorization shortcut and never bypasses tenant context to inspect Company business data.
 
-The first persisted Quote editor follows the same boundary. `Quotes` owns Draft creation/update and its Inertia page Query; `Documents` owns the shared aggregate persistence types, transaction-neutral automatic-number allocator contract, counter realignment Action, and reusable document-line presentation. The Quote Action remains the outer transaction owner and invokes the allocator through its narrow contract. Later Invoice and Recurring editors reuse `Documents` rather than importing Quote feature internals.
+The persisted Quote workspace follows the same boundary. `Quotes` owns Draft creation/update, lifecycle correction, guarded deletion, and its editor/list Queries; `Documents` owns shared configuration locking, aggregate persistence types, line reconciliation, the transaction-neutral automatic-number allocator contract, counter realignment Action, and reusable line presentation. The Quote root Action remains the outer transaction owner and acquires Company configuration before the Document aggregate through the shared lock boundary. Later Invoice and Recurring editors reuse `Documents` rather than importing Quote feature internals.
 
 ## 3. Write and read boundaries
 

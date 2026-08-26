@@ -9,6 +9,7 @@ use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Models\CustomerContact;
 use App\Modules\Customers\Models\CustomerDeliveryRecipient;
+use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -16,19 +17,45 @@ use LogicException;
 
 final class ResolveDocumentCustomer
 {
-    public function for(?string $customerId, bool $lock = false): ResolvedDocumentCustomer
+    public function for(?string $customerId): ResolvedDocumentCustomer
     {
-        $settings = $this->one(CompanySetting::query(), $lock);
+        $settings = $this->one(CompanySetting::query(), false);
         $currencyQuery = CompanyCurrency::query()->where('active', true)->orderBy('id');
         $taxQuery = TaxPreset::query()->whereNull('archived_at')->orderBy('id');
 
-        if ($lock) {
-            $currencyQuery->lockForUpdate();
-            $taxQuery->lockForUpdate();
-        }
+        return $this->resolve(
+            $customerId,
+            $settings,
+            $currencyQuery->get(),
+            $taxQuery->get(),
+            false,
+        );
+    }
 
-        $currencies = $currencyQuery->get();
-        $taxPresets = $taxQuery->get();
+    public function forLocked(
+        ?string $customerId,
+        LockedDocumentConfiguration $configuration,
+    ): ResolvedDocumentCustomer {
+        return $this->resolve(
+            $customerId,
+            $configuration->settings,
+            $configuration->currencies->where('active', true),
+            $configuration->taxPresets->whereNull('archived_at'),
+            true,
+        );
+    }
+
+    /**
+     * @param  Collection<int, CompanyCurrency>  $currencies
+     * @param  Collection<int, TaxPreset>  $taxPresets
+     */
+    private function resolve(
+        ?string $customerId,
+        CompanySetting $settings,
+        Collection $currencies,
+        Collection $taxPresets,
+        bool $lock,
+    ): ResolvedDocumentCustomer {
         $customer = $customerId === null
             ? null
             : $this->one(Customer::query()->whereKey($customerId)->whereNull('archived_at'), $lock);

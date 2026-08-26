@@ -2,6 +2,7 @@
 
 namespace App\Modules\Quotes\Actions;
 
+use App\Foundation\Documents\DocumentCalendar;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
@@ -10,12 +11,9 @@ use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
-use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\Company;
-use App\Modules\Companies\Models\CompanyCurrency;
-use App\Modules\Companies\Models\CompanySetting;
-use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Documents\Actions\InitializeDocumentDefaults;
+use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
 use App\Modules\Documents\Data\DocumentAssignmentSource;
 use App\Modules\Documents\Data\DocumentKind;
@@ -34,6 +32,7 @@ final readonly class CreateQuoteDraft
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
         private AllocatesDocumentNumbers $numbers,
+        private LockDocumentConfiguration $lockConfiguration,
         private InitializeDocumentDefaults $initializeDefaults,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
@@ -63,24 +62,22 @@ final readonly class CreateQuoteDraft
             return $existing;
         }
 
-        $settings = CompanySetting::query()->orderBy('id')->lockForUpdate()->first();
-        $currencies = CompanyCurrency::query()->orderBy('id')->lockForUpdate()->get();
-        $taxPresets = TaxPreset::query()->orderBy('id')->lockForUpdate()->get();
-        $bankAccounts = BankAccount::query()->orderBy('id')->lockForUpdate()->get();
-        $currency = $currencies
+        $configuration = $this->lockConfiguration->handle();
+        $settings = $configuration->settings;
+        $currency = $configuration->currencies
             ->where('active', true)
             ->firstWhere('is_default', true);
-        $taxPreset = $taxPresets
+        $taxPreset = $configuration->taxPresets
             ->whereNull('archived_at')
             ->firstWhere('is_default', true);
-        $bankAccount = $bankAccounts
+        $bankAccount = $configuration->bankAccounts
             ->whereNull('archived_at')
             ->firstWhere('is_default', true);
         $bankCurrency = $bankAccount?->currency_id === null
             ? null
-            : $currencies->firstWhere('id', $bankAccount->currency_id);
+            : $configuration->currencies->firstWhere('id', $bankAccount->currency_id);
 
-        if (! $settings instanceof CompanySetting || $settings->timezone === null) {
+        if ($settings->timezone === null) {
             throw QuoteDraftException::configurationRequired();
         }
 
@@ -98,6 +95,7 @@ final readonly class CreateQuoteDraft
             'currency_code' => $currency?->currency_code,
             'currency_precision' => $currency?->currency_precision,
             'document_language' => $settings->default_document_language,
+            'customer_reference' => null,
             'terms_and_conditions' => $settings->default_terms_and_conditions,
             'notes' => $settings->default_quote_notes,
             'subtotal' => 0,
@@ -109,6 +107,11 @@ final readonly class CreateQuoteDraft
             'document_id' => $document->id,
             'document_kind' => DocumentKind::Quote,
             'lifecycle' => QuoteLifecycle::Draft,
+            'validity_days' => $settings->default_quote_validity_days,
+            'valid_until' => DocumentCalendar::addDays(
+                $localDate->toDateString(),
+                $settings->default_quote_validity_days,
+            ),
         ]);
 
         $this->initializeDefaults->handle(

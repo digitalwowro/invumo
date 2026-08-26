@@ -154,7 +154,7 @@ Expired is derived separately and is not stored as a lifecycle value.
 Rules:
 
 - Quotes remain editable after sending or acceptance.
-- A quote stores company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, notes, optional customer reference / PO number, and any displayed bank-details snapshot.
+- A quote stores company, customer snapshot, number, issue date, valid-until date, currency, document language, lines, Terms & Conditions, notes, an optional trimmed customer reference / PO number of up to 120 Unicode characters, and any displayed bank-details snapshot.
 - Sending requires all required fields and at least one valid billable line. A Draft quote becomes Sent after provider dispatch acceptance; immediate dispatch failure leaves it Draft and records the attempt, while later delivery failure does not revert it.
 - Expired is derived after `valid_until` in the company timezone when the quote is neither Accepted nor Rejected.
 - Expired public quotes cannot be accepted or rejected until an internal user extends validity or changes status.

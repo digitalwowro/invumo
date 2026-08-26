@@ -1,7 +1,5 @@
 <?php
 
-use App\Modules\Catalog\Http\Controllers\CatalogDocumentSourceController;
-use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Catalog\Http\Controllers\ProductServiceController;
 use App\Modules\Companies\Http\Controllers\CompanyAppearanceController;
 use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
@@ -19,15 +17,12 @@ use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
-use App\Modules\Customers\Http\Controllers\CustomerDocumentSourceController;
-use App\Modules\Customers\Http\Controllers\InlineCustomerController;
 use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
 use App\Modules\Platform\Http\Controllers\UserImpersonationController;
 use App\Modules\Platform\Http\Controllers\UserSuspensionController;
-use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
 use App\Support\Inertia\CommonTranslationBag;
 use App\Support\Inertia\DesignSystemTranslationBag;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -106,32 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('company.context')
         ->scopeBindings()
         ->group(function (): void {
-            Route::get('companies/{company}/quotes/create', [QuoteDraftController::class, 'create'])
-                ->name('quotes.create');
-            Route::post('companies/{company}/quotes', [QuoteDraftController::class, 'store'])
-                ->middleware('throttle:20,1')
-                ->name('quotes.store');
-            Route::get('companies/{company}/quotes/{quote}', [QuoteDraftController::class, 'edit'])
-                ->name('quotes.edit');
-            Route::patch('companies/{company}/quotes/{quote}', [QuoteDraftController::class, 'update'])
-                ->middleware('throttle:30,1')
-                ->name('quotes.update');
-            Route::get('companies/{company}/document-sources/customers', [CustomerDocumentSourceController::class, 'index'])
-                ->name('quote-sources.customers.index');
-            Route::get('companies/{company}/document-sources/company-customer-defaults', [CustomerDocumentSourceController::class, 'companyDefaults'])
-                ->name('quote-sources.customers.company-defaults');
-            Route::get('companies/{company}/document-sources/customers/{customer}', [CustomerDocumentSourceController::class, 'show'])
-                ->name('quote-sources.customers.show');
-            Route::get('companies/{company}/document-sources/products', [CatalogDocumentSourceController::class, 'index'])
-                ->name('quote-sources.products.index');
-            Route::get('companies/{company}/document-sources/products/{product}', [CatalogDocumentSourceController::class, 'show'])
-                ->name('quote-sources.products.show');
-            Route::post('companies/{company}/quotes/{quote}/inline-customers', InlineCustomerController::class)
-                ->middleware('throttle:20,1')
-                ->name('quotes.inline-customers.store');
-            Route::post('companies/{company}/quotes/{quote}/inline-products', InlineProductServiceController::class)
-                ->middleware('throttle:20,1')
-                ->name('quotes.inline-products.store');
+            require __DIR__.'/quotes.php';
 
             Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
                 ->name('catalog.index');

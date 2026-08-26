@@ -235,6 +235,8 @@ final class QuoteSourceSnapshotTest extends TestCase
             'edit_version' => $editVersion, 'customer_id' => $customerId,
             'customer_confirmation_token' => $token, 'currency_code' => $currency,
             'document_language' => $language, 'bank_account_id' => null,
+            'issue_date' => '2026-08-26', 'validity_days' => 30,
+            'valid_until' => '2026-09-25', 'customer_reference' => null,
             'terms_and_conditions' => null, 'notes' => null,
         ];
     }

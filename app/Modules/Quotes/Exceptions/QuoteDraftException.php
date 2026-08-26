@@ -36,6 +36,11 @@ final class QuoteDraftException extends DomainException
         return new self('customer_defaults_changed');
     }
 
+    public static function detailsInvalid(): self
+    {
+        return new self('details_invalid');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

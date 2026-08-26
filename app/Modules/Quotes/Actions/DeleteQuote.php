@@ -19,6 +19,7 @@ use App\Modules\Quotes\Data\QuoteDeletionData;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Exceptions\QuoteDeletionException;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use Illuminate\Support\Facades\DB;
 
 final readonly class DeleteQuote
@@ -58,6 +59,12 @@ final readonly class DeleteQuote
             ->lockForUpdate()
             ->firstOrFail();
         $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $links = QuoteInvoiceLink::query()
+            ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
+
+        if ($links->isNotEmpty()) {
+            throw QuoteDeletionException::invoiceDependency();
+        }
 
         if (! $data->confirmed) {
             throw QuoteDeletionException::confirmationRequired();

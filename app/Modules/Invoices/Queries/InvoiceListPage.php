@@ -138,7 +138,7 @@ final readonly class InvoiceListPage
             ? null
             : DecimalRules::currencyPrecision((int) $row->currency_precision);
         $lifecycle = InvoiceLifecycle::from((string) $row->lifecycle);
-        $state = ResolvedInvoiceState::resolve(
+        $state = ResolvedInvoiceState::withoutFinancialRows(
             $lifecycle,
             (string) $row->total,
             $row->due_date === null ? null : new CarbonImmutable((string) $row->due_date),

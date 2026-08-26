@@ -77,6 +77,7 @@ return [
         'payment_options' => [
             'all' => 'Toate stările plății',
             'UNPAID' => 'Neplătită',
+            'PARTIALLY_PAID' => 'Plătită parțial',
             'PAID' => 'Plătită',
         ],
         'overdue_options' => [
@@ -87,6 +88,7 @@ return [
             'DRAFT' => 'Ciornă',
             'ISSUED' => 'Emisă',
             'UNPAID' => 'Neplătită',
+            'PARTIALLY_PAID' => 'Plătită parțial',
             'PAID' => 'Plătită',
             'OVERDUE' => 'Restantă',
         ],

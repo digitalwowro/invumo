@@ -23,8 +23,9 @@ export type InvoiceLimits = DocumentEditorLimits;
 export type InvoiceLine = DocumentLineDraft;
 export type InvoiceTaxDefault = DocumentTaxDefault;
 export type InvoiceLifecycle = 'DRAFT' | 'ISSUED';
-export type InvoicePaymentState = 'UNPAID' | 'PAID';
-export type InvoiceDisplayStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'OVERDUE';
+export type InvoicePaymentState = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
+export type InvoiceDisplayStatus =
+    'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
 
 export type InvoiceDraft = {
     id: string;

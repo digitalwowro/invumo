@@ -57,7 +57,7 @@ final readonly class CurrentDocumentRepresentation
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
         $settings = CompanySetting::query()->firstOrFail();
         $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
-        $state = ResolvedInvoiceState::resolve(
+        $state = ResolvedInvoiceState::withoutFinancialRows(
             $invoice->lifecycle,
             $document->total,
             $invoice->due_date,

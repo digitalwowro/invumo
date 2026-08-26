@@ -38,6 +38,7 @@ final readonly class QuoteDraftPage
         private CustomerFormOptions $customerForm,
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
+        private QuoteInvoiceAllocation $invoiceAllocation,
     ) {}
 
     /** @return array<string, mixed> */
@@ -68,6 +69,11 @@ final readonly class QuoteDraftPage
         $quote = Quote::query()->whereKey($document->id)->firstOrFail();
         $settings = CompanySetting::query()->firstOrFail();
         $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
+        $displayStatus = QuoteDisplayStatus::resolve(
+            $quote->lifecycle,
+            $quote->valid_until,
+            $localDate,
+        );
         $lines = DocumentLine::query()
             ->where('document_id', $document->id)
             ->orderBy('position')
@@ -125,11 +131,7 @@ final readonly class QuoteDraftPage
                 'validUntil' => $quote->valid_until?->toDateString(),
                 'customerReference' => $document->customer_reference,
                 'lifecycle' => $quote->lifecycle->value,
-                'status' => QuoteDisplayStatus::resolve(
-                    $quote->lifecycle,
-                    $quote->valid_until,
-                    $localDate,
-                )->value,
+                'status' => $displayStatus->value,
                 'customer' => $customer === null ? null : [
                     'id' => $customer->id,
                     'displayName' => $customer->displayName(),
@@ -173,6 +175,16 @@ final readonly class QuoteDraftPage
             ],
             'updateUrl' => route('quotes.update', [$company, $document], false),
             'lifecycleUrl' => route('quotes.lifecycle.update', [$company, $document], false),
+            'conversionUrl' => route('quotes.invoices.store', [$company, $document], false),
+            'conversionKey' => (string) Str::uuid7(),
+            'invoiceAllocation' => $this->invoiceAllocation->for(
+                $company,
+                $actor,
+                $document->id,
+                $document->total,
+                $document->currency_precision ?? 0,
+                $displayStatus,
+            ),
             'deleteUrl' => route('quotes.destroy', [$company, $document], false),
             'representationUrl' => route('quotes.current.show', [$company, $document], false),
             'pdfUrl' => route('quotes.current.pdf', [$company, $document], false),

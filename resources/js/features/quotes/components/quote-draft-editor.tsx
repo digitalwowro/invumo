@@ -1,7 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
@@ -10,11 +9,11 @@ import { DocumentDefaultsSection } from '@/components/domain/documents/document-
 import {
     calculateDocumentLine,
     completeLine,
-    DocumentTotals,
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
 import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
 import { QuoteDetailsSection } from '@/features/quotes/components/quote-details-section';
+import type { QuoteDraftEditorProps } from '@/features/quotes/components/quote-draft-editor-props';
 import {
     applyCustomerDefaults,
     applyProductDefaults,
@@ -23,44 +22,16 @@ import {
     customerFromQuote,
     quoteFormData,
 } from '@/features/quotes/components/quote-draft-form-data';
+import { QuoteDraftSummary } from '@/features/quotes/components/quote-draft-summary';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
-import type { CatalogTranslations } from '@/types/catalog';
-import type { CustomerTranslations } from '@/types/customer';
 import type {
-    QuoteCatalogFormOptions,
-    QuoteCurrencyOption,
-    QuoteCustomerFormOptions,
     QuoteCustomerSelection,
     QuoteDraft,
-    QuoteLimits,
     QuoteLine,
     QuoteProductDefaults,
-    QuoteSourceOption,
-    QuoteSourceUrls,
-    QuoteTranslations,
 } from '@/types/quote';
 
-type Props = {
-    quote: QuoteDraft;
-    limits: QuoteLimits;
-    updateUrl: string;
-    sourceUrls: QuoteSourceUrls;
-    inlineCustomerStoreUrl: string;
-    inlineProductStoreUrl: string;
-    inlineCreatedCustomer: QuoteCustomerSelection | null;
-    inlineCreatedProduct: QuoteProductDefaults | null;
-    sourceAbilities: { createCustomer: boolean; createProduct: boolean };
-    currencyOptions: QuoteCurrencyOption[];
-    languageOptions: QuoteSourceOption[];
-    bankAccountOptions: QuoteSourceOption[];
-    customerForm: QuoteCustomerFormOptions;
-    catalogForm: QuoteCatalogFormOptions;
-    labels: QuoteTranslations['edit'];
-    customerLabels: CustomerTranslations;
-    catalogLabels: CatalogTranslations;
-};
-
-export function QuoteDraftEditor(props: Props) {
+export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
     const form = useForm(quoteFormData(props.quote));
     const [customer, setCustomer] = useState(customerFromQuote(props.quote));
     const [precision, setPrecision] = useState(props.quote.currencyPrecision);
@@ -238,15 +209,17 @@ export function QuoteDraftEditor(props: Props) {
                             setProductSelector(true);
                         }}
                     />
-                    <DocumentTotals labels={props.labels} totals={totals} />
-                    <FormActions separated>
-                        <SubmitButton
-                            processing={form.processing}
-                            testId="save-quote"
-                        >
-                            {props.labels.save}
-                        </SubmitButton>
-                    </FormActions>
+                    <QuoteDraftSummary
+                        totals={totals}
+                        processing={form.processing}
+                        dirty={form.isDirty}
+                        currencyCode={props.quote.currencyCode}
+                        conversionUrl={props.conversion.url}
+                        conversionKey={props.conversion.creationKey}
+                        allocation={props.conversion.allocation}
+                        editorLabels={props.labels}
+                        conversionLabels={props.conversionLabels}
+                    />
                 </Stack>
             </form>
             <DocumentSourceDialogs

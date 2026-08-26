@@ -18,7 +18,9 @@ export function InvoiceStatusBadges(props: Props) {
                 ? null
                 : props.paymentState === 'PAID'
                   ? 'paid'
-                  : 'unpaid',
+                  : props.paymentState === 'PARTIALLY_PAID'
+                    ? 'partial'
+                    : 'unpaid',
         overdue: props.overdue,
     });
 

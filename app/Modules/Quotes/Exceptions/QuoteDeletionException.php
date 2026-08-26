@@ -16,6 +16,11 @@ final class QuoteDeletionException extends DomainException
         return new self('delete_high_risk_confirmation_required');
     }
 
+    public static function invoiceDependency(): self
+    {
+        return new self('delete_invoice_dependency');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

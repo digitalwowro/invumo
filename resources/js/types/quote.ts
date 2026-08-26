@@ -68,6 +68,30 @@ export type QuoteDraft = {
 
 export type QuoteLimits = DocumentEditorLimits;
 
+export type QuoteInvoiceAllocation = {
+    quoted: string;
+    invoiced: string;
+    remaining: string;
+    projectedRemaining: string;
+    willOverAllocate: boolean;
+    conversionMode: 'normal' | 'override' | 'blocked';
+    invoices: {
+        id: string;
+        number: string;
+        total: string;
+        lifecycle: 'DRAFT' | 'ISSUED';
+        editUrl: string;
+        unlinkUrl: string;
+        canUnlink: boolean;
+    }[];
+};
+
+export type QuoteConversionControl = {
+    url: string;
+    creationKey: string;
+    allocation: QuoteInvoiceAllocation;
+};
+
 export type QuoteRow = {
     id: string;
     number: string;
@@ -164,6 +188,9 @@ export type QuoteTranslations = {
     >;
     lifecycle: Record<string, string>;
     deletion: Record<string, string>;
+    conversion: Record<string, string>;
+    allocation: Record<string, string>;
+    unlink: Record<string, string>;
     feedback: Record<string, string>;
     errors: Record<string, string>;
 };

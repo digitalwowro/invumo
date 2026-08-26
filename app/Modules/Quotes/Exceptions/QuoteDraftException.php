@@ -41,6 +41,11 @@ final class QuoteDraftException extends DomainException
         return new self('details_invalid');
     }
 
+    public static function currencyLinked(): self
+    {
+        return new self('currency_linked');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

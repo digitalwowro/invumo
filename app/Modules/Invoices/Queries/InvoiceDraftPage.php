@@ -67,7 +67,7 @@ final readonly class InvoiceDraftPage
             ->firstOrFail();
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
         $settings = CompanySetting::query()->firstOrFail();
-        $state = ResolvedInvoiceState::resolve(
+        $state = ResolvedInvoiceState::withoutFinancialRows(
             $invoice->lifecycle,
             $document->total,
             $invoice->due_date,

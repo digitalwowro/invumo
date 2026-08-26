@@ -9,11 +9,27 @@ use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use App\Modules\Quotes\Actions\CreateQuoteDraft;
+use App\Modules\Quotes\Data\QuoteLifecycle;
+use App\Modules\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Str;
 
 uses(DatabaseMigrations::class);
+
+afterEach(function (): void {
+    Company::query()->pluck('id')->each(function (string $companyId): void {
+        app(TenantContext::class)->runAsSystem(
+            $companyId,
+            fn () => Quote::query()->where('lifecycle', '!=', QuoteLifecycle::Draft)
+                ->update(['lifecycle' => QuoteLifecycle::Draft]),
+        );
+    });
+});
 
 function companyForQuoteBrowser(string $language = 'en'): array
 {
@@ -63,6 +79,30 @@ function openQuoteCreate(User $owner, Company $company, bool $mobile = false): m
         ->type('Password', 'password')
         ->click('Log in')
         ->navigate(route('quotes.create', $company, false));
+}
+
+function acceptedQuoteForBrowser(Company $company, User $owner): Document
+{
+    $document = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
+
+    return app(TenantContext::class)->runAsSystem($company->id, function () use ($document): Document {
+        $document->update([
+            'customer_reference' => 'PO-CONVERT-42',
+            'subtotal' => '100', 'tax_total' => '0', 'total' => '100',
+        ]);
+        Quote::query()->whereKey($document->id)->update(['lifecycle' => QuoteLifecycle::Accepted]);
+        DocumentLine::query()->create([
+            'document_id' => $document->id, 'position' => 1,
+            'description' => 'Converted consulting', 'item_price' => '100',
+            'quantity' => '1', 'unit' => 'hour', 'period_unit' => 'NONE',
+            'discount_percentage' => '0', 'discount_amount' => '0',
+            'tax_percentage' => '0', 'items_subtotal' => '100',
+            'items_total' => '100', 'grand_subtotal' => '100',
+            'tax_amount' => '0', 'final_line_total' => '100',
+        ]);
+
+        return $document->refresh();
+    });
 }
 
 it('creates and calculates a manual Quote Draft without viewport overflow', function () {
@@ -158,6 +198,49 @@ it('keeps the Romanian Quote Draft editor usable on a narrow viewport', function
         ->assertNoAccessibilityIssues()
         ->navigate(route('quotes.index', $company, false))
         ->assertSee('Oferte')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('converts and unlinks an accepted Quote without desktop overflow', function () {
+    [$owner, $company] = companyForQuoteBrowser();
+    $quote = acceptedQuoteForBrowser($company, $owner);
+
+    openQuoteCreate($owner, $company)
+        ->navigate(route('quotes.edit', [$company, $quote], false))
+        ->assertSee('Invoice allocation')
+        ->click('@convert-quote')
+        ->assertSee('Create an Invoice from this Quote?')
+        ->click('@confirm-convert-quote')
+        ->assertSee('I-'.now('Europe/Bucharest')->year.'-0001')
+        ->click('I-'.now('Europe/Bucharest')->year.'-0001')
+        ->assertSee('I-'.now('Europe/Bucharest')->year.'-0001')
+        ->assertValue('Customer reference / PO number', 'PO-CONVERT-42')
+        ->navigate(route('quotes.edit', [$company, $quote], false))
+        ->assertSee('100.00 RON')
+        ->click('Unlink')
+        ->type('Reason', 'Independent browser billing')
+        ->check('I confirm that this Draft Invoice should become independent.')
+        ->click('Unlink Invoice')
+        ->assertSee('Invoice unlinked from the Quote.')
+        ->assertSee('No Invoices have been created from this Quote.')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('shows Romanian conversion controls on mobile without overflow', function () {
+    [$owner, $company] = companyForQuoteBrowser('ro');
+    $quote = acceptedQuoteForBrowser($company, $owner);
+
+    openQuoteCreate($owner, $company, mobile: true)
+        ->navigate(route('quotes.edit', [$company, $quote], false))
+        ->assertSee('Alocarea facturilor')
+        ->click('@convert-quote')
+        ->assertSee('Creezi o factură din această ofertă?')
+        ->assertSee('Creează factura ciornă')
+        ->click('Anulează')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

@@ -14,6 +14,8 @@ enum CompanyAbility: string
     case ManageCatalog = 'manage_catalog';
     case ViewQuotes = 'view_quotes';
     case ManageQuotes = 'manage_quotes';
+    case OverrideQuoteConversion = 'override_quote_conversion';
+    case UnlinkQuoteInvoice = 'unlink_quote_invoice';
     case DeleteQuotes = 'delete_quotes';
     case ViewInvoices = 'view_invoices';
     case ManageInvoices = 'manage_invoices';

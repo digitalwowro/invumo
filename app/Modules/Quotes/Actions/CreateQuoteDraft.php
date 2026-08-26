@@ -112,6 +112,7 @@ final readonly class CreateQuoteDraft
                 $localDate->toDateString(),
                 $settings->default_quote_validity_days,
             ),
+            'invoice_payment_term_days' => $settings->default_payment_term_days,
         ]);
 
         $this->initializeDefaults->handle(

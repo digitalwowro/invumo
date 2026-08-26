@@ -6,6 +6,7 @@ use App\Modules\Customers\Http\Controllers\CustomerDocumentSourceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
 use App\Modules\Quotes\Http\Controllers\QuoteController;
 use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
+use App\Modules\Quotes\Http\Controllers\QuoteInvoiceController;
 use App\Modules\Quotes\Http\Controllers\QuoteLifecycleController;
 use App\Modules\Quotes\Http\Controllers\QuoteRepresentationController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,12 @@ Route::patch('companies/{company}/quotes/{quote}', [QuoteDraftController::class,
 Route::patch('companies/{company}/quotes/{quote}/lifecycle', [QuoteLifecycleController::class, 'update'])
     ->middleware('throttle:20,1')
     ->name('quotes.lifecycle.update');
+Route::post('companies/{company}/quotes/{quote}/invoices', [QuoteInvoiceController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('quotes.invoices.store');
+Route::post('companies/{company}/quotes/{quote}/invoices/{invoice}/unlink', [QuoteInvoiceController::class, 'unlink'])
+    ->middleware('throttle:10,1')
+    ->name('quotes.invoices.unlink');
 Route::delete('companies/{company}/quotes/{quote}', [QuoteController::class, 'destroy'])
     ->middleware('throttle:10,1')
     ->name('quotes.destroy');

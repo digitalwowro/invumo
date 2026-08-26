@@ -16,6 +16,7 @@ final class ResolveInvoiceStateTest extends TestCase
     public function test_it_derives_payment_and_overdue_state(
         InvoiceLifecycle $lifecycle,
         string $total,
+        string $netPaid,
         ?string $dueDate,
         ?InvoicePaymentState $paymentState,
         bool $isOverdue,
@@ -24,6 +25,7 @@ final class ResolveInvoiceStateTest extends TestCase
         $resolved = ResolvedInvoiceState::resolve(
             $lifecycle,
             $total,
+            $netPaid,
             $dueDate === null ? null : new CarbonImmutable($dueDate),
             new CarbonImmutable('2026-08-26'),
         );
@@ -33,24 +35,54 @@ final class ResolveInvoiceStateTest extends TestCase
         self::assertSame($displayStatus, $resolved->displayStatus);
     }
 
-    /** @return iterable<string, array{InvoiceLifecycle, string, ?string, ?InvoicePaymentState, bool, InvoiceDisplayStatus}> */
+    /** @return iterable<string, array{InvoiceLifecycle, string, string, ?string, ?InvoicePaymentState, bool, InvoiceDisplayStatus}> */
     public static function states(): iterable
     {
         yield 'Draft ignores payment and due date' => [
-            InvoiceLifecycle::Draft, '100', '2026-08-25', null, false,
+            InvoiceLifecycle::Draft, '100', '0', '2026-08-25', null, false,
             InvoiceDisplayStatus::Draft,
         ];
         yield 'Issued zero total is Paid even after due date' => [
-            InvoiceLifecycle::Issued, '0.00000000', '2026-08-25',
+            InvoiceLifecycle::Issued, '0.00000000', '0', '2026-08-25',
             InvoicePaymentState::Paid, false, InvoiceDisplayStatus::Paid,
         ];
         yield 'Issued outstanding total is Overdue after due date' => [
-            InvoiceLifecycle::Issued, '10.00', '2026-08-25',
+            InvoiceLifecycle::Issued, '10.00', '0', '2026-08-25',
             InvoicePaymentState::Unpaid, true, InvoiceDisplayStatus::Overdue,
         ];
         yield 'Issued outstanding total is not Overdue on due date' => [
-            InvoiceLifecycle::Issued, '10.00', '2026-08-26',
+            InvoiceLifecycle::Issued, '10.00', '0', '2026-08-26',
             InvoicePaymentState::Unpaid, false, InvoiceDisplayStatus::Issued,
         ];
+        yield 'Issued partially paid total may also be Overdue' => [
+            InvoiceLifecycle::Issued, '10.00', '4.00', '2026-08-25',
+            InvoicePaymentState::PartiallyPaid, true, InvoiceDisplayStatus::Overdue,
+        ];
+        yield 'Issued fully paid total is Paid' => [
+            InvoiceLifecycle::Issued, '10.00', '10.00', '2026-08-25',
+            InvoicePaymentState::Paid, false, InvoiceDisplayStatus::Paid,
+        ];
+    }
+
+    #[DataProvider('invalidLedgers')]
+    public function test_it_rejects_invalid_complete_ledger_amounts(string $total, string $netPaid): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        ResolvedInvoiceState::resolve(
+            InvoiceLifecycle::Issued,
+            $total,
+            $netPaid,
+            null,
+            new CarbonImmutable('2026-08-26'),
+        );
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function invalidLedgers(): iterable
+    {
+        yield 'negative total' => ['-1', '0'];
+        yield 'negative net paid' => ['10', '-1'];
+        yield 'overpaid' => ['10', '11'];
     }
 }

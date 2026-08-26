@@ -337,6 +337,7 @@ Rendered numbers have a non-unique lookup index `(company_id, kind, rendered_num
 - `document_id` plus `company_id` and a constant `document_kind = QUOTE`
 - lifecycle: `DRAFT`, `SENT`, `ACCEPTED`, or `REJECTED`
 - nullable non-negative validity-days offset and nullable `valid_until`
+- nullable non-negative Invoice payment-term-days snapshot resolved from the selected Customer and Company fallback
 
 The composite foreign key includes the constant kind, so an Invoice base row cannot receive a Quote subtype. The day offset uses the shared `0..3,652,058` technical envelope. If both dates are present, `valid_until >= issue_date` is enforced by application validation and a deferred cross-table constraint trigger. Expired remains derived from the Company-local date and is never persisted as a lifecycle value.
 
@@ -346,7 +347,7 @@ The composite foreign key includes the constant kind, so an Invoice base row can
 - lifecycle: `DRAFT`, `ISSUED`, or `CANCELLED`
 - nullable non-negative payment-term days and nullable `due_date`
 
-If both dates are present, `due_date >= issue_date` is enforced. Payment state and Overdue are derived rather than stored as lifecycle values.
+If both dates are present, `due_date >= issue_date` is enforced. Payment state and Overdue are derived rather than stored as lifecycle values. The shared resolver already accepts authoritative `invoice_total` and `net_paid`, enforces the complete-ledger bounds, and derives Unpaid/Partially Paid/Paid plus Overdue. Before Phase 7 financial rows exist, the explicit Phase 6 no-financial-rows entry point supplies zero net paid; Phase 7 provides the locked transaction aggregate without replacing the derivation algorithm.
 
 Batch 6B expands the deployed subtype check to `DRAFT`/`ISSUED`; `CANCELLED` remains absent until Phase 7 can enforce its transaction-aware invariant in one complete workflow. A deferred issuability function independently rejects an Issued row without the Customer linkage/snapshot, Company snapshot, number, issue/due dates, currency/precision, document language, at least one line, or with any incomplete line. Constraint triggers cover the Invoice subtype, relevant Document base fields, lines, and required snapshot rows, so an Issued Invoice cannot be committed incomplete or made incomplete later through a direct or concurrent write. The application performs the same check before transition and after every Issued edit, while the existing same-Company/kind foreign key, bounded payment-term offset, supported date range, due-date trigger, and calculation triggers remain independent safeguards.
 
@@ -428,7 +429,9 @@ This explicit deferred/immediate bracket avoids temporary-position values and ex
 - creation idempotency key
 - unique active Invoice reference
 
-The row represents an active provenance link. Restrict deleting a Quote while it exists. The unlink action enforces the approved Draft/never-used window, records the removed relationship and reason in audit history, then deletes the link so the Invoice is independent and the Quote no longer has a linked Invoice. Deleting an eligible linked Invoice removes its owned link; its deletion audit remains the durable history.
+The row represents an active provenance link. Both Quote and Invoice deletion are restricted while it exists. The unlink action enforces the approved Draft/never-used window, records the removed relationship and reason in audit history, then deletes the link so the copied Invoice remains intact as an independent Draft and no longer contributes to Quote allocation. Phase 6 evaluates the currently available Draft/Issued and public-access state; the Phase 7 transaction rows and Phase 9 delivery-attempt rows extend the same fail-closed unlink check when those disqualifying consumers arrive. The Quote currency cannot change while any link remains.
+
+Conversion first locks Company configuration and the Invoice numbering counter, then the Quote aggregate, provenance rows, and its dependent snapshots/lines in their stable order. A Company/Quote-scoped UUID creation key makes retries idempotent under the same lock order. Each conversion allocates an independent Invoice number, preserves Quote currency and precision, copies the current approved Company/Customer/Tax/Bank/delivery-recipient/line snapshots, copies the Quote customer reference and Terms & Conditions, uses the Quote's resolved Invoice-payment-term snapshot, and initializes a new Invoice-only public-access state. Allocation is read from every active non-Cancelled link and its current Invoice total; remaining may be negative and is a warning rather than a write constraint.
 
 ### `quote_public_decisions`
 
@@ -706,7 +709,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 6B this includes the shared document base, Quote and independent Invoice Draft/Issued subtypes, numbering/history, lines, current snapshots, and database-enforced Invoice issuability under the reusable tenant-table contract. Provenance, transactions, cancellation/reopening/deletion, public links, delivery artifacts/events, reminders, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 6C this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, and active Quote-to-Invoice provenance under the reusable tenant-table contract. Transactions, cancellation/reopening/deletion, public links, delivery artifacts/events, reminders, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

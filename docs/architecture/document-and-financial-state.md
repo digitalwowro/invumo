@@ -187,6 +187,8 @@ is_overdue = lifecycle_state = ISSUED
 
 Partially Paid and Overdue may both be true. Paid, zero-total, Draft, and Cancelled Invoices are never Overdue.
 
+The typed resolver implements this complete `invoice_total`/`net_paid` comparison before transaction persistence exists. Phase 6 callers deliberately use its named no-financial-rows entry point, which supplies zero net paid and therefore reaches only Unpaid, zero-total Paid, and Overdue states. Phase 7 supplies the locked ledger aggregate to the same resolver; it does not replace a total-based placeholder. `Partially Paid` is already part of the typed payment/display contract but cannot be produced until transaction rows exist.
+
 ## 6. Transaction state rules
 
 Transaction kinds are:

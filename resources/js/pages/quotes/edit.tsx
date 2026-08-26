@@ -8,6 +8,7 @@ import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
+import { QuoteInvoiceAllocationSection } from '@/features/quotes/components/quote-invoice-allocation';
 import { QuoteLifecycleDialog } from '@/features/quotes/components/quote-lifecycle-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
@@ -18,6 +19,7 @@ import type {
     QuoteCustomerSelection,
     QuoteDraft,
     QuoteLimits,
+    QuoteInvoiceAllocation,
     QuoteProductDefaults,
     QuoteSourceOption,
     QuoteSourceUrls,
@@ -30,6 +32,9 @@ type Props = {
     limits: QuoteLimits;
     updateUrl: string;
     lifecycleUrl: string;
+    conversionUrl: string;
+    conversionKey: string;
+    invoiceAllocation: QuoteInvoiceAllocation;
     deleteUrl: string;
     representationUrl: string;
     pdfUrl: string;
@@ -57,6 +62,9 @@ export default function EditQuote({
     limits,
     updateUrl,
     lifecycleUrl,
+    conversionUrl,
+    conversionKey,
+    invoiceAllocation,
     deleteUrl,
     representationUrl,
     pdfUrl,
@@ -134,7 +142,18 @@ export default function EditQuote({
                         labels={translations.edit}
                         customerLabels={customerTranslations}
                         catalogLabels={catalogTranslations}
+                        conversion={{
+                            url: conversionUrl,
+                            creationKey: conversionKey,
+                            allocation: invoiceAllocation,
+                        }}
+                        conversionLabels={translations.conversion}
                         {...sourceProps}
+                    />
+                    <QuoteInvoiceAllocationSection
+                        allocation={invoiceAllocation}
+                        currencyCode={quote.currencyCode}
+                        labels={translations}
                     />
                     <Cluster>
                         <ActionLink href={indexUrl} variant="ghost">

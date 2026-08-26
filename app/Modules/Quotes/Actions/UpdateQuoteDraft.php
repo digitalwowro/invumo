@@ -26,6 +26,7 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Quotes\Data\QuoteDraftData;
 use App\Modules\Quotes\Exceptions\QuoteDraftException;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -71,11 +72,17 @@ final readonly class UpdateQuoteDraft
         }
 
         $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $links = QuoteInvoiceLink::query()
+            ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
         $this->assertValidDates($data);
         $changedFields = $this->changedFields($document, $quote, $data, $selection !== null);
 
         if ($selection === null && $document->customer_id !== $data->customerId) {
             throw QuoteDraftException::customerConfirmationRequired();
+        }
+
+        if ($document->currency_code !== $data->currencyCode && $links->isNotEmpty()) {
+            throw QuoteDraftException::currencyLinked();
         }
 
         $persisted = $this->sourceGuard->lockSourcesAndLines(
@@ -121,6 +128,9 @@ final readonly class UpdateQuoteDraft
         $quote->update([
             'validity_days' => $data->validityDays,
             'valid_until' => $data->validUntil,
+            'invoice_payment_term_days' => $selection instanceof ResolvedDocumentCustomer
+                ? $selection->paymentTermDays
+                : $quote->invoice_payment_term_days,
         ]);
         $connection->statement(<<<'SQL'
             SET CONSTRAINTS

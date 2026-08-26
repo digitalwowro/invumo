@@ -89,7 +89,7 @@ final class QuoteDraftController extends Controller
             $field = match ($exception->reason()) {
                 'stale' => 'edit_version',
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
-                'currency_unavailable' => 'currency_code',
+                'currency_unavailable', 'currency_linked' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
                 'details_invalid' => 'valid_until',
                 default => 'lines',

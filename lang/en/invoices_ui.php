@@ -77,6 +77,7 @@ return [
         'payment_options' => [
             'all' => 'All payment states',
             'UNPAID' => 'Unpaid',
+            'PARTIALLY_PAID' => 'Partially paid',
             'PAID' => 'Paid',
         ],
         'overdue_options' => [
@@ -87,6 +88,7 @@ return [
             'DRAFT' => 'Draft',
             'ISSUED' => 'Issued',
             'UNPAID' => 'Unpaid',
+            'PARTIALLY_PAID' => 'Partially paid',
             'PAID' => 'Paid',
             'OVERDUE' => 'Overdue',
         ],

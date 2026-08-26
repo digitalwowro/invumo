@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Support\Database;
 
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use RuntimeException;
 
 final class PostgreSqlTestRestore
 {
+    public function __construct(
+        private readonly PostgreSqlClientBinaries $binaries,
+    ) {}
+
     /** @param array<string, mixed> $connection */
     public function restore(array $connection, string $backupPath): void
     {
@@ -18,7 +23,7 @@ final class PostgreSqlTestRestore
         }
 
         $common = [
-            '/usr/lib/postgresql/18/bin/psql',
+            $this->binaries->psql(),
             '--no-psqlrc',
             '--set=ON_ERROR_STOP=1',
             '--host='.$this->required($connection, 'host'),

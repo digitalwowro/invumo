@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { TextareaField, TextField } from '@/components/app/form-field';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
@@ -18,6 +19,8 @@ type Props = {
     limits: DocumentLineLimits;
     labels: DocumentLineLabels;
     errors: Record<string, string>;
+    sourceAction?: ReactNode;
+    sourceNotice?: ReactNode;
     onChange: (line: DocumentLineDraft) => void;
     onMove: (direction: -1 | 1) => void;
     onRemove: () => void;
@@ -42,6 +45,7 @@ export function DocumentLineCard(props: Props) {
                     {props.labels.line} {props.index + 1}
                 </h2>
                 <div className="flex flex-wrap gap-2">
+                    {props.sourceAction}
                     <Button
                         type="button"
                         variant="secondary"
@@ -73,6 +77,7 @@ export function DocumentLineCard(props: Props) {
                     </Button>
                 </div>
             </div>
+            {props.sourceNotice}
             <TextareaField
                 label={props.labels.fields.description}
                 error={error('description')}

@@ -26,6 +26,16 @@ final class QuoteDraftException extends DomainException
         return new self('line_invalid');
     }
 
+    public static function customerConfirmationRequired(): self
+    {
+        return new self('customer_confirmation_required');
+    }
+
+    public static function customerDefaultsChanged(): self
+    {
+        return new self('customer_defaults_changed');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

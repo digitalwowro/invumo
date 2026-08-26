@@ -382,7 +382,7 @@ The copied values render even if the source is later archived. Permanent source 
 
 ### `document_tax_defaults`
 
-Zero or one current default row containing an optional source Tax-preset reference plus the snapshotted tax name and percentage. Selecting a Customer replaces this default only after the approved preview/confirmation flow. A newly added manual line uses this stored document default rather than silently re-reading a later Customer or Company setting; the line then receives its own authoritative tax snapshot.
+Zero or one current default row containing an optional source Tax-preset reference plus the snapshotted tax name and percentage. Selecting a Customer replaces this default only after the approved preview/confirmation flow. The preview token is an opaque HMAC over the relevant resolved source content; aggregate save locks and re-resolves the source, compares the token in constant time, and rejects any intervening relevant change. The token is neither persisted nor audited. A newly added manual line uses this stored document default rather than silently re-reading a later Customer or Company setting; the line then receives its own authoritative tax snapshot.
 
 ### `document_delivery_settings` and `document_delivery_recipients`
 
@@ -407,7 +407,7 @@ Committed line positions are a dense one-based sequence with no gaps. PostgreSQL
 The position constraint is `DEFERRABLE INITIALLY IMMEDIATE`. Ordinary direct writes therefore retain statement-level collision checking. The owning save Action uses this exact short transaction boundary:
 
 1. lock the Document row and reject a submitted version that is no longer current;
-2. lock all persisted document lines in stable UUID order and validate that the aggregate command may update/delete only that complete owned set;
+2. lock submitted Tax-preset sources, submitted Product/Service sources, and then all persisted document lines, each set in stable UUID order; validate source availability and that the aggregate command may update/delete only the complete owned line set;
 3. execute `SET CONSTRAINTS document_lines_company_document_position_unique DEFERRED`;
 4. reconcile inserts, UUID-addressed updates, deletions, and the complete dense `1..n` final order without using `(company_id, document_id, position)` as an `ON CONFLICT` arbiter;
 5. execute `SET CONSTRAINTS document_lines_company_document_position_unique IMMEDIATE` immediately after the last line write, forcing final uniqueness validation at the line boundary rather than at transaction commit;

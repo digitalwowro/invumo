@@ -28,7 +28,19 @@ final class QuoteDraftDatabaseTest extends TestCase
     {
         $company = $this->company();
 
-        foreach (['number_counters', 'documents', 'quotes', 'document_number_events', 'document_lines'] as $table) {
+        foreach ([
+            'number_counters',
+            'documents',
+            'quotes',
+            'document_number_events',
+            'document_lines',
+            'document_company_snapshots',
+            'document_customer_snapshots',
+            'document_bank_snapshots',
+            'document_tax_defaults',
+            'document_delivery_settings',
+            'document_delivery_recipients',
+        ] as $table) {
             $rls = DB::connection('pgsql_schema')->selectOne(<<<SQL
                 SELECT relrowsecurity, relforcerowsecurity
                 FROM pg_class WHERE oid = 'public.{$table}'::regclass

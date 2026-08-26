@@ -1,7 +1,13 @@
 <?php
 
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use App\Foundation\Database\PrivateSqlBackupFiles;
 use App\Foundation\Database\ProductionSqlDump;
+
+function configuredPostgreSqlBinaries(int $majorVersion = 18): PostgreSqlClientBinaries
+{
+    return new PostgreSqlClientBinaries('/usr/lib/postgresql/18/bin', $majorVersion);
+}
 
 function privateBackupTestDirectory(): string
 {
@@ -22,7 +28,7 @@ function removePrivateBackupTestDirectory(string $directory): void
 }
 
 it('propagates the exported snapshot and validates tenant table identifiers', function () {
-    $dump = new ProductionSqlDump;
+    $dump = new ProductionSqlDump(configuredPostgreSqlBinaries());
     $command = $dump->command('127.0.0.1', '5432', 'schema', 'invumo', '0001-1');
 
     expect($command[0])->toBe('/usr/lib/postgresql/18/bin/pg_dump')
@@ -45,7 +51,7 @@ it('detects missing forced-RLS rows in a generated SQL file', function () {
         'INSERT INTO public.company_settings (id) VALUES (\'one\');',
     ]));
 
-    $dump = new ProductionSqlDump;
+    $dump = new ProductionSqlDump(configuredPostgreSqlBinaries());
     $dump->verifyTenantRowCounts($path, ['public.company_settings' => 1]);
 
     expect(fn () => $dump->verifyTenantRowCounts(
@@ -59,13 +65,18 @@ it('detects missing forced-RLS rows in a generated SQL file', function () {
 it('fails closed when the dump process cannot complete', function () {
     $path = tempnam(sys_get_temp_dir(), 'invumo-dump-failure-');
     $destination = fopen($path, 'wb');
-    $dump = new ProductionSqlDump('/usr/bin/false');
+    $dump = new ProductionSqlDump(configuredPostgreSqlBinaries());
 
     expect(fn () => $dump->append($destination, ['/usr/bin/false'], getenv()))
         ->toThrow(RuntimeException::class);
 
     fclose($destination);
     unlink($path);
+});
+
+it('requires the configured PostgreSQL client major version', function () {
+    expect(fn () => configuredPostgreSqlBinaries(17)->assertCompatible())
+        ->toThrow(RuntimeException::class, 'incompatible major version');
 });
 
 it('finalizes private backups atomically with restrictive permissions', function () {

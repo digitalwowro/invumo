@@ -3,6 +3,7 @@
 namespace Tests\Feature\Foundation\Configuration;
 
 use App\Foundation\Configuration\ProductionConfiguration;
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -133,6 +134,24 @@ class ProductionConfigurationTest extends TestCase
             $this->fail('A public production Company-asset disk was accepted.');
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('filesystem.company_assets', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_postgresql_client_must_match_the_configured_major_version(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('database.postgresql_client.major_version', 17);
+
+        $this->app->forgetInstance(ProductionConfiguration::class);
+        $this->app->forgetInstance(PostgreSqlClientBinaries::class);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('An incompatible PostgreSQL client was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('database.postgresql_client', $exception->getMessage());
         } finally {
             $this->app['env'] = 'testing';
         }

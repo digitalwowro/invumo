@@ -21,7 +21,7 @@ final readonly class CatalogLineDefaults
         Company $company,
         User $actor,
         string $productId,
-        string $documentCurrencyCode,
+        ?string $documentCurrencyCode,
     ): array {
         if (! $this->abilities->allows($actor, $company, CompanyAbility::ViewCatalog)) {
             throw new AuthorizationException;
@@ -34,7 +34,7 @@ final readonly class CatalogLineDefaults
         $sourceCurrency = $product->currency_id === null
             ? null
             : CompanyCurrency::query()->whereKey($product->currency_id)->where('active', true)->firstOrFail();
-        $documentCurrencyCode = strtoupper(trim($documentCurrencyCode));
+        $documentCurrencyCode = strtoupper(trim((string) $documentCurrencyCode));
         $priceMatches = $sourceCurrency instanceof CompanyCurrency
             && $sourceCurrency->currency_code === $documentCurrencyCode;
         $taxPreset = $product->tax_preset_id === null

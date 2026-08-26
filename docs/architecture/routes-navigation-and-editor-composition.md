@@ -150,6 +150,12 @@ Platform Owner grant/revoke has no web route in v1. Non-operators receive no pla
 | POST   | `/companies/{company}/quotes`                                   | Persist a numbered Draft and redirect to its workspace       |
 | GET    | `/companies/{company}/quotes/{quote}`                           | Quote document workspace/editor                              |
 | PATCH  | `/companies/{company}/quotes/{quote}`                           | Version-checked aggregate save                               |
+| GET    | `/companies/{company}/document-sources/customers`                | Bounded literal Customer source search                       |
+| GET    | `/companies/{company}/document-sources/customers/{customer}`     | Customer/default snapshot preview and confirmation token     |
+| GET    | `/companies/{company}/document-sources/products`                 | Bounded literal active Product/Service source search         |
+| GET    | `/companies/{company}/document-sources/products/{product}`       | Detached Product/Service line defaults                       |
+| POST   | `/companies/{company}/quotes/{quote}/inline-customers`           | Shared Customer create Action with inline selection result   |
+| POST   | `/companies/{company}/quotes/{quote}/inline-products`            | Owner/Admin shared catalogue create Action with line defaults |
 | DELETE | `/companies/{company}/quotes/{quote}`                           | Guarded permanent deletion                                   |
 | POST   | `/companies/{company}/quotes/{quote}/invoices`                  | Guarded Quote-to-Invoice conversion                          |
 | POST   | `/companies/{company}/quotes/{quote}/invoices/{invoice}/unlink` | Owner/Admin-only eligible Draft unlink action                |
@@ -322,6 +328,8 @@ Customer and Product/Service inline creation use the same actions and form compo
 - a successful create returns the minimum new option data, closes the dialog, and selects the new record;
 - Product/Service inline creation is absent for Members because catalogue management is Owner/Admin-only;
 - selecting a Customer or Product/Service never creates a live link that can silently rewrite an existing document line/snapshot.
+
+Customer selection previews return an opaque HMAC over only the currently resolved source/default content that would be copied. The aggregate save locks and re-resolves those sources, compares the HMAC in constant time, and rejects a stale preview before changing the Draft. The token contains no clear source values, is not persisted or audited, and therefore does not become an alternate Customer-data store. Product/Service selection remains a detached preview; saving locks referenced Tax presets, then Products/Services, then existing lines in stable UUID order before accepting provenance or copied values.
 
 ## 7. Authorization and visibility
 

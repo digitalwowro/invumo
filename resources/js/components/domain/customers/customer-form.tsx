@@ -1,8 +1,9 @@
+import type { Page } from '@inertiajs/core';
 import { Form } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
-import { CustomerDetailSections } from '@/features/customers/components/customer-detail-sections';
-import { CustomerIdentitySections } from '@/features/customers/components/customer-identity-sections';
+import { CustomerDetailSections } from '@/components/domain/customers/customer-detail-sections';
+import { CustomerIdentitySections } from '@/components/domain/customers/customer-identity-sections';
 import type {
     CustomerFieldLimits,
     CustomerOption,
@@ -21,6 +22,7 @@ type Props = {
     labels: CustomerTranslations['form'];
     disabled?: boolean;
     unsavedWarning: string;
+    onSuccess?: (page: Page) => void;
 };
 
 export function CustomerForm({
@@ -34,6 +36,7 @@ export function CustomerForm({
     labels,
     disabled = false,
     unsavedWarning,
+    onSuccess,
 }: Props) {
     return (
         <Form
@@ -41,6 +44,7 @@ export function CustomerForm({
             method={method}
             options={{ preserveScroll: true }}
             setDefaultsOnSuccess
+            onSuccess={onSuccess}
         >
             {({ errors, isDirty, processing }) => (
                 <Stack gap="2xl">

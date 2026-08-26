@@ -2,21 +2,39 @@
 
 namespace App\Modules\Quotes\Queries;
 
+use App\Foundation\Documents\DocumentFieldLimits as DocumentContentLimits;
+use App\Foundation\Localization\SupportedLocales;
 use App\Foundation\Money\DecimalRules;
 use App\Models\User;
+use App\Modules\Catalog\Queries\CatalogFormOptions;
+use App\Modules\Catalog\Queries\CatalogLineDefaults;
 use App\Modules\Companies\Data\CompanyAbility;
+use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Customers\Models\Customer;
+use App\Modules\Customers\Queries\CustomerDocumentOptions;
+use App\Modules\Customers\Queries\CustomerFormOptions;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentBankSnapshot;
+use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Documents\Models\DocumentTaxDefault;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
 
 final readonly class QuoteDraftPage
 {
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private CustomerDocumentOptions $customerOptions,
+        private CustomerFormOptions $customerForm,
+        private CatalogFormOptions $catalogForm,
+        private CatalogLineDefaults $catalogDefaults,
+    ) {}
 
     /** @return array<string, mixed> */
     public function create(Company $company, User $actor): array
@@ -30,8 +48,14 @@ final readonly class QuoteDraftPage
     }
 
     /** @return array<string, mixed> */
-    public function edit(Company $company, User $actor, string $documentId): array
-    {
+    public function edit(
+        Company $company,
+        User $actor,
+        string $documentId,
+        string $locale,
+        ?string $inlineCustomerId = null,
+        ?string $inlineProductId = null,
+    ): array {
         $this->authorize($company, $actor);
         $document = Document::query()
             ->whereKey($documentId)
@@ -41,20 +65,83 @@ final readonly class QuoteDraftPage
             ->where('document_id', $document->id)
             ->orderBy('position')
             ->get();
+        $customer = $document->customer_id === null
+            ? null
+            : Customer::query()->whereKey($document->customer_id)->first();
+        $taxDefault = DocumentTaxDefault::query()->where('document_id', $document->id)->first();
+        $bank = DocumentBankSnapshot::query()->where('document_id', $document->id)->first();
+        $delivery = DocumentDeliverySetting::query()->where('document_id', $document->id)->firstOrFail();
+        $currencies = CompanyCurrency::query()
+            ->where('active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('currency_code')
+            ->get();
+        $bankAccounts = BankAccount::query()
+            ->whereNull('archived_at')
+            ->orderByDesc('is_default')
+            ->orderBy('label')
+            ->get();
+        $currencyOptions = $currencies->map(fn (CompanyCurrency $currency): array => [
+            'value' => $currency->currency_code,
+            'label' => $currency->currency_code,
+            'precision' => $currency->currency_precision,
+        ])->values()->all();
+        $bankAccountOptions = $bankAccounts->map(fn (BankAccount $account): array => [
+            'value' => $account->id,
+            'label' => $account->label,
+        ])->values()->all();
+
+        if ($document->currency_code !== null
+            && $currencies->firstWhere('currency_code', $document->currency_code) === null) {
+            array_unshift($currencyOptions, [
+                'value' => $document->currency_code,
+                'label' => $document->currency_code,
+                'precision' => $document->currency_precision,
+            ]);
+        }
+
+        if ($bank !== null
+            && $bank->bank_account_id !== null
+            && $bankAccounts->firstWhere('id', $bank->bank_account_id) === null) {
+            array_unshift($bankAccountOptions, [
+                'value' => $bank->bank_account_id,
+                'label' => $bank->label,
+            ]);
+        }
 
         return [
             'quote' => [
                 'id' => $document->id,
                 'number' => $document->rendered_number,
                 'issueDate' => $document->issue_date?->toDateString(),
+                'customer' => $customer === null ? null : [
+                    'id' => $customer->id,
+                    'displayName' => $customer->displayName(),
+                ],
                 'currencyCode' => $document->currency_code,
                 'currencyPrecision' => $document->currency_precision,
+                'documentLanguage' => $document->document_language,
+                'termsAndConditions' => $document->terms_and_conditions,
+                'notes' => $document->notes,
+                'taxDefault' => $taxDefault === null ? null : [
+                    'id' => $taxDefault->tax_preset_id,
+                    'name' => $taxDefault->name,
+                    'percentage' => rtrim(rtrim($taxDefault->percentage, '0'), '.') ?: '0',
+                ],
+                'bankAccount' => $bank === null ? null : [
+                    'id' => $bank->bank_account_id,
+                    'label' => $bank->label,
+                    'currencyCode' => $bank->currency_code,
+                ],
+                'emailAttachmentMode' => $delivery->email_attachment_mode->value,
+                'recipientCount' => $document->deliveryRecipients()->count(),
                 'editVersion' => $document->edit_version,
                 'subtotal' => $this->money($document->subtotal, $document->currency_precision),
                 'taxTotal' => $this->money($document->tax_total, $document->currency_precision),
                 'total' => $this->money($document->total, $document->currency_precision),
                 'lines' => $lines->map(fn (DocumentLine $line): array => [
                     'id' => $line->id,
+                    'productServiceId' => $line->product_service_id,
                     'description' => $line->description,
                     'itemPrice' => $line->item_price,
                     'quantity' => $line->quantity,
@@ -64,14 +151,47 @@ final readonly class QuoteDraftPage
                     'discountPercentage' => $line->discount_percentage,
                     'taxName' => $line->tax_name,
                     'taxPercentage' => $line->tax_percentage,
+                    'taxPresetId' => $line->tax_preset_id,
                     'finalLineTotal' => $this->money($line->final_line_total, $document->currency_precision),
                 ])->values(),
             ],
             'updateUrl' => route('quotes.update', [$company, $document], false),
+            'sourceUrls' => [
+                'customerSearch' => route('quote-sources.customers.index', $company, false),
+                'companyCustomerDefaults' => route('quote-sources.customers.company-defaults', $company, false),
+                'productSearch' => route('quote-sources.products.index', $company, false),
+            ],
+            'inlineCustomerStoreUrl' => route('quotes.inline-customers.store', [$company, $document], false),
+            'inlineProductStoreUrl' => route('quotes.inline-products.store', [$company, $document], false),
+            'inlineCreatedCustomer' => $inlineCustomerId === null
+                ? null
+                : $this->customerOptions->preview($company, $actor, $inlineCustomerId),
+            'inlineCreatedProduct' => $inlineProductId === null
+                ? null
+                : $this->catalogDefaults->for(
+                    $company,
+                    $actor,
+                    $inlineProductId,
+                    $document->currency_code,
+                ),
+            'sourceAbilities' => [
+                'createCustomer' => $this->abilities->allows($actor, $company, CompanyAbility::ManageCustomers),
+                'createProduct' => $this->abilities->allows($actor, $company, CompanyAbility::ManageCatalog),
+            ],
+            'currencyOptions' => $currencyOptions,
+            'languageOptions' => array_map(fn (string $language): array => [
+                'value' => $language,
+                'label' => __("companies_ui.settings.documents.language_options.{$language}"),
+            ], SupportedLocales::all()),
+            'bankAccountOptions' => $bankAccountOptions,
+            'customerForm' => $this->customerForm->for($locale),
+            'catalogForm' => $this->catalogForm->for(),
             'limits' => [
                 'description' => DocumentFieldLimits::DESCRIPTION,
                 'unit' => DocumentFieldLimits::UNIT,
                 'taxName' => DocumentFieldLimits::TAX_NAME,
+                'termsAndConditions' => DocumentContentLimits::TERMS_AND_CONDITIONS_CHARACTERS,
+                'notes' => DocumentContentLimits::NOTES_CHARACTERS,
             ],
         ];
     }

@@ -3,7 +3,7 @@ import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
-import { ProductServiceCreateForm } from '@/features/catalog/components/product-service-create-form';
+import { ProductServiceCreateForm } from '@/components/domain/catalog/product-service-create-form';
 import { ProductServiceTable } from '@/features/catalog/components/product-service-table';
 import type {
     CatalogCurrencyOption,

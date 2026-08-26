@@ -17,6 +17,11 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Customers\Data\ResolvedDocumentCustomer;
+use App\Modules\Customers\Queries\ResolveDocumentCustomer;
+use App\Modules\Documents\Actions\ApplyDocumentCustomer;
+use App\Modules\Documents\Actions\ApplyDocumentDraftSources;
+use App\Modules\Documents\Actions\LockDocumentLineSources;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Data\DocumentLineData;
@@ -24,7 +29,6 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Quotes\Data\QuoteDraftData;
 use App\Modules\Quotes\Exceptions\QuoteDraftException;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -35,6 +39,10 @@ final readonly class UpdateQuoteDraft
         private AuthorizesCompanyActions $authorizer,
         private LineCalculator $lineCalculator,
         private DocumentCalculator $documentCalculator,
+        private ResolveDocumentCustomer $resolveCustomer,
+        private ApplyDocumentCustomer $applyCustomer,
+        private ApplyDocumentDraftSources $applyDraftSources,
+        private LockDocumentLineSources $sourceGuard,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -53,6 +61,7 @@ final readonly class UpdateQuoteDraft
     private function update(Company $company, User $actor, string $documentId, QuoteDraftData $data): Document
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageQuotes);
+        $selection = $this->customerSelection($data);
         $document = Document::query()
             ->whereKey($documentId)
             ->where('kind', DocumentKind::Quote)
@@ -63,12 +72,24 @@ final readonly class UpdateQuoteDraft
             throw QuoteDraftException::stale();
         }
 
-        /** @var Collection<int, DocumentLine> $persisted */
-        $persisted = DocumentLine::query()
-            ->where('document_id', $document->id)
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get();
+        if ($selection === null && $document->customer_id !== $data->customerId) {
+            throw QuoteDraftException::customerConfirmationRequired();
+        }
+
+        $persisted = $this->sourceGuard->lockSourcesAndLines($document->id, $data->lines);
+
+        if ($selection instanceof ResolvedDocumentCustomer) {
+            $this->applyCustomer->handle($document, $selection);
+        }
+
+        $this->applyDraftSources->handle(
+            $document,
+            $data->currencyCode,
+            $data->documentLanguage,
+            $data->bankAccountId,
+            $data->termsAndConditions,
+            $data->notes,
+        );
 
         $submittedIds = array_values(array_filter(array_map(
             fn (DocumentLineData $line): ?string => $line->id,
@@ -132,7 +153,8 @@ final readonly class UpdateQuoteDraft
                 'line_count' => count($data->lines),
                 'complete_line_count' => count($amounts),
                 'edit_version' => $document->edit_version,
-            ], ['line_count', 'complete_line_count', 'edit_version']),
+                'customer_selection_applied' => $selection !== null,
+            ], ['line_count', 'complete_line_count', 'edit_version', 'customer_selection_applied']),
         ));
 
         return $document->refresh();
@@ -180,6 +202,7 @@ final readonly class UpdateQuoteDraft
         )) : null;
 
         return [[
+            'product_service_id' => $data->productServiceId,
             'description' => $data->description,
             'item_price' => $data->itemPrice,
             'quantity' => $data->quantity,
@@ -189,8 +212,24 @@ final readonly class UpdateQuoteDraft
             'discount_percentage' => $data->discountPercentage,
             'tax_name' => $data->taxName,
             'tax_percentage' => $data->taxPercentage,
+            'tax_preset_id' => $data->taxPresetId,
             ...$this->nullableAmounts($calculation),
         ], $calculation];
+    }
+
+    private function customerSelection(QuoteDraftData $data): ?ResolvedDocumentCustomer
+    {
+        if ($data->customerConfirmationToken === null) {
+            return null;
+        }
+
+        $selection = $this->resolveCustomer->for($data->customerId, true);
+
+        if (! hash_equals($selection->confirmationToken, $data->customerConfirmationToken)) {
+            throw QuoteDraftException::customerDefaultsChanged();
+        }
+
+        return $selection;
     }
 
     /** @return array<string, string|null> */

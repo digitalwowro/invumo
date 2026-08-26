@@ -5,6 +5,14 @@ use Pdo\Mysql;
 
 return [
 
+    'postgresql_client' => [
+        'binary_directory' => env(
+            'POSTGRESQL_CLIENT_BIN_DIRECTORY',
+            '/usr/lib/postgresql/18/bin',
+        ),
+        'major_version' => (int) env('POSTGRESQL_CLIENT_MAJOR_VERSION', 18),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name

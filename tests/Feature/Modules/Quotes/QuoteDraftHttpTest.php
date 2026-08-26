@@ -61,6 +61,7 @@ final class QuoteDraftHttpTest extends TestCase
                 ->where('quote.editVersion', 1));
 
         $this->patch(route('quotes.update', [$company, $quote]), [
+            ...$this->draftDefaults(),
             'edit_version' => 1,
             'lines' => [$this->line('Consulting', '100', '2', '10', 'TVA', '19')],
         ])->assertRedirect()->assertSessionHas('status');
@@ -91,12 +92,14 @@ final class QuoteDraftHttpTest extends TestCase
         $url = route('quotes.update', [$company, $quote]);
 
         $this->patch($url, [
+            ...$this->draftDefaults(),
             'edit_version' => 1,
             'lines' => [$this->line('First'), $this->line('Second')],
         ])->assertRedirect();
         $lines = $this->tenant($company, fn () => DocumentLine::query()->orderBy('position')->get());
 
         $this->patch($url, [
+            ...$this->draftDefaults(),
             'edit_version' => 2,
             'lines' => [
                 [...$this->line('Second moved'), 'id' => $lines[1]->id],
@@ -113,6 +116,7 @@ final class QuoteDraftHttpTest extends TestCase
         });
 
         $this->patch($url, [
+            ...$this->draftDefaults(),
             'edit_version' => 2,
             'lines' => [],
         ])->assertSessionHasErrors('edit_version');
@@ -137,11 +141,13 @@ final class QuoteDraftHttpTest extends TestCase
         $this->actingAs($owner);
 
         $this->patch(route('quotes.update', [$company, $quote]), [
+            ...$this->draftDefaults(),
             'edit_version' => 1,
             'lines' => [[...$this->line(str_repeat('x', 5001)), 'id' => $foreignLine->id]],
         ])->assertSessionHasErrors(['lines.0.description']);
 
         $response = $this->patch(route('quotes.update', [$company, $quote]), [
+            ...$this->draftDefaults(),
             'edit_version' => 1,
             'lines' => [[...$this->line('Invalid', '-1'), 'id' => $foreignLine->id]],
         ])->assertSessionHasErrors(['lines.0.item_price']);
@@ -149,9 +155,24 @@ final class QuoteDraftHttpTest extends TestCase
 
         $this->get(route('quotes.edit', [$other, $otherQuote]))->assertNotFound();
         $this->patch(route('quotes.update', [$company, $quote]), [
+            ...$this->draftDefaults(),
             'edit_version' => 1,
             'lines' => [[...$this->line('Foreign'), 'id' => $foreignLine->id]],
         ])->assertSessionHasErrors('lines');
+    }
+
+    /** @return array<string, mixed> */
+    private function draftDefaults(): array
+    {
+        return [
+            'customer_id' => null,
+            'customer_confirmation_token' => null,
+            'currency_code' => 'RON',
+            'document_language' => 'en',
+            'bank_account_id' => null,
+            'terms_and_conditions' => null,
+            'notes' => null,
+        ];
     }
 
     /** @return array<string, mixed> */

@@ -1,10 +1,11 @@
+import type { Page } from '@inertiajs/core';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { FormSection } from '@/components/app/form-section';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
-import { ProductServiceFormFields } from '@/features/catalog/components/product-service-form-fields';
+import { ProductServiceFormFields } from '@/components/domain/catalog/product-service-form-fields';
 import type {
     CatalogCurrencyOption,
     CatalogLimits,
@@ -31,6 +32,7 @@ type Props = {
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
     labels: CatalogTranslations['form'];
+    onSuccess?: (page: Page) => void;
 };
 
 export function ProductServiceCreateForm(props: Props) {
@@ -42,7 +44,10 @@ export function ProductServiceCreateForm(props: Props) {
         event.preventDefault();
         form.post(props.storeUrl, {
             preserveScroll: true,
-            onSuccess: () => form.reset(),
+            onSuccess: (page) => {
+                form.reset();
+                props.onSuccess?.(page);
+            },
         });
     };
 

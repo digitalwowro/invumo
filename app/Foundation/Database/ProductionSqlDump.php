@@ -9,14 +9,12 @@ use RuntimeException;
 final class ProductionSqlDump implements SqlDumpProcess
 {
     public function __construct(
-        private readonly string $binary = '/usr/lib/postgresql/18/bin/pg_dump',
+        private readonly PostgreSqlClientBinaries $binaries,
     ) {}
 
     public function assertAvailable(): void
     {
-        if (! is_executable($this->binary)) {
-            throw new RuntimeException('The PostgreSQL backup binary is unavailable.');
-        }
+        $this->binaries->assertCompatible();
     }
 
     /** @return list<string> */
@@ -28,7 +26,7 @@ final class ProductionSqlDump implements SqlDumpProcess
         string $snapshot,
     ): array {
         return [
-            $this->binary,
+            $this->binaries->pgDump(),
             '--host', $host,
             '--port', $port,
             '--username', $username,

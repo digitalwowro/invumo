@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Foundation\Database\DestructiveCommandSafety;
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use App\Foundation\Database\ProductionSqlDump;
 use App\Foundation\Database\SqlDumpProcess;
 use App\Foundation\Diagnostics\ApplicationHealth;
@@ -29,6 +30,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(
+            PostgreSqlClientBinaries::class,
+            fn (): PostgreSqlClientBinaries => new PostgreSqlClientBinaries(
+                (string) config('database.postgresql_client.binary_directory'),
+                (int) config('database.postgresql_client.major_version'),
+            ),
+        );
         $this->app->bind(
             VerifiesTenantMembership::class,
             CompanyMembershipVerifier::class,

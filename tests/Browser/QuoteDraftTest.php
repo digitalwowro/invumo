@@ -2,10 +2,13 @@
 
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
+use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Companies\Models\TaxPreset;
+use App\Modules\Customers\Models\Customer;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -29,9 +32,21 @@ function companyForQuoteBrowser(string $language = 'en'): array
             'timezone' => 'Europe/Bucharest',
             'default_document_language' => $language,
         ]);
-        CompanyCurrency::query()->create([
+        $currency = CompanyCurrency::query()->create([
             'currency_code' => 'RON', 'currency_precision' => 2,
             'is_default' => true, 'active' => true,
+        ]);
+        $tax = TaxPreset::query()->create([
+            'name' => 'TVA', 'percentage' => '19', 'is_default' => true,
+        ]);
+        Customer::query()->create([
+            'type' => 'COMPANY', 'legal_name' => 'Browser Customer SRL',
+            'document_language' => $language,
+        ]);
+        ProductService::query()->create([
+            'name' => 'Browser Consulting', 'unit_price' => '100',
+            'currency_id' => $currency->id, 'unit' => 'hour',
+            'period_unit' => 'NONE', 'tax_preset_id' => $tax->id,
         ]);
     });
 
@@ -57,14 +72,39 @@ it('creates and calculates a manual Quote Draft without viewport overflow', func
         ->assertSee('New quote')
         ->click('Create quote draft')
         ->assertSee('Q-'.now('Europe/Bucharest')->year.'-0001')
+        ->click('@quote-customer-select')
+        ->type('Customer search', 'Browser Customer')
+        ->click('@quote-customer-search')
+        ->click('@quote-customer-result')
+        ->assertSee('Review the Customer defaults')
+        ->click('@quote-customer-confirm')
+        ->assertSee('Browser Customer SRL')
         ->click('Add line')
-        ->type('Description', 'Consulting')
-        ->type('Item price', '100')
+        ->click('@quote-product-select-0')
+        ->type('Product or Service search', 'Browser Consulting')
+        ->click('@quote-product-search')
+        ->click('@quote-product-result')
+        ->click('@quote-product-confirm')
+        ->assertValue('Description', 'Browser Consulting')
         ->type('Quantity', '2')
         ->type('Discount %', '10')
-        ->type('Tax name', 'VAT')
-        ->type('Tax %', '19')
         ->assertSee('214.20')
+        ->type('Description', 'Unsaved Quote sentinel')
+        ->click('@quote-customer-select')
+        ->click('@quote-inline-customer')
+        ->type('First name', 'Inline')
+        ->type('Last name', 'Customer')
+        ->click('Create customer')
+        ->assertValue('Description', 'Unsaved Quote sentinel')
+        ->assertSee('Inline Customer')
+        ->assertValue('Description', 'Unsaved Quote sentinel')
+        ->click('@quote-product-select-0')
+        ->click('@quote-inline-product')
+        ->type('Name', 'Inline Browser Product')
+        ->click('Add entry')
+        ->assertValue('Description', 'Inline Browser Product')
+        ->assertSee('Inline Customer')
+        ->type('Item price', '100')
         ->click('Save quote draft')
         ->assertSee('Quote draft saved.')
         ->assertSee('214.20')

@@ -40,6 +40,8 @@ jobs:
       DB_SCHEMA_DATABASE: invumo_test
       DB_SCHEMA_USERNAME: invumo_schema
       DB_SCHEMA_PASSWORD: invumo_schema_test_password
+      POSTGRESQL_CLIENT_BIN_DIRECTORY: /usr/lib/postgresql/18/bin
+      POSTGRESQL_CLIENT_MAJOR_VERSION: 18
 
     steps:
       - name: Checkout code
@@ -83,7 +85,8 @@ jobs:
           EOF
           sudo apt-get update
           sudo apt-get install --yes postgresql-client-18
-          /usr/lib/postgresql/18/bin/pg_dump --version | grep -E '^pg_dump \(PostgreSQL\) 18\.'
+          "${POSTGRESQL_CLIENT_BIN_DIRECTORY}/pg_dump" --version | grep -E "^pg_dump \\(PostgreSQL\\) ${POSTGRESQL_CLIENT_MAJOR_VERSION}\\."
+          "${POSTGRESQL_CLIENT_BIN_DIRECTORY}/psql" --version | grep -E "^psql \\(PostgreSQL\\) ${POSTGRESQL_CLIENT_MAJOR_VERSION}\\."
 
       - name: Prepare application
         run: |

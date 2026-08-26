@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { SystemMessage } from '@/components/app/system-message';
+import { ProductServiceFormFields } from '@/components/domain/catalog/product-service-form-fields';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -14,7 +15,6 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { ProductServiceFormFields } from '@/features/catalog/components/product-service-form-fields';
 import type {
     CatalogCurrencyOption,
     CatalogLimits,

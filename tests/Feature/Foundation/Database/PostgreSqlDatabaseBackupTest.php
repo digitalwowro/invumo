@@ -1,5 +1,6 @@
 <?php
 
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use App\Foundation\Database\PostgreSqlDatabaseBackup;
 use App\Foundation\Database\PrivateSqlBackupFiles;
 use App\Foundation\Database\ProductionSqlDump;
@@ -60,7 +61,7 @@ it('creates a consistent forced-RLS backup and restores it', function () {
     config()->set('database.connections.backup_concurrent', $connection);
     $directory = backupFeatureDirectory();
     $recording = new RecordingSqlDumpProcess(
-        new ProductionSqlDump,
+        new ProductionSqlDump(app(PostgreSqlClientBinaries::class)),
         afterAppend: function (int $append) use (
             $lateAccount,
             $lateCompanyId,
@@ -129,7 +130,8 @@ it('creates a consistent forced-RLS backup and restores it', function () {
     DB::purge('backup_concurrent');
     DB::purge('pgsql');
     DB::purge('pgsql_schema');
-    (new PostgreSqlTestRestore)->restore($connection, $result['path']);
+    (new PostgreSqlTestRestore(app(PostgreSqlClientBinaries::class)))
+        ->restore($connection, $result['path']);
     DB::purge('pgsql');
     DB::purge('pgsql_schema');
 
@@ -148,7 +150,7 @@ it('removes partial output when an exported snapshot expires', function () {
     backupTestCompany('Expired Snapshot');
     $directory = backupFeatureDirectory();
     $recording = new RecordingSqlDumpProcess(
-        new ProductionSqlDump,
+        new ProductionSqlDump(app(PostgreSqlClientBinaries::class)),
         expireSnapshotOnAppend: 2,
     );
     $backup = new PostgreSqlDatabaseBackup($recording, new PrivateSqlBackupFiles);
@@ -164,7 +166,7 @@ it('removes partial output when tenant row verification disagrees', function () 
     backupTestCompany('Mismatched Rows');
     $directory = backupFeatureDirectory();
     $recording = new RecordingSqlDumpProcess(
-        new ProductionSqlDump,
+        new ProductionSqlDump(app(PostgreSqlClientBinaries::class)),
         forceRowMismatch: true,
     );
     $backup = new PostgreSqlDatabaseBackup($recording, new PrivateSqlBackupFiles);
@@ -180,6 +182,7 @@ it('refuses restore verification outside an isolated test database', function ()
     $connection = config('database.connections.pgsql_schema');
     $connection['database'] = 'invumo';
 
-    expect(fn () => (new PostgreSqlTestRestore)->restore($connection, '/tmp/not-used.sql'))
+    expect(fn () => (new PostgreSqlTestRestore(app(PostgreSqlClientBinaries::class)))
+        ->restore($connection, '/tmp/not-used.sql'))
         ->toThrow(RuntimeException::class, 'requires an isolated test database');
 });

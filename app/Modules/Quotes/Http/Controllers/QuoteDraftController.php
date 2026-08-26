@@ -5,12 +5,15 @@ namespace App\Modules\Quotes\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Documents\Data\DocumentNumberAllocationException;
+use App\Modules\Documents\Data\DocumentSourceFailure;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
 use App\Modules\Quotes\Actions\UpdateQuoteDraft;
 use App\Modules\Quotes\Exceptions\QuoteDraftException;
 use App\Modules\Quotes\Http\Requests\CreateQuoteDraftRequest;
 use App\Modules\Quotes\Http\Requests\UpdateQuoteDraftRequest;
 use App\Modules\Quotes\Queries\QuoteDraftPage;
+use App\Support\Inertia\CatalogUiTranslationBag;
+use App\Support\Inertia\CustomersUiTranslationBag;
 use App\Support\Inertia\QuotesUiTranslationBag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,11 +57,22 @@ final class QuoteDraftController extends Controller
         string $quote,
         QuoteDraftPage $page,
         QuotesUiTranslationBag $translations,
+        CustomersUiTranslationBag $customerTranslations,
+        CatalogUiTranslationBag $catalogTranslations,
     ): Response {
         return Inertia::render('quotes/edit', [
-            ...$page->edit($company, $request->user(), $quote),
+            ...$page->edit(
+                $company,
+                $request->user(),
+                $quote,
+                app()->getLocale(),
+                $request->session()->pull('inline_customer_id'),
+                $request->session()->pull('inline_product_id'),
+            ),
             'status' => $request->session()->get('status'),
             'translations' => $translations->toArray(),
+            'customerTranslations' => $customerTranslations->toArray(),
+            'catalogTranslations' => $catalogTranslations->toArray(),
         ]);
     }
 
@@ -70,8 +84,14 @@ final class QuoteDraftController extends Controller
     ): RedirectResponse {
         try {
             $update->handle($company, $request->user(), $quote, $request->draft());
-        } catch (QuoteDraftException $exception) {
-            $field = $exception->reason() === 'stale' ? 'edit_version' : 'lines';
+        } catch (QuoteDraftException|DocumentSourceFailure $exception) {
+            $field = match ($exception->reason()) {
+                'stale' => 'edit_version',
+                'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
+                'currency_unavailable' => 'currency_code',
+                'bank_unavailable' => 'bank_account_id',
+                default => 'lines',
+            };
 
             throw ValidationException::withMessages([
                 $field => __("quotes_ui.errors.{$exception->reason()}"),

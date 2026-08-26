@@ -4,7 +4,7 @@ import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
-import { CustomerForm } from '@/features/customers/components/customer-form';
+import { CustomerForm } from '@/components/domain/customers/customer-form';
 import type {
     CustomerFieldLimits,
     CustomerOption,

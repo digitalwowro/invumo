@@ -8,6 +8,7 @@ final readonly class DocumentLineData
 {
     public function __construct(
         public ?string $id,
+        public ?string $productServiceId,
         public ?string $description,
         public ?string $itemPrice,
         public ?string $quantity,
@@ -17,5 +18,6 @@ final readonly class DocumentLineData
         public string $discountPercentage,
         public ?string $taxName,
         public string $taxPercentage,
+        public ?string $taxPresetId,
     ) {}
 }

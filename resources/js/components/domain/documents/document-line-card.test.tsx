@@ -27,6 +27,7 @@ const labels = {
 const line = {
     key: 'local-1',
     id: null,
+    productServiceId: null,
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -36,6 +37,7 @@ const line = {
     discountPercentage: '0',
     taxName: '',
     taxPercentage: '0',
+    taxPresetId: null,
     finalLineTotal: null,
 };
 

@@ -3,6 +3,7 @@ export type DocumentPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
 export type DocumentLineDraft = {
     key: string;
     id: string | null;
+    productServiceId: string | null;
     description: string;
     itemPrice: string;
     quantity: string;
@@ -12,6 +13,8 @@ export type DocumentLineDraft = {
     discountPercentage: string;
     taxName: string;
     taxPercentage: string;
+    taxPresetId: string | null;
+    priceStatus?: 'COPIED' | 'ENTER_MANUALLY' | 'CURRENCY_MISMATCH' | null;
     finalLineTotal: string | null;
 };
 

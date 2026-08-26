@@ -2,6 +2,7 @@
 
 namespace App\Foundation\Configuration;
 
+use App\Foundation\Database\PostgreSqlClientBinaries;
 use App\Foundation\Database\Schema\MigrationDatabaseRole;
 use App\Foundation\Localization\SupportedLocales;
 use RuntimeException;
@@ -9,6 +10,10 @@ use RuntimeException;
 final class ProductionConfiguration
 {
     private const QUEUE_WORKER_TIMEOUT_SECONDS = 90;
+
+    public function __construct(
+        private readonly PostgreSqlClientBinaries $postgresqlClientBinaries,
+    ) {}
 
     public function assertSafe(): void
     {
@@ -33,6 +38,8 @@ final class ProductionConfiguration
             ),
             'database.role_separation' => config('database.connections.pgsql.username')
                 === config('database.connections.pgsql_schema.username'),
+            'database.postgresql_client' => ! $this->postgresqlClientBinaries
+                ->configurationIsValid(),
             'session.driver' => config('session.driver') !== 'database',
             'session.encrypt' => config('session.encrypt') !== true,
             'session.secure' => config('session.secure') !== true,

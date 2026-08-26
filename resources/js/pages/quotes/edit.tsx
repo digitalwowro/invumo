@@ -4,14 +4,40 @@ import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
-import type { QuoteDraft, QuoteLimits, QuoteTranslations } from '@/types/quote';
+import type { CatalogTranslations } from '@/types/catalog';
+import type { CustomerTranslations } from '@/types/customer';
+import type {
+    QuoteCatalogFormOptions,
+    QuoteCurrencyOption,
+    QuoteCustomerFormOptions,
+    QuoteCustomerSelection,
+    QuoteDraft,
+    QuoteLimits,
+    QuoteProductDefaults,
+    QuoteSourceOption,
+    QuoteSourceUrls,
+    QuoteTranslations,
+} from '@/types/quote';
 
 type Props = {
     quote: QuoteDraft;
     limits: QuoteLimits;
     updateUrl: string;
+    sourceUrls: QuoteSourceUrls;
+    inlineCustomerStoreUrl: string;
+    inlineProductStoreUrl: string;
+    inlineCreatedCustomer: QuoteCustomerSelection | null;
+    inlineCreatedProduct: QuoteProductDefaults | null;
+    sourceAbilities: { createCustomer: boolean; createProduct: boolean };
+    currencyOptions: QuoteCurrencyOption[];
+    languageOptions: QuoteSourceOption[];
+    bankAccountOptions: QuoteSourceOption[];
+    customerForm: QuoteCustomerFormOptions;
+    catalogForm: QuoteCatalogFormOptions;
     status?: string;
     translations: QuoteTranslations;
+    customerTranslations: CustomerTranslations;
+    catalogTranslations: CatalogTranslations;
 };
 
 export default function EditQuote({
@@ -20,6 +46,9 @@ export default function EditQuote({
     updateUrl,
     status,
     translations,
+    customerTranslations,
+    catalogTranslations,
+    ...sourceProps
 }: Props) {
     return (
         <>
@@ -42,11 +71,13 @@ export default function EditQuote({
                         }
                     />
                     <QuoteDraftEditor
-                        key={`${quote.id}:${quote.editVersion}`}
                         quote={quote}
                         limits={limits}
                         updateUrl={updateUrl}
                         labels={translations.edit}
+                        customerLabels={customerTranslations}
+                        catalogLabels={catalogTranslations}
+                        {...sourceProps}
                     />
                 </Stack>
             </PageFrame>

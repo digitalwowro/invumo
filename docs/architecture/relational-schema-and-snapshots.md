@@ -457,11 +457,14 @@ Public decisions are immutable events. Internal lifecycle corrections do not rew
 - payment method, external/reference text, and notes
 - required reason for an Adjustment
 - creator and last editor
+- Company/Invoice-scoped UUID creation key for retry idempotency
 - monotonic `edit_version`
 
-Local `CHECK` constraints enforce kind/direction compatibility, positive amount, precision bounds, and the application date range. The named financial action locks the Invoice first, then its transactions in stable ID order; recomputes the complete ledger with `brick/math`; validates cash, net-paid, outstanding, lifecycle, currency, and date rules; writes the transaction and audit event; and commits.
+Payment method, reference, notes, and Adjustment reason are bounded at 120, 500, 5,000, and 500 characters respectively. Local `CHECK` constraints enforce kind/direction/reason compatibility, strictly positive quantized amounts, currency/precision matching, text bounds, and the application date range. Deferred constraint triggers independently reject a transaction on a non-Issued or zero-total Invoice, a future Company-local transaction date, a mismatched currency snapshot, an invalid net-paid/cash result, or a later Invoice total/currency/lifecycle change that would invalidate retained rows.
 
-The Invoice row is the aggregate lock. v1 does not store a second authoritative balance/payment-state cache that could drift from transaction rows. Operational queries derive payment state and balance from the document total plus transaction aggregates.
+The named `CreateInvoiceTransaction`, `UpdateInvoiceTransaction`, and `DeleteInvoiceTransaction` root Actions lock Company settings, the Document/Invoice aggregate, then all transaction rows in stable UUID order; recompute the complete ledger with `brick/math`; validate cash, net-paid, outstanding, lifecycle, currency, and date rules; write the transaction and privacy-allowlisted audit event; bump the current Document version; and commit. Adjustment reasons remain in the approved reasoned audit boundary, while amount, payment method, reference, and notes are excluded from audit payloads.
+
+The Invoice row is the aggregate lock. v1 does not store a second authoritative balance/payment-state cache that could drift from transaction rows. The mutation path uses `InvoiceLedger`; Invoice edit/current-representation queries consume that same derived net-paid value, while list filtering performs the equivalent signed SQL aggregate so filtering remains database-side and cursor-pageable.
 
 The foreign key from transactions to Invoices is restrictive. Its presence therefore prevents permanent Invoice deletion at the database level, matching the approved product guard.
 
@@ -709,7 +712,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 6C this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, and active Quote-to-Invoice provenance under the reusable tenant-table contract. Transactions, cancellation/reopening/deletion, public links, delivery artifacts/events, reminders, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 7A this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, and the exact Invoice transaction ledger under the reusable tenant-table contract. Cancellation/reopening/deletion, public links, delivery artifacts/events, reminders, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

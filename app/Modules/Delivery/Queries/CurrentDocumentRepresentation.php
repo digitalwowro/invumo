@@ -20,6 +20,7 @@ use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Transactions\Queries\InvoiceTransactionsForInvoice;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Date;
@@ -31,6 +32,7 @@ final readonly class CurrentDocumentRepresentation
         private CompanyAbilityCheck $abilities,
         private ResolveOutwardBrandTheme $brandTheme,
         private OutwardDocumentFormatter $format,
+        private InvoiceTransactionsForInvoice $transactions,
     ) {}
 
     public function forQuote(Company $company, User $actor, string $documentId): OutwardDocument
@@ -57,9 +59,10 @@ final readonly class CurrentDocumentRepresentation
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
         $settings = CompanySetting::query()->firstOrFail();
         $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
-        $state = ResolvedInvoiceState::withoutFinancialRows(
+        $state = ResolvedInvoiceState::resolve(
             $invoice->lifecycle,
             $document->total,
+            (string) $this->transactions->ledger($document->id)->netPaid(),
             $invoice->due_date,
             $localDate,
         );

@@ -11,6 +11,7 @@ import type {
     DocumentSourceUrls,
     DocumentTaxDefault,
 } from '@/types/document';
+import type { InvoiceTransactionTranslations } from '@/types/invoice-transaction';
 
 export type InvoiceCustomerSelection = DocumentCustomerSelection;
 export type InvoiceProductDefaults = DocumentProductDefaults;
@@ -146,6 +147,7 @@ export type InvoiceTranslations = {
         'trigger' | 'title' | 'description' | 'confirm' | 'save_first',
         string
     >;
+    transactions: InvoiceTransactionTranslations;
     feedback: Record<string, string>;
     errors: Record<string, string>;
 };

@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Download, Eye } from 'lucide-react';
+import { useState } from 'react';
 import { ActionLink } from '@/components/app/action-link';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
@@ -7,6 +8,7 @@ import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
+import { InvoiceTransactionsPanel } from '@/features/invoices/components/invoice-transactions-panel';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
@@ -21,9 +23,11 @@ import type {
     InvoiceSourceUrls,
     InvoiceTranslations,
 } from '@/types/invoice';
+import type { InvoiceTransactions } from '@/types/invoice-transaction';
 
 type Props = {
     invoice: InvoiceDraft;
+    transactions: InvoiceTransactions;
     limits: InvoiceLimits;
     updateUrl: string;
     issueUrl: string;
@@ -49,6 +53,7 @@ type Props = {
 
 export default function EditInvoice({
     invoice,
+    transactions,
     limits,
     updateUrl,
     issueUrl,
@@ -61,6 +66,8 @@ export default function EditInvoice({
     catalogTranslations,
     ...sourceProps
 }: Props) {
+    const [invoiceDirty, setInvoiceDirty] = useState(false);
+
     return (
         <>
             <Head title={`${translations.edit.head_title} ${invoice.number}`} />
@@ -105,6 +112,7 @@ export default function EditInvoice({
                         }
                     />
                     <InvoiceDraftEditor
+                        key={invoice.editVersion}
                         invoice={invoice}
                         limits={limits}
                         updateUrl={updateUrl}
@@ -113,7 +121,15 @@ export default function EditInvoice({
                         issueLabels={translations.issue}
                         customerLabels={customerTranslations}
                         catalogLabels={catalogTranslations}
+                        onDirtyChange={setInvoiceDirty}
                         {...sourceProps}
+                    />
+                    <InvoiceTransactionsPanel
+                        lifecycle={invoice.lifecycle}
+                        currencyCode={invoice.currencyCode}
+                        transactions={transactions}
+                        labels={translations.transactions}
+                        invoiceDirty={invoiceDirty}
                     />
                     <Cluster>
                         <ActionLink href={indexUrl} variant="ghost">

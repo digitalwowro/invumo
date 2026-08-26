@@ -26,6 +26,7 @@ use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
 use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
+use App\Modules\Transactions\Queries\InvoiceTransactionsForInvoice;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
@@ -38,6 +39,7 @@ final readonly class InvoiceDraftPage
         private CustomerFormOptions $customerForm,
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
+        private InvoiceTransactionsForInvoice $transactions,
     ) {}
 
     /** @return array<string, mixed> */
@@ -67,9 +69,11 @@ final readonly class InvoiceDraftPage
             ->firstOrFail();
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
         $settings = CompanySetting::query()->firstOrFail();
-        $state = ResolvedInvoiceState::withoutFinancialRows(
+        $ledger = $this->transactions->ledger($document->id);
+        $state = ResolvedInvoiceState::resolve(
             $invoice->lifecycle,
             $document->total,
+            (string) $ledger->netPaid(),
             $invoice->due_date,
             Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay(),
         );
@@ -174,6 +178,14 @@ final readonly class InvoiceDraftPage
                     'finalLineTotal' => $this->money($line->final_line_total, $document->currency_precision),
                 ])->values(),
             ],
+            'transactions' => $this->transactions->props(
+                $company,
+                $actor,
+                $document->id,
+                $invoice->lifecycle,
+                $document->total,
+                $document->currency_precision ?? 2,
+            ),
             'updateUrl' => route('invoices.update', [$company, $document], false),
             'issueUrl' => route('invoices.issue', [$company, $document], false),
             'representationUrl' => route('invoices.current.show', [$company, $document], false),

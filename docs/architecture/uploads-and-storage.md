@@ -52,7 +52,7 @@ Replacing a logo never overwrites an existing object:
 3. In the Company-settings mutation, atomically change the live logo reference and record the audit event.
 4. Delete a failed pre-commit write on a best-effort basis.
 
-Removing a logo clears the live Company-settings reference and records the settings change. An asset may receive `deleted_at` only after no live Company setting or retained document snapshot references it. Physical object deletion happens after commit through an idempotent cleanup path; a cleanup failure remains retryable and observable. Existing PDFs/documents may therefore retain an earlier logo asset for their approved retention period.
+Removing a logo clears the live Company-settings reference and records the settings change. The cleanup job locks the asset row, then checks both `company_settings.logo_asset_id` and `document_company_snapshots.logo_asset_id`; an asset may receive `deleted_at` only when neither reference exists. Deferred database triggers independently reject a live setting or retained snapshot pointing at a deleted asset and close the race between snapshot creation and cleanup. Physical object deletion happens after commit through the idempotent cleanup path; a cleanup failure remains retryable and observable. Existing PDFs/documents therefore retain an earlier logo asset and its bytes for their approved retention period.
 
 No HTTP request may perform irreversible object deletion before the referencing database transaction commits.
 

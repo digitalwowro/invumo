@@ -6,6 +6,7 @@ use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
 use App\Modules\Invoices\Http\Controllers\InvoiceLifecycleController;
 use App\Modules\Invoices\Http\Controllers\InvoiceRepresentationController;
+use App\Modules\Transactions\Http\Controllers\InvoiceTransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('companies/{company}/invoices', [InvoiceController::class, 'index'])
@@ -23,6 +24,15 @@ Route::patch('companies/{company}/invoices/{invoice}', [InvoiceDraftController::
 Route::post('companies/{company}/invoices/{invoice}/issue', [InvoiceLifecycleController::class, 'issue'])
     ->middleware('throttle:20,1')
     ->name('invoices.issue');
+Route::post('companies/{company}/invoices/{invoice}/transactions', [InvoiceTransactionController::class, 'store'])
+    ->middleware('throttle:30,1')
+    ->name('invoice-transactions.store');
+Route::patch('companies/{company}/invoices/{invoice}/transactions/{transaction}', [InvoiceTransactionController::class, 'update'])
+    ->middleware('throttle:30,1')
+    ->name('invoice-transactions.update');
+Route::delete('companies/{company}/invoices/{invoice}/transactions/{transaction}', [InvoiceTransactionController::class, 'destroy'])
+    ->middleware('throttle:20,1')
+    ->name('invoice-transactions.destroy');
 Route::get('companies/{company}/invoices/{invoice}/view', [InvoiceRepresentationController::class, 'show'])
     ->name('invoices.current.show');
 Route::get('companies/{company}/invoices/{invoice}/pdf', [InvoiceRepresentationController::class, 'pdf'])

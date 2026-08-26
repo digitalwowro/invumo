@@ -20,6 +20,7 @@ use App\Modules\Quotes\Data\QuoteInvoiceUnlinkData;
 use App\Modules\Quotes\Exceptions\QuoteInvoiceUnlinkException;
 use App\Modules\Quotes\Models\Quote;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UnlinkQuoteInvoice
@@ -78,8 +79,15 @@ final readonly class UnlinkQuoteInvoice
             ->lockForUpdate()->firstOrFail();
         $delivery = DocumentDeliverySetting::query()
             ->where('document_id', $invoiceDocument->id)->lockForUpdate()->firstOrFail();
+        $transactions = InvoiceTransaction::query()
+            ->where('invoice_id', $invoiceDocument->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
 
-        if ($invoice->lifecycle !== InvoiceLifecycle::Draft || $delivery->public_access_enabled) {
+        if ($invoice->lifecycle !== InvoiceLifecycle::Draft
+            || $delivery->public_access_enabled
+            || $transactions->isNotEmpty()) {
             throw QuoteInvoiceUnlinkException::unavailable();
         }
 

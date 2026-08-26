@@ -22,6 +22,7 @@ use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Models\Invoice;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -29,6 +30,18 @@ use Tests\TestCase;
 final class InvoiceDraftHttpTest extends TestCase
 {
     use DatabaseMigrations;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Date::setTestNow('2026-08-26 12:00:00');
+    }
+
+    protected function tearDown(): void
+    {
+        Date::setTestNow();
+        parent::tearDown();
+    }
 
     public function test_member_creates_an_idempotent_invoice_and_saves_authoritative_lines(): void
     {

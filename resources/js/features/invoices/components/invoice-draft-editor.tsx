@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
@@ -62,9 +62,11 @@ type Props = {
     issueLabels: InvoiceTranslations['issue'];
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
+    onDirtyChange?: (dirty: boolean) => void;
 };
 
 export function InvoiceDraftEditor(props: Props) {
+    const { onDirtyChange } = props;
     const form = useForm(invoiceFormData(props.invoice));
     const [customer, setCustomer] = useState(
         customerFromInvoice(props.invoice),
@@ -86,6 +88,10 @@ export function InvoiceDraftEditor(props: Props) {
                   calculated.filter(completeLine),
                   precision,
               );
+
+    useEffect(() => {
+        onDirtyChange?.(form.isDirty);
+    }, [form.isDirty, onDirtyChange]);
 
     const changeLines = (change: (lines: InvoiceLine[]) => InvoiceLine[]) => {
         form.setData((current) => ({

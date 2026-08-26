@@ -63,6 +63,10 @@ final readonly class InvoiceListPage
     {
         return DB::connection(config('database.tenant_connection'))
             ->table('documents')
+            ->leftJoinSub($this->ledgerQuery(), 'ledger', function ($join): void {
+                $join->on('ledger.company_id', '=', 'documents.company_id')
+                    ->on('ledger.invoice_id', '=', 'documents.id');
+            })
             ->join('invoices', function ($join): void {
                 $join->on('invoices.company_id', '=', 'documents.company_id')
                     ->on('invoices.document_id', '=', 'documents.id');
@@ -78,7 +82,24 @@ final readonly class InvoiceListPage
                 'documents.currency_code', 'documents.currency_precision',
                 'documents.total', 'documents.updated_at', 'invoices.lifecycle', 'invoices.due_date',
             ])
+            ->selectRaw('COALESCE(ledger.net_paid, 0) AS net_paid')
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
+    }
+
+    private function ledgerQuery(): Builder
+    {
+        return DB::connection(config('database.tenant_connection'))
+            ->table('invoice_transactions')
+            ->select(['company_id', 'invoice_id'])
+            ->selectRaw(<<<'SQL'
+                SUM(CASE
+                    WHEN kind = 'PAYMENT' THEN amount
+                    WHEN kind = 'REFUND' THEN -amount
+                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'INCREASE_PAID' THEN amount
+                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'DECREASE_PAID' THEN -amount
+                    ELSE 0 END) AS net_paid
+                SQL)
+            ->groupBy('company_id', 'invoice_id');
     }
 
     /** @param array{q: string, issueFrom: string, issueTo: string, dueFrom: string, dueTo: string, lifecycle: string, payment: string, overdue: string, sort: string, perPage: int} $filters */
@@ -106,14 +127,21 @@ final readonly class InvoiceListPage
         }
 
         if ($filters['payment'] === 'PAID') {
-            $query->where('invoices.lifecycle', 'ISSUED')->where('documents.total', '0');
+            $query->where('invoices.lifecycle', 'ISSUED')
+                ->whereRaw('documents.total = COALESCE(ledger.net_paid, 0)');
+        } elseif ($filters['payment'] === 'PARTIALLY_PAID') {
+            $query->where('invoices.lifecycle', 'ISSUED')
+                ->whereRaw('COALESCE(ledger.net_paid, 0) > 0')
+                ->whereRaw('COALESCE(ledger.net_paid, 0) < documents.total');
         } elseif ($filters['payment'] === 'UNPAID') {
-            $query->where('invoices.lifecycle', 'ISSUED')->where('documents.total', '>', '0');
+            $query->where('invoices.lifecycle', 'ISSUED')
+                ->where('documents.total', '>', '0')
+                ->whereRaw('COALESCE(ledger.net_paid, 0) = 0');
         }
 
         if ($filters['overdue'] === 'overdue') {
             $query->where('invoices.lifecycle', 'ISSUED')
-                ->where('documents.total', '>', '0')
+                ->whereRaw('documents.total > COALESCE(ledger.net_paid, 0)')
                 ->where('invoices.due_date', '<', $localDate);
         }
     }
@@ -138,9 +166,10 @@ final readonly class InvoiceListPage
             ? null
             : DecimalRules::currencyPrecision((int) $row->currency_precision);
         $lifecycle = InvoiceLifecycle::from((string) $row->lifecycle);
-        $state = ResolvedInvoiceState::withoutFinancialRows(
+        $state = ResolvedInvoiceState::resolve(
             $lifecycle,
             (string) $row->total,
+            (string) $row->net_paid,
             $row->due_date === null ? null : new CarbonImmutable((string) $row->due_date),
             $localDate,
         );

@@ -20,6 +20,7 @@ use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -27,6 +28,18 @@ use Tests\TestCase;
 final class QuoteOperationalHttpTest extends TestCase
 {
     use DatabaseMigrations;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Date::setTestNow('2026-08-26 12:00:00');
+    }
+
+    protected function tearDown(): void
+    {
+        Date::setTestNow();
+        parent::tearDown();
+    }
 
     public function test_quote_dates_reference_and_database_bounds_are_persisted(): void
     {

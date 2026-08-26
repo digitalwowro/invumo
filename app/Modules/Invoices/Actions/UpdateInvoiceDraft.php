@@ -28,6 +28,8 @@ use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Exceptions\InvoiceDraftException;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Invoices\Rules\InvoiceIssuability;
+use App\Modules\Transactions\Data\InvoiceLedger;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -74,7 +76,16 @@ final readonly class UpdateInvoiceDraft
         }
 
         $invoice = Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $transactions = InvoiceTransaction::query()
+            ->where('invoice_id', $document->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
         $this->assertValidDetails($data);
+
+        if ($transactions->isNotEmpty() && $document->currency_code !== $data->currencyCode) {
+            throw InvoiceDraftException::currencyLocked();
+        }
         $changedFields = $this->changedFields($document, $invoice, $data, $selection !== null);
 
         if ($selection === null && $document->customer_id !== $data->customerId) {
@@ -107,6 +118,10 @@ final readonly class UpdateInvoiceDraft
 
         $connection = DB::connection(config('database.tenant_connection'));
         $linePersistence = $this->persistLines->handle($document, $persisted, $data->lines);
+
+        if (! InvoiceLedger::fromTransactions($transactions)->acceptsTotal($linePersistence->total)) {
+            throw InvoiceDraftException::totalBelowNetPaid();
+        }
 
         $connection->statement(<<<'SQL'
             SET CONSTRAINTS

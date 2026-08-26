@@ -10,6 +10,7 @@ use App\Modules\Companies\Data\StoredCompanyAsset;
 use App\Modules\Companies\Models\CompanyAsset;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Support\CompanyAssetStorage;
+use App\Modules\Documents\Models\DocumentCompanySnapshot;
 
 final class DeleteUnreferencedCompanyLogo extends TenantJob
 {
@@ -52,6 +53,10 @@ final class DeleteUnreferencedCompanyLogo extends TenantJob
 
         if (CompanySetting::query()->where('logo_asset_id', $asset->id)->exists()) {
             return [null, 'company_logo_still_referenced'];
+        }
+
+        if (DocumentCompanySnapshot::query()->where('logo_asset_id', $asset->id)->exists()) {
+            return [null, 'company_logo_retained_by_document'];
         }
 
         if ($asset->deleted_at === null) {

@@ -31,6 +31,16 @@ final class InvoiceDraftException extends RuntimeException
         return new self('details_invalid');
     }
 
+    public static function currencyLocked(): self
+    {
+        return new self('invoice_currency_locked_by_transactions');
+    }
+
+    public static function totalBelowNetPaid(): self
+    {
+        return new self('invoice_total_below_net_paid');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

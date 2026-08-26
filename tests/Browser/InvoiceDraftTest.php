@@ -11,6 +11,7 @@ use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 uses(DatabaseMigrations::class);
@@ -19,8 +20,11 @@ afterEach(function (): void {
     Company::query()->pluck('id')->each(function (string $companyId): void {
         app(TenantContext::class)->runAsSystem(
             $companyId,
-            fn () => Invoice::query()->where('lifecycle', InvoiceLifecycle::Issued)
-                ->update(['lifecycle' => InvoiceLifecycle::Draft]),
+            function (): void {
+                InvoiceTransaction::query()->delete();
+                Invoice::query()->where('lifecycle', InvoiceLifecycle::Issued)
+                    ->update(['lifecycle' => InvoiceLifecycle::Draft]);
+            },
         );
     });
 });
@@ -100,6 +104,13 @@ it('creates calculates and renders an Invoice Draft without viewport overflow', 
         ->click('@invoice-issue-confirm')
         ->assertSee('Invoice issued.')
         ->assertSee('Issued')
+        ->click('Record payment')
+        ->type('@transaction-amount', '100')
+        ->click('Save transaction')
+        ->assertSee('Transaction recorded.')
+        ->assertSee('Partially paid')
+        ->assertSee('138.00 RON')
+        ->wait(0.2)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues()
@@ -132,14 +143,20 @@ it('keeps the Romanian Invoice Draft and current view usable on mobile', functio
         ->click('@document-customer-confirm')
         ->click('Adaugă linie')
         ->assertSee('Data scadenței')
-        ->type('Preț unitar', '0')
+        ->type('Preț unitar', '100')
         ->type('Cantitate', '1')
         ->click('Salvează factura')
         ->assertSee('Factura a fost salvată.')
         ->click('@invoice-issue-trigger')
         ->click('@invoice-issue-confirm')
         ->assertSee('Factura a fost emisă.')
-        ->assertSee('Plătită')
+        ->click('Înregistrează plata')
+        ->type('@transaction-amount', '40')
+        ->click('Salvează tranzacția')
+        ->assertSee('Tranzacția a fost înregistrată.')
+        ->assertSee('Plătită parțial')
+        ->assertSee('60.00 RON')
+        ->wait(0.2)
         ->click('Vizualizează')
         ->assertSee('Factura curentă')
         ->assertSee('Invoice Browser SRL')

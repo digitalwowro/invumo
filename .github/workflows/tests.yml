@@ -66,6 +66,25 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Install PostgreSQL 18 client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ca-certificates curl
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --output /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          . /etc/os-release
+          runner_codename="${VERSION_CODENAME}"
+          sudo tee /etc/apt/sources.list.d/pgdg.sources >/dev/null <<EOF
+          Types: deb
+          URIs: https://apt.postgresql.org/pub/repos/apt
+          Suites: ${runner_codename}-pgdg
+          Components: main
+          Signed-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          EOF
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-18
+          pg_dump --version | grep -E '^pg_dump \(PostgreSQL\) 18\.'
+
       - name: Prepare application
         run: |
           cp .env.example .env

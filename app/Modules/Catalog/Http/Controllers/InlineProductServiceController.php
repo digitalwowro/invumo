@@ -7,8 +7,10 @@ use App\Modules\Catalog\Actions\CreateProductService;
 use App\Modules\Catalog\Exceptions\ProductServiceException;
 use App\Modules\Catalog\Http\Requests\SaveProductServiceRequest;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -19,11 +21,17 @@ final class InlineProductServiceController extends Controller
         Company $company,
         string $document,
         CreateProductService $create,
+        CompanyAbilityCheck $abilities,
     ): RedirectResponse {
-        Document::query()
+        $editable = Document::query()
             ->whereKey($document)
             ->whereIn('kind', [DocumentKind::Quote, DocumentKind::Invoice])
             ->firstOrFail();
+
+        if (! $abilities->allows($request->user(), $company, $editable->kind->manageAbility())) {
+            throw new AuthorizationException;
+        }
+
         try {
             $product = $create->handle($company, $request->user(), $request->product());
         } catch (ProductServiceException $exception) {

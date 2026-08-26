@@ -22,6 +22,9 @@ export type InvoiceCatalogFormOptions = DocumentCatalogFormOptions;
 export type InvoiceLimits = DocumentEditorLimits;
 export type InvoiceLine = DocumentLineDraft;
 export type InvoiceTaxDefault = DocumentTaxDefault;
+export type InvoiceLifecycle = 'DRAFT' | 'ISSUED';
+export type InvoicePaymentState = 'UNPAID' | 'PAID';
+export type InvoiceDisplayStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'OVERDUE';
 
 export type InvoiceDraft = {
     id: string;
@@ -30,7 +33,10 @@ export type InvoiceDraft = {
     paymentTermDays: number | null;
     dueDate: string | null;
     customerReference: string | null;
-    lifecycle: 'DRAFT';
+    lifecycle: InvoiceLifecycle;
+    paymentState: InvoicePaymentState | null;
+    isOverdue: boolean;
+    displayStatus: InvoiceDisplayStatus;
     customer: { id: string; displayName: string } | null;
     currencyCode: string | null;
     currencyPrecision: number | null;
@@ -59,10 +65,13 @@ export type InvoiceRow = {
     customerReference: string | null;
     issueDate: string | null;
     dueDate: string | null;
-    lifecycle: 'DRAFT';
+    lifecycle: InvoiceLifecycle;
+    paymentState: InvoicePaymentState | null;
+    isOverdue: boolean;
+    displayStatus: InvoiceDisplayStatus;
     total: string | null;
     currencyCode: string | null;
-    editUrl: string;
+    editUrl: string | null;
     viewUrl: string;
 };
 
@@ -78,6 +87,9 @@ export type InvoiceFilters = {
     issueTo: string;
     dueFrom: string;
     dueTo: string;
+    lifecycle: 'all' | InvoiceLifecycle;
+    payment: 'all' | InvoicePaymentState;
+    overdue: 'all' | 'overdue';
     sort: 'issue_desc' | 'issue_asc' | 'recent';
     perPage: number;
 };
@@ -96,6 +108,9 @@ export type InvoiceTranslations = {
         issue_to: string;
         due_from: string;
         due_to: string;
+        lifecycle_label: string;
+        payment_label: string;
+        overdue_label: string;
         sort_label: string;
         per_page_label: string;
         clear: string;
@@ -111,7 +126,10 @@ export type InvoiceTranslations = {
         error_description: string;
         columns: Record<string, string>;
         sort_options: Record<string, string>;
-        statuses: Record<'DRAFT', string>;
+        lifecycle_options: Record<'all' | InvoiceLifecycle, string>;
+        payment_options: Record<'all' | InvoicePaymentState, string>;
+        overdue_options: Record<'all' | 'overdue', string>;
+        statuses: Record<InvoiceDisplayStatus | InvoicePaymentState, string>;
     };
     representation: Record<
         | 'head_title'
@@ -121,6 +139,10 @@ export type InvoiceTranslations = {
         | 'download_pdf'
         | 'edit'
         | 'back',
+        string
+    >;
+    issue: Record<
+        'trigger' | 'title' | 'description' | 'confirm' | 'save_first',
         string
     >;
     feedback: Record<string, string>;

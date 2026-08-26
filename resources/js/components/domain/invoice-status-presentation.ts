@@ -5,7 +5,7 @@ type InvoicePaymentState = 'unpaid' | 'partial' | 'paid';
 
 type InvoiceStatusFacts = {
     lifecycle: InvoiceLifecycle;
-    payment: InvoicePaymentState;
+    payment: InvoicePaymentState | null;
     overdue: boolean;
 };
 

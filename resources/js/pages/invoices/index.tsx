@@ -16,7 +16,7 @@ type Props = {
     invoices: InvoiceCursorPage;
     filters: InvoiceFilters;
     indexUrl: string;
-    createUrl: string;
+    createUrl: string | null;
     status?: string;
     translations: InvoiceTranslations;
 };
@@ -31,10 +31,12 @@ export default function InvoiceIndex(props: Props) {
                         title={props.translations.index.title}
                         subtitle={props.translations.index.description}
                         actions={
-                            <ActionLink href={props.createUrl}>
-                                <Plus aria-hidden="true" />
-                                {props.translations.index.create}
-                            </ActionLink>
+                            props.createUrl ? (
+                                <ActionLink href={props.createUrl}>
+                                    <Plus aria-hidden="true" />
+                                    {props.translations.index.create}
+                                </ActionLink>
+                            ) : undefined
                         }
                     />
                     {props.status && (

@@ -12,7 +12,7 @@ import {
     TableAmount,
     TableValue,
 } from '@/components/app/typography';
-import { StatusBadge } from '@/components/domain/status-badge';
+import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
 import { Button } from '@/components/ui/button';
 import { InvoiceListTools } from '@/features/invoices/components/invoice-list-tools';
 import type {
@@ -86,8 +86,13 @@ export function InvoiceTable(props: Props) {
             key: 'status',
             label: labels.columns.status,
             kind: 'status',
-            render: () => (
-                <StatusBadge status="draft" label={labels.statuses.DRAFT} />
+            render: (invoice) => (
+                <InvoiceStatusBadges
+                    lifecycle={invoice.lifecycle}
+                    paymentState={invoice.paymentState}
+                    overdue={invoice.isOverdue}
+                    labels={labels.statuses}
+                />
             ),
         },
         {
@@ -104,7 +109,9 @@ export function InvoiceTable(props: Props) {
             ? value !== 'issue_desc'
             : key === 'perPage'
               ? value !== 25
-              : value !== '',
+              : key === 'lifecycle' || key === 'payment' || key === 'overdue'
+                ? value !== 'all'
+                : value !== '',
     );
     const state = props.page.items.length
         ? 'ready'
@@ -130,7 +137,9 @@ export function InvoiceTable(props: Props) {
             rowLabel={(invoice) =>
                 `${labels.columns.invoice} ${invoice.number}`
             }
-            onRowActivate={(invoice) => router.visit(invoice.editUrl)}
+            onRowActivate={(invoice) =>
+                router.visit(invoice.editUrl ?? invoice.viewUrl)
+            }
             state={state}
             stateCopy={stateCopy}
             toolbar={
@@ -156,11 +165,13 @@ function InvoiceActions(props: {
     return (
         <div onClick={stop} onKeyDown={stopKeyboard}>
             <Cluster gap="sm">
-                <Button asChild variant="secondary">
-                    <Link href={props.invoice.editUrl}>
-                        {props.labels.index.columns.open}
-                    </Link>
-                </Button>
+                {props.invoice.editUrl && (
+                    <Button asChild variant="secondary">
+                        <Link href={props.invoice.editUrl}>
+                            {props.labels.index.columns.open}
+                        </Link>
+                    </Button>
+                )}
                 <Button asChild variant="secondary">
                     <Link href={props.invoice.viewUrl}>
                         {props.labels.representation.view}

@@ -3,7 +3,6 @@
 namespace App\Modules\Delivery\Queries;
 
 use App\Models\User;
-use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyAsset;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
@@ -80,11 +79,7 @@ final readonly class CurrentDocumentLogo
         string $documentId,
         DocumentKind $kind,
     ): ?CompanyAsset {
-        $ability = $kind === DocumentKind::Quote
-            ? CompanyAbility::ViewQuotes
-            : CompanyAbility::ViewInvoices;
-
-        if (! $this->abilities->allows($actor, $company, $ability)) {
+        if (! $this->abilities->allows($actor, $company, $kind->viewAbility())) {
             throw new AuthorizationException;
         }
 

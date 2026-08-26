@@ -10,6 +10,9 @@ return [
         'ACCEPTED' => 'Acceptată',
         'REJECTED' => 'Respinsă',
         'EXPIRED' => 'Expirată',
+        'ISSUED' => 'Emisă',
+        'PAID' => 'Plătită',
+        'OVERDUE' => 'Restantă',
     ],
     'periods' => [
         'MONTH' => 'lună',

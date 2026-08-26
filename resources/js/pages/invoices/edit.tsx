@@ -5,7 +5,7 @@ import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
-import { StatusBadge } from '@/components/domain/status-badge';
+import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
@@ -26,6 +26,7 @@ type Props = {
     invoice: InvoiceDraft;
     limits: InvoiceLimits;
     updateUrl: string;
+    issueUrl: string;
     representationUrl: string;
     pdfUrl: string;
     indexUrl: string;
@@ -50,6 +51,7 @@ export default function EditInvoice({
     invoice,
     limits,
     updateUrl,
+    issueUrl,
     representationUrl,
     pdfUrl,
     indexUrl,
@@ -80,9 +82,11 @@ export default function EditInvoice({
                                     <Download aria-hidden="true" />
                                     {translations.representation.download_pdf}
                                 </ActionLink>
-                                <StatusBadge
-                                    status="draft"
-                                    label={translations.index.statuses.DRAFT}
+                                <InvoiceStatusBadges
+                                    lifecycle={invoice.lifecycle}
+                                    paymentState={invoice.paymentState}
+                                    overdue={invoice.isOverdue}
+                                    labels={translations.index.statuses}
                                 />
                             </>
                         }
@@ -104,7 +108,9 @@ export default function EditInvoice({
                         invoice={invoice}
                         limits={limits}
                         updateUrl={updateUrl}
+                        issueUrl={issueUrl}
                         labels={translations.edit}
+                        issueLabels={translations.issue}
                         customerLabels={customerTranslations}
                         catalogLabels={catalogTranslations}
                         {...sourceProps}

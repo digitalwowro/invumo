@@ -4,7 +4,6 @@ namespace App\Modules\Delivery\Queries;
 
 use App\Foundation\Money\DecimalRules;
 use App\Models\User;
-use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
@@ -17,6 +16,7 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentCustomerSnapshot;
 use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\Quote;
@@ -55,13 +55,21 @@ final readonly class CurrentDocumentRepresentation
     {
         $document = $this->document($company, $actor, $documentId, DocumentKind::Invoice);
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
+        $settings = CompanySetting::query()->firstOrFail();
+        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
+        $state = ResolvedInvoiceState::resolve(
+            $invoice->lifecycle,
+            $document->total,
+            $invoice->due_date,
+            $localDate,
+        );
         $locale = $document->document_language ?? 'en';
 
         return $this->build(
             $company,
             $document,
             $this->translation('documents_outward.invoice', $locale),
-            $this->translation('documents_outward.statuses.'.$invoice->lifecycle->value, $locale),
+            $this->translation('documents_outward.statuses.'.$state->displayStatus->value, $locale),
             null,
             $invoice->due_date,
         );
@@ -73,11 +81,7 @@ final readonly class CurrentDocumentRepresentation
         string $documentId,
         DocumentKind $kind,
     ): Document {
-        $ability = $kind === DocumentKind::Quote
-            ? CompanyAbility::ViewQuotes
-            : CompanyAbility::ViewInvoices;
-
-        if (! $this->abilities->allows($actor, $company, $ability)) {
+        if (! $this->abilities->allows($actor, $company, $kind->viewAbility())) {
             throw new AuthorizationException;
         }
 

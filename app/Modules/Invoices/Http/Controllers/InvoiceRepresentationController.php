@@ -3,7 +3,9 @@
 namespace App\Modules\Invoices\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Delivery\Queries\CurrentDocumentLogo;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
@@ -23,6 +25,7 @@ final class InvoiceRepresentationController extends Controller
         string $invoice,
         CurrentDocumentRepresentation $representation,
         InvoicesUiTranslationBag $translations,
+        CompanyAbilityCheck $abilities,
     ): Response {
         $document = $representation->forInvoice($company, $request->user(), $invoice);
 
@@ -30,7 +33,9 @@ final class InvoiceRepresentationController extends Controller
             'document' => $document->toArray(
                 $document->hasLogo ? route('invoices.current.logo', [$company, $invoice], false) : null,
             ),
-            'editUrl' => route('invoices.edit', [$company, $invoice], false),
+            'editUrl' => $abilities->allows($request->user(), $company, CompanyAbility::ManageInvoices)
+                ? route('invoices.edit', [$company, $invoice], false)
+                : null,
             'indexUrl' => route('invoices.index', $company, false),
             'pdfUrl' => route('invoices.current.pdf', [$company, $invoice], false),
             'translations' => $translations->toArray(),

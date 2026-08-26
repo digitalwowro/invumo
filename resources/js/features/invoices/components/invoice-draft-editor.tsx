@@ -21,7 +21,9 @@ import {
     changeInvoiceDetail,
     customerFromInvoice,
     invoiceFormData,
+    invoiceRequestData,
 } from '@/features/invoices/components/invoice-draft-form-data';
+import { InvoiceIssueDialog } from '@/features/invoices/components/invoice-issue-dialog';
 import { InvoiceSourceDialogs } from '@/features/invoices/components/invoice-source-dialogs';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import type { CatalogTranslations } from '@/types/catalog';
@@ -44,6 +46,7 @@ type Props = {
     invoice: InvoiceDraft;
     limits: InvoiceLimits;
     updateUrl: string;
+    issueUrl: string;
     sourceUrls: InvoiceSourceUrls;
     inlineCustomerStoreUrl: string;
     inlineProductStoreUrl: string;
@@ -56,6 +59,7 @@ type Props = {
     customerForm: InvoiceCustomerFormOptions;
     catalogForm: InvoiceCatalogFormOptions;
     labels: InvoiceTranslations['edit'];
+    issueLabels: InvoiceTranslations['issue'];
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
 };
@@ -132,37 +136,7 @@ export function InvoiceDraftEditor(props: Props) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.transform((data) => ({
-            edit_version: data.editVersion,
-            customer_id: data.customerId,
-            customer_confirmation_token: data.customerConfirmationToken,
-            currency_code: data.currencyCode,
-            document_language: data.documentLanguage,
-            issue_date: data.issueDate || null,
-            payment_term_days:
-                data.paymentTermDays === ''
-                    ? null
-                    : Number(data.paymentTermDays),
-            due_date: data.dueDate || null,
-            customer_reference: data.customerReference || null,
-            bank_account_id: data.bankAccountId,
-            terms_and_conditions: data.termsAndConditions,
-            notes: data.notes,
-            lines: data.lines.map((line) => ({
-                id: line.id,
-                product_service_id: line.productServiceId,
-                description: line.description,
-                item_price: line.itemPrice,
-                quantity: line.quantity,
-                unit: line.unit,
-                period_unit: line.periodUnit,
-                period_quantity: line.periodQuantity,
-                discount_percentage: line.discountPercentage,
-                tax_name: line.taxName,
-                tax_percentage: line.taxPercentage,
-                tax_preset_id: line.taxPresetId,
-            })),
-        }));
+        form.transform(invoiceRequestData);
         form.patch(props.updateUrl, {
             preserveScroll: true,
             onSuccess: (page) => {
@@ -191,12 +165,14 @@ export function InvoiceDraftEditor(props: Props) {
                     />
                     {(errors.lines ||
                         errors.edit_version ||
-                        errors.customer_id) && (
+                        errors.customer_id ||
+                        errors.invoice) && (
                         <SystemMessage
                             title={
                                 errors.lines ??
                                 errors.edit_version ??
-                                errors.customer_id
+                                errors.customer_id ??
+                                errors.invoice
                             }
                             tone="error"
                         />
@@ -257,6 +233,15 @@ export function InvoiceDraftEditor(props: Props) {
                         >
                             {props.labels.save}
                         </SubmitButton>
+                        {props.invoice.lifecycle === 'DRAFT' && (
+                            <InvoiceIssueDialog
+                                key={form.data.editVersion}
+                                url={props.issueUrl}
+                                editVersion={form.data.editVersion}
+                                labels={props.issueLabels}
+                                disabled={form.isDirty || form.processing}
+                            />
+                        )}
                     </FormActions>
                 </Stack>
             </form>

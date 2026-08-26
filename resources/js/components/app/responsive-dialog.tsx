@@ -192,6 +192,11 @@ type FormDialogProps = {
     formId: string;
     processing: boolean;
     children: ReactNode;
+    triggerTestId?: string;
+    confirmTestId?: string;
+    triggerDisabled?: boolean;
+    triggerDisabledDescription?: string;
+    onConfirm?: () => void;
 };
 
 export function FormDialog({
@@ -206,14 +211,35 @@ export function FormDialog({
     formId,
     processing,
     children,
+    triggerTestId,
+    confirmTestId,
+    triggerDisabled = false,
+    triggerDisabledDescription,
+    onConfirm,
 }: FormDialogProps) {
+    const triggerHelpId = `${formId}-trigger-help`;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
-                <Button type="button" variant="secondary">
+                <Button
+                    type="button"
+                    variant="secondary"
+                    data-testid={triggerTestId}
+                    disabled={triggerDisabled}
+                    aria-describedby={
+                        triggerDisabledDescription ? triggerHelpId : undefined
+                    }
+                    title={triggerDisabledDescription}
+                >
                     {triggerLabel}
                 </Button>
             </DialogTrigger>
+            {triggerDisabledDescription && (
+                <span id={triggerHelpId} className="sr-only">
+                    {triggerDisabledDescription}
+                </span>
+            )}
             <DialogContent closeLabel={closeLabel}>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
@@ -226,7 +252,13 @@ export function FormDialog({
                             {cancelLabel}
                         </Button>
                     </DialogClose>
-                    <Button type="submit" form={formId} disabled={processing}>
+                    <Button
+                        type={onConfirm ? 'button' : 'submit'}
+                        form={onConfirm ? undefined : formId}
+                        disabled={processing}
+                        data-testid={confirmTestId}
+                        onClick={onConfirm}
+                    >
                         {processing && <Spinner />}
                         {confirmLabel}
                     </Button>

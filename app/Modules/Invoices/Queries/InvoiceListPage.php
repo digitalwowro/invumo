@@ -6,10 +6,15 @@ use App\Foundation\Money\DecimalRules;
 use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Invoices\Data\InvoiceLifecycle;
+use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Http\Requests\InvoiceListRequest;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
@@ -19,7 +24,9 @@ final readonly class InvoiceListPage
 
     private const SEARCH = "coalesce(documents.rendered_number, '') || ' ' || coalesce(documents.customer_reference, '') || ' ' || coalesce(customer.first_name, '') || ' ' || coalesce(customer.last_name, '') || ' ' || coalesce(customer.legal_name, '')";
 
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+    ) {}
 
     /** @return array<string, mixed> */
     public function for(Company $company, User $actor, InvoiceListRequest $request): array
@@ -29,15 +36,18 @@ final readonly class InvoiceListPage
         }
 
         $filters = $request->filters();
+        $canManage = $this->abilities->allows($actor, $company, CompanyAbility::ManageInvoices);
+        $settings = CompanySetting::query()->firstOrFail();
+        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
         $query = $this->query();
-        $this->applyFilters($query, $filters);
+        $this->applyFilters($query, $filters, $localDate->toDateString());
         $this->applySort($query, $filters['sort']);
         $page = $query->cursorPaginate($filters['perPage'])->withQueryString();
 
         return [
             'invoices' => [
                 'items' => array_map(
-                    fn (stdClass $row): array => $this->row($company, $row),
+                    fn (stdClass $row): array => $this->row($company, $row, $localDate, $canManage),
                     $page->items(),
                 ),
                 'previousUrl' => $page->previousPageUrl(),
@@ -45,7 +55,7 @@ final readonly class InvoiceListPage
             ],
             'filters' => $filters,
             'indexUrl' => route('invoices.index', $company, false),
-            'createUrl' => route('invoices.create', $company, false),
+            'createUrl' => $canManage ? route('invoices.create', $company, false) : null,
         ];
     }
 
@@ -71,8 +81,8 @@ final readonly class InvoiceListPage
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
     }
 
-    /** @param array{q: string, issueFrom: string, issueTo: string, dueFrom: string, dueTo: string, sort: string, perPage: int} $filters */
-    private function applyFilters(Builder $query, array $filters): void
+    /** @param array{q: string, issueFrom: string, issueTo: string, dueFrom: string, dueTo: string, lifecycle: string, payment: string, overdue: string, sort: string, perPage: int} $filters */
+    private function applyFilters(Builder $query, array $filters, string $localDate): void
     {
         if ($filters['q'] !== '') {
             $query->whereRaw('('.self::SEARCH.") ILIKE ? ESCAPE '!'", [
@@ -90,6 +100,22 @@ final readonly class InvoiceListPage
                 $query->where($column, $operator, $value);
             }
         }
+
+        if ($filters['lifecycle'] !== 'all') {
+            $query->where('invoices.lifecycle', $filters['lifecycle']);
+        }
+
+        if ($filters['payment'] === 'PAID') {
+            $query->where('invoices.lifecycle', 'ISSUED')->where('documents.total', '0');
+        } elseif ($filters['payment'] === 'UNPAID') {
+            $query->where('invoices.lifecycle', 'ISSUED')->where('documents.total', '>', '0');
+        }
+
+        if ($filters['overdue'] === 'overdue') {
+            $query->where('invoices.lifecycle', 'ISSUED')
+                ->where('documents.total', '>', '0')
+                ->where('invoices.due_date', '<', $localDate);
+        }
     }
 
     private function applySort(Builder $query, string $sort): void
@@ -102,11 +128,22 @@ final readonly class InvoiceListPage
     }
 
     /** @return array<string, mixed> */
-    private function row(Company $company, stdClass $row): array
-    {
+    private function row(
+        Company $company,
+        stdClass $row,
+        CarbonImmutable $localDate,
+        bool $canManage,
+    ): array {
         $precision = $row->currency_precision === null
             ? null
             : DecimalRules::currencyPrecision((int) $row->currency_precision);
+        $lifecycle = InvoiceLifecycle::from((string) $row->lifecycle);
+        $state = ResolvedInvoiceState::resolve(
+            $lifecycle,
+            (string) $row->total,
+            $row->due_date === null ? null : new CarbonImmutable((string) $row->due_date),
+            $localDate,
+        );
 
         return [
             'id' => (string) $row->id,
@@ -115,12 +152,15 @@ final readonly class InvoiceListPage
             'customerReference' => $row->customer_reference,
             'issueDate' => $row->issue_date,
             'dueDate' => $row->due_date,
-            'lifecycle' => (string) $row->lifecycle,
+            'lifecycle' => $lifecycle->value,
+            'paymentState' => $state->paymentState?->value,
+            'isOverdue' => $state->isOverdue,
+            'displayStatus' => $state->displayStatus->value,
             'total' => $precision === null
                 ? null
                 : (string) DecimalRules::moneySource((string) $row->total)->toScale($precision),
             'currencyCode' => $row->currency_code,
-            'editUrl' => route('invoices.edit', [$company, $row->id], false),
+            'editUrl' => $canManage ? route('invoices.edit', [$company, $row->id], false) : null,
             'viewUrl' => route('invoices.current.show', [$company, $row->id], false),
         ];
     }

@@ -10,6 +10,7 @@ use App\Modules\Documents\Data\DocumentSourceFailure;
 use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Actions\UpdateInvoiceDraft;
 use App\Modules\Invoices\Exceptions\InvoiceDraftException;
+use App\Modules\Invoices\Exceptions\InvoiceLifecycleException;
 use App\Modules\Invoices\Http\Requests\CreateInvoiceDraftRequest;
 use App\Modules\Invoices\Http\Requests\UpdateInvoiceDraftRequest;
 use App\Modules\Invoices\Queries\InvoiceDraftPage;
@@ -85,13 +86,14 @@ final class InvoiceDraftController extends Controller
     ): RedirectResponse {
         try {
             $update->handle($company, $request->user(), $invoice, $request->draft());
-        } catch (InvoiceDraftException|DocumentSourceFailure|DocumentLineFailure $exception) {
+        } catch (InvoiceDraftException|InvoiceLifecycleException|DocumentSourceFailure|DocumentLineFailure $exception) {
             $field = match ($exception->reason()) {
                 'stale' => 'edit_version',
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
                 'currency_unavailable' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
                 'details_invalid' => 'due_date',
+                'issue_incomplete' => 'invoice',
                 default => 'lines',
             };
 

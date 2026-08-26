@@ -24,8 +24,10 @@ use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Invoices\Data\InvoiceDraftData;
+use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Exceptions\InvoiceDraftException;
 use App\Modules\Invoices\Models\Invoice;
+use App\Modules\Invoices\Rules\InvoiceIssuability;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -40,6 +42,7 @@ final readonly class UpdateInvoiceDraft
         private ApplyDocumentDraftSources $applyDraftSources,
         private LockDocumentLineSources $sourceGuard,
         private PersistDocumentLines $persistLines,
+        private InvoiceIssuability $issuability,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -122,6 +125,15 @@ final readonly class UpdateInvoiceDraft
             'payment_term_days' => $data->paymentTermDays,
             'due_date' => $data->dueDate,
         ]);
+
+        if ($invoice->lifecycle === InvoiceLifecycle::Issued) {
+            $this->issuability->assert(
+                $document,
+                $invoice,
+                $document->lines()->getQuery()->reorder('id')->get(),
+            );
+        }
+
         $connection->statement(<<<'SQL'
             SET CONSTRAINTS
                 invoice_due_date_integrity_trigger,
@@ -132,7 +144,9 @@ final readonly class UpdateInvoiceDraft
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,
-            action: 'company.invoice.draft_updated',
+            action: $invoice->lifecycle === InvoiceLifecycle::Draft
+                ? 'company.invoice.draft_updated'
+                : 'company.invoice.issued_updated',
             targetType: 'Invoice',
             targetId: $document->id,
             after: AuditPayload::fromAllowedFields([

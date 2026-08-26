@@ -2,8 +2,10 @@
 
 namespace App\Modules\Invoices\Data;
 
-enum InvoiceLifecycle: string
+enum InvoiceDisplayStatus: string
 {
     case Draft = 'DRAFT';
     case Issued = 'ISSUED';
+    case Paid = 'PAID';
+    case Overdue = 'OVERDUE';
 }

@@ -7,6 +7,7 @@ import {
     changeInvoiceDetail,
     customerFromInvoice,
     invoiceFormData,
+    invoiceRequestData,
 } from '@/features/invoices/components/invoice-draft-form-data';
 import type { InvoiceDraft } from '@/types/invoice';
 
@@ -18,6 +19,9 @@ const invoice: InvoiceDraft = {
     dueDate: '2026-09-25',
     customerReference: 'PO-42',
     lifecycle: 'DRAFT',
+    paymentState: null,
+    isOverdue: false,
+    displayStatus: 'DRAFT',
     customer: { id: 'customer-1', displayName: 'Customer SRL' },
     currencyCode: 'RON',
     currencyPrecision: 2,
@@ -50,6 +54,17 @@ describe('Invoice Draft form data', () => {
         expect(blankInvoiceLine(invoice.taxDefault)).toMatchObject({
             taxPresetId: 'tax-1',
             taxPercentage: '19',
+        });
+    });
+
+    it('maps editor state to the server-owned request contract', () => {
+        expect(invoiceRequestData(invoiceFormData(invoice))).toMatchObject({
+            edit_version: 3,
+            customer_id: 'customer-1',
+            issue_date: '2026-08-26',
+            payment_term_days: 30,
+            customer_reference: 'PO-42',
+            lines: [],
         });
     });
 

@@ -10,7 +10,7 @@ import type { OutwardDocument as OutwardDocumentData } from '@/types/outward-doc
 
 type Props = {
     document: OutwardDocumentData;
-    editUrl: string;
+    editUrl: string | null;
     indexUrl: string;
     pdfUrl: string;
     translations: InvoiceTranslations;
@@ -36,10 +36,12 @@ export default function ViewInvoice(props: Props) {
                                     <Download aria-hidden="true" />
                                     {labels.download_pdf}
                                 </ActionLink>
-                                <ActionLink href={props.editUrl}>
-                                    <Pencil aria-hidden="true" />
-                                    {labels.edit}
-                                </ActionLink>
+                                {props.editUrl && (
+                                    <ActionLink href={props.editUrl}>
+                                        <Pencil aria-hidden="true" />
+                                        {labels.edit}
+                                    </ActionLink>
+                                )}
                             </>
                         }
                     />

@@ -69,6 +69,36 @@ export const invoiceFormData = (invoice: InvoiceDraft): InvoiceEditorData => ({
     })),
 });
 
+export const invoiceRequestData = (data: InvoiceEditorData) => ({
+    edit_version: data.editVersion,
+    customer_id: data.customerId,
+    customer_confirmation_token: data.customerConfirmationToken,
+    currency_code: data.currencyCode,
+    document_language: data.documentLanguage,
+    issue_date: data.issueDate || null,
+    payment_term_days:
+        data.paymentTermDays === '' ? null : Number(data.paymentTermDays),
+    due_date: data.dueDate || null,
+    customer_reference: data.customerReference || null,
+    bank_account_id: data.bankAccountId,
+    terms_and_conditions: data.termsAndConditions,
+    notes: data.notes,
+    lines: data.lines.map((line) => ({
+        id: line.id,
+        product_service_id: line.productServiceId,
+        description: line.description,
+        item_price: line.itemPrice,
+        quantity: line.quantity,
+        unit: line.unit,
+        period_unit: line.periodUnit,
+        period_quantity: line.periodQuantity,
+        discount_percentage: line.discountPercentage,
+        tax_name: line.taxName,
+        tax_percentage: line.taxPercentage,
+        tax_preset_id: line.taxPresetId,
+    })),
+});
+
 export const customerFromInvoice = (
     invoice: InvoiceDraft,
 ): InvoiceCustomerSelection => ({

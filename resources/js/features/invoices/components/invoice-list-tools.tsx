@@ -33,6 +33,9 @@ export function InvoiceListTools({ action, filters, labels }: Props) {
                     issue_to: values.issueTo,
                     due_from: values.dueFrom,
                     due_to: values.dueTo,
+                    lifecycle: values.lifecycle,
+                    payment: values.payment,
+                    overdue: values.overdue,
                     sort: values.sort,
                     per_page: values.perPage,
                 },
@@ -79,6 +82,44 @@ export function InvoiceListTools({ action, filters, labels }: Props) {
                         change('sort', value as InvoiceFilters['sort'])
                     }
                     options={Object.entries(labels.sort_options).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
+                />
+            </Grid>
+            <Grid columns={3} gap="md">
+                <SelectField
+                    name="lifecycle"
+                    label={labels.lifecycle_label}
+                    value={values.lifecycle}
+                    onValueChange={(value) =>
+                        change(
+                            'lifecycle',
+                            value as InvoiceFilters['lifecycle'],
+                        )
+                    }
+                    options={Object.entries(labels.lifecycle_options).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
+                />
+                <SelectField
+                    name="payment"
+                    label={labels.payment_label}
+                    value={values.payment}
+                    onValueChange={(value) =>
+                        change('payment', value as InvoiceFilters['payment'])
+                    }
+                    options={Object.entries(labels.payment_options).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
+                />
+                <SelectField
+                    name="overdue"
+                    label={labels.overdue_label}
+                    value={values.overdue}
+                    onValueChange={(value) =>
+                        change('overdue', value as InvoiceFilters['overdue'])
+                    }
+                    options={Object.entries(labels.overdue_options).map(
                         ([value, label]) => ({ value, label }),
                     )}
                 />

@@ -3,7 +3,7 @@ import { resolveInvoiceDisplayStatuses } from '@/components/domain/invoice-statu
 
 describe('resolveInvoiceDisplayStatuses', () => {
     it.each([
-        ['draft', 'unpaid', false, ['draft']],
+        ['draft', null, false, ['draft']],
         ['cancelled', 'partial', true, ['cancelled']],
         ['issued', 'paid', true, ['paid']],
         ['issued', 'partial', false, ['partial']],

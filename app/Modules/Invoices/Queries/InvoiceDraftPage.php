@@ -12,6 +12,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
@@ -23,8 +24,10 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
+use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 
 final readonly class InvoiceDraftPage
@@ -63,6 +66,13 @@ final readonly class InvoiceDraftPage
             ->where('kind', DocumentKind::Invoice)
             ->firstOrFail();
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
+        $settings = CompanySetting::query()->firstOrFail();
+        $state = ResolvedInvoiceState::resolve(
+            $invoice->lifecycle,
+            $document->total,
+            $invoice->due_date,
+            Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay(),
+        );
         $lines = DocumentLine::query()
             ->where('document_id', $document->id)
             ->orderBy('position')
@@ -120,6 +130,9 @@ final readonly class InvoiceDraftPage
                 'dueDate' => $invoice->due_date?->toDateString(),
                 'customerReference' => $document->customer_reference,
                 'lifecycle' => $invoice->lifecycle->value,
+                'paymentState' => $state->paymentState?->value,
+                'isOverdue' => $state->isOverdue,
+                'displayStatus' => $state->displayStatus->value,
                 'customer' => $customer === null ? null : [
                     'id' => $customer->id,
                     'displayName' => $customer->displayName(),
@@ -162,6 +175,7 @@ final readonly class InvoiceDraftPage
                 ])->values(),
             ],
             'updateUrl' => route('invoices.update', [$company, $document], false),
+            'issueUrl' => route('invoices.issue', [$company, $document], false),
             'representationUrl' => route('invoices.current.show', [$company, $document], false),
             'pdfUrl' => route('invoices.current.pdf', [$company, $document], false),
             'indexUrl' => route('invoices.index', $company, false),
@@ -209,7 +223,7 @@ final readonly class InvoiceDraftPage
 
     private function authorize(Company $company, User $actor): void
     {
-        if (! $this->abilities->allows($actor, $company, CompanyAbility::ViewInvoices)) {
+        if (! $this->abilities->allows($actor, $company, CompanyAbility::ManageInvoices)) {
             throw new AuthorizationException;
         }
     }

@@ -10,6 +10,9 @@ return [
         'ACCEPTED' => 'Accepted',
         'REJECTED' => 'Rejected',
         'EXPIRED' => 'Expired',
+        'ISSUED' => 'Issued',
+        'PAID' => 'Paid',
+        'OVERDUE' => 'Overdue',
     ],
     'periods' => [
         'MONTH' => 'month',

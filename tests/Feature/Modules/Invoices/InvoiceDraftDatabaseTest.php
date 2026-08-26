@@ -72,6 +72,27 @@ final class InvoiceDraftDatabaseTest extends TestCase
         });
     }
 
+    public function test_database_rejects_incomplete_issue_and_unknown_lifecycle(): void
+    {
+        [$company, $document] = $this->invoice();
+
+        $this->tenant($company, function () use ($document): void {
+            $connection = DB::connection(config('database.tenant_connection'));
+
+            foreach (['ISSUED', 'CANCELLED'] as $lifecycle) {
+                try {
+                    $connection->transaction(function () use ($document, $lifecycle, $connection): void {
+                        Invoice::query()->whereKey($document->id)->update(['lifecycle' => $lifecycle]);
+                        $connection->statement('SET CONSTRAINTS ALL IMMEDIATE');
+                    });
+                    $this->fail("Invalid Invoice lifecycle [{$lifecycle}] must fail.");
+                } catch (QueryException $exception) {
+                    $this->assertSame('23514', $exception->errorInfo[0]);
+                }
+            }
+        });
+    }
+
     /** @return array{Company, Document} */
     private function invoice(): array
     {

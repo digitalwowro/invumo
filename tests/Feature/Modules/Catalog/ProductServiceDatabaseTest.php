@@ -89,6 +89,10 @@ final class ProductServiceDatabaseTest extends TestCase
             'name' => 'Valid', 'unit_price' => '1.23000000',
             'currency_id' => $currency->id, 'tax_preset_id' => $tax->id,
         ]));
+        $this->assertDeferredConstraintFails(
+            $company,
+            fn () => $currency->update(['currency_precision' => 1]),
+        );
         $this->assertDeferredConstraintFails($company, fn () => $currency->update(['active' => false]));
         $this->assertDeferredConstraintFails($company, fn () => $tax->update(['archived_at' => now()]));
         $this->assertDeferredConstraintFails($company, fn () => $product->update(['unit_price' => '1.23400000']));

@@ -2,12 +2,14 @@
 
 namespace App\Modules\Companies\Actions;
 
+use App\Foundation\Money\DecimalRules;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
+use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Data\CompanyConfigurationData;
 use App\Modules\Companies\Exceptions\CompanyConfigurationException;
@@ -17,6 +19,7 @@ use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 final readonly class UpdateCompanyConfiguration
 {
@@ -64,6 +67,7 @@ final readonly class UpdateCompanyConfiguration
         }
 
         $this->confirmScheduleChange($before, $after, $data->scheduleChangeConfirmed);
+        $this->assertCurrencyPrecisionChangeCompatible($currencies, $data);
         $changedFields = array_keys($changedAfter);
 
         if ($company->name !== $data->displayName) {
@@ -84,6 +88,33 @@ final readonly class UpdateCompanyConfiguration
         ));
 
         return $settings->refresh();
+    }
+
+    /** @param Collection<int, CompanyCurrency> $currencies */
+    private function assertCurrencyPrecisionChangeCompatible(
+        Collection $currencies,
+        CompanyConfigurationData $data,
+    ): void {
+        $currency = $currencies->firstWhere('currency_code', $data->currencyCode);
+
+        if (! $currency instanceof CompanyCurrency
+            || $currency->currency_precision === $data->currencyPrecision) {
+            return;
+        }
+
+        $products = ProductService::query()
+            ->where('currency_id', $currency->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id', 'unit_price']);
+
+        foreach ($products as $product) {
+            try {
+                DecimalRules::storedMoney((string) $product->unit_price, $data->currencyPrecision);
+            } catch (InvalidArgumentException) {
+                throw CompanyConfigurationException::currencyPrecisionDependency();
+            }
+        }
     }
 
     /**

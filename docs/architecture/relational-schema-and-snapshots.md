@@ -2,7 +2,7 @@
 
 Status: Approved architecture decision  
 Approved: 2026-08-22  
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 This document defines the approved v1 PostgreSQL relational model, migration strategy, same-Company constraints, deletion behavior, and snapshot boundaries. It translates the approved product brief and architecture contracts into a schema that can be implemented without inventing domain behavior during migrations.
 
@@ -305,7 +305,7 @@ A missing price remains different from explicit zero. Search covers name and int
 
 The database bounds name to 160 characters, internal code/SKU to 120, unit to 80, and description to 5,000; the operational search input is bounded to 120 in Laravel. Price and currency are an exact nullable pair, price is non-negative and must match the selected active Company's `0..8` precision, period is checked to `NONE`, `MONTH`, or `YEAR`, and currency/tax references are same-Company.
 
-An active or archived Customer/Product default prevents its referenced currency from becoming inactive and its referenced tax preset from being archived until the stored reference changes, clears, or is deleted. Source Actions lock complete source sets and dependent rows in stable UUID order for a localized dependency response. Deferred constraint triggers independently reject unavailable sources and invalid cross-row currency precision at commit, including direct and concurrent writes.
+An active or archived Customer/Product default prevents its referenced currency from becoming inactive and its referenced tax preset from being archived until the stored reference changes, clears, or is deleted. Reducing a currency's configured precision is also blocked while any referencing Product/Service price is not exactly representable at the proposed precision; catalog prices are edited explicitly and are never silently rounded by a configuration save. Source Actions lock complete source sets and dependent rows in stable UUID order for a localized dependency response. Deferred constraint triggers cover currency activation and precision changes and independently reject unavailable sources or invalid cross-row currency precision at commit, including direct and concurrent writes.
 
 Hard deletion is restricted while a line or active template still references the product. Archiving is the normal path for a used entry.
 
@@ -398,11 +398,22 @@ The settings row stores the current document delivery mode and whether public ac
 - discount percentage and stored discount value
 - optional source Tax-preset reference plus snapshotted tax name and percentage
 - stored items subtotal, items total, grand subtotal, tax value, and final line total
-- unique `(company_id, document_id, position)`
+- `UNIQUE (company_id, document_id, position) DEFERRABLE INITIALLY IMMEDIATE`
 
 Calculated columns are written only by the authoritative calculation service and are checked for scale/range and non-negative results. Issue/send validation requires at least one complete billable line. The line's source references never drive recalculation after selection.
 
-Drag-and-drop reordering must never perform naïve sequential position updates against an immediately checked unique constraint, because a valid final order can collide transiently. Before the Phase 5 migration/action is finalized, choose and document one of two PostgreSQL-safe mechanisms: make `UNIQUE (company_id, document_id, position)` deferrable and defer it inside the short reorder transaction, or use a collision-free update order/two-step temporary-position strategy. In both cases, lock the Document aggregate, apply the complete reorder atomically, retain the uniqueness constraint on the committed final order, and add swap/move/concurrent/stale-editor integration tests.
+Committed line positions are a dense one-based sequence with no gaps. PostgreSQL independently guarantees positive and unique positions; the owning document aggregate Action guarantees contiguity whenever line membership or order changes. The browser keeps add/remove/reorder/undo changes in its local reducer until the next aggregate save, so v1 has no separate persisted line-membership, line-undo, or reorder write path.
+
+The position constraint is `DEFERRABLE INITIALLY IMMEDIATE`. Ordinary direct writes therefore retain statement-level collision checking. The owning save Action uses this exact short transaction boundary:
+
+1. lock the Document row and reject a submitted version that is no longer current;
+2. lock all persisted document lines in stable UUID order and validate that the aggregate command may update/delete only that complete owned set;
+3. execute `SET CONSTRAINTS document_lines_company_document_position_unique DEFERRED`;
+4. reconcile inserts, UUID-addressed updates, deletions, and the complete dense `1..n` final order without using `(company_id, document_id, position)` as an `ON CONFLICT` arbiter;
+5. execute `SET CONSTRAINTS document_lines_company_document_position_unique IMMEDIATE` immediately after the last line write, forcing final uniqueness validation at the line boundary rather than at transaction commit;
+6. persist the authoritative totals/document fields, increment the aggregate version once, record audit, and commit.
+
+This explicit deferred/immediate bracket avoids temporary-position values and extra rewrite passes without widening deferred checking across later document mutations. It also preserves the existing single aggregate-save contract instead of adding a second reorder transaction that could race with other editor changes. Two concurrent saves carrying the same version serialize on the Document lock; the first succeeds and increments the version, while the second fails stale before touching lines. Phase 5 integration coverage must include swaps, first/last moves, insert/delete compaction, malformed or cross-Document line sets, direct duplicate rejection, exactly-one-wins concurrent saves, stale editors, and atomic rollback.
 
 ### `quote_invoice_links`
 

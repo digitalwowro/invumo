@@ -86,6 +86,7 @@ return [
             ],
             'errors' => [
                 'schedule_change_not_confirmed' => 'Confirm the schedule change before saving the new timezone or execution time.',
+                'currency_precision_dependency' => 'Some Product/Service prices use more decimal places. Update those prices before reducing this currency precision.',
             ],
         ],
         'documents' => [

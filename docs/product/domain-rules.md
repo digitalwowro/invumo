@@ -1,7 +1,7 @@
 # Invumo Core Domain Rules
 
 Status: Approved product rules  
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
@@ -127,6 +127,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Owner/Admin roles manage entries by default. Members may search and use active entries subject to the approved permission matrix.
 - Archive a previously used entry rather than hard-deleting it by default.
 - A referenced Company currency cannot become inactive and a referenced tax preset cannot be archived while any Customer or Product/Service still stores that default. The root source mutation reports the dependency, and deferred PostgreSQL validation independently prevents direct or concurrent writes from creating silent fallback state.
+- Reducing a Company currency's precision is rejected while any Product/Service default price in that currency needs more fractional digits. Users must update those catalog prices explicitly; configuration saves never round or rewrite them silently.
 - Catalog audit records retain changed-field names and only non-sensitive operational facts: price presence, currency code, period unit, tax-presence, and archive/delete state. They never retain product/service name, description, internal code/SKU, unit, price, or tax-preset name.
 - v1 excludes product URLs/customer-visible product links, inventory and stock movements, tags/categories, variants, bundles, supplier/purchasing data, cost/margin tracking, tiered/customer-specific price lists, product images, and catalog CSV import/export.
 

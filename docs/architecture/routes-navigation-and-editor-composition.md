@@ -4,7 +4,7 @@ Status: Approved architecture decision
 
 Created: 2026-08-23
 
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 Approved: 2026-08-23
 
@@ -303,7 +303,7 @@ On wide screens, the editable content is the flexible main column and the totals
 
 `DocumentLinesEditor` is shared by all three editors. It owns manual lines, searchable active Product/Service selection, snapshot copying, complete post-selection editing, add/remove/reorder, quantity, unit, period, description, unit price, discount, tax, and preview totals.
 
-Line reorder sends the complete intended order with the current aggregate version. The server applies the approved PostgreSQL-safe atomic reorder mechanism; the browser never relies on sequential position writes.
+Line add/remove/reorder and unsaved undo remain local reducer changes until the editor sends one complete aggregate command with the current version. The server locks and reconciles the full owned line set through the approved PostgreSQL-safe atomic mechanism; the browser never sends sequential position writes, and v1 has no separate persisted line-reorder or line-undo endpoint.
 
 Customer and Product/Service inline creation use the same actions and form components as standalone creation:
 

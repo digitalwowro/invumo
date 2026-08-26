@@ -86,6 +86,7 @@ return [
             ],
             'errors' => [
                 'schedule_change_not_confirmed' => 'Confirmă schimbarea programului înainte de a salva noul fus orar sau noua oră de execuție.',
+                'currency_precision_dependency' => 'Unele prețuri pentru produse/servicii folosesc mai multe zecimale. Actualizează acele prețuri înainte de a reduce precizia monedei.',
             ],
         ],
         'documents' => [

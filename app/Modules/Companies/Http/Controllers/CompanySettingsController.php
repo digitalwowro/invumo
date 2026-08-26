@@ -54,7 +54,7 @@ final class CompanySettingsController extends Controller
             $update->handle($company, $request->user(), $request->configuration());
         } catch (CompanyConfigurationException $exception) {
             throw ValidationException::withMessages([
-                'confirm_schedule_change' => __(
+                $exception->validationField() => __(
                     "companies_ui.settings.profile.errors.{$exception->reason()}",
                 ),
             ]);

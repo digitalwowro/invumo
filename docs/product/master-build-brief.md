@@ -2,7 +2,7 @@
 
 Status: Approved product brief
 
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 - Marketing website: `https://invumo.com`
 - SaaS application: `https://app.invumo.com`
@@ -365,6 +365,8 @@ Copy the default price only when its currency matches the document currency. On 
 Only Owner/Admin roles should manage catalog entries by default; the permission matrix may allow Members to search and use active entries. Once used, archive entries rather than hard-deleting them by default.
 
 An active or archived Customer/Product default keeps its referenced Company currency or tax preset available until the reference is changed, cleared, or the dependent record is permanently removed. Source changes fail closed instead of silently replacing a stored choice with a fallback.
+
+Reducing a Company currency's configured precision is blocked while any Product/Service price in that currency cannot be represented exactly at the proposed precision. The Company must edit those catalog prices first; the configuration workflow never silently rounds live defaults.
 
 Do not include in v1:
 

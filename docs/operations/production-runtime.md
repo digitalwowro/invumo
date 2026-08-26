@@ -2,7 +2,7 @@
 
 Status: Phase 1 operational baseline complete; public-launch operations verification remains open
 
-Verified: 2026-08-24
+Verified: 2026-08-26
 
 This document records the production runtime that currently serves Invumo. It contains no credentials and does not replace the canonical [development tracker](../development/development-tracker.md).
 
@@ -11,6 +11,8 @@ This document records the production runtime that currently serves Invumo. It co
 Until public launch, while Invumo has no external users or customer business data, development occurs directly in this hosted production checkout. This is an approved temporary simplification. Source control and relevant automated checks still apply, but a repeatable application deployment process is not a Phase 1 requirement.
 
 Rollback, off-server database/file backup and restore, uptime/error monitoring, and alert delivery are provided by the owner's external infrastructure and are not implemented or configured in this repository. Before public launch, Phase 12 must verify evidence that those safeguards are active and usable. Before real users make direct-production development unsafe, Invumo must add separate development and production environments and a repeatable release process.
+
+Every production migration also requires a fresh local logical SQL backup immediately before migration. Run `php scripts/backup-production-database.php`; it reads the private Laravel schema connection without printing credentials and holds one exported repeatable-read PostgreSQL snapshot across the complete dump. Because the schema role cannot bypass forced RLS, the command exports global data once and each discovered forced-RLS tenant table once per Company under explicit tenant context, then verifies the emitted row count for every such table. It writes an atomically finalized `0600` SQL file beneath the `0700` `/home/invumo/backups` directory, verifies a non-empty PostgreSQL dump header, and reports its SHA-256 checksum. The directory is outside every Invumo repository and its contents must never be copied into Git, application storage, logs, or build artifacts. Abort the migration if backup creation or verification fails. Disposable isolated `_test` migrations do not require this production backup.
 
 ## Public application
 
@@ -40,6 +42,8 @@ Production-like migrations now require `invumo_runtime` before executing any con
 The one-time [database bootstrap](../../scripts/bootstrap-production-database.sh) creates or normalizes these roles without deleting an existing database, generates independent secrets without printing them, writes them only to `.env`, runs migrations through `pgsql_schema`, revokes runtime migration-table access, and caches production configuration. It refuses to run again after its placeholders have been replaced.
 
 Verified on 2026-08-25: all current migrations through `2026_08_25_210000_create_customers` are applied. During the Batch 3A closeout, a destructive migration command combined a `testing` CLI environment override with cached production database targets and rebuilt the pre-launch schema. The owner explicitly chose account re-bootstrap instead of external-backup restoration because no external users or customer business data existed. Two verified personal Accounts were recreated from the owner-supplied credentials: one protected Platform Owner and one ordinary User. After the app returned to service, the ordinary User recreated one valid Company through the application. Batch closeout observed no Customer rows. Credential, role, migration, forced-RLS, configuration, queue, and runtime-health checks passed before normal work resumed.
+
+Verified on 2026-08-26: backup `invumo-20260826T064023Z-pre-migration.sql` was finalized outside Git at 146,362 bytes with SHA-256 `cb740672d6595fa07ec58c6fa5ce70c946e17ecbee1397a60c0a6ae7ffc1c36f` before migration `2026_08_26_020000_guard_product_prices_on_currency_precision_change` ran as production batch 5. All migrations are current, zero Product/Service rows violate their configured currency precision, and the deferred currency trigger watches both activation and precision changes. A second post-migration verification run exercised the final tenant-aware backup implementation successfully; it is evidence of the command, not the pre-migration recovery point for this migration.
 
 Destructive Artisan database commands now fail closed unless Laravel is in the `testing` environment and both `pgsql` and `pgsql_schema` target database names end in `_test`. This remains enforced even when a caller supplies a CLI environment override, so cached production connection targets cannot become eligible for `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback`, or `db:wipe`.
 

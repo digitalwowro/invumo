@@ -16,8 +16,21 @@ final class CompanyConfigurationException extends RuntimeException
         return new self('schedule_change_not_confirmed');
     }
 
+    public static function currencyPrecisionDependency(): self
+    {
+        return new self('currency_precision_dependency');
+    }
+
     public function reason(): string
     {
         return $this->errorReason;
+    }
+
+    public function validationField(): string
+    {
+        return match ($this->errorReason) {
+            'currency_precision_dependency' => 'currency_precision',
+            default => 'confirm_schedule_change',
+        };
     }
 }

@@ -1,7 +1,7 @@
 # Calculation, Decimal Precision, and Rounding
 
 Status: Approved architecture decision
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 Invumo uses one deterministic calculation model for quotes, invoices, recurring templates, generated invoices, public pages, PDFs, and transaction validation. The Laravel backend is authoritative; browser calculations exist only to provide an immediate preview of the same rules.
 
@@ -31,6 +31,7 @@ Every quote and invoice stores a snapshot of its currency precision when its cur
 - If inherited currency or precision changed, the generated Invoice retains the stored template line inputs' numeric values and recalculates every derived amount using the newly resolved precision. No FX conversion occurs.
 - Once generated, the Invoice snapshots the resolved currency/precision and later source changes never alter it.
 - Product/service prices may use all eight storage decimals. Once copied, the document line is governed by the document's stored precision.
+- Catalog prices are live defaults rather than snapshots. Reducing a configured currency precision is rejected while any Product/Service price in that currency cannot be represented exactly at the proposed precision; the Company must update those catalog prices first. Laravel reports the dependency on the precision field, and deferred PostgreSQL validation independently covers direct and concurrent writes.
 - Payments, refunds, and adjustments must use the linked invoice's currency and precision.
 
 ## Authoritative decimal implementation

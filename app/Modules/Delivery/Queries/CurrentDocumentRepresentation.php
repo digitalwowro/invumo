@@ -17,13 +17,15 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentCustomerSnapshot;
 use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\Quote;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Date;
 use RuntimeException;
 
-final readonly class CurrentQuoteRepresentation
+final readonly class CurrentDocumentRepresentation
 {
     public function __construct(
         private CompanyAbilityCheck $abilities,
@@ -31,17 +33,68 @@ final readonly class CurrentQuoteRepresentation
         private OutwardDocumentFormatter $format,
     ) {}
 
-    public function for(Company $company, User $actor, string $documentId): OutwardDocument
+    public function forQuote(Company $company, User $actor, string $documentId): OutwardDocument
     {
-        if (! $this->abilities->allows($actor, $company, CompanyAbility::ViewQuotes)) {
+        $document = $this->document($company, $actor, $documentId, DocumentKind::Quote);
+        $quote = Quote::query()->whereKey($document->id)->firstOrFail();
+        $settings = CompanySetting::query()->firstOrFail();
+        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
+        $status = QuoteDisplayStatus::resolve($quote->lifecycle, $quote->valid_until, $localDate);
+
+        return $this->build(
+            $company,
+            $document,
+            $this->translation('documents_outward.quote', $document->document_language ?? 'en'),
+            $this->translation('documents_outward.statuses.'.$status->value, $document->document_language ?? 'en'),
+            $quote->valid_until,
+            null,
+        );
+    }
+
+    public function forInvoice(Company $company, User $actor, string $documentId): OutwardDocument
+    {
+        $document = $this->document($company, $actor, $documentId, DocumentKind::Invoice);
+        $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
+        $locale = $document->document_language ?? 'en';
+
+        return $this->build(
+            $company,
+            $document,
+            $this->translation('documents_outward.invoice', $locale),
+            $this->translation('documents_outward.statuses.'.$invoice->lifecycle->value, $locale),
+            null,
+            $invoice->due_date,
+        );
+    }
+
+    private function document(
+        Company $company,
+        User $actor,
+        string $documentId,
+        DocumentKind $kind,
+    ): Document {
+        $ability = $kind === DocumentKind::Quote
+            ? CompanyAbility::ViewQuotes
+            : CompanyAbility::ViewInvoices;
+
+        if (! $this->abilities->allows($actor, $company, $ability)) {
             throw new AuthorizationException;
         }
 
-        $document = Document::query()
+        return Document::query()
             ->whereKey($documentId)
-            ->where('kind', DocumentKind::Quote)
+            ->where('kind', $kind)
             ->firstOrFail();
-        $quote = Quote::query()->whereKey($document->id)->firstOrFail();
+    }
+
+    private function build(
+        Company $company,
+        Document $document,
+        string $kind,
+        string $status,
+        ?CarbonImmutable $validUntil,
+        ?CarbonImmutable $dueDate,
+    ): OutwardDocument {
         $companySnapshot = DocumentCompanySnapshot::query()
             ->where('document_id', $document->id)
             ->firstOrFail();
@@ -55,21 +108,19 @@ final readonly class CurrentQuoteRepresentation
             ->where('document_id', $document->id)
             ->orderBy('position')
             ->get();
-        $settings = CompanySetting::query()->firstOrFail();
         $locale = $document->document_language ?? 'en';
         $precision = $document->currency_precision ?? 2;
         $currency = $document->currency_code ?? '---';
         $theme = $this->brandTheme->for($companySnapshot->primary_brand_color);
-        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
-        $status = QuoteDisplayStatus::resolve($quote->lifecycle, $quote->valid_until, $localDate);
 
         return new OutwardDocument(
-            kind: $this->translation('documents_outward.quote', $locale),
+            kind: $kind,
             number: $document->rendered_number,
-            status: $this->translation('documents_outward.statuses.'.$status->value, $locale),
+            status: $status,
             language: $locale,
             issueDate: $this->format->date($document->issue_date, $locale),
-            validUntil: $this->format->date($quote->valid_until, $locale),
+            validUntil: $this->format->date($validUntil, $locale),
+            dueDate: $this->format->date($dueDate, $locale),
             customerReference: $document->customer_reference,
             theme: [
                 'accentColor' => $theme->accentColor,

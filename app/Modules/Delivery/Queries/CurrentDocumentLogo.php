@@ -16,16 +16,20 @@ use Illuminate\Filesystem\FilesystemManager;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-final readonly class CurrentQuoteLogo
+final readonly class CurrentDocumentLogo
 {
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private FilesystemManager $filesystems,
     ) {}
 
-    public function dataUri(Company $company, User $actor, string $documentId): ?string
-    {
-        $asset = $this->asset($company, $actor, $documentId);
+    public function dataUri(
+        Company $company,
+        User $actor,
+        string $documentId,
+        DocumentKind $kind,
+    ): ?string {
+        $asset = $this->asset($company, $actor, $documentId, $kind);
 
         if ($asset === null) {
             return null;
@@ -36,9 +40,13 @@ final readonly class CurrentQuoteLogo
         return 'data:'.$asset->mime_type.';base64,'.base64_encode($contents);
     }
 
-    public function response(Company $company, User $actor, string $documentId): StreamedResponse
-    {
-        $asset = $this->asset($company, $actor, $documentId);
+    public function response(
+        Company $company,
+        User $actor,
+        string $documentId,
+        DocumentKind $kind,
+    ): StreamedResponse {
+        $asset = $this->asset($company, $actor, $documentId, $kind);
         abort_if($asset === null, 404);
         $disk = $this->disk($asset);
 
@@ -66,15 +74,23 @@ final readonly class CurrentQuoteLogo
         );
     }
 
-    private function asset(Company $company, User $actor, string $documentId): ?CompanyAsset
-    {
-        if (! $this->abilities->allows($actor, $company, CompanyAbility::ViewQuotes)) {
+    private function asset(
+        Company $company,
+        User $actor,
+        string $documentId,
+        DocumentKind $kind,
+    ): ?CompanyAsset {
+        $ability = $kind === DocumentKind::Quote
+            ? CompanyAbility::ViewQuotes
+            : CompanyAbility::ViewInvoices;
+
+        if (! $this->abilities->allows($actor, $company, $ability)) {
             throw new AuthorizationException;
         }
 
         $document = Document::query()
             ->whereKey($documentId)
-            ->where('kind', DocumentKind::Quote)
+            ->where('kind', $kind)
             ->firstOrFail();
         $snapshot = DocumentCompanySnapshot::query()
             ->where('document_id', $document->id)

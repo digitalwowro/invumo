@@ -12,26 +12,28 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import type {
-    QuoteProductDefaults,
-    QuoteProductSearchItem,
-    QuoteTranslations,
-} from '@/types/quote';
+    DocumentCustomerSearchItem,
+    DocumentCustomerSelection,
+    DocumentEditorTranslations,
+} from '@/types/document';
 
 type Props = {
     open: boolean;
     searchUrl: string;
-    currencyCode: string | null;
-    labels: QuoteTranslations['edit'];
+    companyDefaultsUrl: string;
+    labels: DocumentEditorTranslations;
     canCreate: boolean;
     onOpenChange: (open: boolean) => void;
     onCreate: () => void;
-    onSelect: (defaults: QuoteProductDefaults) => void;
+    onSelect: (selection: DocumentCustomerSelection) => void;
 };
 
-export function QuoteProductSelector(props: Props) {
+export function DocumentCustomerSelector(props: Props) {
     const [query, setQuery] = useState('');
-    const [items, setItems] = useState<QuoteProductSearchItem[]>([]);
-    const [defaults, setDefaults] = useState<QuoteProductDefaults | null>(null);
+    const [items, setItems] = useState<DocumentCustomerSearchItem[]>([]);
+    const [preview, setPreview] = useState<DocumentCustomerSelection | null>(
+        null,
+    );
     const [loading, setLoading] = useState(false);
     const [failed, setFailed] = useState(false);
 
@@ -51,7 +53,7 @@ export function QuoteProductSelector(props: Props) {
             }
 
             const payload = (await response.json()) as {
-                items: QuoteProductSearchItem[];
+                items: DocumentCustomerSearchItem[];
             };
             setItems(payload.items);
         } catch {
@@ -61,17 +63,11 @@ export function QuoteProductSelector(props: Props) {
         }
     };
 
-    const loadDefaults = async (sourceUrl: string) => {
+    const loadPreview = async (url: string) => {
         setLoading(true);
         setFailed(false);
 
         try {
-            const url = new URL(sourceUrl, window.location.origin);
-
-            if (props.currencyCode !== null) {
-                url.searchParams.set('currency_code', props.currencyCode);
-            }
-
             const response = await fetch(url, {
                 headers: { Accept: 'application/json' },
             });
@@ -80,7 +76,7 @@ export function QuoteProductSelector(props: Props) {
                 throw new Error();
             }
 
-            setDefaults((await response.json()) as QuoteProductDefaults);
+            setPreview((await response.json()) as DocumentCustomerSelection);
         } catch {
             setFailed(true);
         } finally {
@@ -89,12 +85,12 @@ export function QuoteProductSelector(props: Props) {
     };
 
     const confirm = () => {
-        if (defaults === null) {
+        if (preview === null) {
             return;
         }
 
-        props.onSelect(defaults);
-        setDefaults(null);
+        props.onSelect(preview);
+        setPreview(null);
         props.onOpenChange(false);
     };
 
@@ -106,10 +102,10 @@ export function QuoteProductSelector(props: Props) {
             >
                 <DialogHeader>
                     <DialogTitle>
-                        {props.labels.product_search_title}
+                        {props.labels.customer_search_title}
                     </DialogTitle>
                     <DialogDescription>
-                        {props.labels.product_search_description}
+                        {props.labels.customer_search_description}
                     </DialogDescription>
                 </DialogHeader>
                 {failed && (
@@ -118,7 +114,7 @@ export function QuoteProductSelector(props: Props) {
                         tone="error"
                     />
                 )}
-                {defaults === null ? (
+                {preview === null ? (
                     <div className="space-y-4">
                         <form
                             className="flex flex-col gap-3 sm:flex-row sm:items-end"
@@ -129,12 +125,12 @@ export function QuoteProductSelector(props: Props) {
                         >
                             <div className="min-w-0 flex-1">
                                 <TextField
-                                    label={props.labels.product_search_label}
+                                    label={props.labels.customer_search_label}
                                     input={{
                                         value: query,
                                         placeholder:
                                             props.labels
-                                                .product_search_placeholder,
+                                                .customer_search_placeholder,
                                         onChange: (event) =>
                                             setQuery(event.target.value),
                                     }}
@@ -142,7 +138,7 @@ export function QuoteProductSelector(props: Props) {
                             </div>
                             <Button
                                 type="submit"
-                                data-testid="quote-product-search"
+                                data-testid="document-customer-search"
                                 disabled={loading}
                             >
                                 <Search aria-hidden="true" />
@@ -155,61 +151,75 @@ export function QuoteProductSelector(props: Props) {
                                     key={item.id}
                                     type="button"
                                     variant="secondary"
-                                    data-testid="quote-product-result"
+                                    data-testid="document-customer-result"
                                     className="h-auto w-full justify-start py-3 text-left whitespace-normal"
                                     onClick={() =>
-                                        void loadDefaults(item.defaultsUrl)
+                                        void loadPreview(item.previewUrl)
                                     }
                                 >
                                     <span>
                                         <span className="block font-medium">
-                                            {item.name}
+                                            {item.displayName}
                                         </span>
-                                        {item.internalCode && (
-                                            <span className="block font-mono text-foreground-muted">
-                                                {item.internalCode}
-                                            </span>
-                                        )}
+                                        <span className="block text-foreground-muted">
+                                            {item.email ??
+                                                item.externalReference ??
+                                                props.labels.not_available}
+                                        </span>
                                     </span>
                                 </Button>
                             ))}
                             {!loading && items.length === 0 && (
                                 <p className="py-6 text-center text-sm text-foreground-muted">
-                                    {props.labels.no_product_results}
+                                    {props.labels.no_customer_results}
                                 </p>
                             )}
                         </div>
                     </div>
                 ) : (
-                    <ProductPreview defaults={defaults} labels={props.labels} />
+                    <CustomerPreview
+                        selection={preview}
+                        labels={props.labels}
+                    />
                 )}
                 <DialogFooter>
-                    {defaults === null ? (
-                        props.canCreate && (
+                    {preview === null ? (
+                        <>
+                            {props.canCreate && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    data-testid="document-inline-customer"
+                                    onClick={props.onCreate}
+                                >
+                                    {props.labels.create_customer}
+                                </Button>
+                            )}
                             <Button
                                 type="button"
                                 variant="secondary"
-                                data-testid="quote-inline-product"
-                                onClick={props.onCreate}
+                                onClick={() =>
+                                    void loadPreview(props.companyDefaultsUrl)
+                                }
                             >
-                                {props.labels.create_product}
+                                {props.labels.clear_customer}
                             </Button>
-                        )
+                        </>
                     ) : (
                         <>
                             <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={() => setDefaults(null)}
+                                onClick={() => setPreview(null)}
                             >
                                 {props.labels.cancel}
                             </Button>
                             <Button
                                 type="button"
-                                data-testid="quote-product-confirm"
+                                data-testid="document-customer-confirm"
                                 onClick={confirm}
                             >
-                                {props.labels.select_product}
+                                {props.labels.confirm_customer}
                             </Button>
                         </>
                     )}
@@ -219,39 +229,48 @@ export function QuoteProductSelector(props: Props) {
     );
 }
 
-function ProductPreview({
-    defaults,
+function CustomerPreview({
+    selection,
     labels,
 }: {
-    defaults: QuoteProductDefaults;
-    labels: QuoteTranslations['edit'];
+    selection: DocumentCustomerSelection;
+    labels: DocumentEditorTranslations;
 }) {
-    const warning =
-        defaults.priceStatus === 'CURRENCY_MISMATCH'
-            ? labels.currency_mismatch
-            : defaults.priceStatus === 'ENTER_MANUALLY'
-              ? labels.manual_price_required
-              : null;
-
     return (
         <div className="space-y-4">
-            {warning && <SystemMessage title={warning} tone="warning" />}
+            <SystemMessage
+                title={labels.customer_confirmation_title}
+                description={labels.customer_confirmation_description}
+                tone="warning"
+            />
             <dl className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2">
                 <Summary
-                    label={labels.fields.description}
-                    value={defaults.description}
+                    label={labels.select_customer}
+                    value={selection.displayName ?? labels.no_customer}
                 />
                 <Summary
-                    label={labels.fields.item_price}
-                    value={defaults.unitPrice ?? labels.manual_price_required}
+                    label={labels.currency}
+                    value={selection.currencyCode ?? labels.not_available}
                 />
                 <Summary
-                    label={labels.fields.unit}
-                    value={defaults.unit ?? labels.not_available}
+                    label={labels.language}
+                    value={selection.documentLanguage ?? labels.not_available}
                 />
                 <Summary
                     label={labels.tax_default}
-                    value={defaults.tax?.name ?? labels.no_tax}
+                    value={selection.taxDefault?.name ?? labels.no_tax}
+                />
+                <Summary
+                    label={labels.recipients}
+                    value={String(selection.recipientCount)}
+                />
+                <Summary
+                    label={labels.delivery}
+                    value={
+                        selection.emailAttachmentMode === 'ATTACH_PDF'
+                            ? labels.attach_pdf
+                            : labels.secure_link_only
+                    }
                 />
             </dl>
         </div>
@@ -262,7 +281,7 @@ function Summary({ label, value }: { label: string; value: string }) {
     return (
         <div className="min-w-0">
             <dt className="text-sm text-foreground-muted">{label}</dt>
-            <dd className="font-medium whitespace-pre-wrap">{value}</dd>
+            <dd className="truncate font-medium">{value}</dd>
         </div>
     );
 }

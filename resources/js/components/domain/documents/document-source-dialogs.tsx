@@ -1,18 +1,18 @@
 import type { Page } from '@inertiajs/core';
-import { InlineCustomerDialog } from '@/features/quotes/components/inline-customer-dialog';
-import { InlineProductDialog } from '@/features/quotes/components/inline-product-dialog';
-import { QuoteCustomerSelector } from '@/features/quotes/components/quote-customer-selector';
-import { QuoteProductSelector } from '@/features/quotes/components/quote-product-selector';
+import { DocumentCustomerSelector } from '@/components/domain/documents/document-customer-selector';
+import { DocumentProductSelector } from '@/components/domain/documents/document-product-selector';
+import { InlineDocumentCustomerDialog } from '@/components/domain/documents/inline-document-customer-dialog';
+import { InlineDocumentProductDialog } from '@/components/domain/documents/inline-document-product-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
-    QuoteCatalogFormOptions,
-    QuoteCustomerFormOptions,
-    QuoteCustomerSelection,
-    QuoteProductDefaults,
-    QuoteSourceUrls,
-    QuoteTranslations,
-} from '@/types/quote';
+    DocumentCatalogFormOptions,
+    DocumentCustomerFormOptions,
+    DocumentCustomerSelection,
+    DocumentEditorTranslations,
+    DocumentProductDefaults,
+    DocumentSourceUrls,
+} from '@/types/document';
 
 type Props = {
     customerOpen: boolean;
@@ -20,29 +20,29 @@ type Props = {
     productOpen: boolean;
     productCreatorOpen: boolean;
     currencyCode: string | null;
-    sourceUrls: QuoteSourceUrls;
+    sourceUrls: DocumentSourceUrls;
     inlineCustomerStoreUrl: string;
     inlineProductStoreUrl: string;
-    customerForm: QuoteCustomerFormOptions;
-    catalogForm: QuoteCatalogFormOptions;
+    customerForm: DocumentCustomerFormOptions;
+    catalogForm: DocumentCatalogFormOptions;
     abilities: { createCustomer: boolean; createProduct: boolean };
-    labels: QuoteTranslations['edit'];
+    labels: DocumentEditorTranslations;
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
     onCustomerOpenChange: (open: boolean) => void;
     onCustomerCreatorOpenChange: (open: boolean) => void;
     onProductOpenChange: (open: boolean) => void;
     onProductCreatorOpenChange: (open: boolean) => void;
-    onCustomerSelected: (selection: QuoteCustomerSelection) => void;
+    onCustomerSelected: (selection: DocumentCustomerSelection) => void;
     onCustomerCreated: (page: Page) => void;
-    onProductSelected: (defaults: QuoteProductDefaults) => void;
+    onProductSelected: (defaults: DocumentProductDefaults) => void;
     onProductCreated: (page: Page) => void;
 };
 
-export function QuoteSourceDialogs(props: Props) {
+export function DocumentSourceDialogs(props: Props) {
     return (
         <>
-            <QuoteCustomerSelector
+            <DocumentCustomerSelector
                 open={props.customerOpen}
                 searchUrl={props.sourceUrls.customerSearch}
                 companyDefaultsUrl={props.sourceUrls.companyCustomerDefaults}
@@ -55,16 +55,16 @@ export function QuoteSourceDialogs(props: Props) {
                 }}
                 onSelect={props.onCustomerSelected}
             />
-            <InlineCustomerDialog
+            <InlineDocumentCustomerDialog
                 open={props.customerCreatorOpen}
                 storeUrl={props.inlineCustomerStoreUrl}
                 options={props.customerForm}
-                quoteLabels={props.labels}
+                documentLabels={props.labels}
                 customerLabels={props.customerLabels}
                 onOpenChange={props.onCustomerCreatorOpenChange}
                 onCreated={props.onCustomerCreated}
             />
-            <QuoteProductSelector
+            <DocumentProductSelector
                 open={props.productOpen}
                 searchUrl={props.sourceUrls.productSearch}
                 currencyCode={props.currencyCode}
@@ -77,11 +77,11 @@ export function QuoteSourceDialogs(props: Props) {
                 }}
                 onSelect={props.onProductSelected}
             />
-            <InlineProductDialog
+            <InlineDocumentProductDialog
                 open={props.productCreatorOpen}
                 storeUrl={props.inlineProductStoreUrl}
                 options={props.catalogForm}
-                quoteLabels={props.labels}
+                documentLabels={props.labels}
                 catalogLabels={props.catalogLabels}
                 onOpenChange={props.onProductCreatorOpenChange}
                 onCreated={props.onProductCreated}

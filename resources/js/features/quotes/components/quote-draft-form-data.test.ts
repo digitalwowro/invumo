@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { normalizeEditedLine } from '@/components/domain/documents/document-draft-lines';
 import {
     addCalendarDays,
     blankQuoteLine,
@@ -6,7 +7,6 @@ import {
     customerFromQuote,
     quoteFormData,
 } from '@/features/quotes/components/quote-draft-form-data';
-import { normalizeEditedLine } from '@/features/quotes/components/quote-draft-lines';
 import type { QuoteDraft } from '@/types/quote';
 
 const quote: QuoteDraft = {

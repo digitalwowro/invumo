@@ -5,8 +5,9 @@ namespace App\Modules\Quotes\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
-use App\Modules\Delivery\Queries\CurrentQuoteLogo;
-use App\Modules\Delivery\Queries\CurrentQuoteRepresentation;
+use App\Modules\Delivery\Queries\CurrentDocumentLogo;
+use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
+use App\Modules\Documents\Data\DocumentKind;
 use App\Support\Inertia\QuotesUiTranslationBag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -20,10 +21,10 @@ final class QuoteRepresentationController extends Controller
         Request $request,
         Company $company,
         string $quote,
-        CurrentQuoteRepresentation $representation,
+        CurrentDocumentRepresentation $representation,
         QuotesUiTranslationBag $translations,
     ): Response {
-        $document = $representation->for($company, $request->user(), $quote);
+        $document = $representation->forQuote($company, $request->user(), $quote);
 
         return Inertia::render('quotes/view', [
             'document' => $document->toArray(
@@ -40,14 +41,16 @@ final class QuoteRepresentationController extends Controller
         Request $request,
         Company $company,
         string $quote,
-        CurrentQuoteRepresentation $representation,
-        CurrentQuoteLogo $logo,
+        CurrentDocumentRepresentation $representation,
+        CurrentDocumentLogo $logo,
         RendersDocumentPdf $renderer,
     ): HttpResponse {
-        $document = $representation->for($company, $request->user(), $quote);
+        $document = $representation->forQuote($company, $request->user(), $quote);
         $html = view('pdf.outward-document', [
             'document' => $document->toArray(),
-            'logoDataUri' => $document->hasLogo ? $logo->dataUri($company, $request->user(), $quote) : null,
+            'logoDataUri' => $document->hasLogo
+                ? $logo->dataUri($company, $request->user(), $quote, DocumentKind::Quote)
+                : null,
             'fontRegular' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Regular.ttf'),
             'fontBold' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Bold.ttf'),
             'fontMono' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleMono-Regular.ttf'),
@@ -68,8 +71,8 @@ final class QuoteRepresentationController extends Controller
         Request $request,
         Company $company,
         string $quote,
-        CurrentQuoteLogo $logo,
+        CurrentDocumentLogo $logo,
     ): StreamedResponse {
-        return $logo->response($company, $request->user(), $quote);
+        return $logo->response($company, $request->user(), $quote, DocumentKind::Quote);
     }
 }

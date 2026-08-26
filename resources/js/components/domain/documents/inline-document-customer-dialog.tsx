@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import type { CustomerRecord, CustomerTranslations } from '@/types/customer';
 import type {
-    QuoteCustomerFormOptions,
-    QuoteTranslations,
-} from '@/types/quote';
+    DocumentCustomerFormOptions,
+    DocumentEditorTranslations,
+} from '@/types/document';
 
 const emptyCustomer: CustomerRecord = {
     type: 'INDIVIDUAL',
@@ -37,18 +37,18 @@ const emptyCustomer: CustomerRecord = {
 type Props = {
     open: boolean;
     storeUrl: string;
-    options: QuoteCustomerFormOptions;
-    quoteLabels: QuoteTranslations['edit'];
+    options: DocumentCustomerFormOptions;
+    documentLabels: DocumentEditorTranslations;
     customerLabels: CustomerTranslations;
     onOpenChange: (open: boolean) => void;
     onCreated: (page: Page) => void;
 };
 
-export function InlineCustomerDialog({
+export function InlineDocumentCustomerDialog({
     open,
     storeUrl,
     options,
-    quoteLabels,
+    documentLabels,
     customerLabels,
     onOpenChange,
     onCreated,
@@ -57,14 +57,14 @@ export function InlineCustomerDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 className="sm:max-w-5xl"
-                closeLabel={quoteLabels.close}
+                closeLabel={documentLabels.close}
             >
                 <DialogHeader>
                     <DialogTitle>
-                        {quoteLabels.create_customer_title}
+                        {documentLabels.create_customer_title}
                     </DialogTitle>
                     <DialogDescription>
-                        {quoteLabels.create_customer_description}
+                        {documentLabels.create_customer_description}
                     </DialogDescription>
                 </DialogHeader>
                 <CustomerForm

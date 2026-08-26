@@ -2,6 +2,7 @@
 
 return [
     'quote' => 'Quote',
+    'invoice' => 'Invoice',
     'not_set' => 'Not set',
     'statuses' => [
         'DRAFT' => 'Draft',
@@ -17,6 +18,7 @@ return [
     'labels' => [
         'issue_date' => 'Issue date',
         'valid_until' => 'Valid until',
+        'due_date' => 'Due date',
         'customer_reference' => 'Customer reference / PO number',
         'from' => 'From',
         'bill_to' => 'Bill to',

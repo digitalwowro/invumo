@@ -348,6 +348,8 @@ The composite foreign key includes the constant kind, so an Invoice base row can
 
 If both dates are present, `due_date >= issue_date` is enforced. Payment state and Overdue are derived rather than stored as lifecycle values.
 
+Batch 6A implements the independent mutable Draft boundary only: the deployed subtype check currently permits `DRAFT`, while the shared base accepts both `QUOTE` and `INVOICE`. The same-Company/kind foreign key, bounded payment-term offset, supported date range, and deferred cross-table due-date trigger independently protect the persisted row. Batch 6B expands the subtype to `ISSUED`; `CANCELLED` remains absent until Phase 7 can enforce its transaction-aware invariant in one complete workflow.
+
 A deferred constraint trigger requires every committed `documents` row to have exactly one matching subtype whose constant kind matches the base. Creation/deletion actions write the base and subtype in the same transaction.
 
 ### `document_company_snapshots`
@@ -687,7 +689,7 @@ Named actions acquire locks in this order when the records apply:
 4. dependent provenance/transaction/reminder rows in stable UUID order;
 5. audit and `job_dispatches` inserts.
 
-Quote Draft creation and update use one shared configuration lock boundary: Company settings, all currencies, all Tax presets, and all Bank accounts are locked before the Document aggregate. Customer resolution and source application consume those locked rows instead of conditionally reacquiring configuration after the Document lock. This order applies whether or not the request carries a Customer confirmation token.
+Quote and Invoice Draft creation and update use one shared configuration lock boundary: Company settings, all currencies, all Tax presets, and all Bank accounts are locked before the Document aggregate. Customer resolution and source application consume those locked rows instead of conditionally reacquiring configuration after the Document lock. This order applies whether or not the request carries a Customer confirmation token.
 
 Ownership transfer uses its own control-plane specialization: lock the Company, the current/destination Accounts in stable UUID order, then the current/destination memberships in stable UUID order before changing the former-Owner outcome, sole Owner role, and `owning_account_id` in one transaction. The deferred matching-Owner constraint validates the final state at commit.
 
@@ -704,7 +706,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-The first migration step is implemented: `pg_trgm`, the stable transaction-local Company resolver, the immutable currency-quantization predicate, domain `timestamptz` normalization, runtime migration-table denial, and the reusable tenant-table migration contract are present and isolated-tested. Steps 3–8 remain feature-owned persistence work and are not empty tables created ahead of their application Actions, Queries, validation, authorization, and tests. The outbox's dispatcher-specific grant remains coupled to the migration that introduces `job_dispatches`.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 6A this includes the shared document base, Quote and independent Invoice Draft subtypes, numbering/history, lines, and current snapshots under the reusable tenant-table contract. Provenance, transactions, public links, delivery artifacts/events, reminders, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

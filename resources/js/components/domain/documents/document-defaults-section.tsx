@@ -3,33 +3,33 @@ import { FormSection } from '@/components/app/form-section';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
 import type {
-    QuoteCurrencyOption,
-    QuoteCustomerSelection,
-    QuoteSourceOption,
-    QuoteTranslations,
-} from '@/types/quote';
+    DocumentCurrencyOption,
+    DocumentCustomerSelection,
+    DocumentEditorTranslations,
+    DocumentSourceOption,
+} from '@/types/document';
 
 const UNSET = '__UNSET__';
 
 type Props = {
-    customer: QuoteCustomerSelection;
+    customer: DocumentCustomerSelection;
     currencyCode: string | null;
     documentLanguage: string | null;
     bankAccountId: string | null;
     bankAccountLabel: string | null;
     termsAndConditions: string;
     notes: string;
-    currencyOptions: QuoteCurrencyOption[];
-    languageOptions: QuoteSourceOption[];
-    bankAccountOptions: QuoteSourceOption[];
+    currencyOptions: DocumentCurrencyOption[];
+    languageOptions: DocumentSourceOption[];
+    bankAccountOptions: DocumentSourceOption[];
     termsLimit: number;
     notesLimit: number;
-    labels: QuoteTranslations['edit'];
+    labels: DocumentEditorTranslations;
     errors: Record<string, string>;
     onChange: (field: string, value: string | null) => void;
 };
 
-export function QuoteDefaultsSection(props: Props) {
+export function DocumentDefaultsSection(props: Props) {
     const delivery =
         props.customer.emailAttachmentMode === 'ATTACH_PDF'
             ? props.labels.attach_pdf

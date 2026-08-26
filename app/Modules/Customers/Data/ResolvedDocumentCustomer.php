@@ -18,6 +18,7 @@ final readonly class ResolvedDocumentCustomer
         public ?string $currencyCode,
         public ?int $currencyPrecision,
         public ?string $documentLanguage,
+        public ?int $paymentTermDays,
         public ?array $taxDefault,
         public EmailAttachmentMode $emailAttachmentMode,
         public array $recipients,
@@ -33,6 +34,7 @@ final readonly class ResolvedDocumentCustomer
             'currencyCode' => $this->currencyCode,
             'currencyPrecision' => $this->currencyPrecision,
             'documentLanguage' => $this->documentLanguage,
+            'paymentTermDays' => $this->paymentTermDays,
             'taxDefault' => $this->taxDefault === null ? null : [
                 'id' => $this->taxDefault['id'],
                 'name' => $this->taxDefault['name'],

@@ -1,5 +1,12 @@
 import { usePage } from '@inertiajs/react';
-import { Boxes, FileText, LayoutGrid, Settings, Users } from 'lucide-react';
+import {
+    Boxes,
+    FileText,
+    LayoutGrid,
+    ReceiptText,
+    Settings,
+    Users,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AppSidebarBrand } from '@/components/app/app-sidebar-brand';
 import { NavMain } from '@/components/app/nav-main';
@@ -36,19 +43,27 @@ export function AppSidebar({
         icon: LayoutGrid,
     });
 
-    if (companyContext.current && companyContext.abilities.view_customers) {
-        mainNavItems.push({
-            title: t('navigation.customers'),
-            href: companyContext.current.customersUrl,
-            icon: Users,
-        });
-    }
-
     if (companyContext.current && companyContext.abilities.view_quotes) {
         mainNavItems.push({
             title: t('navigation.quotes'),
             href: companyContext.current.quotesUrl,
             icon: FileText,
+        });
+    }
+
+    if (companyContext.current && companyContext.abilities.view_invoices) {
+        mainNavItems.push({
+            title: t('navigation.invoices'),
+            href: companyContext.current.invoicesUrl,
+            icon: ReceiptText,
+        });
+    }
+
+    if (companyContext.current && companyContext.abilities.view_customers) {
+        mainNavItems.push({
+            title: t('navigation.customers'),
+            href: companyContext.current.customersUrl,
+            icon: Users,
         });
     }
 

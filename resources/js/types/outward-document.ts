@@ -24,6 +24,7 @@ export type OutwardDocument = {
     language: string;
     issueDate: string | null;
     validUntil: string | null;
+    dueDate: string | null;
     customerReference: string | null;
     theme: {
         accentColor: string;

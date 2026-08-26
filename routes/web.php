@@ -102,6 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->scopeBindings()
         ->group(function (): void {
             require __DIR__.'/quotes.php';
+            require __DIR__.'/invoices.php';
 
             Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
                 ->name('catalog.index');

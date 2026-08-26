@@ -1,32 +1,34 @@
 import { Plus, Search } from 'lucide-react';
 import { SystemMessage } from '@/components/app/system-message';
+import {
+    moveDocumentLine,
+    normalizeEditedLine,
+} from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineCard } from '@/components/domain/documents/document-line-card';
 import { Button } from '@/components/ui/button';
-import { blankQuoteLine } from '@/features/quotes/components/quote-draft-form-data';
-import {
-    moveQuoteLine,
-    normalizeEditedLine,
-} from '@/features/quotes/components/quote-draft-lines';
 import type { LineAmounts } from '@/lib/money/line-calculation';
 import type {
-    QuoteLimits,
-    QuoteLine,
-    QuoteTaxDefault,
-    QuoteTranslations,
-} from '@/types/quote';
+    DocumentEditorLimits,
+    DocumentEditorTranslations,
+    DocumentLineDraft,
+    DocumentTaxDefault,
+} from '@/types/document';
 
 type Props = {
-    lines: QuoteLine[];
+    lines: DocumentLineDraft[];
     calculated: Array<LineAmounts | null>;
-    taxDefault: QuoteTaxDefault | null;
-    limits: QuoteLimits;
-    labels: QuoteTranslations['edit'];
+    taxDefault: DocumentTaxDefault | null;
+    limits: DocumentEditorLimits;
+    labels: DocumentEditorTranslations;
     errors: Record<string, string>;
-    onChange: (change: (lines: QuoteLine[]) => QuoteLine[]) => void;
+    onChange: (
+        change: (lines: DocumentLineDraft[]) => DocumentLineDraft[],
+    ) => void;
+    onAdd: (tax: DocumentTaxDefault | null) => DocumentLineDraft;
     onSelectProduct: (index: number) => void;
 };
 
-export function QuoteLineEditor({
+export function DocumentLineEditor({
     lines,
     calculated,
     taxDefault,
@@ -34,6 +36,7 @@ export function QuoteLineEditor({
     labels,
     errors,
     onChange,
+    onAdd,
     onSelectProduct,
 }: Props) {
     return (
@@ -55,7 +58,7 @@ export function QuoteLineEditor({
                         <Button
                             type="button"
                             variant="secondary"
-                            data-testid={`quote-product-select-${index}`}
+                            data-testid={`document-product-select-${index}`}
                             onClick={() => onSelectProduct(index)}
                         >
                             <Search aria-hidden="true" />
@@ -74,7 +77,7 @@ export function QuoteLineEditor({
                     }
                     onMove={(direction) =>
                         onChange((current) =>
-                            moveQuoteLine(current, index, direction),
+                            moveDocumentLine(current, index, direction),
                         )
                     }
                     onRemove={() =>
@@ -90,10 +93,7 @@ export function QuoteLineEditor({
                 type="button"
                 variant="secondary"
                 onClick={() =>
-                    onChange((current) => [
-                        ...current,
-                        blankQuoteLine(taxDefault),
-                    ])
+                    onChange((current) => [...current, onAdd(taxDefault)])
                 }
             >
                 <Plus aria-hidden="true" />
@@ -103,7 +103,10 @@ export function QuoteLineEditor({
     );
 }
 
-function sourceNotice(line: QuoteLine, labels: QuoteTranslations['edit']) {
+function sourceNotice(
+    line: DocumentLineDraft,
+    labels: DocumentEditorTranslations,
+) {
     if (!line.priceStatus || line.priceStatus === 'COPIED') {
         return undefined;
     }

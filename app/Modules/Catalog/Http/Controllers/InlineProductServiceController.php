@@ -17,10 +17,13 @@ final class InlineProductServiceController extends Controller
     public function __invoke(
         SaveProductServiceRequest $request,
         Company $company,
-        string $quote,
+        string $document,
         CreateProductService $create,
     ): RedirectResponse {
-        Document::query()->whereKey($quote)->where('kind', DocumentKind::Quote)->firstOrFail();
+        Document::query()
+            ->whereKey($document)
+            ->whereIn('kind', [DocumentKind::Quote, DocumentKind::Invoice])
+            ->firstOrFail();
         try {
             $product = $create->handle($company, $request->user(), $request->product());
         } catch (ProductServiceException $exception) {

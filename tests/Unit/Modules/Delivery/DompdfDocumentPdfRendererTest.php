@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
+use Illuminate\Filesystem\Filesystem;
 use Smalot\PdfParser\Parser;
 use Tests\TestCase;
 
@@ -46,6 +47,30 @@ it('proves the selected pure PHP renderer against the outward compatibility fixt
         ->and($objectContent)->toContain('0.357 0.227 0.557');
 });
 
+it('denies local resources outside the dedicated font and cache roots', function (): void {
+    $files = app(Filesystem::class);
+    $directory = storage_path('framework/testing/dompdf-denied');
+    $path = $directory.'/outside.png';
+    $files->ensureDirectoryExists($directory, 0700, true);
+    $image = base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        true,
+    );
+    expect($image)->toBeString();
+    $files->put($path, $image);
+
+    try {
+        $pdf = app(RendersDocumentPdf::class)->render(
+            '<html><body><img src="file://'.e($path).'"></body></html>',
+        );
+    } finally {
+        $files->deleteDirectory($directory);
+    }
+
+    expect($pdf)->toStartWith('%PDF-')
+        ->and($pdf)->not->toContain('/Subtype /Image');
+});
+
 /**
  * @param  list<array{position: int, description: string, quantity: string, unitPrice: string, discount: string|null, tax: string|null, total: string}>  $lines
  * @return array<string, mixed>
@@ -54,7 +79,7 @@ function compatibilityDocument(array $lines): array
 {
     return [
         'kind' => 'Ofertă', 'number' => 'Q-2026-0042', 'status' => 'Ciornă', 'language' => 'ro',
-        'issueDate' => '26 aug. 2026', 'validUntil' => '25 sept. 2026',
+        'issueDate' => '26 aug. 2026', 'validUntil' => '25 sept. 2026', 'dueDate' => null,
         'customerReference' => 'PO-ȘȚ-42',
         'theme' => [
             'accentColor' => '#5B3A8E', 'onAccentColor' => '#FFFFFF',

@@ -15,10 +15,13 @@ final class InlineCustomerController extends Controller
     public function __invoke(
         SaveCustomerRequest $request,
         Company $company,
-        string $quote,
+        string $document,
         CreateCustomer $create,
     ): RedirectResponse {
-        Document::query()->whereKey($quote)->where('kind', DocumentKind::Quote)->firstOrFail();
+        Document::query()
+            ->whereKey($document)
+            ->whereIn('kind', [DocumentKind::Quote, DocumentKind::Invoice])
+            ->firstOrFail();
         $customer = $create->handle($company, $request->user(), $request->customer());
 
         return back()->with('inline_customer_id', $customer->id);

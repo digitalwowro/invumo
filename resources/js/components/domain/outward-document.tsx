@@ -95,6 +95,10 @@ function DocumentHeader({ document }: Props) {
                         value={document.validUntil}
                     />
                     <MetaRow
+                        label={document.labels.due_date}
+                        value={document.dueDate}
+                    />
+                    <MetaRow
                         label={document.labels.customer_reference}
                         value={document.customerReference}
                     />

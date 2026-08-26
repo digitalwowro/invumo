@@ -11,6 +11,7 @@ export type CompanySummary = {
     customersUrl: string;
     catalogUrl: string;
     quotesUrl: string;
+    invoicesUrl: string;
     settingsUrl: string;
     membersUrl: string;
 };
@@ -27,6 +28,8 @@ export type CompanyAbilities = {
     view_quotes: boolean;
     manage_quotes: boolean;
     delete_quotes: boolean;
+    view_invoices: boolean;
+    manage_invoices: boolean;
     manage_number_counters: boolean;
     manage_adjustments: boolean;
     manage_recurring_automation: boolean;

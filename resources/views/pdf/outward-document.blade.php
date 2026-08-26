@@ -54,6 +54,9 @@
                     @if ($document['validUntil'])
                         <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['valid_until'] }}</span> {{ $document['validUntil'] }}</p>
                     @endif
+                    @if ($document['dueDate'])
+                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['due_date'] }}</span> {{ $document['dueDate'] }}</p>
+                    @endif
                     @if ($document['customerReference'])
                         <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['customer_reference'] }}</span> {{ $document['customerReference'] }}</p>
                     @endif

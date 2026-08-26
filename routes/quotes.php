@@ -47,9 +47,9 @@ Route::get('companies/{company}/document-sources/products', [CatalogDocumentSour
     ->name('quote-sources.products.index');
 Route::get('companies/{company}/document-sources/products/{product}', [CatalogDocumentSourceController::class, 'show'])
     ->name('quote-sources.products.show');
-Route::post('companies/{company}/quotes/{quote}/inline-customers', InlineCustomerController::class)
+Route::post('companies/{company}/quotes/{document}/inline-customers', InlineCustomerController::class)
     ->middleware('throttle:20,1')
     ->name('quotes.inline-customers.store');
-Route::post('companies/{company}/quotes/{quote}/inline-products', InlineProductServiceController::class)
+Route::post('companies/{company}/quotes/{document}/inline-products', InlineProductServiceController::class)
     ->middleware('throttle:20,1')
     ->name('quotes.inline-products.store');

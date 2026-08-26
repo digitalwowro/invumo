@@ -8,23 +8,26 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import type { CatalogTranslations } from '@/types/catalog';
-import type { QuoteCatalogFormOptions, QuoteTranslations } from '@/types/quote';
+import type {
+    DocumentCatalogFormOptions,
+    DocumentEditorTranslations,
+} from '@/types/document';
 
 type Props = {
     open: boolean;
     storeUrl: string;
-    options: QuoteCatalogFormOptions;
-    quoteLabels: QuoteTranslations['edit'];
+    options: DocumentCatalogFormOptions;
+    documentLabels: DocumentEditorTranslations;
     catalogLabels: CatalogTranslations;
     onOpenChange: (open: boolean) => void;
     onCreated: (page: Page) => void;
 };
 
-export function InlineProductDialog({
+export function InlineDocumentProductDialog({
     open,
     storeUrl,
     options,
-    quoteLabels,
+    documentLabels,
     catalogLabels,
     onOpenChange,
     onCreated,
@@ -33,14 +36,14 @@ export function InlineProductDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 className="sm:max-w-4xl"
-                closeLabel={quoteLabels.close}
+                closeLabel={documentLabels.close}
             >
                 <DialogHeader>
                     <DialogTitle>
-                        {quoteLabels.create_product_title}
+                        {documentLabels.create_product_title}
                     </DialogTitle>
                     <DialogDescription>
-                        {quoteLabels.create_product_description}
+                        {documentLabels.create_product_description}
                     </DialogDescription>
                 </DialogHeader>
                 <ProductServiceCreateForm

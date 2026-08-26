@@ -74,6 +74,7 @@ export const customerFromQuote = (
     currencyCode: quote.currencyCode,
     currencyPrecision: quote.currencyPrecision,
     documentLanguage: quote.documentLanguage,
+    paymentTermDays: null,
     taxDefault: quote.taxDefault,
     emailAttachmentMode: quote.emailAttachmentMode,
     recipientCount: quote.recipientCount,

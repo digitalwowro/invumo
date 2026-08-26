@@ -2,6 +2,7 @@
 
 return [
     'quote' => 'Ofertă',
+    'invoice' => 'Factură',
     'not_set' => 'Nesetat',
     'statuses' => [
         'DRAFT' => 'Ciornă',
@@ -17,6 +18,7 @@ return [
     'labels' => [
         'issue_date' => 'Data emiterii',
         'valid_until' => 'Valabilă până la',
+        'due_date' => 'Data scadenței',
         'customer_reference' => 'Referință client / număr comandă',
         'from' => 'De la',
         'bill_to' => 'Către',

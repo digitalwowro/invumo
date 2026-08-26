@@ -5,23 +5,24 @@ import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
-import { QuoteCustomerControls } from '@/features/quotes/components/quote-customer-controls';
-import { QuoteDefaultsSection } from '@/features/quotes/components/quote-defaults-section';
+import { DocumentCustomerControls } from '@/components/domain/documents/document-customer-controls';
+import { DocumentDefaultsSection } from '@/components/domain/documents/document-defaults-section';
+import {
+    calculateDocumentLine,
+    completeLine,
+    DocumentTotals,
+} from '@/components/domain/documents/document-draft-lines';
+import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
+import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
 import { QuoteDetailsSection } from '@/features/quotes/components/quote-details-section';
 import {
     applyCustomerDefaults,
     applyProductDefaults,
+    blankQuoteLine,
     changeQuoteDetail,
     customerFromQuote,
     quoteFormData,
 } from '@/features/quotes/components/quote-draft-form-data';
-import {
-    calculateQuoteLine,
-    completeLine,
-    QuoteTotals,
-} from '@/features/quotes/components/quote-draft-lines';
-import { QuoteLineEditor } from '@/features/quotes/components/quote-line-editor';
-import { QuoteSourceDialogs } from '@/features/quotes/components/quote-source-dialogs';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
@@ -70,7 +71,7 @@ export function QuoteDraftEditor(props: Props) {
     const [lineIndex, setLineIndex] = useState<number | null>(null);
     const errors = form.errors as Record<string, string>;
     const calculated = form.data.lines.map((line) =>
-        calculateQuoteLine(line, precision),
+        calculateDocumentLine(line, precision),
     );
     const totals =
         precision === null
@@ -189,7 +190,7 @@ export function QuoteDraftEditor(props: Props) {
                             tone="error"
                         />
                     )}
-                    <QuoteCustomerControls
+                    <DocumentCustomerControls
                         customer={customer}
                         labels={props.labels}
                         onSelect={() => setCustomerSelector(true)}
@@ -204,7 +205,7 @@ export function QuoteDraftEditor(props: Props) {
                         errors={errors}
                         onChange={changeDetail}
                     />
-                    <QuoteDefaultsSection
+                    <DocumentDefaultsSection
                         customer={customer}
                         currencyCode={form.data.currencyCode}
                         documentLanguage={form.data.documentLanguage}
@@ -223,7 +224,7 @@ export function QuoteDraftEditor(props: Props) {
                         errors={errors}
                         onChange={changeDefault}
                     />
-                    <QuoteLineEditor
+                    <DocumentLineEditor
                         lines={form.data.lines}
                         calculated={calculated}
                         taxDefault={customer.taxDefault}
@@ -231,12 +232,13 @@ export function QuoteDraftEditor(props: Props) {
                         labels={props.labels}
                         errors={errors}
                         onChange={changeLines}
+                        onAdd={blankQuoteLine}
                         onSelectProduct={(index) => {
                             setLineIndex(index);
                             setProductSelector(true);
                         }}
                     />
-                    <QuoteTotals labels={props.labels} totals={totals} />
+                    <DocumentTotals labels={props.labels} totals={totals} />
                     <FormActions separated>
                         <SubmitButton
                             processing={form.processing}
@@ -247,7 +249,7 @@ export function QuoteDraftEditor(props: Props) {
                     </FormActions>
                 </Stack>
             </form>
-            <QuoteSourceDialogs
+            <DocumentSourceDialogs
                 customerOpen={customerSelector}
                 customerCreatorOpen={customerCreator}
                 productOpen={productSelector}

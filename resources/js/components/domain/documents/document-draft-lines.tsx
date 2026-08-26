@@ -3,14 +3,17 @@ import { Surface } from '@/components/app/surface';
 import type { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import { calculateLineAmounts } from '@/lib/money/line-calculation';
 import type { LineAmounts } from '@/lib/money/line-calculation';
-import type { QuoteLine, QuoteTranslations } from '@/types/quote';
+import type {
+    DocumentEditorTranslations,
+    DocumentLineDraft,
+} from '@/types/document';
 
 export const completeLine = (
     amounts: LineAmounts | null,
 ): amounts is LineAmounts => amounts !== null;
 
-export function calculateQuoteLine(
-    line: QuoteLine,
+export function calculateDocumentLine(
+    line: DocumentLineDraft,
     precision: number | null,
 ): LineAmounts | null {
     if (
@@ -39,9 +42,9 @@ export function calculateQuoteLine(
 }
 
 export function normalizeEditedLine(
-    previous: QuoteLine,
-    next: QuoteLine,
-): QuoteLine {
+    previous: DocumentLineDraft,
+    next: DocumentLineDraft,
+): DocumentLineDraft {
     return {
         ...next,
         taxPresetId:
@@ -56,11 +59,11 @@ export function normalizeEditedLine(
     };
 }
 
-export function moveQuoteLine(
-    lines: QuoteLine[],
+export function moveDocumentLine(
+    lines: DocumentLineDraft[],
     index: number,
     direction: -1 | 1,
-): QuoteLine[] {
+): DocumentLineDraft[] {
     const destination = index + direction;
 
     if (destination < 0 || destination >= lines.length) {
@@ -73,11 +76,11 @@ export function moveQuoteLine(
     return next;
 }
 
-export function QuoteTotals({
+export function DocumentTotals({
     labels,
     totals,
 }: {
-    labels: QuoteTranslations['edit'];
+    labels: DocumentEditorTranslations;
     totals: ReturnType<typeof calculateDocumentAmounts> | null;
 }) {
     return (

@@ -14,9 +14,10 @@ final readonly class DompdfDocumentPdfRenderer implements RendersDocumentPdf
     public function render(string $html): string
     {
         $cache = storage_path('framework/cache/dompdf');
+        $fonts = resource_path('fonts/atkinson-hyperlegible');
         $this->files->ensureDirectoryExists($cache, 0700, true);
         $options = new Options;
-        $options->setChroot(base_path());
+        $options->setChroot([$fonts, $cache]);
         $options->setFontDir($cache);
         $options->setFontCache($cache);
         $options->setTempDir($cache);

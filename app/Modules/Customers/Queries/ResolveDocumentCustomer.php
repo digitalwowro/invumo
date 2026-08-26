@@ -79,6 +79,7 @@ final class ResolveDocumentCustomer
             currencyCode: $currency?->currency_code,
             currencyPrecision: $currency?->currency_precision,
             documentLanguage: $customer->document_language ?? $settings->default_document_language,
+            paymentTermDays: $customer->payment_term_days ?? $settings->default_payment_term_days,
             taxDefault: $tax === null ? null : [
                 'id' => $tax->id,
                 'name' => $tax->name,
@@ -200,7 +201,8 @@ final class ResolveDocumentCustomer
             ->all();
         $payload = [
             'settings' => $settings->only([
-                'id', 'default_document_language', 'default_email_attachment_mode',
+                'id', 'default_document_language', 'default_payment_term_days',
+                'default_email_attachment_mode',
             ]),
             'currency' => $currency?->only([
                 'id', 'currency_code', 'currency_precision', 'is_default', 'active',
@@ -211,7 +213,8 @@ final class ResolveDocumentCustomer
                 'address_line_1', 'address_line_2', 'city', 'region', 'postal_code',
                 'country_code', 'tax_registration_label', 'tax_registration_identifier',
                 'business_registration_label', 'business_registration_number',
-                'currency_id', 'document_language', 'tax_preset_id', 'email_attachment_mode',
+                'currency_id', 'document_language', 'payment_term_days',
+                'tax_preset_id', 'email_attachment_mode',
             ]),
             'contacts' => $rows($contacts, [
                 'id', 'name', 'email', 'position_title', 'is_primary', 'is_billing', 'archived_at',

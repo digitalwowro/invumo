@@ -7,6 +7,7 @@ use App\Modules\Customers\Http\Controllers\InlineCustomerController;
 use App\Modules\Quotes\Http\Controllers\QuoteController;
 use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
 use App\Modules\Quotes\Http\Controllers\QuoteLifecycleController;
+use App\Modules\Quotes\Http\Controllers\QuoteRepresentationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('companies/{company}/quotes', [QuoteController::class, 'index'])
@@ -27,6 +28,14 @@ Route::patch('companies/{company}/quotes/{quote}/lifecycle', [QuoteLifecycleCont
 Route::delete('companies/{company}/quotes/{quote}', [QuoteController::class, 'destroy'])
     ->middleware('throttle:10,1')
     ->name('quotes.destroy');
+Route::get('companies/{company}/quotes/{quote}/view', [QuoteRepresentationController::class, 'show'])
+    ->name('quotes.current.show');
+Route::get('companies/{company}/quotes/{quote}/pdf', [QuoteRepresentationController::class, 'pdf'])
+    ->middleware('throttle:30,1')
+    ->name('quotes.current.pdf');
+Route::get('companies/{company}/quotes/{quote}/logo', [QuoteRepresentationController::class, 'logo'])
+    ->middleware('throttle:60,1')
+    ->name('quotes.current.logo');
 
 Route::get('companies/{company}/document-sources/customers', [CustomerDocumentSourceController::class, 'index'])
     ->name('quote-sources.customers.index');

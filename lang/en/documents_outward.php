@@ -1,0 +1,45 @@
+<?php
+
+return [
+    'quote' => 'Quote',
+    'not_set' => 'Not set',
+    'statuses' => [
+        'DRAFT' => 'Draft',
+        'SENT' => 'Sent',
+        'ACCEPTED' => 'Accepted',
+        'REJECTED' => 'Rejected',
+        'EXPIRED' => 'Expired',
+    ],
+    'periods' => [
+        'MONTH' => 'month',
+        'YEAR' => 'year',
+    ],
+    'labels' => [
+        'issue_date' => 'Issue date',
+        'valid_until' => 'Valid until',
+        'customer_reference' => 'Customer reference / PO number',
+        'from' => 'From',
+        'bill_to' => 'Bill to',
+        'not_set' => 'Not set',
+        'description' => 'Description',
+        'quantity' => 'Quantity',
+        'unit_price' => 'Unit price',
+        'discount' => 'Discount',
+        'tax' => 'Tax',
+        'line_total' => 'Line total',
+        'no_lines' => 'No lines have been added.',
+        'subtotal' => 'Subtotal',
+        'tax_total' => 'Tax',
+        'total' => 'Total',
+        'bank_details' => 'Bank details',
+        'notes' => 'Notes',
+        'terms_and_conditions' => 'Terms and Conditions',
+    ],
+    'bank' => [
+        'bank_name' => 'Bank',
+        'account_holder' => 'Account holder',
+        'account_number' => 'IBAN / account number',
+        'swift_bic' => 'SWIFT / BIC',
+        'currency' => 'Currency',
+    ],
+];

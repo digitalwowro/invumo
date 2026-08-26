@@ -169,6 +169,11 @@ function QuoteActions({
                         {labels.index.columns.open}
                     </Link>
                 </Button>
+                <Button asChild variant="secondary">
+                    <Link href={quote.viewUrl}>
+                        {labels.representation.view}
+                    </Link>
+                </Button>
                 {quote.canDelete && (
                     <QuoteDeleteDialog
                         url={quote.deleteUrl}

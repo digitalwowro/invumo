@@ -10,9 +10,11 @@ use App\Foundation\Diagnostics\ApplicationHealth;
 use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
+use App\Integrations\Dompdf\DompdfDocumentPdfRenderer;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
+use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
 use App\Modules\Documents\Numbering\LockedDocumentNumberAllocator;
 use Carbon\CarbonImmutable;
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuthorizesCompanyActions::class, CompanyActionAuthorizer::class);
         $this->app->bind(SqlDumpProcess::class, ProductionSqlDump::class);
         $this->app->bind(AllocatesDocumentNumbers::class, LockedDocumentNumberAllocator::class);
+        $this->app->bind(RendersDocumentPdf::class, DompdfDocumentPdfRenderer::class);
         $this->app->singleton(TenantJobExecution::class);
         $this->app->singleton(TenantContext::class);
     }

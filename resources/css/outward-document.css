@@ -1,0 +1,248 @@
+@page {
+    margin: 18mm 14mm 16mm;
+}
+
+:root {
+    --document-background: #ffffff;
+    --document-foreground: #14181c;
+    --document-muted: #5b6470;
+    --document-border: #dee3e9;
+    --document-subtle: #f7f8fa;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--document-background);
+    color: var(--document-foreground);
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+}
+
+.document-accent {
+    height: 6pt;
+    margin: -18mm -14mm 12mm;
+    background: var(--document-accent);
+}
+
+.document-header,
+.document-parties,
+.document-summary,
+.document-section-grid {
+    width: 100%;
+}
+
+.document-header td,
+.document-parties td,
+.document-summary td,
+.document-section-grid td {
+    vertical-align: top;
+}
+
+.document-logo {
+    display: block;
+    max-width: 150pt;
+    max-height: 48pt;
+    margin-bottom: 10pt;
+}
+
+.document-company-name,
+.document-title,
+.document-party-name,
+.document-section-title {
+    color: var(--document-text);
+    font-weight: 700;
+}
+
+.document-company-name {
+    margin: 0 0 2pt;
+    font-size: 15pt;
+}
+
+.document-title {
+    margin: 0 0 4pt;
+    font-size: 25pt;
+}
+
+.document-number {
+    display: inline-block;
+    padding: 5pt 8pt;
+    background: var(--document-accent);
+    color: var(--document-on-accent);
+    font-family: 'Atkinson Hyperlegible Mono', monospace;
+    font-weight: 700;
+}
+
+.document-muted,
+.document-detail {
+    color: var(--document-muted);
+}
+
+.document-detail {
+    margin: 1pt 0;
+}
+
+.document-meta {
+    margin-top: 8pt;
+}
+
+.document-meta-row {
+    margin: 2pt 0;
+}
+
+.document-meta-label,
+.document-label {
+    color: var(--document-muted);
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.document-parties {
+    margin: 15pt 0 18pt;
+    border-top: 1pt solid var(--document-rule);
+}
+
+.document-party {
+    width: 50%;
+    padding: 12pt 10pt 0 0;
+}
+
+.document-party + .document-party {
+    padding-right: 0;
+    padding-left: 10pt;
+}
+
+.document-party-name {
+    margin: 3pt 0 5pt;
+    font-size: 12pt;
+}
+
+.document-lines {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.document-lines thead {
+    display: table-header-group;
+}
+
+.document-lines tr {
+    page-break-inside: avoid;
+}
+
+.document-lines th {
+    padding: 7pt 5pt;
+    background: var(--document-subtle);
+    color: var(--document-muted);
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.document-lines td {
+    padding: 8pt 5pt;
+    border-bottom: 0.5pt solid var(--document-border);
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.document-lines .line-description {
+    width: 38%;
+}
+
+.document-lines .line-quantity {
+    width: 17%;
+}
+
+.document-lines .line-price,
+.document-lines .line-tax {
+    width: 15%;
+}
+
+.document-lines .line-total {
+    width: 15%;
+}
+
+.document-data {
+    font-family: 'Atkinson Hyperlegible Mono', monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+.document-right {
+    text-align: right;
+}
+
+.document-summary {
+    margin: 14pt 0 18pt;
+}
+
+.document-summary-spacer {
+    width: 56%;
+}
+
+.document-summary-values {
+    width: 44%;
+}
+
+.document-summary-row {
+    padding: 3pt 0;
+}
+
+.document-summary-row .document-data,
+.document-summary-total .document-data {
+    float: right;
+    margin-left: 12pt;
+}
+
+.document-summary-total {
+    margin-top: 5pt;
+    padding-top: 7pt;
+    border-top: 1.5pt solid var(--document-rule);
+    color: var(--document-text);
+    font-size: 14pt;
+    font-weight: 700;
+}
+
+.document-section-grid {
+    margin-top: 12pt;
+    page-break-inside: avoid;
+}
+
+.document-section {
+    width: 50%;
+    padding: 10pt 10pt 0 0;
+    border-top: 1pt solid var(--document-rule);
+}
+
+.document-section + .document-section {
+    padding-right: 0;
+    padding-left: 10pt;
+}
+
+.document-section-title {
+    margin: 0 0 6pt;
+    font-size: 11pt;
+}
+
+.document-copy {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.document-bank-row {
+    margin: 2pt 0;
+}
+
+.document-bank-label {
+    color: var(--document-muted);
+}

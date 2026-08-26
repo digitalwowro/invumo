@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { Download, Eye } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
@@ -30,6 +31,8 @@ type Props = {
     updateUrl: string;
     lifecycleUrl: string;
     deleteUrl: string;
+    representationUrl: string;
+    pdfUrl: string;
     indexUrl: string;
     quoteAbilities: { correctLifecycle: boolean; delete: boolean };
     sourceUrls: QuoteSourceUrls;
@@ -55,6 +58,8 @@ export default function EditQuote({
     updateUrl,
     lifecycleUrl,
     deleteUrl,
+    representationUrl,
+    pdfUrl,
     indexUrl,
     quoteAbilities,
     status,
@@ -73,6 +78,17 @@ export default function EditQuote({
                         subtitle={translations.edit.description}
                         actions={
                             <>
+                                <ActionLink
+                                    href={representationUrl}
+                                    variant="secondary"
+                                >
+                                    <Eye aria-hidden="true" />
+                                    {translations.representation.view}
+                                </ActionLink>
+                                <ActionLink href={pdfUrl} variant="secondary">
+                                    <Download aria-hidden="true" />
+                                    {translations.representation.download_pdf}
+                                </ActionLink>
                                 <StatusBadge
                                     status={
                                         quote.status.toLowerCase() as Status

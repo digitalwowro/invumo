@@ -328,6 +328,8 @@ Common current representation:
 - positive monotonic `edit_version`
 - current-PDF invalidation/content version metadata
 
+`document_company_snapshots` also stores the resolved `CODE`/`SYMBOL` currency display style alongside the already-snapshotted currency code/precision, identity, logo, and brand colour. Later Company setting changes therefore cannot restyle or reformat an existing document's current representation.
+
 Rendered numbers have a non-unique lookup index `(company_id, kind, rendered_number)`. No soft-delete column is used: an authorized permanent document deletion removes the business aggregate and retains only the minimal audit tombstone defined below.
 
 ### `quotes`
@@ -474,7 +476,7 @@ Regeneration creates a new record and revokes the old one so history and explici
 - artifact type, document edit version, immutable asset reference, content hash
 - current/historical purpose and generation timestamp
 
-The current PDF may be invalidated and replaced after an edit. An artifact already attached to a delivery is immutable and remains associated with that delivery while the document exists.
+The Phase 5 authenticated current PDF is rendered directly and read-only from the current aggregate and its snapshots, so a normal view/download creates no artifact and an edit is reflected on the next request. `content_version` is retained for future cache/delivery coordination. Phase 9 introduces immutable attachment artifacts when delivery provides the first persistence consumer. An artifact already attached to a delivery is immutable and remains associated with that delivery while the document exists.
 
 ### `email_deliveries`
 

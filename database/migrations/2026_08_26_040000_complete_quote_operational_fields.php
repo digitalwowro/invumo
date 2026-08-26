@@ -28,15 +28,6 @@ return new class extends Migration
             CREATE INDEX documents_quote_issue_sort_index
                 ON documents (company_id, kind, issue_sort_date DESC, id DESC);
 
-            UPDATE quotes AS quote
-            SET validity_days = settings.default_quote_validity_days,
-                valid_until = document.issue_date + settings.default_quote_validity_days
-            FROM documents AS document
-            JOIN company_settings AS settings ON settings.company_id = document.company_id
-            WHERE quote.company_id = document.company_id
-              AND quote.document_id = document.id
-              AND document.issue_date IS NOT NULL;
-
             ALTER TABLE documents
                 ADD CONSTRAINT documents_customer_reference_check CHECK (
                     customer_reference IS NULL OR (

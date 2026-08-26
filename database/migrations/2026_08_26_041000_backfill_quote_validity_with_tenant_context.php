@@ -32,11 +32,11 @@ return new class extends Migration
             });
         }
 
-        $connection->selectOne("SELECT set_config('app.current_company_id', '', true)");
     }
 
     public function down(): void
     {
-        // The backfill cannot distinguish pre-existing nulls after later edits.
+        // Intentionally irreversible: later edits make the backfilled values
+        // indistinguishable from user-selected validity settings.
     }
 };

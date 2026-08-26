@@ -174,6 +174,8 @@ final readonly class QuoteDraftPage
             'updateUrl' => route('quotes.update', [$company, $document], false),
             'lifecycleUrl' => route('quotes.lifecycle.update', [$company, $document], false),
             'deleteUrl' => route('quotes.destroy', [$company, $document], false),
+            'representationUrl' => route('quotes.current.show', [$company, $document], false),
+            'pdfUrl' => route('quotes.current.pdf', [$company, $document], false),
             'indexUrl' => route('quotes.index', $company, false),
             'quoteAbilities' => [
                 'correctLifecycle' => $this->abilities->allows($actor, $company, CompanyAbility::ManageQuotes),

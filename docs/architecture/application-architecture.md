@@ -142,9 +142,9 @@ Do not add Redis, RabbitMQ, Kafka, Horizon, or a separate message-broker service
 
 ## PDFs and files
 
-Generate v1 PDFs from dedicated Blade templates using a pure-PHP renderer behind an internal PDF-renderer boundary. Before committing to the renderer, prove Romanian diacritics, embedded fonts, long tables, line wrapping, multi-page page breaks, logos, and the approved brand color.
+Generate v1 PDFs from dedicated Blade templates through the Invumo-owned `RendersDocumentPdf` boundary. Phase 5 selected Dompdf 3.1.6 after a production-shaped pure-PHP proof verified Romanian comma-below diacritics, embedded source-owned Atkinson Hyperlegible Next/Mono fonts, long tables with repeated headings, wrapping, multi-page page breaks, raster logos, and the resolved Company brand colour. Remote resources, embedded PHP, and JavaScript remain disabled in the adapter.
 
-If that proof fails, replace only the renderer with a headless-browser implementation; do not move invoice rendering or calculations into a Node service.
+The authenticated current representation and current PDF are fresh read-only projections of the same persisted document/snapshot data and Laravel-owned translations. A normal `GET` does not create an artifact, mutate the document, or emit audit/side effects. Phase 8 may expose this same representation through its approved token boundary; immutable delivery attachment artifacts remain Phase 9 work. If a later supported case exceeds Dompdf's proven envelope, replace only the renderer adapter after a new compatibility proof; do not move rendering or calculations into a Node service.
 
 Use Laravel's filesystem abstraction. Local production storage is acceptable initially only when uploaded and generated files are covered by the externally managed off-server backup and restore process. This preserves a later move to S3-compatible storage without changing domain code. Company-logo validation, private serving, replacement, cleanup, and the local-to-S3 transition follow the approved [`uploads-and-storage.md`](uploads-and-storage.md) contract.
 

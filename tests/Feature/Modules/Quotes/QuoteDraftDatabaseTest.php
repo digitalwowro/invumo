@@ -9,6 +9,7 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
@@ -184,6 +185,37 @@ final class QuoteDraftDatabaseTest extends TestCase
         }
 
         $this->assertSame(0, DB::connection('pgsql_schema')->table('quotes')->count());
+    }
+
+    public function test_currency_display_snapshot_migration_backfills_each_forced_rls_company_context(): void
+    {
+        [$companyA] = $this->quote();
+        $companyB = $this->company();
+        app(TenantContext::class)->runAsSystem($companyB->id, fn () => CompanySetting::query()
+            ->firstOrFail()
+            ->update(['currency_display_style' => 'SYMBOL']));
+        $ownerB = $companyB->memberships()->firstOrFail()->user;
+        app(CreateQuoteDraft::class)->handle($companyB, $ownerB, (string) Str::uuid7());
+        $defaultConnection = DB::getDefaultConnection();
+
+        try {
+            DB::setDefaultConnection('pgsql_schema');
+            $migration = require database_path('migrations/2026_08_26_050000_snapshot_document_currency_display_style.php');
+            $migration->down();
+            $migration->up();
+        } finally {
+            DB::setDefaultConnection($defaultConnection);
+        }
+
+        app(TenantContext::class)->runAsSystem($companyA->id, fn () => $this->assertSame(
+            'CODE',
+            DocumentCompanySnapshot::query()->sole()->currency_display_style->value,
+        ));
+        app(TenantContext::class)->runAsSystem($companyB->id, fn () => $this->assertSame(
+            'SYMBOL',
+            DocumentCompanySnapshot::query()->sole()->currency_display_style->value,
+        ));
+        $this->assertSame(0, DB::connection('pgsql_schema')->table('document_company_snapshots')->count());
     }
 
     /** @return array{Company, Document} */

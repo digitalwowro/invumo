@@ -70,7 +70,7 @@ Customer-facing quote/invoice pages, PDFs, and transactional email use shared ou
 
 They reuse:
 
-- Atkinson Hyperlegible typography where renderer/client support permits;
+- Atkinson Hyperlegible typography; Phase 5's selected PDF renderer embeds the pinned source-owned Next and Mono font files and passed the Romanian/multi-page compatibility proof;
 - the numeric alignment and formatting rules;
 - the same spacing and hierarchy discipline;
 - shared Company-brand validation and contrast resolution;
@@ -293,7 +293,7 @@ Do not skip levels to make a local section look important. A page has one `PageT
 
 ### 7.3 Typography verification
 
-Before the font gate closes:
+The Phase 5 PDF/font gate is complete. Its regression coverage continues to:
 
 - verify `ă â î ș ț` as comma-below forms in React, public pages, and the selected PDF renderer;
 - verify `B/8`, `O/0/D`, and `1/I/l` remain distinguishable;

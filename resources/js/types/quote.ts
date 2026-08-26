@@ -123,6 +123,7 @@ export type QuoteRow = {
     total: string | null;
     currencyCode: string | null;
     editUrl: string;
+    viewUrl: string;
     deleteUrl: string;
     deleteHighRisk: boolean;
     canDelete: boolean;
@@ -263,6 +264,16 @@ export type QuoteTranslations = {
         sort_options: Record<string, string>;
         statuses: Record<QuoteDisplayStatus, string>;
     };
+    representation: Record<
+        | 'head_title'
+        | 'title'
+        | 'description'
+        | 'view'
+        | 'download_pdf'
+        | 'edit'
+        | 'back',
+        string
+    >;
     lifecycle: Record<string, string>;
     deletion: Record<string, string>;
     feedback: Record<string, string>;

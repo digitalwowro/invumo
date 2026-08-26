@@ -2,6 +2,7 @@
 
 namespace App\Modules\Documents\Actions;
 
+use App\Modules\Companies\Data\CurrencyDisplayStyle;
 use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
@@ -39,6 +40,7 @@ final class InitializeDocumentDefaults
             'phone' => $settings->phone,
             'website' => $settings->website,
             'primary_brand_color' => $settings->primary_brand_color,
+            'currency_display_style' => $settings->currency_display_style ?? CurrencyDisplayStyle::Code,
             'logo_asset_id' => $settings->logo_asset_id,
         ]);
 

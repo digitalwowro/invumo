@@ -153,6 +153,15 @@ return [
             'EXPIRED' => 'Expired',
         ],
     ],
+    'representation' => [
+        'head_title' => 'Current quote',
+        'title' => 'Current quote',
+        'description' => 'Review the customer-facing representation generated from the current saved Quote.',
+        'view' => 'View',
+        'download_pdf' => 'Download PDF',
+        'edit' => 'Edit quote',
+        'back' => 'Back to quotes',
+    ],
     'lifecycle' => [
         'trigger' => 'Correct status',
         'title' => 'Correct Quote status',

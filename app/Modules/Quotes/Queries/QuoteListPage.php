@@ -145,6 +145,7 @@ final readonly class QuoteListPage
                 : (string) DecimalRules::moneySource((string) $row->total)->toScale($precision),
             'currencyCode' => $row->currency_code,
             'editUrl' => route('quotes.edit', [$company, $row->id], false),
+            'viewUrl' => route('quotes.current.show', [$company, $row->id], false),
             'deleteUrl' => route('quotes.destroy', [$company, $row->id], false),
             'deleteHighRisk' => $lifecycle !== QuoteLifecycle::Draft,
             'canDelete' => $canDelete,

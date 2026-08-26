@@ -153,6 +153,15 @@ return [
             'EXPIRED' => 'Expirată',
         ],
     ],
+    'representation' => [
+        'head_title' => 'Oferta curentă',
+        'title' => 'Oferta curentă',
+        'description' => 'Verifică reprezentarea pentru client generată din oferta salvată în prezent.',
+        'view' => 'Vizualizează',
+        'download_pdf' => 'Descarcă PDF-ul',
+        'edit' => 'Editează oferta',
+        'back' => 'Înapoi la oferte',
+    ],
     'lifecycle' => [
         'trigger' => 'Corectează starea',
         'title' => 'Corectează starea ofertei',

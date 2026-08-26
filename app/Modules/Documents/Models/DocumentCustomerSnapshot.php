@@ -12,8 +12,20 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $first_name
  * @property string|null $last_name
  * @property string|null $legal_name
+ * @property string|null $contact_name
+ * @property string|null $contact_position_title
  * @property string|null $email
  * @property string|null $phone
+ * @property string|null $address_line_1
+ * @property string|null $address_line_2
+ * @property string|null $city
+ * @property string|null $region
+ * @property string|null $postal_code
+ * @property string|null $country_code
+ * @property string|null $tax_registration_label
+ * @property string|null $tax_registration_identifier
+ * @property string|null $business_registration_label
+ * @property string|null $business_registration_number
  */
 #[Fillable([
     'document_id', 'type', 'first_name', 'last_name', 'legal_name',

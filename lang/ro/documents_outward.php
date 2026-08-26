@@ -1,0 +1,45 @@
+<?php
+
+return [
+    'quote' => 'Ofertă',
+    'not_set' => 'Nesetat',
+    'statuses' => [
+        'DRAFT' => 'Ciornă',
+        'SENT' => 'Trimisă',
+        'ACCEPTED' => 'Acceptată',
+        'REJECTED' => 'Respinsă',
+        'EXPIRED' => 'Expirată',
+    ],
+    'periods' => [
+        'MONTH' => 'lună',
+        'YEAR' => 'an',
+    ],
+    'labels' => [
+        'issue_date' => 'Data emiterii',
+        'valid_until' => 'Valabilă până la',
+        'customer_reference' => 'Referință client / număr comandă',
+        'from' => 'De la',
+        'bill_to' => 'Către',
+        'not_set' => 'Nesetat',
+        'description' => 'Descriere',
+        'quantity' => 'Cantitate',
+        'unit_price' => 'Preț unitar',
+        'discount' => 'Reducere',
+        'tax' => 'Taxă',
+        'line_total' => 'Total linie',
+        'no_lines' => 'Nu au fost adăugate linii.',
+        'subtotal' => 'Subtotal',
+        'tax_total' => 'Taxă',
+        'total' => 'Total',
+        'bank_details' => 'Detalii bancare',
+        'notes' => 'Note',
+        'terms_and_conditions' => 'Termeni și condiții',
+    ],
+    'bank' => [
+        'bank_name' => 'Bancă',
+        'account_holder' => 'Titular cont',
+        'account_number' => 'IBAN / număr cont',
+        'swift_bic' => 'SWIFT / BIC',
+        'currency' => 'Monedă',
+    ],
+];

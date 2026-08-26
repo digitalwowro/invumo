@@ -87,7 +87,7 @@ Foundation code must not depend on a business module or concrete integration. A 
 
 ### 2.3 Integrations
 
-`app/Integrations` contains concrete adapters such as `ZeptoMail` and the selected PDF renderer. Integrations translate vendor or renderer behavior into Invumo-owned contracts and data. They do not own document state, business rules, or tenant authorization.
+`app/Integrations` contains concrete adapters such as `ZeptoMail` and `Dompdf`. Integrations translate vendor or renderer behavior into Invumo-owned contracts and data. They do not own document state, business rules, or tenant authorization. `Delivery` owns the shared `OutwardDocument` data contract, exact display formatter, current-representation Queries, PDF contract, Blade template, and outward CSS; `Quotes` owns only its thin authenticated representation controller/routes. React consumes the same resolved data contract through `components/domain/outward-document*.tsx`, while the Blade template consumes it for PDF output. Source-owned PDF fonts live under `resources/fonts/atkinson-hyperlegible` with pinned origins and checksums.
 
 A module declares the narrow contract it needs; a provider binds a concrete integration implementation. This keeps provider values out of domain workflows without surrounding normal internal Laravel code with unnecessary interfaces.
 

@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Modules\Quotes\Exceptions;
+
+use DomainException;
+
+final class QuoteDraftException extends DomainException
+{
+    public static function configurationRequired(): self
+    {
+        return new self('configuration_required');
+    }
+
+    public static function stale(): self
+    {
+        return new self('stale');
+    }
+
+    public static function lineSetInvalid(): self
+    {
+        return new self('line_set_invalid');
+    }
+
+    public static function lineInvalid(): self
+    {
+        return new self('line_invalid');
+    }
+
+    public function reason(): string
+    {
+        return $this->getMessage();
+    }
+}

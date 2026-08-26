@@ -146,6 +146,7 @@ Platform Owner grant/revoke has no web route in v1. Non-operators receive no pla
 | POST   | `/companies/{company}/products/{product}/restore`               | Restore entry                                                |
 | DELETE | `/companies/{company}/products/{product}`                       | Owner/Admin-only dependency-guarded permanent deletion       |
 | GET    | `/companies/{company}/quotes`                                   | Quote operational list                                       |
+| GET    | `/companies/{company}/quotes/create`                            | Side-effect-free numbered-Draft creation confirmation        |
 | POST   | `/companies/{company}/quotes`                                   | Persist a numbered Draft and redirect to its workspace       |
 | GET    | `/companies/{company}/quotes/{quote}`                           | Quote document workspace/editor                              |
 | PATCH  | `/companies/{company}/quotes/{quote}`                           | Version-checked aggregate save                               |
@@ -213,6 +214,14 @@ GET  /companies/{company}/settings/appearance/logo
 ```
 
 The mutation uses `POST` because a logo replacement is multipart. The logo response resolves only the current live settings reference through the authenticated Company context and `manage_company_settings` ability; it never accepts an asset key or filesystem path from the browser.
+
+Quote numbering-counter correction uses the existing Numbering settings section:
+
+```text
+PATCH /companies/{company}/settings/numbering/counters/{counter}
+```
+
+Only Owner/Admin may use it. The Action locks the current Company configuration, all relevant Quote-series versions in UUID order, and the selected counter; backward movement or a candidate found in current/retained number history requires explicit confirmation and every accepted change requires a bounded reason and privacy-safe audit event.
 
 ### 4.4 Deferred route contracts
 

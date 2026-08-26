@@ -2,7 +2,7 @@
 
 Status: Approved implementation contract
 
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 This is the living map of Invumo's code ownership and dependency boundaries. It explains where new code belongs without duplicating the product specification or the development tracker.
 
@@ -76,7 +76,7 @@ Do not add `Services`, `Managers`, `Helpers`, or repositories as default buckets
 
 - `Tenancy` — company context and restricted-role/RLS plumbing;
 - `Auth` — request-session identity-transition context shared by Platform and audit boundaries;
-- `Database` — UUIDv7 domain identifiers plus the tested tenant-table migration, exact-decimal storage-envelope, same-Company foreign-key, forced-RLS, and restricted-grant contract;
+- `Database` — UUIDv7 domain identifiers; the tested tenant-table migration, exact-decimal storage-envelope, same-Company foreign-key, forced-RLS, and restricted-grant contract; and the production-backup boundary with isolated restore verification;
 - `Configuration` — production-readiness assertions used by the deploy/runtime gate and health diagnosis, identifying unsafe keys without disclosing their values;
 - `Diagnostics` — database-aware health diagnosis and the bounded operational logging contract;
 - `Http` — framework-independent shared HTTP response behavior such as the Inertia error surface;
@@ -116,6 +116,8 @@ Laravel entry points / Inertia pages
 `Foundation` depends on neither modules nor integrations. Modules may depend on Foundation but not concrete integrations. Integrations may depend on Foundation and the module contracts/data they implement, but not on module Actions, Models, HTTP code, or Policies.
 
 `Platform` may coordinate approved control-plane mutations through the owning `Identity` or `Companies` module Action when that domain owns the invariant. It never mutates another module's models as an authorization shortcut and never bypasses tenant context to inspect Company business data.
+
+The first persisted Quote editor follows the same boundary. `Quotes` owns Draft creation/update and its Inertia page Query; `Documents` owns the shared aggregate persistence types, transaction-neutral automatic-number allocator contract, counter realignment Action, and reusable document-line presentation. The Quote Action remains the outer transaction owner and invokes the allocator through its narrow contract. Later Invoice and Recurring editors reuse `Documents` rather than importing Quote feature internals.
 
 ## 3. Write and read boundaries
 

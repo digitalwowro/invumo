@@ -1,7 +1,7 @@
 # Document Numbering and Concurrency
 
 Status: Approved architecture decision  
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 This specification defines automatic quote and invoice numbering. It preserves the product's flexible manual-numbering rules while ensuring that two concurrent automatic creations cannot receive the same suggestion.
 
@@ -59,6 +59,8 @@ Concurrent allocators for the same company, document type, and period wait on th
 Do not use a PostgreSQL advisory lock for normal numbering. The counter row is persisted business state and a row lock is easier to inspect, repair, constrain, and test.
 
 If the transaction fails, both Draft creation and counter advancement roll back. Transaction-level deadlock or serialization failures are retried a small bounded number of times using the same creation key.
+
+Phase 5 implements this boundary through the Quote root creation Action. The Action locks and revalidates Company authority, resolves the Company-local date and active configuration, then calls a transaction-neutral allocator which locks the active series and period counter before rendering. The persisted rendered-number envelope is derived from the approved 120-character pattern and a signed-bigint sequence: replacing the eight-character `{NUMBER}` token with at most 19 digits yields a maximum of 131 characters rather than a new user-facing format limit.
 
 ## Manual numbers and renumbering
 

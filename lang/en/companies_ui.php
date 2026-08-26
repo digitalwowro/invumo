@@ -148,6 +148,16 @@ return [
             'preview_timezone_required' => 'Set the Company timezone before previewing a pattern that uses {YEAR}.',
             'save' => 'Save numbering settings',
             'unsaved_warning' => 'You have unsaved numbering settings. Leave without saving?',
+            'counter_title' => 'Quote counter realignment',
+            'counter_description' => 'Change the next automatic Quote sequence only when correcting an operational numbering mistake.',
+            'counter_empty' => 'The Quote counter becomes available after the first Draft receives a number.',
+            'counter_period' => 'Counter period',
+            'counter_next_value' => 'Next sequence value',
+            'counter_reason' => 'Reason for realignment',
+            'counter_confirmation' => 'I understand this may reuse a historical number',
+            'counter_confirmation_description' => 'Required when moving backwards or selecting a number that appears in retained history.',
+            'counter_save' => 'Realign Quote counter',
+            'counter_unsaved_warning' => 'You have an unsaved Quote counter change. Leave without saving?',
             'fields' => [
                 'pattern' => 'Number pattern',
                 'padding' => 'Number padding',
@@ -165,12 +175,15 @@ return [
             ],
             'feedback' => [
                 'saved' => 'Numbering settings saved.',
+                'counter_saved' => 'Quote counter realigned.',
             ],
             'errors' => [
                 'pattern_invalid' => 'Use {NUMBER} exactly once, {YEAR} at most once, and no other brace tokens.',
                 'annual_requires_year' => 'Annual reset requires {YEAR} in the number pattern.',
                 'invalid_configuration' => 'Enter a valid number pattern and padding.',
                 'timezone_required' => 'Set the Company timezone before using {YEAR} or annual reset.',
+                'counter_unavailable' => 'The active Quote counter is no longer available. Reload this page.',
+                'counter_confirmation_required' => 'Confirm the historical-number warning before realigning this counter.',
             ],
         ],
         'taxes' => [

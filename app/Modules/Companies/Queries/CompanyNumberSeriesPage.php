@@ -11,6 +11,7 @@ use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Models\NumberSeries;
 use App\Modules\Companies\Policies\CompanyAuthorization;
+use App\Modules\Documents\Models\NumberCounter;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use LogicException;
@@ -72,6 +73,7 @@ final readonly class CompanyNumberSeriesPage
                 ],
                 NumberSeriesResetPolicy::cases(),
             ),
+            'quoteCounter' => $this->counter($company, $active->get('quote'), $year),
         ];
     }
 
@@ -99,5 +101,29 @@ final readonly class CompanyNumberSeriesPage
             1,
             $year,
         );
+    }
+
+    /** @return array<string, mixed>|null */
+    private function counter(Company $company, NumberSeries $series, ?int $year): ?array
+    {
+        $periodKey = $series->reset_policy === NumberSeriesResetPolicy::Annual
+            ? ($year === null ? null : sprintf('%04d', $year))
+            : 'ALL';
+
+        if ($periodKey === null) {
+            return null;
+        }
+
+        $counter = NumberCounter::query()
+            ->where('number_series_id', $series->id)
+            ->where('period_key', $periodKey)
+            ->first();
+
+        return $counter === null ? null : [
+            'id' => $counter->id,
+            'periodKey' => $counter->period_key,
+            'nextValue' => (string) $counter->next_value,
+            'updateUrl' => route('company-number-counters.update', [$company, $counter], false),
+        ];
     }
 }

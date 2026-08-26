@@ -63,7 +63,7 @@ final readonly class CompanyContextProps
         );
     }
 
-    /** @return array{id: string, name: string, dashboardUrl: string, customersUrl: string, catalogUrl: string, settingsUrl: string, membersUrl: string} */
+    /** @return array{id: string, name: string, dashboardUrl: string, customersUrl: string, catalogUrl: string, quotesUrl: string, settingsUrl: string, membersUrl: string} */
     private function companyItem(CompanyMembership $membership): array
     {
         $canManageSettings = $this->authorization->allows(
@@ -77,6 +77,7 @@ final readonly class CompanyContextProps
             'dashboardUrl' => route('companies.dashboard', $membership->company_id, false),
             'customersUrl' => route('customers.index', $membership->company_id, false),
             'catalogUrl' => route('catalog.index', $membership->company_id, false),
+            'quotesUrl' => route('quotes.create', $membership->company_id, false),
             'settingsUrl' => $canManageSettings
                 ? route('company-settings.profile.edit', $membership->company_id, false)
                 : route('company-members.index', $membership->company_id, false),

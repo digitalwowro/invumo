@@ -12,6 +12,9 @@ enum CompanyAbility: string
     case ManageMembers = 'manage_members';
     case ViewCatalog = 'view_catalog';
     case ManageCatalog = 'manage_catalog';
+    case ViewQuotes = 'view_quotes';
+    case ManageQuotes = 'manage_quotes';
+    case ManageNumberCounters = 'manage_number_counters';
     case ManageAdjustments = 'manage_adjustments';
     case ManageRecurringAutomation = 'manage_recurring_automation';
     case ViewOperations = 'view_operations';

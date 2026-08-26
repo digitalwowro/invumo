@@ -148,6 +148,16 @@ return [
             'preview_timezone_required' => 'Setează fusul orar al companiei înainte de a previzualiza un model care folosește {YEAR}.',
             'save' => 'Salvează setările de numerotare',
             'unsaved_warning' => 'Ai setări de numerotare nesalvate. Ieși fără să salvezi?',
+            'counter_title' => 'Realinierea contorului ofertelor',
+            'counter_description' => 'Schimbă următoarea secvență automată a ofertelor numai pentru a corecta o eroare operațională de numerotare.',
+            'counter_empty' => 'Contorul ofertelor devine disponibil după ce prima ciornă primește un număr.',
+            'counter_period' => 'Perioada contorului',
+            'counter_next_value' => 'Următoarea valoare a secvenței',
+            'counter_reason' => 'Motivul realinierii',
+            'counter_confirmation' => 'Înțeleg că aceasta poate reutiliza un număr istoric',
+            'counter_confirmation_description' => 'Obligatorie la mutarea înapoi sau la selectarea unui număr prezent în istoricul păstrat.',
+            'counter_save' => 'Realiniază contorul ofertelor',
+            'counter_unsaved_warning' => 'Ai o modificare nesalvată a contorului ofertelor. Ieși fără să salvezi?',
             'fields' => [
                 'pattern' => 'Modelul numărului',
                 'padding' => 'Completarea numărului',
@@ -165,12 +175,15 @@ return [
             ],
             'feedback' => [
                 'saved' => 'Setările de numerotare au fost salvate.',
+                'counter_saved' => 'Contorul ofertelor a fost realiniat.',
             ],
             'errors' => [
                 'pattern_invalid' => 'Folosește {NUMBER} exact o dată, {YEAR} cel mult o dată și niciun alt marcaj între acolade.',
                 'annual_requires_year' => 'Resetarea anuală necesită {YEAR} în modelul numărului.',
                 'invalid_configuration' => 'Introdu un model și o completare valide pentru număr.',
                 'timezone_required' => 'Setează fusul orar al companiei înainte de a folosi {YEAR} sau resetarea anuală.',
+                'counter_unavailable' => 'Contorul activ al ofertelor nu mai este disponibil. Reîncarcă pagina.',
+                'counter_confirmation_required' => 'Confirmă avertismentul privind numerele istorice înainte de realinierea contorului.',
             ],
         ],
         'taxes' => [

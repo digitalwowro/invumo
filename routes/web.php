@@ -17,11 +17,13 @@ use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
+use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
 use App\Modules\Platform\Http\Controllers\UserImpersonationController;
 use App\Modules\Platform\Http\Controllers\UserSuspensionController;
+use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
 use App\Support\Inertia\CommonTranslationBag;
 use App\Support\Inertia\DesignSystemTranslationBag;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -100,6 +102,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('company.context')
         ->scopeBindings()
         ->group(function (): void {
+            Route::get('companies/{company}/quotes/create', [QuoteDraftController::class, 'create'])
+                ->name('quotes.create');
+            Route::post('companies/{company}/quotes', [QuoteDraftController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('quotes.store');
+            Route::get('companies/{company}/quotes/{quote}', [QuoteDraftController::class, 'edit'])
+                ->name('quotes.edit');
+            Route::patch('companies/{company}/quotes/{quote}', [QuoteDraftController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('quotes.update');
+
             Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
                 ->name('catalog.index');
             Route::post('companies/{company}/products', [ProductServiceController::class, 'store'])
@@ -182,6 +195,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'update'])
                 ->middleware('throttle:20,1')
                 ->name('company-number-series.update');
+            Route::patch('companies/{company}/settings/numbering/counters/{counter}', [DocumentNumberCounterController::class, 'update'])
+                ->middleware('throttle:10,1')
+                ->name('company-number-counters.update');
             Route::get('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'index'])
                 ->name('company-tax-presets.index');
             Route::post('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'store'])

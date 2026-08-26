@@ -6,13 +6,13 @@ namespace App\Foundation\Database;
 
 use RuntimeException;
 
-final class ProductionSqlDump
+final class ProductionSqlDump implements SqlDumpProcess
 {
-    private const BINARY = '/usr/bin/pg_dump';
+    public function __construct(private readonly string $binary = '/usr/bin/pg_dump') {}
 
     public function assertAvailable(): void
     {
-        if (! is_executable(self::BINARY)) {
+        if (! is_executable($this->binary)) {
             throw new RuntimeException('The PostgreSQL backup binary is unavailable.');
         }
     }
@@ -26,7 +26,7 @@ final class ProductionSqlDump
         string $snapshot,
     ): array {
         return [
-            self::BINARY,
+            $this->binary,
             '--host', $host,
             '--port', $port,
             '--username', $username,

@@ -24,6 +24,13 @@ export type CompanyNumberPreviewContext = {
     sequence: number;
 };
 
+export type QuoteNumberCounter = {
+    id: string;
+    periodKey: string;
+    nextValue: string;
+    updateUrl: string;
+};
+
 export type CompanyNumberSeriesTranslations = {
     head_title: string;
     title: string;
@@ -57,5 +64,17 @@ export type CompanyNumberSeriesTranslations = {
         pattern_invalid: string;
         invalid_configuration: string;
         timezone_required: string;
+        counter_unavailable: string;
+        counter_confirmation_required: string;
     };
+    counter_title: string;
+    counter_description: string;
+    counter_empty: string;
+    counter_period: string;
+    counter_next_value: string;
+    counter_reason: string;
+    counter_confirmation: string;
+    counter_confirmation_description: string;
+    counter_save: string;
+    counter_unsaved_warning: string;
 };

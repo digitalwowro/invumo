@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Boxes, LayoutGrid, Settings, Users } from 'lucide-react';
+import { Boxes, FileText, LayoutGrid, Settings, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AppSidebarBrand } from '@/components/app/app-sidebar-brand';
 import { NavMain } from '@/components/app/nav-main';
@@ -41,6 +41,14 @@ export function AppSidebar({
             title: t('navigation.customers'),
             href: companyContext.current.customersUrl,
             icon: Users,
+        });
+    }
+
+    if (companyContext.current && companyContext.abilities.view_quotes) {
+        mainNavItems.push({
+            title: t('navigation.quotes'),
+            href: companyContext.current.quotesUrl,
+            icon: FileText,
         });
     }
 

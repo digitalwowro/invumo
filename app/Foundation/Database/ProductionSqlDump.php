@@ -8,7 +8,9 @@ use RuntimeException;
 
 final class ProductionSqlDump implements SqlDumpProcess
 {
-    public function __construct(private readonly string $binary = '/usr/bin/pg_dump') {}
+    public function __construct(
+        private readonly string $binary = '/usr/lib/postgresql/18/bin/pg_dump',
+    ) {}
 
     public function assertAvailable(): void
     {

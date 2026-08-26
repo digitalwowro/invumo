@@ -18,7 +18,7 @@ final class PostgreSqlTestRestore
         }
 
         $common = [
-            '/usr/bin/psql',
+            '/usr/lib/postgresql/18/bin/psql',
             '--no-psqlrc',
             '--set=ON_ERROR_STOP=1',
             '--host='.$this->required($connection, 'host'),

@@ -25,7 +25,8 @@ it('propagates the exported snapshot and validates tenant table identifiers', fu
     $dump = new ProductionSqlDump;
     $command = $dump->command('127.0.0.1', '5432', 'schema', 'invumo', '0001-1');
 
-    expect($command)->toContain('--snapshot=0001-1')
+    expect($command[0])->toBe('/usr/lib/postgresql/18/bin/pg_dump')
+        ->and($command)->toContain('--snapshot=0001-1')
         ->and($dump->qualifiedTable((object) [
             'schema_name' => 'public',
             'table_name' => 'company_settings',

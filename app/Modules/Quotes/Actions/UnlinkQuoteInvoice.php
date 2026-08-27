@@ -11,9 +11,9 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
-use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteInvoiceUnlinkData;
@@ -29,6 +29,7 @@ final readonly class UnlinkQuoteInvoice
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
         private RecordAuditEvent $recordAuditEvent,
+        private DocumentPublicLinkHistory $publicLinkHistory,
     ) {}
 
     public function handle(
@@ -77,17 +78,16 @@ final readonly class UnlinkQuoteInvoice
             ->where('quote_id', $quoteDocument->id)
             ->where('invoice_id', $invoiceDocument->id)
             ->lockForUpdate()->firstOrFail();
-        $delivery = DocumentDeliverySetting::query()
-            ->where('document_id', $invoiceDocument->id)->lockForUpdate()->firstOrFail();
         $transactions = InvoiceTransaction::query()
             ->where('invoice_id', $invoiceDocument->id)
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
+        $publicLinks = $this->publicLinkHistory->lock($invoiceDocument->id);
 
         if ($invoice->lifecycle !== InvoiceLifecycle::Draft
-            || $delivery->public_access_enabled
-            || $transactions->isNotEmpty()) {
+            || $transactions->isNotEmpty()
+            || $publicLinks->isNotEmpty()) {
             throw QuoteInvoiceUnlinkException::unavailable();
         }
 

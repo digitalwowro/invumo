@@ -95,7 +95,10 @@ final class InvoiceDeletionHttpTest extends TestCase
             $this->assertSame(3, DocumentNumberEvent::query()->where('event_type', 'DELETED')->count());
             $audit = AuditEvent::query()->where('action', 'company.invoice.deleted')
                 ->where('target_id', $issued->id)->sole();
-            $this->assertEqualsCanonicalizing(['document_number', 'lifecycle'], array_keys($audit->before));
+            $this->assertEqualsCanonicalizing(
+                ['document_number', 'lifecycle', 'had_public_link_history'],
+                array_keys($audit->before),
+            );
             $this->assertNull($audit->after);
             $payload = json_encode($audit->before, JSON_THROW_ON_ERROR);
             $this->assertStringNotContainsString('Deletion Customer', $payload);

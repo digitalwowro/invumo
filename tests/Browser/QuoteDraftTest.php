@@ -9,6 +9,7 @@ use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Identity\Models\Account;
@@ -226,6 +227,36 @@ it('converts and unlinks an accepted Quote without desktop overflow', function (
         ->assertSee('Invoice unlinked from the Quote.')
         ->assertSee('No Invoices have been created from this Quote.')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('creates views and revokes a secure Quote link without desktop overflow', function () {
+    [$owner, $company] = companyForQuoteBrowser();
+    $quote = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
+    $page = openQuoteCreate($owner, $company)
+        ->navigate(route('quotes.edit', [$company, $quote], false))
+        ->assertSee('Secure public link')
+        ->assertSee('Not created')
+        ->click('Create secure link')
+        ->assertSee('Secure public link created.')
+        ->assertSee('Active');
+    $token = app(TenantContext::class)->runAsSystem(
+        $company->id,
+        fn (): string => PublicDocumentLink::query()->sole()->token_ciphertext,
+    );
+
+    $page->navigate(route('public-quotes.show', $token, false))
+        ->assertSee('Quote '.$quote->rendered_number)
+        ->assertSee('Download PDF')
+        ->assertSee('Securely shared with Invumo')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues()
+        ->navigate(route('quotes.edit', [$company, $quote], false))
+        ->click('Revoke link')
+        ->assertSee('Secure public link revoked.')
+        ->assertSee('Disabled')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });

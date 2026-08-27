@@ -14,5 +14,7 @@ final readonly class CompanyDocumentDefaultsData
         public ?string $quoteNotes,
         public ?string $invoiceNotes,
         public EmailAttachmentMode $emailAttachmentMode,
+        public bool $publicLinksEnabled,
+        public int $publicLinkValidityDays,
     ) {}
 }

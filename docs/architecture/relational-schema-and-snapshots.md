@@ -429,7 +429,7 @@ This explicit deferred/immediate bracket avoids temporary-position values and ex
 - creation idempotency key
 - unique active Invoice reference
 
-The row represents an active provenance link. Both Quote and Invoice deletion are restricted while it exists. The unlink action enforces the approved Draft/never-used window, records the removed relationship and reason in audit history, then deletes the link so the copied Invoice remains intact as an independent Draft and no longer contributes to Quote allocation. Phase 6 evaluates the currently available Draft/Issued and public-access state; the Phase 7 transaction rows and Phase 9 delivery-attempt rows extend the same fail-closed unlink check when those disqualifying consumers arrive. The Quote currency cannot change while any link remains.
+The row represents an active provenance link. Both Quote and Invoice deletion are restricted while it exists. The unlink action enforces the approved Draft/never-used window, records the removed relationship and reason in audit history, then deletes the link so the copied Invoice remains intact as an independent Draft and no longer contributes to Quote allocation. Phase 7 transaction rows extend that fail-closed check. Phase 8 adds a permanent link-history precondition: once the derived Invoice has any `public_document_links` generation, neither revocation nor expiry restores unlink eligibility. The root Action and its server-resolved UI eligibility Query lock/read that history directly rather than relying on the current `public_access_enabled` latch. Phase 9 delivery-attempt rows must extend the same guard before they can ship. The Quote currency cannot change while any link remains.
 
 Conversion first locks Company configuration and the Invoice numbering counter, then the Quote aggregate, provenance rows, and its dependent snapshots/lines in their stable order. A Company/Quote-scoped UUID creation key makes retries idempotent under the same lock order. Each conversion allocates an independent Invoice number, preserves Quote currency and precision, copies the current approved Company/Customer/Tax/Bank/delivery-recipient/line snapshots, copies the Quote customer reference and Terms & Conditions, uses the Quote's resolved Invoice-payment-term snapshot, and initializes a new Invoice-only public-access state. Allocation is read from every active non-Cancelled link and its current Invoice total; remaining may be negative and is a warning rather than a write constraint.
 
@@ -474,11 +474,11 @@ The foreign keys from transactions and Quote provenance to Invoices are restrict
 
 ### `public_document_links`
 
-- `id`, `company_id`, document reference
-- cryptographic token hash, unique; never plaintext
-- expiry, revocation, generation, creator, and last-used metadata
+- UUIDv7 `id`, `company_id`, and same-Company document reference
+- exact unique SHA-256 token hash plus bounded authenticated ciphertext; never plaintext
+- positive generation, absolute expiry, optional complete revocation metadata, creator, and timestamps
 
-Regeneration creates a new record and revokes the old one so history and explicit revocation remain distinguishable. Exact token encoding/hash/encrypted recovery, rate limiting, side-effect-free reads, lifecycle, access-log redaction, and the narrow public RLS bootstrap follow the approved [public-token and access contract](public-token-and-access.md).
+The forced-RLS table permits ordinary access only under Company context. A second narrow runtime `SELECT` policy admits at most the exact unrevoked/unexpired row whose unique hash matches the transaction-local public-link bootstrap setting; it grants no document or configuration access. The partial unique current-generation index independently prevents two unrevoked generations for one document. Regeneration revokes the old row and inserts the next generation atomically, while public reads remain side-effect free and retain no IP address, User-Agent, view count, or last-used timestamp. Exact token encoding/hash/encrypted recovery, rate limiting, lifecycle, access-log redaction, and bootstrap behavior follow the approved [public-token and access contract](public-token-and-access.md).
 
 ### `document_artifacts`
 

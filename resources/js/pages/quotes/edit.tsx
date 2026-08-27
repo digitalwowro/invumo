@@ -6,6 +6,7 @@ import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
+import { PublicDocumentLinkPanel } from '@/components/domain/documents/public-document-link-panel';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
@@ -13,6 +14,10 @@ import { QuoteInvoiceAllocationSection } from '@/features/quotes/components/quot
 import { QuoteLifecycleDialog } from '@/features/quotes/components/quote-lifecycle-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type {
+    PublicDocumentLink,
+    PublicDocumentTranslations,
+} from '@/types/public-document';
 import type {
     QuoteCatalogFormOptions,
     QuoteCurrencyOption,
@@ -39,6 +44,7 @@ type Props = {
     deleteUrl: string;
     representationUrl: string;
     pdfUrl: string;
+    publicLink: PublicDocumentLink;
     indexUrl: string;
     quoteAbilities: { correctLifecycle: boolean; delete: boolean };
     sourceUrls: QuoteSourceUrls;
@@ -56,6 +62,7 @@ type Props = {
     translations: QuoteTranslations;
     customerTranslations: CustomerTranslations;
     catalogTranslations: CatalogTranslations;
+    publicDocumentTranslations: PublicDocumentTranslations;
 };
 
 export default function EditQuote({
@@ -69,12 +76,14 @@ export default function EditQuote({
     deleteUrl,
     representationUrl,
     pdfUrl,
+    publicLink,
     indexUrl,
     quoteAbilities,
     status,
     translations,
     customerTranslations,
     catalogTranslations,
+    publicDocumentTranslations,
     ...sourceProps
 }: Props) {
     return (
@@ -138,6 +147,10 @@ export default function EditQuote({
                         tone={
                             quote.currencyCode === null ? 'warning' : 'neutral'
                         }
+                    />
+                    <PublicDocumentLinkPanel
+                        link={publicLink}
+                        labels={publicDocumentTranslations.management}
                     />
                     <QuoteDraftEditor
                         quote={quote}

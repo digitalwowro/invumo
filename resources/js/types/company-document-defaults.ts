@@ -6,12 +6,15 @@ export type CompanyDocumentDefaults = {
     quoteNotes: string | null;
     invoiceNotes: string | null;
     emailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
+    publicLinksEnabled: boolean;
+    publicLinkValidityDays: string;
 };
 
 export type CompanyDocumentLimits = {
     maxDayOffset: number;
     termsAndConditionsCharacters: number;
     notesCharacters: number;
+    publicLinkValidityDays: { min: number; max: number };
 };
 
 export type CompanyDocumentDefaultsTranslations = {
@@ -35,6 +38,8 @@ export type CompanyDocumentDefaultsTranslations = {
         default_quote_notes: string;
         default_invoice_notes: string;
         default_email_attachment_mode: string;
+        public_links_enabled_by_default: string;
+        default_public_link_validity_days: string;
     };
     field_descriptions: {
         default_document_language: string;
@@ -44,6 +49,8 @@ export type CompanyDocumentDefaultsTranslations = {
         default_quote_notes: string;
         default_invoice_notes: string;
         default_email_attachment_mode: string;
+        public_links_enabled_by_default: string;
+        default_public_link_validity_days: string;
     };
     email_attachment_mode_options: Record<
         'SECURE_LINK_ONLY' | 'ATTACH_PDF',

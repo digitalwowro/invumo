@@ -15,6 +15,7 @@ use App\Modules\Quotes\Http\Requests\UpdateQuoteDraftRequest;
 use App\Modules\Quotes\Queries\QuoteDraftPage;
 use App\Support\Inertia\CatalogUiTranslationBag;
 use App\Support\Inertia\CustomersUiTranslationBag;
+use App\Support\Inertia\PublicDocumentsTranslationBag;
 use App\Support\Inertia\QuotesUiTranslationBag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ final class QuoteDraftController extends Controller
         QuotesUiTranslationBag $translations,
         CustomersUiTranslationBag $customerTranslations,
         CatalogUiTranslationBag $catalogTranslations,
+        PublicDocumentsTranslationBag $publicDocumentTranslations,
     ): Response {
         return Inertia::render('quotes/edit', [
             ...$page->edit(
@@ -74,6 +76,7 @@ final class QuoteDraftController extends Controller
             'translations' => $translations->toArray(),
             'customerTranslations' => $customerTranslations->toArray(),
             'catalogTranslations' => $catalogTranslations->toArray(),
+            'publicDocumentTranslations' => $publicDocumentTranslations->toArray(),
         ]);
     }
 

@@ -110,6 +110,8 @@ return [
                 'default_quote_notes' => 'Quote notes',
                 'default_invoice_notes' => 'Invoice notes',
                 'default_email_attachment_mode' => 'Default PDF delivery',
+                'public_links_enabled_by_default' => 'Enable public links for new documents',
+                'default_public_link_validity_days' => 'Public link validity days',
             ],
             'field_descriptions' => [
                 'default_document_language' => 'Used for future customer-facing documents unless a customer or document overrides it.',
@@ -119,6 +121,8 @@ return [
                 'default_quote_notes' => 'Optional customer-visible notes for future quotes.',
                 'default_invoice_notes' => 'Optional customer-visible notes for future invoices.',
                 'default_email_attachment_mode' => 'Secure link only is safer and avoids attaching a copy. Customer and per-send choices can override this default.',
+                'public_links_enabled_by_default' => 'Future Quotes and Invoices start ready for an explicitly created secure link. No link is created automatically.',
+                'default_public_link_validity_days' => 'Absolute lifetime for newly generated links, from 1 to 3650 days.',
             ],
             'email_attachment_mode_options' => [
                 'SECURE_LINK_ONLY' => 'Secure link only',

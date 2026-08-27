@@ -17,6 +17,8 @@ use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
+use App\Modules\Delivery\Http\Controllers\PublicDocumentController;
+use App\Modules\Delivery\Http\Middleware\PublicDocumentResponseHeaders;
 use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
@@ -32,6 +34,26 @@ use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
 use Laravel\Fortify\Http\Controllers\ConfirmedPasswordStatusController;
 
 Route::get('/', CompanyLandingController::class)->name('home');
+
+Route::middleware([
+    PublicDocumentResponseHeaders::class,
+    'throttle:public-document-view',
+])->group(function (): void {
+    Route::get('q/{token}', [PublicDocumentController::class, 'quote'])
+        ->name('public-quotes.show');
+    Route::get('i/{token}', [PublicDocumentController::class, 'invoice'])
+        ->name('public-invoices.show');
+});
+
+Route::middleware([
+    PublicDocumentResponseHeaders::class,
+    'throttle:public-document-pdf',
+])->group(function (): void {
+    Route::get('q/{token}/pdf', [PublicDocumentController::class, 'quotePdf'])
+        ->name('public-quotes.pdf');
+    Route::get('i/{token}/pdf', [PublicDocumentController::class, 'invoicePdf'])
+        ->name('public-invoices.pdf');
+});
 
 Route::get('invitations/{token}', [CompanyInvitationController::class, 'show'])
     ->middleware('throttle:20,1')

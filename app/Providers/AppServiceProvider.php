@@ -14,14 +14,20 @@ use App\Integrations\Dompdf\DompdfDocumentPdfRenderer;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
+use App\Modules\Delivery\Contracts\GeneratesPublicDocumentTokens;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
+use App\Modules\Delivery\Support\CryptographicPublicDocumentToken;
+use App\Modules\Delivery\Support\PublicDocumentRateLimitKey;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
 use App\Modules\Documents\Numbering\LockedDocumentNumberAllocator;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Events\DiagnosingHealth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -47,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SqlDumpProcess::class, ProductionSqlDump::class);
         $this->app->bind(AllocatesDocumentNumbers::class, LockedDocumentNumberAllocator::class);
         $this->app->bind(RendersDocumentPdf::class, DompdfDocumentPdfRenderer::class);
+        $this->app->bind(
+            GeneratesPublicDocumentTokens::class,
+            CryptographicPublicDocumentToken::class,
+        );
         $this->app->singleton(TenantJobExecution::class);
         $this->app->singleton(TenantContext::class);
     }
@@ -61,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
             fn () => app(ApplicationHealth::class)->diagnose(),
         );
         $this->configureDefaults();
+        $this->configurePublicDocumentRateLimits();
     }
 
     /**
@@ -89,5 +100,17 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    private function configurePublicDocumentRateLimits(): void
+    {
+        RateLimiter::for('public-document-view', fn (Request $request): array => [
+            Limit::perMinute(60)->by('source:'.PublicDocumentRateLimitKey::source($request)),
+            Limit::perMinute(120)->by('token:'.PublicDocumentRateLimitKey::token($request)),
+        ]);
+        RateLimiter::for('public-document-pdf', fn (Request $request): array => [
+            Limit::perMinute(10)->by('source:'.PublicDocumentRateLimitKey::source($request)),
+            Limit::perMinute(10)->by('token:'.PublicDocumentRateLimitKey::token($request)),
+        ]);
     }
 }

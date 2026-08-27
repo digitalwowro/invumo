@@ -62,6 +62,13 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
                 'required',
                 Rule::enum(EmailAttachmentMode::class),
             ],
+            'public_links_enabled_by_default' => ['required', 'boolean'],
+            'default_public_link_validity_days' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:3650',
+            ],
         ];
     }
 
@@ -85,6 +92,8 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
             emailAttachmentMode: EmailAttachmentMode::from(
                 (string) $this->validated('default_email_attachment_mode'),
             ),
+            publicLinksEnabled: (bool) $this->validated('public_links_enabled_by_default'),
+            publicLinkValidityDays: (int) $this->validated('default_public_link_validity_days'),
         );
     }
 
@@ -97,7 +106,11 @@ final class UpdateCompanyDocumentDefaultsRequest extends FormRequest
             $normalized['default_document_language'] = trim($language);
         }
 
-        foreach (['default_payment_term_days', 'default_quote_validity_days'] as $field) {
+        foreach ([
+            'default_payment_term_days',
+            'default_quote_validity_days',
+            'default_public_link_validity_days',
+        ] as $field) {
             $value = $this->input($field);
 
             if (is_string($value)) {

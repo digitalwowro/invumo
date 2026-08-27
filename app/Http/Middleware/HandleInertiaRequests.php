@@ -40,6 +40,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        if ($request->is('q/*', 'i/*')) {
+            return [
+                ...parent::share($request),
+                'name' => config('app.name'),
+                'i18n' => [
+                    'locale' => app()->getLocale(),
+                    'supportedLocales' => SupportedLocales::all(),
+                    'common' => app(CommonTranslationBag::class)->toArray(),
+                ],
+            ];
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),

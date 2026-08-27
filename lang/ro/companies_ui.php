@@ -110,6 +110,8 @@ return [
                 'default_quote_notes' => 'Note pentru ofertă',
                 'default_invoice_notes' => 'Note pentru factură',
                 'default_email_attachment_mode' => 'Livrarea implicită a PDF-ului',
+                'public_links_enabled_by_default' => 'Activează linkurile publice pentru documentele noi',
+                'default_public_link_validity_days' => 'Valabilitatea linkului public în zile',
             ],
             'field_descriptions' => [
                 'default_document_language' => 'Folosită pentru documentele viitoare destinate clienților, dacă un client sau document nu o înlocuiește.',
@@ -119,6 +121,8 @@ return [
                 'default_quote_notes' => 'Note opționale, vizibile clienților, pentru ofertele viitoare.',
                 'default_invoice_notes' => 'Note opționale, vizibile clienților, pentru facturile viitoare.',
                 'default_email_attachment_mode' => 'Doar linkul securizat este mai sigur și evită atașarea unei copii. Opțiunile clientului și ale trimiterii pot înlocui această valoare implicită.',
+                'public_links_enabled_by_default' => 'Ofertele și facturile viitoare pornesc pregătite pentru un link securizat creat explicit. Niciun link nu este creat automat.',
+                'default_public_link_validity_days' => 'Durata absolută a linkurilor nou generate, între 1 și 3650 de zile.',
             ],
             'email_attachment_mode_options' => [
                 'SECURE_LINK_ONLY' => 'Doar link securizat',

@@ -17,6 +17,7 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
 use App\Modules\Customers\Queries\CustomerFormOptions;
+use App\Modules\Delivery\Queries\DocumentPublicLinkState;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -42,6 +43,7 @@ final readonly class InvoiceDraftPage
         private CatalogLineDefaults $catalogDefaults,
         private InvoiceTransactionsForInvoice $transactions,
         private InvoiceLifecycleActionsForInvoice $lifecycleActions,
+        private DocumentPublicLinkState $publicLinkState,
     ) {}
 
     /** @return array<string, mixed> */
@@ -201,6 +203,12 @@ final readonly class InvoiceDraftPage
             'issueUrl' => route('invoices.issue', [$company, $document], false),
             'representationUrl' => route('invoices.current.show', [$company, $document], false),
             'pdfUrl' => route('invoices.current.pdf', [$company, $document], false),
+            'publicLink' => $this->publicLinkState->for(
+                $company,
+                $actor,
+                $document->id,
+                DocumentKind::Invoice,
+            ),
             'deletion' => [
                 'url' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices)
                     ? route('invoices.destroy', [$company, $document], false)

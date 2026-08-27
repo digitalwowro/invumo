@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $default_quote_notes
  * @property string|null $default_invoice_notes
  * @property EmailAttachmentMode $default_email_attachment_mode
+ * @property bool $public_links_enabled_by_default
+ * @property int $default_public_link_validity_days
  * @property string $primary_brand_color
  * @property string|null $logo_asset_id
  * @property-read CompanyAsset|null $logoAsset
@@ -48,6 +50,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'default_quote_notes',
     'default_invoice_notes',
     'default_email_attachment_mode',
+    'public_links_enabled_by_default',
+    'default_public_link_validity_days',
     'primary_brand_color',
     'logo_asset_id',
 ])]
@@ -67,6 +71,8 @@ class CompanySetting extends TenantOwnedModel
             'default_payment_term_days' => 'integer',
             'default_quote_validity_days' => 'integer',
             'default_email_attachment_mode' => EmailAttachmentMode::class,
+            'public_links_enabled_by_default' => 'boolean',
+            'default_public_link_validity_days' => 'integer',
         ];
     }
 }

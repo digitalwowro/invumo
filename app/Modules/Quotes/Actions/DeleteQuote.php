@@ -11,6 +11,8 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\DeleteDocumentPublicLinks;
+use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Data\DocumentNumberEventType;
 use App\Modules\Documents\Models\Document;
@@ -28,6 +30,8 @@ final readonly class DeleteQuote
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
         private RecordAuditEvent $recordAuditEvent,
+        private DocumentPublicLinkHistory $publicLinkHistory,
+        private DeleteDocumentPublicLinks $deletePublicLinks,
     ) {}
 
     public function handle(
@@ -61,6 +65,7 @@ final readonly class DeleteQuote
         $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
         $links = QuoteInvoiceLink::query()
             ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
+        $publicLinks = $this->publicLinkHistory->lock($document->id);
 
         if ($links->isNotEmpty()) {
             throw QuoteDeletionException::invoiceDependency();
@@ -70,7 +75,8 @@ final readonly class DeleteQuote
             throw QuoteDeletionException::confirmationRequired();
         }
 
-        $highRisk = $quote->lifecycle !== QuoteLifecycle::Draft;
+        $highRisk = $quote->lifecycle !== QuoteLifecycle::Draft
+            || $publicLinks->isNotEmpty();
 
         if ($highRisk && ! $data->confirmedHighRisk) {
             throw QuoteDeletionException::highRiskConfirmationRequired();
@@ -85,7 +91,8 @@ final readonly class DeleteQuote
             before: AuditPayload::fromAllowedFields([
                 'lifecycle' => $quote->lifecycle->value,
                 'had_customer' => $document->customer_id !== null,
-            ], ['lifecycle', 'had_customer']),
+                'had_public_link_history' => $publicLinks->isNotEmpty(),
+            ], ['lifecycle', 'had_customer', 'had_public_link_history']),
         ));
         DocumentNumberEvent::query()->create([
             'document_id' => $document->id,
@@ -96,6 +103,7 @@ final readonly class DeleteQuote
             'occurred_at' => now(),
             'related_audit_event_id' => $audit->id,
         ]);
+        $this->deletePublicLinks->handle($document->id);
         $document->delete();
 
         return true;

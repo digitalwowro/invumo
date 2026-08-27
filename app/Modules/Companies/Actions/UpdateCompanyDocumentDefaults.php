@@ -22,6 +22,8 @@ final readonly class UpdateCompanyDocumentDefaults
         'default_payment_term_days',
         'default_quote_validity_days',
         'default_email_attachment_mode',
+        'public_links_enabled_by_default',
+        'default_public_link_validity_days',
     ];
 
     public function __construct(
@@ -86,6 +88,8 @@ final readonly class UpdateCompanyDocumentDefaults
             'default_quote_notes' => $settings->default_quote_notes,
             'default_invoice_notes' => $settings->default_invoice_notes,
             'default_email_attachment_mode' => $settings->default_email_attachment_mode->value,
+            'public_links_enabled_by_default' => $settings->public_links_enabled_by_default,
+            'default_public_link_validity_days' => $settings->default_public_link_validity_days,
         ];
     }
 
@@ -100,6 +104,8 @@ final readonly class UpdateCompanyDocumentDefaults
             'default_quote_notes' => $data->quoteNotes,
             'default_invoice_notes' => $data->invoiceNotes,
             'default_email_attachment_mode' => $data->emailAttachmentMode->value,
+            'public_links_enabled_by_default' => $data->publicLinksEnabled,
+            'default_public_link_validity_days' => $data->publicLinkValidityDays,
         ];
     }
 

@@ -168,6 +168,7 @@ Phase 8 implementation must prove:
 - Laravel authorization and forced RLS independently protect internal link management
 - route/IP/token rate limits and PDF resource limits
 - EN/RO desktop/mobile public views, PDF download, accessibility, no page overflow, no third-party requests, response headers, and side-effect-free rendering
+- permanent link history blocks `UnlinkQuoteInvoice` and its server-resolved UI eligibility after revocation or expiry; Batch 8B owns this extension and cannot pass without the revoke-then-unlink regression
 - Quote decision lifecycle, idempotency, replay, concurrency, required identity, privacy-safe audit, and tenant isolation in Batch 8C
 - production access-log redaction is verified before public routes are enabled
 

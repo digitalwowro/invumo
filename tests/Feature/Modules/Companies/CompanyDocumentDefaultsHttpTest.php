@@ -272,6 +272,8 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
             'default_quote_notes' => 'Private quote note',
             'default_invoice_notes' => 'Private invoice note',
             'default_email_attachment_mode' => 'ATTACH_PDF',
+            'public_links_enabled_by_default' => true,
+            'default_public_link_validity_days' => '30',
         ], $overrides);
     }
 
@@ -286,11 +288,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
 
     private function companyFor(User $owner, string $name = 'Acme SRL'): Company
     {
-        return app(CreateCompany::class)->handle(
-            $owner->account()->firstOrFail(),
-            $owner,
-            $name,
-        );
+        return app(CreateCompany::class)->handle($owner->account()->firstOrFail(), $owner, $name);
     }
 
     private function addMember(Company $company, User $user, CompanyRole $role): CompanyMembership

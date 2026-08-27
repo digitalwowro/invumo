@@ -132,7 +132,11 @@ final readonly class ConvertQuoteToInvoice
                 ? null
                 : DocumentCalendar::addDays($localDate->toDateString(), $paymentTermDays),
         ]);
-        $lineCount = $this->copySnapshots->handle($source, $invoiceDocument);
+        $lineCount = $this->copySnapshots->handle(
+            $source,
+            $invoiceDocument,
+            $settings->public_links_enabled_by_default,
+        );
         QuoteInvoiceLink::query()->create([
             'quote_id' => $source->id,
             'invoice_id' => $invoiceDocument->id,

@@ -2,6 +2,7 @@
 
 use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
+use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
 use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
 use App\Modules\Invoices\Http\Controllers\InvoiceLifecycleController;
@@ -53,6 +54,18 @@ Route::get('companies/{company}/invoices/{invoice}/pdf', [InvoiceRepresentationC
 Route::get('companies/{company}/invoices/{invoice}/logo', [InvoiceRepresentationController::class, 'logo'])
     ->middleware('throttle:60,1')
     ->name('invoices.current.logo');
+Route::post('companies/{company}/invoices/{document}/public-link', [DocumentPublicLinkController::class, 'store'])
+    ->defaults('document_kind', 'INVOICE')
+    ->middleware('throttle:20,1')
+    ->name('invoices.public-link.store');
+Route::post('companies/{company}/invoices/{document}/public-link/regenerate', [DocumentPublicLinkController::class, 'regenerate'])
+    ->defaults('document_kind', 'INVOICE')
+    ->middleware('throttle:20,1')
+    ->name('invoices.public-link.regenerate');
+Route::delete('companies/{company}/invoices/{document}/public-link', [DocumentPublicLinkController::class, 'destroy'])
+    ->defaults('document_kind', 'INVOICE')
+    ->middleware('throttle:20,1')
+    ->name('invoices.public-link.destroy');
 Route::post('companies/{company}/invoices/{document}/inline-customers', InlineCustomerController::class)
     ->middleware('throttle:20,1')
     ->name('invoices.inline-customers.store');

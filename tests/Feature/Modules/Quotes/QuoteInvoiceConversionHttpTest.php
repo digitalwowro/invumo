@@ -80,7 +80,7 @@ final class QuoteInvoiceConversionHttpTest extends TestCase
             $this->assertSame($sourceSnapshot->legal_name, $invoiceSnapshot->legal_name);
             $this->assertSame(1, DocumentLine::query()
                 ->where('document_id', $invoiceDocument->id)->count());
-            $this->assertFalse(DocumentDeliverySetting::query()
+            $this->assertTrue(DocumentDeliverySetting::query()
                 ->where('document_id', $invoiceDocument->id)->sole()->public_access_enabled);
             $this->assertSame(1, QuoteInvoiceLink::query()->count());
             $this->assertSame(1, AuditEvent::query()
@@ -159,12 +159,6 @@ final class QuoteInvoiceConversionHttpTest extends TestCase
             'confirmed' => true, 'confirmed_high_risk' => true,
         ])->assertSessionHasErrors('quote');
 
-        $this->tenant($company, fn () => DocumentDeliverySetting::query()
-            ->where('document_id', $invoiceId)->update(['public_access_enabled' => true]));
-        $this->post($url, ['reason' => 'Detach', 'confirmed' => true])
-            ->assertSessionHasErrors('unlink');
-        $this->tenant($company, fn () => DocumentDeliverySetting::query()
-            ->where('document_id', $invoiceId)->update(['public_access_enabled' => false]));
         $this->post($url, ['reason' => 'Independent billing', 'confirmed' => true])
             ->assertRedirect()->assertSessionDoesntHaveErrors();
 

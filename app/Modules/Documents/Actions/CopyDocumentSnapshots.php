@@ -13,13 +13,16 @@ use App\Modules\Documents\Models\DocumentTaxDefault;
 
 final class CopyDocumentSnapshots
 {
-    public function handle(Document $source, Document $target): int
-    {
+    public function handle(
+        Document $source,
+        Document $target,
+        bool $publicAccessEnabled = false,
+    ): int {
         $this->copyCompany($source, $target);
         $this->copyCustomer($source, $target);
         $this->copyTax($source, $target);
         $this->copyBank($source, $target);
-        $this->copyDelivery($source, $target);
+        $this->copyDelivery($source, $target, $publicAccessEnabled);
 
         return $this->copyLines($source, $target);
     }
@@ -93,14 +96,17 @@ final class CopyDocumentSnapshots
         }
     }
 
-    private function copyDelivery(Document $source, Document $target): void
-    {
+    private function copyDelivery(
+        Document $source,
+        Document $target,
+        bool $publicAccessEnabled,
+    ): void {
         $setting = DocumentDeliverySetting::query()
             ->where('document_id', $source->id)->lockForUpdate()->firstOrFail();
         DocumentDeliverySetting::query()->create([
             'document_id' => $target->id,
             'email_attachment_mode' => $setting->email_attachment_mode,
-            'public_access_enabled' => false,
+            'public_access_enabled' => $publicAccessEnabled,
         ]);
 
         $recipients = DocumentDeliveryRecipient::query()

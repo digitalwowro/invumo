@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use Brick\Math\BigDecimal;
@@ -14,7 +15,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 final readonly class QuoteInvoiceAllocation
 {
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private DocumentPublicLinkHistory $publicLinkHistory,
+    ) {}
 
     /**
      * @param  int<0, 8>  $precision
@@ -29,7 +33,7 @@ final readonly class QuoteInvoiceAllocation
         QuoteDisplayStatus $status,
     ): array {
         $links = QuoteInvoiceLink::query()
-            ->with(['invoiceDocument', 'invoice', 'invoiceDelivery'])
+            ->with(['invoiceDocument', 'invoice'])
             ->where('quote_invoice_links.quote_id', $quoteId)
             ->whereHas('invoice', fn ($query) => $query->where('lifecycle', '!=', 'CANCELLED'))
             ->orderBy('id')
@@ -66,7 +70,7 @@ final readonly class QuoteInvoiceAllocation
                 'unlinkUrl' => route('quotes.invoices.unlink', [$company, $quoteId, $link->invoice_id], false),
                 'canUnlink' => $canUnlink
                     && $link->invoice->lifecycle->value === 'DRAFT'
-                    && ! $link->invoiceDelivery->public_access_enabled,
+                    && ! $this->publicLinkHistory->exists($link->invoice_id),
             ])->values()->all(),
         ];
     }

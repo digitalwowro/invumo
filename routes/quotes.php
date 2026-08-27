@@ -4,6 +4,7 @@ use App\Modules\Catalog\Http\Controllers\CatalogDocumentSourceController;
 use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Customers\Http\Controllers\CustomerDocumentSourceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
+use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
 use App\Modules\Quotes\Http\Controllers\QuoteController;
 use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
 use App\Modules\Quotes\Http\Controllers\QuoteInvoiceController;
@@ -43,6 +44,18 @@ Route::get('companies/{company}/quotes/{quote}/pdf', [QuoteRepresentationControl
 Route::get('companies/{company}/quotes/{quote}/logo', [QuoteRepresentationController::class, 'logo'])
     ->middleware('throttle:60,1')
     ->name('quotes.current.logo');
+Route::post('companies/{company}/quotes/{document}/public-link', [DocumentPublicLinkController::class, 'store'])
+    ->defaults('document_kind', 'QUOTE')
+    ->middleware('throttle:20,1')
+    ->name('quotes.public-link.store');
+Route::post('companies/{company}/quotes/{document}/public-link/regenerate', [DocumentPublicLinkController::class, 'regenerate'])
+    ->defaults('document_kind', 'QUOTE')
+    ->middleware('throttle:20,1')
+    ->name('quotes.public-link.regenerate');
+Route::delete('companies/{company}/quotes/{document}/public-link', [DocumentPublicLinkController::class, 'destroy'])
+    ->defaults('document_kind', 'QUOTE')
+    ->middleware('throttle:20,1')
+    ->name('quotes.public-link.destroy');
 
 Route::get('companies/{company}/document-sources/customers', [CustomerDocumentSourceController::class, 'index'])
     ->name('quote-sources.customers.index');

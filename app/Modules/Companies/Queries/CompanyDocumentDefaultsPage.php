@@ -48,6 +48,8 @@ final readonly class CompanyDocumentDefaultsPage
                 'quoteNotes' => $settings->default_quote_notes,
                 'invoiceNotes' => $settings->default_invoice_notes,
                 'emailAttachmentMode' => $settings->default_email_attachment_mode->value,
+                'publicLinksEnabled' => $settings->public_links_enabled_by_default,
+                'publicLinkValidityDays' => (string) $settings->default_public_link_validity_days,
             ],
             'languageOptions' => array_map(
                 fn (string $locale): array => [
@@ -67,6 +69,7 @@ final readonly class CompanyDocumentDefaultsPage
                 'maxDayOffset' => DocumentFieldLimits::MAX_CALENDAR_DAY_OFFSET,
                 'termsAndConditionsCharacters' => DocumentFieldLimits::TERMS_AND_CONDITIONS_CHARACTERS,
                 'notesCharacters' => DocumentFieldLimits::NOTES_CHARACTERS,
+                'publicLinkValidityDays' => ['min' => 1, 'max' => 3650],
             ],
         ];
     }

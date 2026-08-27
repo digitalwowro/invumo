@@ -7,8 +7,11 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
+use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Transactions\Models\InvoiceTransaction;
@@ -188,6 +191,28 @@ it('keeps the Romanian Invoice Draft and current view usable on mobile', functio
         ->assertSee('Tranzacții')
         ->assertSee('40.00 RON')
         ->assertSee('Browser Invoice Customer SRL')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('renders a Romanian public Invoice link on a narrow viewport', function () {
+    [$owner, $company] = companyForInvoiceBrowser('ro');
+    $invoice = app(CreateInvoiceDraft::class)->handle($company, $owner, (string) Str::uuid7());
+    $link = app(CreatePublicDocumentLink::class)->handle(
+        $company,
+        $owner,
+        $invoice->id,
+        DocumentKind::Invoice,
+    );
+
+    visit(route('public-invoices.show', $link->token_ciphertext, false))
+        ->on()
+        ->iPhone15()
+        ->assertSee('Factură '.$invoice->rendered_number)
+        ->assertSee('Descarcă PDF-ul')
+        ->assertSee('Partajat securizat cu Invumo')
+        ->assertScript("document.querySelector('[data-testid=public-pdf-download]')?.tagName === 'A'")
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

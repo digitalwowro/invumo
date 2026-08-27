@@ -4,22 +4,17 @@ namespace App\Modules\Delivery\Queries;
 
 use App\Models\User;
 use App\Modules\Companies\Models\Company;
-use App\Modules\Companies\Models\CompanyAsset;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
-use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Filesystem\FilesystemManager;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final readonly class CurrentDocumentLogo
 {
     public function __construct(
         private CompanyAbilityCheck $abilities,
-        private FilesystemManager $filesystems,
+        private DocumentLogoContent $content,
     ) {}
 
     public function dataUri(
@@ -28,15 +23,9 @@ final readonly class CurrentDocumentLogo
         string $documentId,
         DocumentKind $kind,
     ): ?string {
-        $asset = $this->asset($company, $actor, $documentId, $kind);
+        $this->authorize($company, $actor, $documentId, $kind);
 
-        if ($asset === null) {
-            return null;
-        }
-
-        $contents = $this->disk($asset)->get($asset->storage_key);
-
-        return 'data:'.$asset->mime_type.';base64,'.base64_encode($contents);
+        return $this->content->dataUri($documentId);
     }
 
     public function response(
@@ -45,65 +34,24 @@ final readonly class CurrentDocumentLogo
         string $documentId,
         DocumentKind $kind,
     ): StreamedResponse {
-        $asset = $this->asset($company, $actor, $documentId, $kind);
-        abort_if($asset === null, 404);
-        $disk = $this->disk($asset);
+        $this->authorize($company, $actor, $documentId, $kind);
 
-        return response()->stream(
-            function () use ($disk, $asset): void {
-                $stream = $disk->readStream($asset->storage_key);
-
-                if (! is_resource($stream)) {
-                    throw new RuntimeException('The document logo could not be read from private storage.');
-                }
-
-                try {
-                    fpassthru($stream);
-                } finally {
-                    fclose($stream);
-                }
-            },
-            200,
-            [
-                'Content-Type' => $asset->mime_type,
-                'Content-Length' => (string) $asset->byte_size,
-                'Cache-Control' => 'private, no-store, max-age=0',
-                'X-Content-Type-Options' => 'nosniff',
-            ],
-        );
+        return $this->content->response($documentId);
     }
 
-    private function asset(
+    private function authorize(
         Company $company,
         User $actor,
         string $documentId,
         DocumentKind $kind,
-    ): ?CompanyAsset {
+    ): void {
         if (! $this->abilities->allows($actor, $company, $kind->viewAbility())) {
             throw new AuthorizationException;
         }
 
-        $document = Document::query()
+        Document::query()
             ->whereKey($documentId)
             ->where('kind', $kind)
             ->firstOrFail();
-        $snapshot = DocumentCompanySnapshot::query()
-            ->where('document_id', $document->id)
-            ->firstOrFail();
-
-        return $snapshot->logo_asset_id === null
-            ? null
-            : CompanyAsset::query()
-                ->whereKey($snapshot->logo_asset_id)
-                ->whereNull('deleted_at')
-                ->first();
-    }
-
-    private function disk(CompanyAsset $asset): Filesystem
-    {
-        $disk = $this->filesystems->disk($asset->storage_disk);
-        abort_unless($disk->exists($asset->storage_key), 404);
-
-        return $disk;
     }
 }

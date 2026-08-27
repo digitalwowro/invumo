@@ -47,7 +47,7 @@ final class InitializeDocumentDefaults
         DocumentDeliverySetting::query()->create([
             'document_id' => $document->id,
             'email_attachment_mode' => $settings->default_email_attachment_mode,
-            'public_access_enabled' => false,
+            'public_access_enabled' => $settings->public_links_enabled_by_default,
         ]);
 
         if ($taxPreset instanceof TaxPreset) {

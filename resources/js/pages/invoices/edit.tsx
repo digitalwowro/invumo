@@ -7,6 +7,7 @@ import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
+import { PublicDocumentLinkPanel } from '@/components/domain/documents/public-document-link-panel';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
 import { InvoiceDeleteDialog } from '@/features/invoices/components/invoice-delete-dialog';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
@@ -27,6 +28,10 @@ import type {
     InvoiceTranslations,
 } from '@/types/invoice';
 import type { InvoiceTransactions } from '@/types/invoice-transaction';
+import type {
+    PublicDocumentLink,
+    PublicDocumentTranslations,
+} from '@/types/public-document';
 
 type Props = {
     invoice: InvoiceDraft;
@@ -37,6 +42,7 @@ type Props = {
     issueUrl: string;
     representationUrl: string;
     pdfUrl: string;
+    publicLink: PublicDocumentLink;
     deletion: { url: string | null; highRisk: boolean };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
@@ -54,6 +60,7 @@ type Props = {
     translations: InvoiceTranslations;
     customerTranslations: CustomerTranslations;
     catalogTranslations: CatalogTranslations;
+    publicDocumentTranslations: PublicDocumentTranslations;
 };
 
 export default function EditInvoice({
@@ -65,12 +72,14 @@ export default function EditInvoice({
     issueUrl,
     representationUrl,
     pdfUrl,
+    publicLink,
     deletion,
     indexUrl,
     status,
     translations,
     customerTranslations,
     catalogTranslations,
+    publicDocumentTranslations,
     ...sourceProps
 }: Props) {
     const [invoiceDirty, setInvoiceDirty] = useState(false);
@@ -128,6 +137,10 @@ export default function EditInvoice({
                                 ? 'warning'
                                 : 'neutral'
                         }
+                    />
+                    <PublicDocumentLinkPanel
+                        link={publicLink}
+                        labels={publicDocumentTranslations.management}
                     />
                     <InvoiceDraftEditor
                         key={invoice.editVersion}

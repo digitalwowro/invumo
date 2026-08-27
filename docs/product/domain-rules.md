@@ -464,7 +464,7 @@ Recurring template
 
 - Use Zoho ZeptoMail.
 - Use the already-configured authenticated SMTP transport for foundational account verification, recovery, and invitation email.
-- Before Phase 9 document email, complete the provider gate and select SMTP reuse or ZeptoMail API delivery without weakening webhook authentication, retries, idempotency, or delivery history.
+- Use ZeptoMail's HTTPS Send API for Quote, Invoice, reminder, and payment-received delivery. Keep foundational account verification, recovery, and invitation email on the existing authenticated SMTP transport.
 - Provide multilingual default subject and body for quotes and invoices.
 - Allow editing before sending.
 - Provide company templates per language for quote sent, invoice sent, payment reminder, and payment received events.
@@ -476,8 +476,10 @@ Recurring template
 - Show resolved recipients and secure-link-only/attach-PDF choice in the send composer before sending.
 - Require at least one valid primary recipient; validate and deduplicate To/CC/BCC addresses.
 - Automated sends with no valid recipient fail visibly and record the reason rather than retrying indefinitely.
-- Track Sent, Delivered, and Opened where ZeptoMail supports them.
-- Authenticate webhooks and process provider events idempotently.
+- Track Sent, Delivered, soft/hard bounce, Opened, and clicked provider events. Treat open/click signals as provider-reported and potentially incomplete.
+- Authenticate ZeptoMail webhooks with the pinned HMAC-SHA256 signature and bounded timestamp skew, discard raw/privacy-rich provider fields, and process duplicate or out-of-order events idempotently.
+- A provider outcome that may have been transmitted but cannot be confirmed becomes `UNKNOWN` and is never resent automatically. An authorized manual retry creates a new immutable attempt after a duplicate-delivery warning.
+- Permanent document deletion erases delivery content, recipients, attachment artifacts, public URLs, and provider identity while retaining only non-sensitive operational facts.
 - Customer SMTP is excluded from v1.
 - The company primary brand color may be used for restrained accents when email-client compatibility and contrast permit it.
 

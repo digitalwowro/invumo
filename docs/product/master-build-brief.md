@@ -785,7 +785,7 @@ Design the PDF system so more templates can be added later without rewriting the
 
 ## 23. Email
 
-Send transactional email through Zoho ZeptoMail. Foundational account email already uses the production ZeptoMail SMTP transport over authenticated TLS. Before Phase 9 document delivery, complete the provider gate and choose whether quote/invoice/reminder delivery should reuse SMTP or use ZeptoMail's API; that choice must preserve the approved webhook, retry, idempotency, and delivery-history behavior.
+Send transactional email through Zoho ZeptoMail. Foundational account email continues through the production ZeptoMail SMTP transport over authenticated TLS. Quote, Invoice, reminder, and payment-received delivery uses ZeptoMail's HTTPS Send API under the approved [email delivery and webhook contract](../architecture/email-delivery-and-webhooks.md).
 
 Quote and invoice emails include:
 
@@ -833,7 +833,7 @@ The send composer must display the resolved recipients and attachment choice bef
 
 Sending requires at least one valid primary recipient. Validate and deduplicate To/CC/BCC addresses. An automated send with no valid recipient must fail visibly and record the reason rather than retrying indefinitely or silently succeeding.
 
-Track Sent, Delivered, and Opened where ZeptoMail supports them. Authenticate webhooks and process provider events idempotently.
+Track Sent, Delivered, bounced, Opened, and clicked provider events under the approved privacy-minimal webhook contract. Authenticate webhooks and process duplicate or out-of-order provider events idempotently. An ambiguous send outcome is never retried automatically; show it as potentially delivered and require an authorized, warned manual retry.
 
 The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.
 

@@ -437,12 +437,11 @@ Conversion first locks Company configuration and the Invoice numbering counter, 
 
 - `id`, `company_id`, Quote reference
 - decision: `ACCEPTED` or `REJECTED`
-- customer name and email
+- trimmed customer name bounded at 160 and normalized lowercase email bounded at 254
 - decision timestamp
-- idempotency key
-- optional IP/user-agent metadata with explicit retention controls
+- Quote-scoped UUID idempotency key
 
-Public decisions are immutable events. Internal lifecycle corrections do not rewrite them.
+Public decisions are immutable tenant events and retain no IP address or User-Agent in v1. Restricted runtime receives `SELECT`, `INSERT`, and row-locking `UPDATE`; a database trigger rejects every actual update, and runtime receives no direct `DELETE`. Quote deletion cascades the live name/email record under the approved erasure boundary and retains only the audit tombstone's non-sensitive `had_customer_decision` fact. Internal lifecycle corrections do not rewrite prior events.
 
 ## 9. Financial rows
 
@@ -714,7 +713,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 7D this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, and the Company-wide transaction-date cursor index under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Public links, delivery artifacts/events, reminder persistence, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 8C this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, and immutable Quote public-decision identity under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Delivery artifacts/events, reminder persistence, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

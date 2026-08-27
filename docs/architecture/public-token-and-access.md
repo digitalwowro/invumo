@@ -37,7 +37,7 @@ This is a deliberate refinement of the earlier shorthand that described the stor
 
 Use the approved SaaS host with type-specific routes:
 
-- `/q/{token}` and `/q/{token}/pdf`
+- `/q/{token}`, `/q/{token}/pdf`, and `/q/{token}/decision`
 - `/i/{token}` and `/i/{token}/pdf`
 
 The route prefix must match the linked document kind. Tokens never appear in query strings or hidden form fields. Public decision forms use the already-resolved link context rather than accepting a second token field.
@@ -45,6 +45,8 @@ The route prefix must match the linked document kind. Tokens never appear in que
 Every public response uses `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex, nofollow, noarchive`, `X-Content-Type-Options: nosniff`, and a public-page Content Security Policy with `frame-ancestors 'none'`. Pages load no third-party resources.
 
 The current host access log records full request paths. Before any token route becomes live, the web-server/access-proxy configuration must suppress or structurally redact the token segment for these routes. This is a separate production-configuration authorization boundary. Application logs and exception reporting must also redact route tokens.
+
+Application redaction has two explicit stages. A global pre-routing middleware captures a valid public-route token from the untouched server request URI into a private Request attribute without changing the path the router must match. After route matching, route middleware compares that captured value to the resolved `token` parameter in constant time, then replaces the route parameter and request URI with `[redacted]` and reinitializes Symfony's cached URI/path values before any controller, rate-limit key, exception context, or downstream logger can read them. If routing or another earlier layer throws, the global middleware performs the same sanitization before rethrowing to Laravel's exception reporter. The private Request attribute is the sole downstream plaintext authority used by resolution and keyed rate limiting; the redacted route parameter is never used to authorize access.
 
 ## 5. Relational model
 
@@ -132,11 +134,11 @@ The bootstrap policy grants no INSERT, UPDATE, DELETE, document, Customer, Compa
 
 Use Laravel's database-backed named rate limiters with multiple simultaneous limits:
 
-| Surface | Per source-IP fingerprint | Per token hash |
-| --- | ---: | ---: |
-| HTML view | 60/minute | 120/minute |
-| PDF generation/download | 10/minute | 10/minute |
-| Accept/Reject submission | 10/minute | 5/minute |
+| Surface                  | Per source-IP fingerprint | Per token hash |
+| ------------------------ | ------------------------: | -------------: |
+| HTML view                |                 60/minute |     120/minute |
+| PDF generation/download  |                 10/minute |      10/minute |
+| Accept/Reject submission |                 10/minute |       5/minute |
 
 Keys contain a keyed one-way fingerprint of the normalized source IP and the token SHA-256 hash, never their plaintext values. Invalid token guesses still consume the IP limit. Quote and Invoice routes share the corresponding public surface bucket. Rate-limited responses include `Retry-After`, reveal no token/link state, create no business audit event, and log only a bounded outcome code.
 
@@ -146,14 +148,15 @@ These limits constrain resource abuse; token unpredictability remains the primar
 
 Successful public GET/PDF reads remain side-effect free. Do not persist `last_used_at`, view counters, IP addresses, or User-Agent strings. This intentionally removes the earlier proposed `last-used metadata` field because it has no approved product consumer and would make rendering mutate retained state.
 
-Phase 8C public Accept/Reject persists the required supplied name/email in the decision-owned live record under the Customer-data erasure boundary. Append-only audit records only public actor type, decision, target, timestamp, and non-sensitive lifecycle facts; it never copies the name, email, IP, User-Agent, token, hash, or URL.
+Phase 8C public Accept/Reject persists the required supplied name/email in the decision-owned live record under the Customer-data erasure boundary. The approved Customer identity envelope is reused: trimmed names are bounded at 160 characters and normalized lowercase RFC-valid email addresses at 254. v1 deliberately stores no IP address or User-Agent because there is no approved retention consumer. Append-only audit records only public actor type, decision, target, timestamp, idempotency reference, and non-sensitive lifecycle facts; it never copies the name, email, IP, User-Agent, token, hash, or URL.
 
 ## 12. Concurrency and idempotency
 
 - Generation, revocation, and regeneration serialize on the Document and complete link set.
 - The partial unique index independently prevents two current generations.
 - Public resolution uses one database transaction and one token generation; regeneration racing a read yields either the complete old committed state or the complete new committed state.
-- Accept/Reject locks the link and Quote aggregate, rechecks expiry/revocation/Sent/commercial validity, commits the decision and audit together, treats replay of the same decision as idempotent, and rejects an opposite later decision.
+- Accept/Reject owns one outer restricted-runtime transaction. It locks Company settings, the Document/Quote aggregate, delivery latch, all link generations, then decision events in stable UUID order; rechecks the exact presented generation, expiry/revocation, Sent lifecycle, and Company-local commercial validity; and commits lifecycle, versions, immutable decision identity, and privacy-safe audit together.
+- The Quote aggregate lock serializes concurrent visitors. Reusing an idempotency key with different content is rejected, retrying an identical request or the already-recorded outcome creates no second event/audit, and an opposite later public decision remains blocked until an internal correction returns the Quote to an eligible state.
 - No public GET, PDF, or rejected lookup creates queue work, email, artifacts, audit rows, or provider calls.
 
 ## 13. Required verification

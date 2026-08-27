@@ -2,7 +2,6 @@
 
 namespace App\Modules\Delivery\Support;
 
-use App\Modules\Delivery\Http\Middleware\RedactPublicDocumentToken;
 use Illuminate\Http\Request;
 
 final readonly class PublicDocumentRateLimitKey
@@ -18,6 +17,6 @@ final readonly class PublicDocumentRateLimitKey
 
     public static function token(Request $request): string
     {
-        return hash('sha256', RedactPublicDocumentToken::plainText($request));
+        return hash('sha256', PublicDocumentRequestToken::plainText($request));
     }
 }

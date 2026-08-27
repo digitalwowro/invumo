@@ -234,6 +234,8 @@ it('converts and unlinks an accepted Quote without desktop overflow', function (
 it('creates views and revokes a secure Quote link without desktop overflow', function () {
     [$owner, $company] = companyForQuoteBrowser();
     $quote = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
+    app(TenantContext::class)->runAsSystem($company->id, fn () => Quote::query()
+        ->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]));
     $page = openQuoteCreate($owner, $company)
         ->navigate(route('quotes.edit', [$company, $quote], false))
         ->assertSee('Secure public link')
@@ -249,6 +251,11 @@ it('creates views and revokes a secure Quote link without desktop overflow', fun
     $page->navigate(route('public-quotes.show', $token, false))
         ->assertSee('Quote '.$quote->rendered_number)
         ->assertSee('Download PDF')
+        ->assertSee('Respond to this quote')
+        ->type('Your name', 'Browser Customer')
+        ->type('Your email address', 'browser-customer@example.com')
+        ->click('Accept quote')
+        ->assertSee('Quote accepted')
         ->assertSee('Securely shared with Invumo')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()

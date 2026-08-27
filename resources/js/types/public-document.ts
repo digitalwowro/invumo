@@ -32,10 +32,39 @@ export type PublicDocumentTranslations = {
         download_pdf: string;
         provided_by: string;
     };
+    decision: {
+        title: string;
+        description: string;
+        customer_name: string;
+        customer_email: string;
+        accept: string;
+        reject: string;
+        accepted_title: string;
+        accepted_description: string;
+        rejected_title: string;
+        rejected_description: string;
+        unavailable_title: string;
+        unavailable_description: string;
+    };
     feedback: {
         created: string;
         regenerated: string;
         revoked: string;
     };
-    errors: { unavailable: string };
+    errors: {
+        unavailable: string;
+        decision_unavailable: string;
+        decision_conflict: string;
+        idempotency_conflict: string;
+    };
+};
+
+export type PublicQuoteDecisionState = {
+    state: 'AVAILABLE' | 'ACCEPTED' | 'REJECTED' | 'UNAVAILABLE';
+    submitUrl: string | null;
+    idempotencyKey: string | null;
+    locale: string;
+    csrfToken: string;
+    customerName: string;
+    customerEmail: string;
 };

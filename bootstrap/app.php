@@ -6,7 +6,7 @@ use App\Http\Middleware\EnsureAuthenticatedUserIsActive;
 use App\Http\Middleware\EnterCompanyContext;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetApplicationLocale;
-use App\Modules\Delivery\Http\Middleware\RedactPublicDocumentToken;
+use App\Modules\Delivery\Http\Middleware\CapturePublicDocumentToken;
 use App\Modules\Platform\Http\Middleware\EnsurePlatformOperator;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend(RedactPublicDocumentToken::class);
+        $middleware->prepend(CapturePublicDocumentToken::class);
         $middleware->encryptCookies(except: ['sidebar_state']);
 
         $middleware->alias([

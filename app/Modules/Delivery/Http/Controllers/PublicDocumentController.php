@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Delivery\Data\OutwardDocument;
 use App\Modules\Delivery\Data\ResolvedPublicDocument;
-use App\Modules\Delivery\Http\Middleware\RedactPublicDocumentToken;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
 use App\Modules\Delivery\Queries\DocumentLogoContent;
 use App\Modules\Delivery\Queries\ResolvePublicDocument;
+use App\Modules\Delivery\Support\PublicDocumentRequestToken;
 use App\Modules\Documents\Data\DocumentKind;
+use App\Modules\Quotes\Queries\PublicQuoteDecisionState;
 use App\Support\Inertia\PublicDocumentsTranslationBag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -52,6 +53,7 @@ final class PublicDocumentController extends Controller
                 ['token' => $resolved['token']],
                 false,
             ),
+            'decision' => $resolved['decision'],
             'translations' => app(PublicDocumentsTranslationBag::class)->toArray(
                 $document->language,
             ),
@@ -82,14 +84,14 @@ final class PublicDocumentController extends Controller
         ]);
     }
 
-    /** @return array{document: OutwardDocument, logoDataUri: string|null, token: string} */
+    /** @return array{document: OutwardDocument, logoDataUri: string|null, decision: array<string, mixed>|null, token: string} */
     private function resolve(Request $request, DocumentKind $kind): array
     {
-        $token = RedactPublicDocumentToken::plainText($request);
+        $token = PublicDocumentRequestToken::plainText($request);
         $result = app(ResolvePublicDocument::class)->run(
             $token,
             $kind,
-            function (ResolvedPublicDocument $resolved) use ($kind): array {
+            function (ResolvedPublicDocument $resolved) use ($kind, $token): array {
                 $representation = app(CurrentDocumentRepresentation::class);
                 $document = $kind === DocumentKind::Quote
                     ? $representation->publicQuote($resolved->company, $resolved->document)
@@ -99,6 +101,9 @@ final class PublicDocumentController extends Controller
                     'document' => $document,
                     'logoDataUri' => $document->hasLogo
                         ? app(DocumentLogoContent::class)->dataUri($resolved->document->id)
+                        : null,
+                    'decision' => $kind === DocumentKind::Quote
+                        ? app(PublicQuoteDecisionState::class)->for($resolved, $token)
                         : null,
                 ];
             },

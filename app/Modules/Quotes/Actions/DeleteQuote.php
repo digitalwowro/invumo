@@ -22,6 +22,7 @@ use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Exceptions\QuoteDeletionException;
 use App\Modules\Quotes\Models\Quote;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
+use App\Modules\Quotes\Models\QuotePublicDecision;
 use Illuminate\Support\Facades\DB;
 
 final readonly class DeleteQuote
@@ -66,6 +67,8 @@ final readonly class DeleteQuote
         $links = QuoteInvoiceLink::query()
             ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
         $publicLinks = $this->publicLinkHistory->lock($document->id);
+        $publicDecisions = QuotePublicDecision::query()
+            ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
 
         if ($links->isNotEmpty()) {
             throw QuoteDeletionException::invoiceDependency();
@@ -76,7 +79,8 @@ final readonly class DeleteQuote
         }
 
         $highRisk = $quote->lifecycle !== QuoteLifecycle::Draft
-            || $publicLinks->isNotEmpty();
+            || $publicLinks->isNotEmpty()
+            || $publicDecisions->isNotEmpty();
 
         if ($highRisk && ! $data->confirmedHighRisk) {
             throw QuoteDeletionException::highRiskConfirmationRequired();
@@ -92,7 +96,8 @@ final readonly class DeleteQuote
                 'lifecycle' => $quote->lifecycle->value,
                 'had_customer' => $document->customer_id !== null,
                 'had_public_link_history' => $publicLinks->isNotEmpty(),
-            ], ['lifecycle', 'had_customer', 'had_public_link_history']),
+                'had_customer_decision' => $publicDecisions->isNotEmpty(),
+            ], ['lifecycle', 'had_customer', 'had_public_link_history', 'had_customer_decision']),
         ));
         DocumentNumberEvent::query()->create([
             'document_id' => $document->id,

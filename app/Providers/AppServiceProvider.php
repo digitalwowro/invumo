@@ -112,5 +112,9 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(10)->by('source:'.PublicDocumentRateLimitKey::source($request)),
             Limit::perMinute(10)->by('token:'.PublicDocumentRateLimitKey::token($request)),
         ]);
+        RateLimiter::for('public-document-decision', fn (Request $request): array => [
+            Limit::perMinute(10)->by('source:'.PublicDocumentRateLimitKey::source($request)),
+            Limit::perMinute(5)->by('token:'.PublicDocumentRateLimitKey::token($request)),
+        ]);
     }
 }

@@ -13,6 +13,7 @@ use App\Modules\Documents\Models\DocumentDeliverySetting;
 use Closure;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 final readonly class ResolvePublicDocument
 {
@@ -35,40 +36,72 @@ final readonly class ResolvePublicDocument
             return null;
         }
 
-        $result = $this->connection()->transaction(function () use (
-            $hash,
-            $expectedKind,
-            $callback,
-        ): mixed {
-            $connection = $this->connection();
-            $connection->selectOne(
-                "SELECT set_config('app.public_link_hash', ?, true)",
-                [$hash],
-            );
-            $bootstrap = $connection->table('public_document_links')
-                ->where('token_hash', $hash)
-                ->whereNull('revoked_at')
-                ->where('expires_at', '>', now())
-                ->first(['id', 'company_id', 'document_id']);
-
-            if ($bootstrap === null) {
-                return null;
-            }
-
-            return $this->tenantContext->runAsSystem(
-                (string) $bootstrap->company_id,
-                fn (): mixed => $this->resolved(
-                    (string) $bootstrap->id,
-                    $hash,
-                    $expectedKind,
-                    $callback,
-                ),
-            );
-        });
+        $result = $this->connection()->transaction(
+            fn (): mixed => $this->resolveHash($hash, $expectedKind, $callback),
+        );
 
         $this->tenantContext->assertClear();
 
         return $result;
+    }
+
+    /**
+     * Resolve inside a root Action's existing transaction so the public
+     * bootstrap and the resulting mutation share one atomic boundary.
+     *
+     * @template TResult
+     *
+     * @param  Closure(ResolvedPublicDocument): TResult  $callback
+     * @return TResult|null
+     */
+    public function withinTransaction(
+        string $token,
+        DocumentKind $expectedKind,
+        Closure $callback,
+    ): mixed {
+        $hash = PublicDocumentToken::lookupHash($token);
+
+        if ($hash === null || $this->tenantContext->companyId() !== null) {
+            return null;
+        }
+
+        if ($this->connection()->transactionLevel() === 0) {
+            throw new LogicException('Public document mutation resolution requires an active transaction.');
+        }
+
+        return $this->resolveHash($hash, $expectedKind, $callback);
+    }
+
+    /** @param Closure(ResolvedPublicDocument): mixed $callback */
+    private function resolveHash(
+        string $hash,
+        DocumentKind $expectedKind,
+        Closure $callback,
+    ): mixed {
+        $connection = $this->connection();
+        $connection->selectOne(
+            "SELECT set_config('app.public_link_hash', ?, true)",
+            [$hash],
+        );
+        $bootstrap = $connection->table('public_document_links')
+            ->where('token_hash', $hash)
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', now())
+            ->first(['id', 'company_id', 'document_id']);
+
+        if ($bootstrap === null) {
+            return null;
+        }
+
+        return $this->tenantContext->runAsSystem(
+            (string) $bootstrap->company_id,
+            fn (): mixed => $this->resolved(
+                (string) $bootstrap->id,
+                $hash,
+                $expectedKind,
+                $callback,
+            ),
+        );
     }
 
     /** @param Closure(ResolvedPublicDocument): mixed $callback */

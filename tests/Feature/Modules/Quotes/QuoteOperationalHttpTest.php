@@ -178,7 +178,7 @@ final class QuoteOperationalHttpTest extends TestCase
                 ->where('target_id', $quote->id)
                 ->sole();
             $this->assertEqualsCanonicalizing(
-                ['lifecycle', 'had_customer', 'had_public_link_history'],
+                ['lifecycle', 'had_customer', 'had_public_link_history', 'had_customer_decision'],
                 array_keys($audit->before),
             );
         });

@@ -6,15 +6,20 @@ use App\Modules\Delivery\Support\PublicDocumentRequestToken;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
-final readonly class RedactPublicDocumentToken
+final readonly class CapturePublicDocumentToken
 {
     public function handle(Request $request, Closure $next): Response
     {
         PublicDocumentRequestToken::capture($request);
-        abort_unless(PublicDocumentRequestToken::matchesRoute($request), 404);
-        PublicDocumentRequestToken::redact($request);
 
-        return $next($request);
+        try {
+            return $next($request);
+        } catch (Throwable $exception) {
+            PublicDocumentRequestToken::redact($request);
+
+            throw $exception;
+        }
     }
 }

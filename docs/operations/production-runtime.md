@@ -2,7 +2,7 @@
 
 Status: Phase 1 operational baseline complete; public-launch operations verification remains open
 
-Verified: 2026-08-26
+Verified: 2026-08-27
 
 This document records the production runtime that currently serves Invumo. It contains no credentials and does not replace the canonical [development tracker](../development/development-tracker.md).
 
@@ -30,11 +30,13 @@ The generic backup core is covered against the isolated PostgreSQL test database
 
 Nginx, PHP-FPM, and PostgreSQL remain system-managed services. Laravel web requests execute through the unprivileged `invumo` PHP-FPM pool.
 
-Phase 8 public Quote/Invoice routes carry bearer credentials in their path. Before the public-link schema is migrated or any credential is issued, the Nginx access-log format must replace the token segment on `/q/{token}` and `/i/{token}` requests with a fixed redacted marker, including their `/pdf` variants. Validate the configuration, reload Nginx, send a request containing a synthetic token, and prove that token is absent from the resulting access log. This production configuration change remains a separate explicit authorization boundary from an approved application batch.
+Phase 8 public Quote/Invoice routes carry bearer credentials in their path. Before the public-link schema is migrated or any credential is issued, the Nginx access-log format must replace the token segment on `/q/{token}` and `/i/{token}` requests with a fixed redacted marker, including Quote `/decision` and both `/pdf` variants. Validate the configuration, reload Nginx, send a request containing a synthetic token, and prove that token is absent from the resulting access log. This production configuration change remains a separate explicit authorization boundary from an approved application batch.
 
 Public-link ciphertext supports Laravel's current application key plus `APP_PREVIOUS_KEYS`. Rotate keys in this order: install the new current key with the prior key in `APP_PREVIOUS_KEYS`, rebuild the private configuration cache and restart application workers, run `php artisan public-document-links:reencrypt`, verify every retained ciphertext decrypts under the new current key, and only then remove the retired key in a later controlled configuration change. The command iterates Companies through restricted tenant context and locks documents and link rows in stable UUID order; it never prints a token, hash, ciphertext, or URL.
 
 Verified on 2026-08-27 for Batch 8B: the Invumo server uses its own redacted access-log format, overriding the inherited full-request format. A synthetic Quote PDF request with a token-bearing Invoice referrer logged only `/q/[redacted]/pdf` and `[redacted-public-document-url]`; searching the access log for either probe token returned no result. Backup `invumo-20260827T172433Z-pre-migration.sql` was finalized outside Git at 280,099 bytes with SHA-256 `755934c5f4b9c84d56de8b4b0ddcabe160c2e48dfd23bb00924909a7018eafd1` before migration `2026_08_27_040000_create_public_document_links` ran as production batch 17. The table is forced-RLS with its ordinary Company policy and exact-hash bootstrap policy; default/unknown-hash runtime visibility is zero. The existing Company has the enabled/30-day future-document defaults, its two existing documents remain disabled, and no link credential was generated during rollout. Unknown valid-shaped tokens return the same no-store, no-referrer, noindex, framed-denied 404 through both the origin and public host. Production readiness passes and every migration is current.
+
+Verified on 2026-08-27 for Batch 8C: backup `invumo-20260827T185313Z-pre-migration.sql` was finalized outside Git at 289,504 bytes, mode `0600`, with SHA-256 `dbd6f1fc52c164507fa76ad3c3b19948efc3aceff530fb1fd2c23212daf17c77` before migration `2026_08_27_050000_create_quote_public_decisions` ran as production batch 18. `quote_public_decisions` has forced RLS, one Company policy, 16 validated constraints, its immutable-update trigger, and runtime SELECT/INSERT/UPDATE grants; UPDATE exists only to support stable row locking and every actual update is rejected by the trigger. Both production connections see zero decision rows without Company context. All migrations are current and the production runtime verifier passes.
 
 ## Environment and database separation
 

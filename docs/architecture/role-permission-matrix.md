@@ -35,18 +35,18 @@ Every role allocation in this matrix was explicitly approved by the owner on 202
 
 This matrix is independent of the Company-role tables below.
 
-| Action                                                       | Platform Owner | Company Owner/Admin/Member without platform role | Notes                                                                                              |
-| ------------------------------------------------------------ | -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Open Platform Operations                                     | Yes            | No                                              | Verified, unsuspended User and current operator record required                                    |
-| View approved User/Account/Company control-plane metadata    | Yes            | No                                              | Never includes tenant business content or an RLS bypass                                            |
-| View current plan lifecycle and upcoming expirations         | Yes            | No                                              | Operational status/date tracking only; no billing/payment data exists in v1                        |
-| Change an Account's seeded Plan or lifecycle                 | Guarded        | No                                              | Recent password confirmation, explicit confirmation/reason, locks, validation, and platform audit  |
-| Suspend/reactivate a non-operator User and revoke sessions   | Guarded        | No                                              | Cannot target self or the last active Platform Owner                                               |
-| Suspend/reactivate an Account                                | Guarded        | No                                              | Blocks Companies owned by that Account; does not affect unrelated Account ownership                |
-| View platform audit                                          | Yes            | No                                              | Separate from Company audit                                                                        |
-| Grant/revoke Platform Owner through the web UI               | No             | No                                              | Protected confirmed application command only in v1; last active operator cannot be removed         |
-| Read tenant Customers/documents/Transactions without context | No             | No                                              | Full impersonation must first establish the selected User's authorized Company/RLS context          |
-| Fully impersonate a non-operator User                        | Guarded        | No                                              | Shared recent-password window plus action throttle; the mutation accepts no password; no reason/separate action confirmation/special timeout; target permissions/RLS and dual audit apply; Platform Operations is blocked |
+| Action                                                       | Platform Owner | Company Owner/Admin/Member without platform role | Notes                                                                                                                                                                                                                     |
+| ------------------------------------------------------------ | -------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open Platform Operations                                     | Yes            | No                                               | Verified, unsuspended User and current operator record required                                                                                                                                                           |
+| View approved User/Account/Company control-plane metadata    | Yes            | No                                               | Never includes tenant business content or an RLS bypass                                                                                                                                                                   |
+| View current plan lifecycle and upcoming expirations         | Yes            | No                                               | Operational status/date tracking only; no billing/payment data exists in v1                                                                                                                                               |
+| Change an Account's seeded Plan or lifecycle                 | Guarded        | No                                               | Recent password confirmation, explicit confirmation/reason, locks, validation, and platform audit                                                                                                                         |
+| Suspend/reactivate a non-operator User and revoke sessions   | Guarded        | No                                               | Cannot target self or the last active Platform Owner                                                                                                                                                                      |
+| Suspend/reactivate an Account                                | Guarded        | No                                               | Blocks Companies owned by that Account; does not affect unrelated Account ownership                                                                                                                                       |
+| View platform audit                                          | Yes            | No                                               | Separate from Company audit                                                                                                                                                                                               |
+| Grant/revoke Platform Owner through the web UI               | No             | No                                               | Protected confirmed application command only in v1; last active operator cannot be removed                                                                                                                                |
+| Read tenant Customers/documents/Transactions without context | No             | No                                               | Full impersonation must first establish the selected User's authorized Company/RLS context                                                                                                                                |
+| Fully impersonate a non-operator User                        | Guarded        | No                                               | Shared recent-password window plus action throttle; the mutation accepts no password; no reason/separate action confirmation/special timeout; target permissions/RLS and dual audit apply; Platform Operations is blocked |
 
 ## 3. Already-approved authorization boundaries
 
@@ -60,19 +60,19 @@ This matrix is independent of the Company-role tables below.
 
 ## 4. Personal access and Company governance
 
-| Action                                                         | Owner   | Admin   | Member | Notes                                                                                                            |
-| -------------------------------------------------------------- | ------- | ------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
-| Edit own profile, application language, password, and sessions | Self    | Self    | Self   | Not delegated through a Company role                                                                             |
-| Switch among Companies where the User has active membership    | Yes     | Yes     | Yes    | The destination membership controls the new context                                                              |
-| View active Company identity and member directory              | Yes     | Yes     | Yes    | Does not expose secrets or Account controls                                                                      |
-| View the owning Account's plan and entitlements                | Yes     | No      | No     | Exclusive among Company roles; Platform Owner lifecycle administration follows the separate matrix               |
+| Action                                                         | Owner   | Admin   | Member | Notes                                                                                                                  |
+| -------------------------------------------------------------- | ------- | ------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Edit own profile, application language, password, and sessions | Self    | Self    | Self   | Not delegated through a Company role                                                                                   |
+| Switch among Companies where the User has active membership    | Yes     | Yes     | Yes    | The destination membership controls the new context                                                                    |
+| View active Company identity and member directory              | Yes     | Yes     | Yes    | Does not expose secrets or Account controls                                                                            |
+| View the owning Account's plan and entitlements                | Yes     | No      | No     | Exclusive among Company roles; Platform Owner lifecycle administration follows the separate matrix                     |
 | Transfer Company ownership                                     | Guarded | No      | No     | Existing Admin/Member only; validate destination Account/Plan, reauthenticate, confirm former-Owner outcome, and audit |
-| Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                         |
-| Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expires 7 days after issue/resend; revocable and single-use; cannot invite Owner                                  |
-| Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                        |
-| Change another non-Owner membership between Admin and Member   | Guarded | Guarded | No     | Confirmation and audit; Admin cannot affect Owner or change its own role through this action                     |
-| Remove another non-Owner member                                | Guarded | Guarded | No     | Confirmation and audit; Admin cannot remove Owner or itself through this action                                  |
-| Leave a Company                                                | Guarded | Self    | Self   | Owner must transfer ownership or erase the Company first                                                         |
+| Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                               |
+| Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expires 7 days after issue/resend; revocable and single-use; cannot invite Owner                                       |
+| Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                              |
+| Change another non-Owner membership between Admin and Member   | Guarded | Guarded | No     | Confirmation and audit; Admin cannot affect Owner or change its own role through this action                           |
+| Remove another non-Owner member                                | Guarded | Guarded | No     | Confirmation and audit; Admin cannot remove Owner or itself through this action                                        |
+| Leave a Company                                                | Guarded | Self    | Self   | Owner must transfer ownership or erase the Company first                                                               |
 
 ## 5. Company settings and reusable configuration
 
@@ -141,16 +141,16 @@ The UI treats deletion of an already issued, sent, or publicly shared transactio
 
 ## 9. Payments, Refunds, and Adjustments
 
-| Action                                        | Owner   | Admin   | Member  | Notes                                                                                 |
-| --------------------------------------------- | ------- | ------- | ------- | ------------------------------------------------------------------------------------- |
+| Action                                                | Owner   | Admin   | Member  | Notes                                                                                 |
+| ----------------------------------------------------- | ------- | ------- | ------- | ------------------------------------------------------------------------------------- |
 | Search/view the Company-wide Invoice transaction list | Yes     | Yes     | Yes     | Requires both the named transaction-list ability and Invoice visibility               |
-| View Invoice-local transactions and balances           | Yes     | Yes     | Yes     | Governed by the underlying Invoice visibility boundary                                |
-| Record a Payment                              | Yes     | Yes     | Yes     | Issued positive-total Invoice only; complete-ledger validation applies                |
-| Send the optional payment-received email      | Yes     | Yes     | Yes     | Never automatic for backfilled payments                                               |
-| Record a Refund                               | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply                                      |
-| Record a positive/negative Adjustment         | Guarded | Guarded | No      | Required reason and audit; never creates refundable cash                              |
-| Edit or delete an existing Payment or Refund  | Guarded | Guarded | Guarded | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
-| Edit or delete an existing Adjustment         | Guarded | Guarded | No      | Adjustment creation and all later mutation remain entirely Owner/Admin-only           |
+| View Invoice-local transactions and balances          | Yes     | Yes     | Yes     | Governed by the underlying Invoice visibility boundary                                |
+| Record a Payment                                      | Yes     | Yes     | Yes     | Issued positive-total Invoice only; complete-ledger validation applies                |
+| Send the optional payment-received email              | Yes     | Yes     | Yes     | Never automatic for backfilled payments                                               |
+| Record a Refund                                       | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply                                      |
+| Record a positive/negative Adjustment                 | Guarded | Guarded | No      | Required reason and audit; never creates refundable cash                              |
+| Edit or delete an existing Payment or Refund          | Guarded | Guarded | Guarded | Warning, full aggregate revalidation, and audit; delivered receipts remain historical |
+| Edit or delete an existing Adjustment                 | Guarded | Guarded | No      | Adjustment creation and all later mutation remain entirely Owner/Admin-only           |
 
 Invumo records financial facts but does not move money. These permissions do not authorize a bank/card refund outside Invumo.
 
@@ -173,14 +173,15 @@ A Member may therefore reach a valid Invoice state where cancellation still requ
 
 ## 11. Email, reminders, public access, and operational history
 
-| Action                                           | Owner   | Admin   | Member | Notes                                                                      |
-| ------------------------------------------------ | ------- | ------- | ------ | -------------------------------------------------------------------------- |
-| View document delivery/status/reminder history   | Yes     | Yes     | Yes    | Ordinary document-local operational history, not the full audit log        |
-| Retry a failed direct Quote/Invoice email        | Yes     | Yes     | Yes    | Same authorization as sending the document; create a new immutable attempt |
-| Retry a failed automated reminder                | Guarded | Guarded | No     | Recheck balance, lifecycle, due date, recipient, link, and idempotency     |
-| View Company-wide automation failures/operations | Yes     | Yes     | No     | Includes recurring/reminder failures requiring intervention                |
-| View the full Company audit trail                | Yes     | Yes     | No     | Member still sees ordinary document status/delivery history                |
-| Delete or rewrite audit history                  | No      | No      | No     | Only approved retention/erasure workflows may remove records               |
+| Action                                                 | Owner   | Admin   | Member | Notes                                                                      |
+| ------------------------------------------------------ | ------- | ------- | ------ | -------------------------------------------------------------------------- |
+| View document delivery/status/reminder history         | Yes     | Yes     | Yes    | Ordinary document-local operational history, not the full audit log        |
+| Retry a failed direct Quote/Invoice email              | Yes     | Yes     | Yes    | Same authorization as sending the document; create a new immutable attempt |
+| Retry a failed automated reminder                      | Guarded | Guarded | No     | Recheck balance, lifecycle, due date, recipient, link, and idempotency     |
+| View Company-wide automation failures/operations       | Yes     | Yes     | No     | Includes recurring/reminder failures requiring intervention                |
+| View the full Company audit trail                      | Yes     | Yes     | No     | Member still sees ordinary document status/delivery history                |
+| Erase retained public-decision identity for a Customer | Guarded | Guarded | No     | Irreversibly nulls decision name/email while retaining the Quote and event |
+| Delete or rewrite audit history                        | No      | No      | No     | Only approved retention/erasure workflows may remove records               |
 
 ## 12. System and public actors
 

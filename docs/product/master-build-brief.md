@@ -810,6 +810,8 @@ Each template supports:
 - Preview
 - An allowlisted set of placeholders, including relevant customer, company, document, amount, due-date, and public-URL values
 
+Template content is authored as plain text and rendered through Invumo's safe HTML email shell. Subject is limited to 500 characters, body to 20,000, button label to 80, and signature to 5,000. Placeholders use the exact `{{snake_case_name}}` syntax and are restricted per event.
+
 Provide safe multilingual system defaults. Companies may override them. Reject or clearly identify unknown placeholders, escape substituted content for its output context, and fall back safely when an optional value is unavailable.
 
 Direct quote/invoice sends remain editable per send. Automated reminder sends use the saved template for the document language.
@@ -894,7 +896,7 @@ Public invoice pages support viewing and PDF download without a customer account
 
 Public quote pages support viewing, PDF download, Accept, and Reject.
 
-Accepting or rejecting requires the customer's name and email address. Record the decision timestamp and relevant audit metadata, with optional IP/user-agent metadata where appropriate.
+Accepting or rejecting requires the customer's name and email address. Record the decision timestamp and privacy-safe audit metadata without IP address or User-Agent. Owner/Admin can irreversibly erase the retained name/email for every decision tied to a Customer while retaining the immutable decision facts and Quote.
 
 Do not add electronic signatures in v1.
 

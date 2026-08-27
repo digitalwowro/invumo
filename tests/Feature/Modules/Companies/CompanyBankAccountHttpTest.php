@@ -32,7 +32,7 @@ final class CompanyBankAccountHttpTest extends TestCase
                 ->where('currencyOptions.0.label', 'RON')
                 ->where('routingFields.0', 'routing_number')
                 ->where('routingFields.7', 'ifsc')
-                ->where('companySettingsNavigation.4.key', 'bank_accounts')
+                ->where('companySettingsNavigation.5.key', 'bank_accounts')
                 ->where('translations.settings.bank_accounts.fields.account_number', 'IBAN or account number'));
 
         $this->post(route('company-bank-accounts.store', $company), [

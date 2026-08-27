@@ -66,6 +66,10 @@ return [
         'delete_title' => 'Permanently delete this customer?',
         'delete_description' => 'This cannot be undone. Deletion is blocked while historical records depend on the customer.',
         'confirm_delete' => 'Delete permanently',
+        'erase_public_decision_identity' => 'Erase decision identity',
+        'erase_public_decision_identity_title' => 'Erase retained decision identity?',
+        'erase_public_decision_identity_description' => 'Names and email addresses supplied through this customer’s public Quote decisions will be permanently removed. Quotes, outcomes, and timestamps remain.',
+        'confirm_erase_public_decision_identity' => 'Erase identity',
         'navigation_label' => 'Customer workspace',
         'navigation' => [
             'overview' => 'Overview',
@@ -241,6 +245,7 @@ return [
         ],
     ],
     'feedback' => [
+        'public_decision_identity_redacted' => '{0} No retained decision identity required erasure.|{1} Identity was erased from :count public decision.|[2,*] Identity was erased from :count public decisions.',
         'created' => 'Customer created.',
         'updated' => 'Customer saved.',
         'archived' => 'Customer archived.',
@@ -255,6 +260,7 @@ return [
         'defaults_updated' => 'Customer defaults saved.',
     ],
     'errors' => [
+        'public_decision_identity_confirmation_required' => 'Confirm the irreversible identity erasure.',
         'archived' => 'Restore this customer before editing it.',
         'already_archived' => 'This customer is already archived.',
         'not_archived' => 'This customer is already active.',

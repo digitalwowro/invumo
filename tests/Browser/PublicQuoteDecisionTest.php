@@ -6,8 +6,10 @@ use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Customers\Models\Customer;
 use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
 use App\Modules\Documents\Data\DocumentKind;
+use App\Modules\Documents\Models\Document;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
@@ -45,8 +47,15 @@ it('rejects a Romanian public Quote on mobile without overflow', function () {
         ]);
     });
     $quote = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
-    app(TenantContext::class)->runAsSystem($company->id, fn () => Quote::query()
-        ->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]));
+    app(TenantContext::class)->runAsSystem($company->id, function () use ($quote): void {
+        $customer = Customer::query()->create([
+            'type' => 'COMPANY',
+            'legal_name' => 'Client Public SRL',
+            'document_language' => 'ro',
+        ]);
+        Document::query()->whereKey($quote->id)->update(['customer_id' => $customer->id]);
+        Quote::query()->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]);
+    });
     $link = app(CreatePublicDocumentLink::class)->handle(
         $company,
         $owner,
@@ -57,6 +66,7 @@ it('rejects a Romanian public Quote on mobile without overflow', function () {
     $page = visit(route('public-quotes.show', $link->token_ciphertext, false))
         ->on()->iPhone15()
         ->assertSee('Răspunde la această ofertă')
+        ->assertScript("!window.location.pathname.includes('[redacted]')")
         ->type('Numele tău', 'Client Mobil')
         ->type('Adresa ta de e-mail', 'client@example.com')
         ->click('Respinge oferta')

@@ -231,10 +231,11 @@ Current duplicate detection uses `documents`; backward counter realignment and r
 ### `company_email_templates`
 
 - event type and document language
-- subject, body, button label, and plain-text signature
+- required plain-text subject up to 500 characters, body up to 20,000, and button label up to 80
+- optional plain-text signature up to 5,000 characters
 - unique `(company_id, event_type, language_code)`
 
-Placeholder validation is application-authoritative and uses the approved allowlist.
+Missing rows resolve to Laravel-authored system defaults rather than copied seed rows. Placeholder validation is application-authoritative, uses exact `{{snake_case_name}}` syntax, and applies an event-specific allowlist. Company-template audit retains only event, language, override state, and changed-field names, never authored content or resolved values.
 
 ### `company_reminder_rules`
 
@@ -435,13 +436,14 @@ Conversion first locks Company configuration and the Invoice numbering counter, 
 
 ### `quote_public_decisions`
 
-- `id`, `company_id`, Quote reference
+- `id`, `company_id`, same-Company Quote and source-Customer references
 - decision: `ACCEPTED` or `REJECTED`
-- trimmed customer name bounded at 160 and normalized lowercase email bounded at 254
+- nullable trimmed customer name bounded at 160 and normalized lowercase email bounded at 254
 - decision timestamp
 - Quote-scoped UUID idempotency key
+- nullable identity-redaction timestamp
 
-Public decisions are immutable tenant events and retain no IP address or User-Agent in v1. Restricted runtime receives `SELECT`, `INSERT`, and row-locking `UPDATE`; a database trigger rejects every actual update, and runtime receives no direct `DELETE`. Quote deletion cascades the live name/email record under the approved erasure boundary and retains only the audit tombstone's non-sensitive `had_customer_decision` fact. Internal lifecycle corrections do not rewrite prior events.
+Public decisions are immutable tenant events and retain no IP address or User-Agent in v1. Restricted runtime receives `SELECT`, `INSERT`, and narrowly triggered `UPDATE`, with no direct `DELETE`. The database trigger rejects every change except the one-way transition that atomically replaces both identity fields with `NULL` and sets the first redaction timestamp while every event field remains unchanged. Owner/Admin invokes that transition through the Customer-scoped root Action; Member is denied. Quote deletion still cascades the row and retains only the audit tombstone's non-sensitive `had_customer_decision` fact. Internal lifecycle corrections and erasure never rewrite the decision, timestamp, Customer association, or idempotency identity.
 
 ## 9. Financial rows
 

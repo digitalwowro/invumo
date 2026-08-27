@@ -234,8 +234,12 @@ it('converts and unlinks an accepted Quote without desktop overflow', function (
 it('creates views and revokes a secure Quote link without desktop overflow', function () {
     [$owner, $company] = companyForQuoteBrowser();
     $quote = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
-    app(TenantContext::class)->runAsSystem($company->id, fn () => Quote::query()
-        ->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]));
+    app(TenantContext::class)->runAsSystem($company->id, function () use ($quote): void {
+        Document::query()->whereKey($quote->id)->update([
+            'customer_id' => Customer::query()->sole()->id,
+        ]);
+        Quote::query()->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]);
+    });
     $page = openQuoteCreate($owner, $company)
         ->navigate(route('quotes.edit', [$company, $quote], false))
         ->assertSee('Secure public link')

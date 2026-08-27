@@ -6,6 +6,7 @@ type Props = {
     archiveUrl: string | null;
     restoreUrl: string | null;
     deleteUrl: string | null;
+    publicDecisionIdentity: { count: number; eraseUrl: string | null };
     labels: CustomerTranslations['workspace'];
     cancelLabel: string;
     closeLabel: string;
@@ -15,6 +16,7 @@ export function CustomerLifecycleActions({
     archiveUrl,
     restoreUrl,
     deleteUrl,
+    publicDecisionIdentity,
     labels,
     cancelLabel,
     closeLabel,
@@ -57,6 +59,24 @@ export function CustomerLifecycleActions({
                     cancelLabel={cancelLabel}
                     closeLabel={closeLabel}
                     onConfirm={() => router.delete(deleteUrl)}
+                />
+            )}
+            {publicDecisionIdentity.eraseUrl && (
+                <ConfirmationDialog
+                    triggerLabel={labels.erase_public_decision_identity}
+                    title={labels.erase_public_decision_identity_title}
+                    description={
+                        labels.erase_public_decision_identity_description
+                    }
+                    confirmLabel={labels.confirm_erase_public_decision_identity}
+                    cancelLabel={cancelLabel}
+                    closeLabel={closeLabel}
+                    onConfirm={() =>
+                        router.delete(publicDecisionIdentity.eraseUrl!, {
+                            data: { confirmed: true },
+                            preserveScroll: true,
+                        })
+                    }
                 />
             )}
         </>

@@ -8,6 +8,8 @@ use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Customers\Data\CustomerType;
+use App\Modules\Customers\Models\Customer;
 use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
 use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Documents\Data\DocumentKind;
@@ -50,6 +52,7 @@ final class PublicQuoteDecisionHttpTest extends PublicDocumentTestCase
 
         $this->get(route('public-quotes.show', $token))
             ->assertInertia(fn (Assert $page) => $page
+                ->url(route('public-quotes.show', $token, false))
                 ->where('decision.state', 'AVAILABLE')
                 ->where('decision.locale', 'en')
                 ->where('decision.submitUrl', route('public-quotes.decision', $token, false))
@@ -61,7 +64,8 @@ final class PublicQuoteDecisionHttpTest extends PublicDocumentTestCase
             'customer_email' => '  ANA@EXAMPLE.COM  ',
             'idempotency_key' => $key,
             'locale' => 'en',
-        ])->assertStatus(303);
+        ])->assertStatus(303)
+            ->assertRedirect(route('public-quotes.show', $token, false));
 
         $this->tenant($company, function () use ($quote, $key, $version, $token): void {
             $decision = QuotePublicDecision::query()->sole();
@@ -178,8 +182,14 @@ final class PublicQuoteDecisionHttpTest extends PublicDocumentTestCase
     private function sentQuoteAndToken(Company $company, User $owner): array
     {
         $quote = $this->quote($company, $owner);
-        $this->tenant($company, fn () => Quote::query()
-            ->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]));
+        $this->tenant($company, function () use ($quote): void {
+            $customer = Customer::query()->create([
+                'type' => CustomerType::Company,
+                'legal_name' => 'Decision Customer SRL',
+            ]);
+            Document::query()->whereKey($quote->id)->update(['customer_id' => $customer->id]);
+            Quote::query()->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]);
+        });
         $link = app(CreatePublicDocumentLink::class)->handle(
             $company,
             $owner,

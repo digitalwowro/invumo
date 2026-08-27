@@ -6,6 +6,8 @@ use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Customers\Data\CustomerType;
+use App\Modules\Customers\Models\Customer;
 use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -98,6 +100,7 @@ final class PublicQuoteDecisionDatabaseTest extends PublicDocumentTestCase
                         'id' => (string) Str::uuid7(),
                         'company_id' => $companyA->id,
                         'quote_id' => $quoteA->id,
+                        'customer_id' => $quoteA->customer_id,
                         'decision' => PublicQuoteDecision::Accepted->value,
                         'customer_name' => 'Ana',
                         'customer_email' => 'ana@example.com',
@@ -201,8 +204,14 @@ final class PublicQuoteDecisionDatabaseTest extends PublicDocumentTestCase
     private function sentQuoteAndToken(Company $company, User $owner): array
     {
         $quote = $this->quote($company, $owner);
-        $this->tenant($company, fn () => Quote::query()
-            ->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]));
+        $this->tenant($company, function () use ($quote): void {
+            $customer = Customer::query()->create([
+                'type' => CustomerType::Company,
+                'legal_name' => 'Decision Customer SRL',
+            ]);
+            Document::query()->whereKey($quote->id)->update(['customer_id' => $customer->id]);
+            Quote::query()->whereKey($quote->id)->update(['lifecycle' => QuoteLifecycle::Sent]);
+        });
         $link = app(CreatePublicDocumentLink::class)->handle(
             $company,
             $owner,

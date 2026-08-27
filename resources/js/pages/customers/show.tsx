@@ -33,6 +33,7 @@ type Props = {
     archiveUrl: string | null;
     restoreUrl: string | null;
     deleteUrl: string | null;
+    publicDecisionIdentity: { count: number; eraseUrl: string | null };
     countryOptions: CustomerOption[];
     customerTypeOptions: CustomerOption[];
     limits: CustomerFieldLimits;
@@ -50,6 +51,7 @@ export default function CustomerWorkspace({
     archiveUrl,
     restoreUrl,
     deleteUrl,
+    publicDecisionIdentity,
     countryOptions,
     customerTypeOptions,
     limits,
@@ -127,6 +129,7 @@ export default function CustomerWorkspace({
                             archiveUrl={archiveUrl}
                             restoreUrl={restoreUrl}
                             deleteUrl={deleteUrl}
+                            publicDecisionIdentity={publicDecisionIdentity}
                             labels={labels}
                             cancelLabel={i18n.common.actions.cancel}
                             closeLabel={

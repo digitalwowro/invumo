@@ -49,7 +49,7 @@ final class CompanyAppearanceHttpTest extends TestCase
                 ->where('appearance.logo', null)
                 ->where('brandColorPresets.0.value', '#14181C')
                 ->where('brandColorPresets.4.value', '#5B3A8E')
-                ->where('companySettingsNavigation.5.key', 'appearance')
+                ->where('companySettingsNavigation.6.key', 'appearance')
                 ->where('translations.settings.appearance.presets.forest', 'Forest'));
 
         $owner->update(['language_code' => 'ro']);

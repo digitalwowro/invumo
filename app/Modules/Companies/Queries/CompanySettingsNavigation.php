@@ -37,6 +37,10 @@ final readonly class CompanySettingsNavigation
                 'href' => route('company-document-defaults.edit', $company, false),
             ];
             $items[] = [
+                'key' => 'email_templates',
+                'href' => route('company-email-templates.index', $company, false),
+            ];
+            $items[] = [
                 'key' => 'numbering',
                 'href' => route('company-number-series.edit', $company, false),
             ];

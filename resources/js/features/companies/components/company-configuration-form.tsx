@@ -3,11 +3,8 @@ import { Stack } from '@/components/app/layout';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { CompanyDefaultFields } from '@/features/companies/components/company-default-fields';
 import { CompanyIdentityFields } from '@/features/companies/components/company-identity-fields';
-import type {
-    CompanyConfiguration,
-    CompanyOption,
-    CompanySettingsTranslations,
-} from '@/types';
+import type { CompanyConfiguration, CompanyOption } from '@/types';
+import type { CompanySettingsTranslations } from '@/types/company-settings';
 
 type Props = {
     configuration: CompanyConfiguration;

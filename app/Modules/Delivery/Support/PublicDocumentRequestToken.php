@@ -17,7 +17,11 @@ final class PublicDocumentRequestToken
 
         $rawUri = (string) $request->server->get('REQUEST_URI', '');
 
-        if (preg_match('#^/(q|i)/([^/?]+)(?:/(?:pdf|decision))?(?:\?|$)#', $rawUri, $matches) === 1) {
+        if (preg_match(
+            '~^(?:https?://[^/?#]+)?/(q|i)/([^/?]+)(?:/(?:pdf|decision))?(?:\?|$)~i',
+            $rawUri,
+            $matches,
+        ) === 1) {
             $request->attributes->set(self::ATTRIBUTE, $matches[2]);
         }
     }
@@ -34,18 +38,13 @@ final class PublicDocumentRequestToken
 
     public static function redact(Request $request): void
     {
-        $rawUri = (string) $request->server->get('REQUEST_URI', '');
-        $safeUri = preg_replace('#^/(q|i)/[^/?]+#', '/$1/[redacted]', $rawUri);
+        $safeUri = self::safeUri($request);
 
-        if (! is_string($safeUri) || $safeUri === $rawUri) {
+        if ($safeUri === null) {
             return;
         }
 
-        $route = $request->route();
-
-        if ($route instanceof Route && is_string($request->route('token'))) {
-            $route->setParameter('token', '[redacted]');
-        }
+        self::redactRouteParameter($request);
 
         $server = $request->server->all();
         $server['REQUEST_URI'] = $safeUri;
@@ -64,10 +63,52 @@ final class PublicDocumentRequestToken
         );
     }
 
+    public static function redactMatchedRoute(Request $request): void
+    {
+        $safeUri = self::safeUri($request);
+
+        if ($safeUri === null) {
+            return;
+        }
+
+        self::redactRouteParameter($request);
+        $request->server->set('REQUEST_URI', $safeUri);
+        $request->server->set('UNENCODED_URL', $safeUri);
+    }
+
     public static function plainText(Request $request): string
     {
         $token = $request->attributes->get(self::ATTRIBUTE);
 
         return is_string($token) ? $token : '';
+    }
+
+    private static function redactRouteParameter(Request $request): void
+    {
+        $route = $request->route();
+
+        if ($route instanceof Route && is_string($request->route('token'))) {
+            $route->setParameter('token', '[redacted]');
+        }
+    }
+
+    private static function safeUri(Request $request): ?string
+    {
+        $rawUri = (string) $request->server->get('REQUEST_URI', '');
+
+        if (preg_match(
+            '~^(?:https?://[^/?#]+)?/(q|i)/[^/?]+~i',
+            $rawUri,
+        ) !== 1) {
+            return null;
+        }
+
+        $safeUri = preg_replace(
+            '~^((?:https?://[^/?#]+)?)/(q|i)/[^/?]+~i',
+            '$1/$2/[redacted]',
+            $rawUri,
+        );
+
+        return is_string($safeUri) ? $safeUri : null;
     }
 }

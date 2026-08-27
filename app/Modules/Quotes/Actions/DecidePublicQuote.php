@@ -94,8 +94,10 @@ final readonly class DecidePublicQuote
 
         if ($replay instanceof QuotePublicDecision) {
             if ($replay->decision !== $data->decision
-                || ! hash_equals($replay->customer_name, $data->customerName)
-                || ! hash_equals($replay->customer_email, $data->customerEmail)) {
+                || ($replay->identity_redacted_at === null && (
+                    ! hash_equals((string) $replay->customer_name, $data->customerName)
+                    || ! hash_equals((string) $replay->customer_email, $data->customerEmail)
+                ))) {
                 throw PublicQuoteDecisionException::idempotencyConflict();
             }
 
@@ -115,10 +117,15 @@ final readonly class DecidePublicQuote
             throw PublicQuoteDecisionException::unavailable();
         }
 
+        if ($document->customer_id === null) {
+            throw PublicQuoteDecisionException::unavailable();
+        }
+
         $this->assertCommercialValidity($quote, $settings);
 
         QuotePublicDecision::query()->create([
             'quote_id' => $document->id,
+            'customer_id' => $document->customer_id,
             'decision' => $data->decision,
             'customer_name' => $data->customerName,
             'customer_email' => $data->customerEmail,

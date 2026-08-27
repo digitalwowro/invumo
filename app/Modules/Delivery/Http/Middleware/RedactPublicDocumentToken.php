@@ -13,7 +13,7 @@ final readonly class RedactPublicDocumentToken
     {
         PublicDocumentRequestToken::capture($request);
         abort_unless(PublicDocumentRequestToken::matchesRoute($request), 404);
-        PublicDocumentRequestToken::redact($request);
+        PublicDocumentRequestToken::redactMatchedRoute($request);
 
         return $next($request);
     }

@@ -17,12 +17,14 @@ use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
+use App\Modules\Delivery\Http\Controllers\CompanyEmailTemplateController;
 use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
 use App\Modules\Platform\Http\Controllers\PlatformPageController;
 use App\Modules\Platform\Http\Controllers\UserImpersonationController;
 use App\Modules\Platform\Http\Controllers\UserSuspensionController;
+use App\Modules\Quotes\Http\Controllers\CustomerPublicDecisionIdentityController;
 use App\Support\Inertia\CommonTranslationBag;
 use App\Support\Inertia\DesignSystemTranslationBag;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -149,6 +151,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('companies/{company}/customers/{customer}', [CustomerController::class, 'destroy'])
                 ->middleware('throttle:10,1')
                 ->name('customers.destroy');
+            Route::delete('companies/{company}/customers/{customer}/public-decision-identity', [CustomerPublicDecisionIdentityController::class, 'destroy'])
+                ->middleware('throttle:5,1')
+                ->name('customer-public-decision-identity.destroy');
             Route::post('companies/{company}/customers/{customer}/contacts', [CustomerContactController::class, 'store'])
                 ->middleware('throttle:20,1')
                 ->name('customer-contacts.store');
@@ -183,6 +188,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/documents', [CompanyDocumentDefaultsController::class, 'update'])
                 ->middleware('throttle:20,1')
                 ->name('company-document-defaults.update');
+            Route::get('companies/{company}/settings/email-templates', [CompanyEmailTemplateController::class, 'index'])
+                ->name('company-email-templates.index');
+            Route::put('companies/{company}/settings/email-templates', [CompanyEmailTemplateController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-email-templates.update');
+            Route::post('companies/{company}/settings/email-templates/preview', [CompanyEmailTemplateController::class, 'preview'])
+                ->middleware('throttle:60,1')
+                ->name('company-email-templates.preview');
+            Route::delete('companies/{company}/settings/email-templates/{event}/{language}', [CompanyEmailTemplateController::class, 'destroy'])
+                ->middleware('throttle:20,1')
+                ->name('company-email-templates.destroy');
             Route::get('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'edit'])
                 ->name('company-number-series.edit');
             Route::patch('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'update'])

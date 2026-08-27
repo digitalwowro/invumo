@@ -46,7 +46,7 @@ Every public response uses `Cache-Control: private, no-store`, `Referrer-Policy:
 
 The current host access log records full request paths. Before any token route becomes live, the web-server/access-proxy configuration must suppress or structurally redact the token segment for these routes. This is a separate production-configuration authorization boundary. Application logs and exception reporting must also redact route tokens.
 
-Application redaction has two explicit stages. A global pre-routing middleware captures a valid public-route token from the untouched server request URI into a private Request attribute without changing the path the router must match. After route matching, route middleware compares that captured value to the resolved `token` parameter in constant time, then replaces the route parameter and request URI with `[redacted]` and reinitializes Symfony's cached URI/path values before any controller, rate-limit key, exception context, or downstream logger can read them. If routing or another earlier layer throws, the global middleware performs the same sanitization before rethrowing to Laravel's exception reporter. The private Request attribute is the sole downstream plaintext authority used by resolution and keyed rate limiting; the redacted route parameter is never used to authorize access.
+Application redaction has two explicit stages. A global pre-routing middleware captures a valid public-route token from the untouched server request URI into a private Request attribute without changing the path the router must match. After route matching, route middleware compares that captured value to the resolved `token` parameter in constant time, then replaces the route parameter and raw server request target with `[redacted]`. It deliberately preserves Symfony's already-routed semantic URI cache so Inertia and native browser form/redirect behavior retain the real public URL. If any downstream or earlier layer throws, the global middleware performs the stronger redaction and reinitializes Symfony's cached URI/path values before rethrowing to Laravel's exception reporter. The private Request attribute is the sole downstream plaintext authority used by resolution and keyed rate limiting; the redacted route parameter is never used to authorize access.
 
 ## 5. Relational model
 
@@ -148,7 +148,7 @@ These limits constrain resource abuse; token unpredictability remains the primar
 
 Successful public GET/PDF reads remain side-effect free. Do not persist `last_used_at`, view counters, IP addresses, or User-Agent strings. This intentionally removes the earlier proposed `last-used metadata` field because it has no approved product consumer and would make rendering mutate retained state.
 
-Phase 8C public Accept/Reject persists the required supplied name/email in the decision-owned live record under the Customer-data erasure boundary. The approved Customer identity envelope is reused: trimmed names are bounded at 160 characters and normalized lowercase RFC-valid email addresses at 254. v1 deliberately stores no IP address or User-Agent because there is no approved retention consumer. Append-only audit records only public actor type, decision, target, timestamp, idempotency reference, and non-sensitive lifecycle facts; it never copies the name, email, IP, User-Agent, token, hash, or URL.
+Phase 8C public Accept/Reject persists the required supplied name/email in the decision-owned live record, linked to the Quote's source Customer. The approved Customer identity envelope is reused: trimmed names are bounded at 160 characters and normalized lowercase RFC-valid email addresses at 254. Owner/Admin may execute the Customer-scoped erasure action while retaining the Quote; it atomically replaces both identity fields with `NULL`, records the redaction timestamp, and leaves the immutable decision/outcome/time/idempotency facts unchanged. v1 deliberately stores no IP address or User-Agent because there is no approved retention consumer. Append-only audit records only public actor type, decision, target, timestamp, idempotency reference, and non-sensitive lifecycle/erasure facts; it never copies the name, email, IP, User-Agent, token, hash, or URL.
 
 ## 12. Concurrency and idempotency
 
@@ -173,6 +173,7 @@ Phase 8 implementation must prove:
 - EN/RO desktop/mobile public views, PDF download, accessibility, no page overflow, no third-party requests, response headers, and side-effect-free rendering
 - permanent link history blocks `UnlinkQuoteInvoice` and its server-resolved UI eligibility after revocation or expiry; Batch 8B owns this extension and cannot pass without the revoke-then-unlink regression
 - Quote decision lifecycle, idempotency, replay, concurrency, required identity, privacy-safe audit, and tenant isolation in Batch 8C
+- Customer-scoped Owner/Admin identity erasure retains the Quote/event, nulls both identity values exactly once, denies Members/cross-Company access, and cannot mutate or restore any event field
 - production access-log redaction is verified before public routes are enabled
 
 ## 14. Approval record

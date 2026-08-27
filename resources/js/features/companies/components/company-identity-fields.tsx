@@ -2,11 +2,8 @@ import { TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
-import type {
-    CompanyConfiguration,
-    CompanyOption,
-    CompanySettingsTranslations,
-} from '@/types';
+import type { CompanyConfiguration, CompanyOption } from '@/types';
+import type { CompanySettingsTranslations } from '@/types/company-settings';
 
 type Props = {
     configuration: CompanyConfiguration;

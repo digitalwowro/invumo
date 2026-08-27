@@ -7,6 +7,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Quotes\Queries\CustomerPublicDecisionIdentityState;
 use Illuminate\Auth\Access\AuthorizationException;
 
 final readonly class CustomerWorkspacePage
@@ -14,6 +15,7 @@ final readonly class CustomerWorkspacePage
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private CustomerFormOptions $options,
+        private CustomerPublicDecisionIdentityState $publicDecisionIdentity,
     ) {}
 
     /** @return array<string, mixed> */
@@ -51,6 +53,11 @@ final readonly class CustomerWorkspacePage
             'deleteUrl' => $canDelete
                 ? route('customers.destroy', [$company, $customer], false)
                 : null,
+            'publicDecisionIdentity' => $this->publicDecisionIdentity->for(
+                $company,
+                $actor,
+                $customer,
+            ),
             ...$this->options->for($locale),
         ];
     }

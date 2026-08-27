@@ -66,6 +66,10 @@ return [
         'delete_title' => 'Ștergi definitiv acest client?',
         'delete_description' => 'Acțiunea nu poate fi anulată. Ștergerea este blocată cât timp există înregistrări istorice dependente.',
         'confirm_delete' => 'Șterge definitiv',
+        'erase_public_decision_identity' => 'Șterge identitatea deciziei',
+        'erase_public_decision_identity_title' => 'Ștergi identitatea păstrată a deciziei?',
+        'erase_public_decision_identity_description' => 'Numele și adresele de email furnizate prin deciziile publice pentru ofertele acestui client vor fi eliminate definitiv. Ofertele, rezultatele și momentele deciziilor rămân.',
+        'confirm_erase_public_decision_identity' => 'Șterge identitatea',
         'navigation_label' => 'Spațiul de lucru al clientului',
         'navigation' => [
             'overview' => 'Prezentare generală',
@@ -241,6 +245,7 @@ return [
         ],
     ],
     'feedback' => [
+        'public_decision_identity_redacted' => '{0} Nicio identitate păstrată nu a necesitat ștergere.|{1} Identitatea a fost ștearsă din :count decizie publică.|[2,*] Identitatea a fost ștearsă din :count decizii publice.',
         'created' => 'Client creat.',
         'updated' => 'Client salvat.',
         'archived' => 'Client arhivat.',
@@ -255,6 +260,7 @@ return [
         'defaults_updated' => 'Valorile implicite ale clientului au fost salvate.',
     ],
     'errors' => [
+        'public_decision_identity_confirmation_required' => 'Confirmă ștergerea ireversibilă a identității.',
         'archived' => 'Restaurează acest client înainte de editare.',
         'already_archived' => 'Acest client este deja arhivat.',
         'not_archived' => 'Acest client este deja activ.',

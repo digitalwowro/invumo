@@ -125,6 +125,10 @@ export type CustomerTranslations = {
         delete_title: string;
         delete_description: string;
         confirm_delete: string;
+        erase_public_decision_identity: string;
+        erase_public_decision_identity_title: string;
+        erase_public_decision_identity_description: string;
+        confirm_erase_public_decision_identity: string;
         navigation_label: string;
         navigation: { overview: string; contacts: string; defaults: string };
     };

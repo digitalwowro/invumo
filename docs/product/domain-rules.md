@@ -456,6 +456,7 @@ Recurring template
 - Public quote pages support viewing, PDF download, Accept, and Reject.
 - Public Accept/Reject is enabled only for non-expired Sent Quotes.
 - Accept or Reject requires customer name and email address.
+- The decision event remains immutable, but Owner/Admin can irreversibly redact its retained name/email through the Customer erasure action while keeping the Quote, decision, outcome, timestamp, and idempotency fact. Audit never copies the erased identity.
 - Record the decision, timestamp, and appropriate audit metadata.
 - Duplicate/replayed actions must not create inconsistent state.
 - No customer account or electronic signature is required in v1.
@@ -469,6 +470,8 @@ Recurring template
 - Allow editing before sending.
 - Provide company templates per language for quote sent, invoice sent, payment reminder, and payment received events.
 - Template fields include subject, body, button label, plain-text company signature, and preview.
+- Author templates as plain text and render them through the safe Invumo HTML email shell. Bound subject/body/button/signature at 500/20,000/80/5,000 characters.
+- Placeholders use exact `{{snake_case_name}}` tokens, are allowlisted per event, and are resolved by Laravel. Unknown or malformed placeholders are rejected.
 - Support only allowlisted placeholders for relevant customer, company, document, amount, due-date, and public-URL values.
 - Reject or identify unknown placeholders, escape substituted values for their output context, and handle unavailable optional values safely.
 - Resolve recipients and PDF-delivery mode using per-send override, then customer preference, then company default.

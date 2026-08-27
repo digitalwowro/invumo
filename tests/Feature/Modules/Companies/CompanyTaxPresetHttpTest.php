@@ -34,11 +34,12 @@ final class CompanyTaxPresetHttpTest extends TestCase
                 ->has('taxPresets', 0)
                 ->where('companySettingsNavigation.0.key', 'profile')
                 ->where('companySettingsNavigation.1.key', 'documents')
-                ->where('companySettingsNavigation.2.key', 'numbering')
-                ->where('companySettingsNavigation.3.key', 'taxes')
-                ->where('companySettingsNavigation.4.key', 'bank_accounts')
-                ->where('companySettingsNavigation.5.key', 'appearance')
-                ->where('companySettingsNavigation.6.key', 'members')
+                ->where('companySettingsNavigation.2.key', 'email_templates')
+                ->where('companySettingsNavigation.3.key', 'numbering')
+                ->where('companySettingsNavigation.4.key', 'taxes')
+                ->where('companySettingsNavigation.5.key', 'bank_accounts')
+                ->where('companySettingsNavigation.6.key', 'appearance')
+                ->where('companySettingsNavigation.7.key', 'members')
                 ->where('translations.settings.taxes.fields.percentage', 'Percentage'));
 
         $this->post(route('company-tax-presets.store', $company), [

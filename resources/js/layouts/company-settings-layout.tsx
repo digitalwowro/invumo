@@ -1,11 +1,9 @@
 import { usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { SettingsShell } from '@/components/app/settings-shell';
-import type {
-    CompaniesUiTranslations,
-    CompanySettingsNavigationItem,
-    NavItem,
-} from '@/types';
+import type { CompaniesUiTranslations } from '@/types/company';
+import type { CompanySettingsNavigationItem } from '@/types/company-settings';
+import type { NavItem } from '@/types/navigation';
 
 export default function CompanySettingsLayout({ children }: PropsWithChildren) {
     const { companySettingsNavigation, translations } = usePage<{

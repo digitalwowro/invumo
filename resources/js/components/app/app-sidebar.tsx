@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import {
     Boxes,
     FileText,
+    HandCoins,
     LayoutGrid,
     ReceiptText,
     Settings,
@@ -56,6 +57,14 @@ export function AppSidebar({
             title: t('navigation.invoices'),
             href: companyContext.current.invoicesUrl,
             icon: ReceiptText,
+        });
+    }
+
+    if (companyContext.current && companyContext.abilities.view_transactions) {
+        mainNavItems.push({
+            title: t('navigation.transactions'),
+            href: companyContext.current.transactionsUrl,
+            icon: HandCoins,
         });
     }
 

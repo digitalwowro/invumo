@@ -158,7 +158,7 @@ final class InvoiceDeletionHttpTest extends TestCase
         }
     }
 
-    public function test_deleting_a_quote_derived_draft_removes_only_its_active_provenance_link(): void
+    public function test_quote_provenance_blocks_deletion_until_the_guarded_unlink_completes(): void
     {
         [$company, $owner] = $this->company();
         $quote = app(CreateQuoteDraft::class)->handle($company, $owner, (string) Str::uuid7());
@@ -173,10 +173,30 @@ final class InvoiceDeletionHttpTest extends TestCase
 
         $this->actingAs($owner)->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
-        ])->assertRedirect();
-        $this->tenant($company, function () use ($quote): void {
+        ])->assertSessionHasErrors('invoice');
+        $this->tenant($company, function () use ($quote, $invoice): void {
             $this->assertNotNull(Document::query()->find($quote->id));
-            $this->assertSame(0, QuoteInvoiceLink::query()->count());
+            $this->assertNotNull(Document::query()->find($invoice->id));
+            $this->assertSame(1, QuoteInvoiceLink::query()->count());
+            $this->assertSame(0, AuditEvent::query()->where('action', 'company.invoice.deleted')->count());
+        });
+
+        $this->post(route('quotes.invoices.unlink', [$company, $quote, $invoice]), [
+            'reason' => 'Invoice must be deleted independently',
+            'confirmed' => true,
+        ])->assertRedirect()->assertSessionDoesntHaveErrors();
+        $this->delete(route('invoices.destroy', [$company, $invoice]), [
+            'confirmed' => true, 'confirmed_high_risk' => false,
+        ])->assertRedirect(route('invoices.index', $company));
+
+        $this->tenant($company, function () use ($quote, $invoice): void {
+            $this->assertNotNull(Document::query()->find($quote->id));
+            $this->assertNull(Document::query()->find($invoice->id));
+            $unlink = AuditEvent::query()->where('action', 'company.quote.invoice_unlinked')->sole();
+            $this->assertSame($quote->id, $unlink->target_id);
+            $this->assertSame('Invoice must be deleted independently', $unlink->reason);
+            $this->assertSame(true, $unlink->before['linked']);
+            $this->assertSame(false, $unlink->after['linked']);
         });
     }
 

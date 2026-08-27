@@ -135,6 +135,13 @@ it('creates calculates and renders an Invoice Draft without viewport overflow', 
         ->assertSee('Issued')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues()
+        ->click('Transactions')
+        ->assertSee('Company’s recorded Payments')
+        ->assertSee('100.00 RON')
+        ->assertSee('Browser Invoice Customer SRL')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });
 
@@ -174,6 +181,13 @@ it('keeps the Romanian Invoice Draft and current view usable on mobile', functio
         ->assertNoAccessibilityIssues()
         ->navigate(route('invoices.index', $company, false))
         ->assertSee('Facturi')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues()
+        ->navigate(route('transactions.index', $company, false))
+        ->assertSee('Tranzacții')
+        ->assertSee('40.00 RON')
+        ->assertSee('Browser Invoice Customer SRL')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

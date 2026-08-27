@@ -2,7 +2,7 @@
 
 Status: Approved
 Approved: 2026-08-22
-Last updated: 2026-08-24
+Last updated: 2026-08-27
 
 This document assigns every v1 Company action to the Owner, Admin, and Member roles. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [financial/document state contract](document-and-financial-state.md), [numbering contract](numbering-and-concurrency.md), [scheduling contract](scheduling-and-jobs.md), and [tenant-isolation contract](tenant-isolation.md) into one authorization contract for Laravel Policies, application actions, queue jobs, tests, and React UI visibility.
 
@@ -137,7 +137,7 @@ Customer Accept/Reject is outside this membership matrix and follows the approve
 | Confirm a duplicate Invoice number or renumber an Issued/Cancelled Invoice | Guarded | Guarded | No      | Warning, reason, and audit; no silent counter change                                         |
 | Permanently delete a transaction-free Invoice                              | Guarded | Guarded | No      | Highest-friction confirmation if ever issued, sent, or shared; transaction rows always block |
 
-The UI treats deletion of an already issued, sent, or publicly shared transaction-free Invoice as the strongest irreversible document action: the operator must type the exact Invoice number and separately acknowledge that deletion is irreversible. Draft deletion uses the ordinary destructive confirmation. The Phase 7 UI tests both server enforcement and the strong interaction.
+The UI treats deletion of an already issued, sent, or publicly shared transaction-free Invoice as the strongest irreversible document action: the operator must type the exact Invoice number and separately acknowledge that deletion is irreversible. Draft deletion uses the ordinary destructive confirmation. An active Quote provenance link always blocks Invoice deletion; a linked Draft must first pass the distinct Owner/Admin-only confirmed, reason-bearing unlink workflow, and a non-Draft linked Invoice cannot be unlinked or deleted. The Phase 7 UI tests both server enforcement and the strong interaction.
 
 ## 9. Payments, Refunds, and Adjustments
 

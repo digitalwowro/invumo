@@ -73,6 +73,8 @@ Verified on 2026-08-27: backup `invumo-20260827T063018Z-pre-migration.sql` was f
 
 Verified on 2026-08-27 after Batch 7C: no schema migration was added because the existing restrictive `invoice_transactions` foreign key, current document cascades, and retained audit/number-event tables already implement the required database boundary. Production migration status remains current through batch 15 and the production runtime verifier passes. No production migration ran, so no pre-migration backup was required or created for this batch.
 
+Verified on 2026-08-27: backup `invumo-20260827T094817Z-pre-migration.sql` was finalized outside Git at 276,473 bytes with mode `0600` and SHA-256 `31cbfef90a2e973bd3c4924b55d3060928c4ca14ed1032027e258d9cb032efd5` before Batch 7D migration `2026_08_27_030000_index_company_transaction_list` ran as production batch 16. The Company-wide `(company_id, transaction_date, id)` cursor index is present. The one production Company has zero transaction rows, the runtime role sees zero transaction rows without tenant context, every migration is current, and the production runtime verifier passes.
+
 Destructive Artisan database commands now fail closed unless Laravel is in the `testing` environment and both `pgsql` and `pgsql_schema` target database names end in `_test`. This remains enforced even when a caller supplies a CLI environment override, so cached production connection targets cannot become eligible for `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback`, or `db:wipe`.
 
 ## Queue worker

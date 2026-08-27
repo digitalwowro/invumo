@@ -2,7 +2,7 @@
 
 Status: Approved
 Approved: 2026-08-22
-Last updated: 2026-08-22
+Last updated: 2026-08-27
 
 This document defines the exact v1 state model for Quotes, Invoices, payments, refunds, adjustments, overdue behavior, cancellation, reopening, reminders, public access, mutable current documents, and destructive actions. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [calculation specification](calculation-and-rounding.md), [scheduling specification](scheduling-and-jobs.md), and [requirements assessment](requirements-risk-assessment.md) into one implementation-facing state contract.
 
@@ -285,7 +285,7 @@ When an edit, Refund, transaction correction, or reopening makes an Invoice coll
 ### Flexible document deletion
 
 - A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice.
-- An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no transaction rows.
+- An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no transaction rows and no active Quote provenance link. A linked Draft must first pass the separate authorized, confirmed, reason-bearing unlink workflow; Issued and Cancelled links are outside that Draft-only unlink window and therefore block deletion.
 - Sent/decided/issued history causes a stronger warning but does not independently block deletion in v1. Permanently deleting a transaction-free Invoice that has already been issued, sent, or publicly shared is the highest-friction destructive document action. Its strong confirmation requires both the exact current Invoice number and an explicit irreversible-action acknowledgment; Draft deletion uses the ordinary destructive confirmation. Phase 8 public-link and Phase 9 delivery records extend the same server-resolved high-risk signal before those exposure paths ship.
 - Deletion transactionally revokes public access, suppresses pending reminders/jobs, removes or safely detaches dependent delivery records according to the schema retention plan, and writes a minimal audit tombstone that identifies the deletion without retaining a complete customer/document copy.
 - Deletion never rewinds the automatic number counter or silently reuses the removed number.

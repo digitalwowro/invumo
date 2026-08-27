@@ -5,7 +5,6 @@ return [
         'dashboard' => 'Panou de control',
         'quotes' => 'Oferte',
         'invoices' => 'Facturi',
-        'invoices' => 'Facturi',
         'transactions' => 'Tranzacții',
         'customers' => 'Clienți',
         'recurring' => 'Recurente',

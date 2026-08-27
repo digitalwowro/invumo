@@ -262,6 +262,7 @@ return [
         'delete_high_risk_confirmation_required' => 'Acknowledge permanent deletion of this issued Invoice.',
         'delete_number_confirmation_invalid' => 'Enter the exact Invoice number.',
         'delete_transaction_dependency' => 'Delete every Payment, Refund, and Adjustment before permanently deleting this Invoice.',
+        'delete_quote_dependency' => 'This Invoice is linked to a Quote. Only a Draft can first be unlinked through the guarded Quote workflow; an Issued or Cancelled link is permanent.',
         'delete_dependency' => 'This Invoice has a retained dependency and cannot be permanently deleted.',
         'invoice_currency_locked_by_transactions' => 'The Invoice currency cannot change while transactions exist.',
         'invoice_total_below_net_paid' => 'The Invoice total cannot be lower than its current net paid amount.',

@@ -6,11 +6,14 @@ use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
 use App\Modules\Invoices\Http\Controllers\InvoiceLifecycleController;
 use App\Modules\Invoices\Http\Controllers\InvoiceRepresentationController;
+use App\Modules\Transactions\Http\Controllers\CompanyTransactionController;
 use App\Modules\Transactions\Http\Controllers\InvoiceTransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('companies/{company}/invoices', [InvoiceController::class, 'index'])
     ->name('invoices.index');
+Route::get('companies/{company}/transactions', [CompanyTransactionController::class, 'index'])
+    ->name('transactions.index');
 Route::get('companies/{company}/invoices/create', [InvoiceDraftController::class, 'create'])
     ->name('invoices.create');
 Route::post('companies/{company}/invoices', [InvoiceDraftController::class, 'store'])

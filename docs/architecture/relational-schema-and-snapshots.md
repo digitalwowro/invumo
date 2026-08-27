@@ -2,7 +2,7 @@
 
 Status: Approved architecture decision  
 Approved: 2026-08-22  
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 This document defines the approved v1 PostgreSQL relational model, migration strategy, same-Company constraints, deletion behavior, and snapshot boundaries. It translates the approved product brief and architecture contracts into a schema that can be implemented without inventing domain behavior during migrations.
 
@@ -466,7 +466,9 @@ The named `CreateInvoiceTransaction`, `UpdateInvoiceTransaction`, and `DeleteInv
 
 The Invoice row is the aggregate lock. v1 does not store a second authoritative balance/payment-state cache that could drift from transaction rows. The mutation path uses `InvoiceLedger`; Invoice edit/current-representation queries consume that same derived net-paid value, while list filtering performs the equivalent signed SQL aggregate so filtering remains database-side and cursor-pageable.
 
-The foreign key from transactions to Invoices is restrictive. Its presence therefore prevents permanent Invoice deletion at the database level, matching the approved product guard. The named deletion Action takes the standard Company-settings/Document/Invoice/UUID-ordered transaction locks, rechecks that the locked transaction set is empty, removes any active Quote provenance link, records the minimal lifecycle/number tombstone plus a retained `DELETED` number event, and deletes the current aggregate. Document children cascade; number events and audit remain. Phase 8 public-link and Phase 9 reminder/delivery tables must add their approved cleanup/retention hooks to this same root Action before those dependent rows can exist.
+The Company Transactions screen is a purpose-specific read Query over transaction facts plus current Invoice number and retained Customer snapshot identity. The named `ViewTransactions` ability permits Owner/Admin/Member according to the approved matrix, while Company context and forced RLS independently constrain every row. Literal escaped search covers Invoice number, Customer name, payment method, and reference; kind and transaction-date filters, stable real-column sorting, and cursor pagination stay database-side. Index `(company_id, transaction_date, id)` serves the default Company-wide date order, while the existing `(company_id, created_at, id)` index serves recently recorded order.
+
+The foreign keys from transactions and Quote provenance to Invoices are restrictive. Their presence prevents permanent Invoice deletion at the database level, matching the approved product guards. The named deletion Action takes the standard Company-settings/Document/Invoice/UUID-ordered transaction locks followed by stable provenance locks, rechecks that both locked sets are empty, records the minimal lifecycle/number tombstone plus a retained `DELETED` number event, and deletes the current aggregate. It never deletes provenance: a linked Draft must first pass `UnlinkQuoteInvoice`, preserving that workflow's ability, confirmation, reason, lifecycle/public-access/transaction checks, and Quote-targeted audit event. Document children cascade; number events and audit remain. Phase 8 public-link and Phase 9 reminder/delivery tables must add their approved cleanup/retention hooks to this same root Action before those dependent rows can exist.
 
 ## 10. Public access, rendering, and immutable delivery
 
@@ -645,7 +647,7 @@ Stable idempotency keys are persisted on the aggregate/event that owns the effec
 - Customer deletion is blocked by Documents or recurring templates.
 - Product/Tax/Bank deletion is blocked where an active source dependency must remain; ordinary history continues to use copied snapshot values.
 - Quote deletion is blocked by any dependent Quote-to-Invoice provenance.
-- Invoice deletion is blocked by any Payment, Refund, or Adjustment.
+- Invoice deletion is blocked by any Payment, Refund, Adjustment, or active Quote provenance link.
 - No ordinary parent cascade may bypass these guards.
 
 ### Authorized document deletion
@@ -712,7 +714,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 7C this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, and guarded permanent Invoice deletion under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction foreign key and retained number/audit tables already supply its database guard and history boundary. Public links, delivery artifacts/events, reminder persistence, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 7D this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, and the Company-wide transaction-date cursor index under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Public links, delivery artifacts/events, reminder persistence, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

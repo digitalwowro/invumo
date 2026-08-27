@@ -26,6 +26,11 @@ final class InvoiceDeletionException extends DomainException
         return new self('delete_transaction_dependency');
     }
 
+    public static function quoteDependency(): self
+    {
+        return new self('delete_quote_dependency');
+    }
+
     public static function dependency(): self
     {
         return new self('delete_dependency');

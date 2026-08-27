@@ -73,6 +73,10 @@ final readonly class DeleteInvoice
             throw InvoiceDeletionException::transactionDependency();
         }
 
+        if ($links->isNotEmpty()) {
+            throw InvoiceDeletionException::quoteDependency();
+        }
+
         if (! $data->confirmed) {
             throw InvoiceDeletionException::confirmationRequired();
         }
@@ -107,7 +111,6 @@ final readonly class DeleteInvoice
             'occurred_at' => now(),
             'related_audit_event_id' => $audit->id,
         ]);
-        $links->each->delete();
         $context->document->delete();
 
         return true;

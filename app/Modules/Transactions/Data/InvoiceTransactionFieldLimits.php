@@ -4,6 +4,8 @@ namespace App\Modules\Transactions\Data;
 
 final class InvoiceTransactionFieldLimits
 {
+    public const int SEARCH = 120;
+
     public const PAYMENT_METHOD = 120;
 
     public const REFERENCE = 500;

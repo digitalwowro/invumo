@@ -262,6 +262,7 @@ return [
         'delete_high_risk_confirmation_required' => 'Confirmă înțelegerea ștergerii definitive a acestei Facturi emise.',
         'delete_number_confirmation_invalid' => 'Introdu numărul exact al Facturii.',
         'delete_transaction_dependency' => 'Șterge toate Plățile, Rambursările și Ajustările înainte de a șterge definitiv această Factură.',
+        'delete_quote_dependency' => 'Această Factură este legată de o Ofertă. Numai o Ciornă poate fi mai întâi deconectată prin fluxul protejat al Ofertei; legătura unei Facturi Emise sau Anulate este permanentă.',
         'delete_dependency' => 'Această Factură are o dependență păstrată și nu poate fi ștearsă definitiv.',
         'invoice_currency_locked_by_transactions' => 'Moneda Facturii nu poate fi schimbată cât timp există tranzacții.',
         'invoice_total_below_net_paid' => 'Totalul Facturii nu poate fi mai mic decât suma plătită net în prezent.',

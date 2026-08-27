@@ -86,7 +86,7 @@ final class InvoiceTransactionDatabaseTest extends TestCase
             foreach ([
                 fn () => $this->directTransaction($invoice, 'PAYMENT', '50'),
                 fn () => $this->directTransaction($invoice, 'PAYMENT', '1', currency: 'USD'),
-                fn () => $this->directTransaction($invoice, 'PAYMENT', '1', date: '2026-08-28'),
+                fn () => $this->directTransaction($invoice, 'PAYMENT', '1', date: '9999-12-31'),
                 fn () => Document::query()->whereKey($invoice->id)->update(['total' => '50']),
                 fn () => Invoice::query()->whereKey($invoice->id)->update(['lifecycle' => 'DRAFT']),
             ] as $write) {

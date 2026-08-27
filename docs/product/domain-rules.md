@@ -443,7 +443,7 @@ Recurring template
 
 ## Public documents
 
-- Public Quote and Invoice pages are served by the SaaS application at `app.invumo.com`, never by the separate `invumo.com` marketing website. Exact paths remain behind the Phase 8 public-token design gate.
+- Public Quote and Invoice pages are served by the SaaS application at `app.invumo.com`, never by the separate `invumo.com` marketing website. Exact paths and credential/bootstrap behavior follow the approved [`public-token-and-access.md`](../architecture/public-token-and-access.md) contract.
 - Quotes and invoices use unpredictable public tokens rather than database IDs.
 - Default link expiry is 30 days.
 - Expiry is user-configurable.

@@ -874,7 +874,7 @@ Both quotes and invoices support secure public links, such as:
 - `app.invumo.com/q/<secure-token>`
 - `app.invumo.com/i/<secure-token>`
 
-Public document pages belong to the SaaS application host, not the separate `invumo.com` marketing website. The exact route and token-bootstrap contract remains subject to the Phase 8 public-token design gate.
+Public document pages belong to the SaaS application host, not the separate `invumo.com` marketing website. The exact route and token-bootstrap behavior follows the approved [public-token and access contract](../architecture/public-token-and-access.md).
 
 Do not expose predictable database IDs.
 

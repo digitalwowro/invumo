@@ -25,7 +25,12 @@ final readonly class CompanyTransactionListPage
         User $actor,
         CompanyTransactionListRequest $request,
     ): array {
-        if (! $this->abilities->allows($actor, $company, CompanyAbility::ViewTransactions)) {
+        if (! $this->abilities->allowsAll(
+            $actor,
+            $company,
+            CompanyAbility::ViewTransactions,
+            CompanyAbility::ViewInvoices,
+        )) {
             throw new AuthorizationException;
         }
 

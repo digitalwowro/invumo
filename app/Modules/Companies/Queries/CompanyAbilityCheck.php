@@ -14,12 +14,30 @@ final readonly class CompanyAbilityCheck
 
     public function allows(User $actor, Company $company, CompanyAbility $ability): bool
     {
+        return $this->allowsAll($actor, $company, $ability);
+    }
+
+    public function allowsAll(
+        User $actor,
+        Company $company,
+        CompanyAbility $ability,
+        CompanyAbility ...$additionalAbilities,
+    ): bool {
         $membership = CompanyMembership::query()
             ->where('company_id', $company->id)
             ->where('user_id', $actor->id)
             ->first();
 
-        return $membership !== null
-            && $this->authorization->allows($membership->role, $ability);
+        if ($membership === null) {
+            return false;
+        }
+
+        foreach ([$ability, ...$additionalAbilities] as $requiredAbility) {
+            if (! $this->authorization->allows($membership->role, $requiredAbility)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

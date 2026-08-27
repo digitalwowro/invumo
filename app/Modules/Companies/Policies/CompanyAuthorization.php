@@ -9,7 +9,7 @@ final readonly class CompanyAuthorization
 {
     public function allows(CompanyRole $role, CompanyAbility $ability): bool
     {
-        return match ($role) {
+        $allowed = match ($role) {
             CompanyRole::Owner => true,
             CompanyRole::Admin => ! in_array($ability, [
                 CompanyAbility::ManageAccount,
@@ -28,6 +28,11 @@ final readonly class CompanyAuthorization
                 CompanyAbility::ViewTransactions,
             ], true),
         };
+
+        return $allowed && (
+            $ability !== CompanyAbility::ViewTransactions
+            || $this->allows($role, CompanyAbility::ViewInvoices)
+        );
     }
 
     /**

@@ -143,7 +143,8 @@ The UI treats deletion of an already issued, sent, or publicly shared transactio
 
 | Action                                        | Owner   | Admin   | Member  | Notes                                                                                 |
 | --------------------------------------------- | ------- | ------- | ------- | ------------------------------------------------------------------------------------- |
-| Search/view Invoice transactions and balances | Yes     | Yes     | Yes     | Company-scoped operational data                                                       |
+| Search/view the Company-wide Invoice transaction list | Yes     | Yes     | Yes     | Requires both the named transaction-list ability and Invoice visibility               |
+| View Invoice-local transactions and balances           | Yes     | Yes     | Yes     | Governed by the underlying Invoice visibility boundary                                |
 | Record a Payment                              | Yes     | Yes     | Yes     | Issued positive-total Invoice only; complete-ledger validation applies                |
 | Send the optional payment-received email      | Yes     | Yes     | Yes     | Never automatic for backfilled payments                                               |
 | Record a Refund                               | Guarded | Guarded | Guarded | Actual refundable cash and net-paid bounds apply                                      |

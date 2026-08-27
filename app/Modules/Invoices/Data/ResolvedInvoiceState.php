@@ -40,6 +40,11 @@ final readonly class ResolvedInvoiceState
             $resolvedNetPaid->isZero() => InvoicePaymentState::Unpaid,
             default => InvoicePaymentState::PartiallyPaid,
         };
+
+        if ($lifecycle === InvoiceLifecycle::Cancelled) {
+            return new self($paymentState, false, InvoiceDisplayStatus::Cancelled);
+        }
+
         $overdue = ! $outstanding->isZero()
             && $dueDate !== null
             && $dueDate->isBefore($companyLocalDate);

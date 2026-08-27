@@ -1,7 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
@@ -23,7 +22,7 @@ import {
     invoiceFormData,
     invoiceRequestData,
 } from '@/features/invoices/components/invoice-draft-form-data';
-import { InvoiceIssueDialog } from '@/features/invoices/components/invoice-issue-dialog';
+import { InvoiceEditorLifecycleActions } from '@/features/invoices/components/invoice-editor-lifecycle-actions';
 import { InvoiceSourceDialogs } from '@/features/invoices/components/invoice-source-dialogs';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import type { CatalogTranslations } from '@/types/catalog';
@@ -35,6 +34,7 @@ import type {
     InvoiceCustomerSelection,
     InvoiceDraft,
     InvoiceLimits,
+    InvoiceLifecycleActions,
     InvoiceLine,
     InvoiceProductDefaults,
     InvoiceSourceOption,
@@ -47,6 +47,7 @@ type Props = {
     limits: InvoiceLimits;
     updateUrl: string;
     issueUrl: string;
+    lifecycleActions: InvoiceLifecycleActions;
     sourceUrls: InvoiceSourceUrls;
     inlineCustomerStoreUrl: string;
     inlineProductStoreUrl: string;
@@ -60,6 +61,7 @@ type Props = {
     catalogForm: InvoiceCatalogFormOptions;
     labels: InvoiceTranslations['edit'];
     issueLabels: InvoiceTranslations['issue'];
+    lifecycleLabels: InvoiceTranslations['lifecycle'];
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
     onDirtyChange?: (dirty: boolean) => void;
@@ -232,23 +234,17 @@ export function InvoiceDraftEditor(props: Props) {
                         }}
                     />
                     <DocumentTotals labels={props.labels} totals={totals} />
-                    <FormActions separated>
-                        <SubmitButton
-                            processing={form.processing}
-                            testId="save-invoice"
-                        >
-                            {props.labels.save}
-                        </SubmitButton>
-                        {props.invoice.lifecycle === 'DRAFT' && (
-                            <InvoiceIssueDialog
-                                key={form.data.editVersion}
-                                url={props.issueUrl}
-                                editVersion={form.data.editVersion}
-                                labels={props.issueLabels}
-                                disabled={form.isDirty || form.processing}
-                            />
-                        )}
-                    </FormActions>
+                    <InvoiceEditorLifecycleActions
+                        lifecycle={props.invoice.lifecycle}
+                        lifecycleActions={props.lifecycleActions}
+                        issueUrl={props.issueUrl}
+                        editVersion={form.data.editVersion}
+                        dirty={form.isDirty}
+                        processing={form.processing}
+                        saveLabel={props.labels.save}
+                        issueLabels={props.issueLabels}
+                        lifecycleLabels={props.lifecycleLabels}
+                    />
                 </Stack>
             </form>
             <InvoiceSourceDialogs

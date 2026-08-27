@@ -11,6 +11,7 @@ return [
         'REJECTED' => 'Rejected',
         'EXPIRED' => 'Expired',
         'ISSUED' => 'Issued',
+        'CANCELLED' => 'Cancelled',
         'PARTIALLY_PAID' => 'Partially paid',
         'PAID' => 'Paid',
         'OVERDUE' => 'Overdue',

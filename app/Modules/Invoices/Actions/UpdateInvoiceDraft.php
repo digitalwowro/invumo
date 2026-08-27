@@ -141,7 +141,7 @@ final readonly class UpdateInvoiceDraft
             'due_date' => $data->dueDate,
         ]);
 
-        if ($invoice->lifecycle === InvoiceLifecycle::Issued) {
+        if ($invoice->lifecycle !== InvoiceLifecycle::Draft) {
             $this->issuability->assert(
                 $document,
                 $invoice,
@@ -159,9 +159,11 @@ final readonly class UpdateInvoiceDraft
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,
-            action: $invoice->lifecycle === InvoiceLifecycle::Draft
-                ? 'company.invoice.draft_updated'
-                : 'company.invoice.issued_updated',
+            action: match ($invoice->lifecycle) {
+                InvoiceLifecycle::Draft => 'company.invoice.draft_updated',
+                InvoiceLifecycle::Issued => 'company.invoice.issued_updated',
+                InvoiceLifecycle::Cancelled => 'company.invoice.cancelled_updated',
+            },
             targetType: 'Invoice',
             targetId: $document->id,
             after: AuditPayload::fromAllowedFields([

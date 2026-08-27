@@ -196,6 +196,8 @@ type FormDialogProps = {
     confirmTestId?: string;
     triggerDisabled?: boolean;
     triggerDisabledDescription?: string;
+    confirmDisabled?: boolean;
+    confirmDisabledDescription?: string;
     onConfirm?: () => void;
 };
 
@@ -215,9 +217,12 @@ export function FormDialog({
     confirmTestId,
     triggerDisabled = false,
     triggerDisabledDescription,
+    confirmDisabled = false,
+    confirmDisabledDescription,
     onConfirm,
 }: FormDialogProps) {
     const triggerHelpId = `${formId}-trigger-help`;
+    const confirmHelpId = `${formId}-confirm-help`;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -255,13 +260,24 @@ export function FormDialog({
                     <Button
                         type={onConfirm ? 'button' : 'submit'}
                         form={onConfirm ? undefined : formId}
-                        disabled={processing}
+                        disabled={processing || confirmDisabled}
+                        aria-describedby={
+                            confirmDisabledDescription
+                                ? confirmHelpId
+                                : undefined
+                        }
+                        title={confirmDisabledDescription}
                         data-testid={confirmTestId}
                         onClick={onConfirm}
                     >
                         {processing && <Spinner />}
                         {confirmLabel}
                     </Button>
+                    {confirmDisabledDescription && (
+                        <span id={confirmHelpId} className="sr-only">
+                            {confirmDisabledDescription}
+                        </span>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

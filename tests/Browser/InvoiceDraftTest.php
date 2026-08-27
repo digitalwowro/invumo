@@ -13,6 +13,8 @@ use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 uses(DatabaseMigrations::class);
 
@@ -21,9 +23,14 @@ afterEach(function (): void {
         app(TenantContext::class)->runAsSystem(
             $companyId,
             function (): void {
-                InvoiceTransaction::query()->delete();
-                Invoice::query()->where('lifecycle', InvoiceLifecycle::Issued)
-                    ->update(['lifecycle' => InvoiceLifecycle::Draft]);
+                DB::connection(config('database.tenant_connection'))->transaction(function (): void {
+                    Invoice::query()->where('lifecycle', InvoiceLifecycle::Cancelled)
+                        ->update(['lifecycle' => InvoiceLifecycle::Issued]);
+                    DB::statement('SET CONSTRAINTS invoice_transaction_ledger_trigger DEFERRED');
+                    InvoiceTransaction::query()->delete();
+                    Invoice::query()->where('lifecycle', InvoiceLifecycle::Issued)
+                        ->update(['lifecycle' => InvoiceLifecycle::Draft]);
+                });
             },
         );
     });
@@ -33,7 +40,7 @@ function companyForInvoiceBrowser(string $language = 'en'): array
 {
     $owner = User::factory()->create([
         'name' => 'Invoice Owner',
-        'email' => "invoice-{$language}@example.com",
+        'email' => 'invoice-'.$language.'-'.Str::lower(Str::random(8)).'@example.com',
         'language_code' => $language,
     ]);
     $account = Account::query()->create([
@@ -165,6 +172,46 @@ it('keeps the Romanian Invoice Draft and current view usable on mobile', functio
         ->assertNoAccessibilityIssues()
         ->navigate(route('invoices.index', $company, false))
         ->assertSee('Facturi')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('cancels and reopens an Invoice with localized mobile controls', function () {
+    [$owner, $company] = companyForInvoiceBrowser('ro');
+
+    openInvoiceCreate($owner, $company, mobile: true)
+        ->assertSee('Factură nouă')
+        ->click('Creează ciorna facturii')
+        ->assertSee('Adaugă linie')
+        ->click('@document-customer-select')
+        ->type('Căutare client', 'Browser Invoice Customer')
+        ->click('@document-customer-search')
+        ->click('@document-customer-result')
+        ->click('@document-customer-confirm')
+        ->assertSee('Browser Invoice Customer SRL')
+        ->click('Adaugă linie')
+        ->type('Preț unitar', '100')
+        ->type('Cantitate', '1')
+        ->click('Salvează factura')
+        ->assertSee('Factura a fost salvată.')
+        ->click('@invoice-issue-trigger')
+        ->click('@invoice-issue-confirm')
+        ->assertSee('Factura a fost emisă.')
+        ->assertScript("document.querySelector('[data-testid=invoice-cancel-trigger]') !== null")
+        ->assertScript("document.querySelector('[data-testid=invoice-cancel-trigger]')?.disabled === false")
+        ->click('@invoice-cancel-trigger')
+        ->assertSee('Pregătită pentru anulare')
+        ->click('@invoice-cancel-confirm')
+        ->assertSee('Factura a fost anulată.')
+        ->assertSee('Anulată')
+        ->assertSee('istoric protejat la modificare')
+        ->click('@invoice-reopen-trigger')
+        ->type('Motivul redeschiderii', 'Reluarea colectării')
+        ->check('Confirm că această Factură trebuie să revină în starea Emisă.')
+        ->click('@invoice-reopen-confirm')
+        ->assertSee('Factura a fost redeschisă.')
+        ->assertSee('Emisă')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

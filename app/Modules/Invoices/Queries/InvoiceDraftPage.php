@@ -40,6 +40,7 @@ final readonly class InvoiceDraftPage
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
         private InvoiceTransactionsForInvoice $transactions,
+        private InvoiceLifecycleActionsForInvoice $lifecycleActions,
     ) {}
 
     /** @return array<string, mixed> */
@@ -185,6 +186,15 @@ final readonly class InvoiceDraftPage
                 $invoice->lifecycle,
                 $document->total,
                 $document->currency_precision ?? 2,
+            ),
+            'lifecycleActions' => $this->lifecycleActions->props(
+                $company,
+                $actor,
+                $document->id,
+                $invoice->lifecycle,
+                $ledger,
+                $document->currency_precision ?? 2,
+                $document->currency_code,
             ),
             'updateUrl' => route('invoices.update', [$company, $document], false),
             'issueUrl' => route('invoices.issue', [$company, $document], false),

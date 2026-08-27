@@ -1,0 +1,78 @@
+import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { SystemMessage } from '@/components/app/system-message';
+import { InvoiceIssueDialog } from '@/features/invoices/components/invoice-issue-dialog';
+import { InvoiceLifecycleDialog } from '@/features/invoices/components/invoice-lifecycle-dialog';
+import type {
+    InvoiceLifecycleActions,
+    InvoiceTranslations,
+} from '@/types/invoice';
+
+type Props = {
+    lifecycle: 'DRAFT' | 'ISSUED' | 'CANCELLED';
+    lifecycleActions: InvoiceLifecycleActions;
+    issueUrl: string;
+    editVersion: number;
+    dirty: boolean;
+    processing: boolean;
+    saveLabel: string;
+    issueLabels: InvoiceTranslations['issue'];
+    lifecycleLabels: InvoiceTranslations['lifecycle'];
+};
+
+export function InvoiceEditorLifecycleActions(props: Props) {
+    const actionDisabled = props.dirty || props.processing;
+
+    return (
+        <>
+            {props.lifecycle === 'ISSUED' &&
+                props.lifecycleActions.state === 'OWNER_ADMIN_REQUIRED' && (
+                    <SystemMessage
+                        title={props.lifecycleActions.stateTitle}
+                        description={props.lifecycleActions.stateDescription}
+                        tone="warning"
+                    />
+                )}
+            <FormActions separated>
+                <SubmitButton
+                    processing={props.processing}
+                    testId="save-invoice"
+                >
+                    {props.saveLabel}
+                </SubmitButton>
+                {props.lifecycle === 'DRAFT' && (
+                    <InvoiceIssueDialog
+                        key={props.editVersion}
+                        url={props.issueUrl}
+                        editVersion={props.editVersion}
+                        labels={props.issueLabels}
+                        disabled={actionDisabled}
+                    />
+                )}
+                {props.lifecycle === 'ISSUED' &&
+                    props.lifecycleActions.cancelUrl && (
+                        <InvoiceLifecycleDialog
+                            key={`cancel-${props.editVersion}`}
+                            action="cancel"
+                            url={props.lifecycleActions.cancelUrl}
+                            editVersion={props.editVersion}
+                            workflow={props.lifecycleActions}
+                            labels={props.lifecycleLabels}
+                            disabled={actionDisabled}
+                        />
+                    )}
+                {props.lifecycle === 'CANCELLED' &&
+                    props.lifecycleActions.reopenUrl && (
+                        <InvoiceLifecycleDialog
+                            key={`reopen-${props.editVersion}`}
+                            action="reopen"
+                            url={props.lifecycleActions.reopenUrl}
+                            editVersion={props.editVersion}
+                            workflow={props.lifecycleActions}
+                            labels={props.lifecycleLabels}
+                            disabled={actionDisabled}
+                        />
+                    )}
+            </FormActions>
+        </>
+    );
+}

@@ -24,6 +24,12 @@ Route::patch('companies/{company}/invoices/{invoice}', [InvoiceDraftController::
 Route::post('companies/{company}/invoices/{invoice}/issue', [InvoiceLifecycleController::class, 'issue'])
     ->middleware('throttle:20,1')
     ->name('invoices.issue');
+Route::post('companies/{company}/invoices/{invoice}/cancel', [InvoiceLifecycleController::class, 'cancel'])
+    ->middleware('throttle:20,1')
+    ->name('invoices.cancel');
+Route::post('companies/{company}/invoices/{invoice}/reopen', [InvoiceLifecycleController::class, 'reopen'])
+    ->middleware('throttle:20,1')
+    ->name('invoices.reopen');
 Route::post('companies/{company}/invoices/{invoice}/transactions', [InvoiceTransactionController::class, 'store'])
     ->middleware('throttle:30,1')
     ->name('invoice-transactions.store');

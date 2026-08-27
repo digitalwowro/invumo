@@ -55,6 +55,10 @@ final readonly class IssueInvoice
             return $document;
         }
 
+        if ($invoice->lifecycle !== InvoiceLifecycle::Draft) {
+            throw InvoiceLifecycleException::unavailable();
+        }
+
         if ($document->edit_version !== $editVersion) {
             throw InvoiceLifecycleException::stale();
         }

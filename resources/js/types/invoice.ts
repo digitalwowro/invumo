@@ -23,10 +23,24 @@ export type InvoiceCatalogFormOptions = DocumentCatalogFormOptions;
 export type InvoiceLimits = DocumentEditorLimits;
 export type InvoiceLine = DocumentLineDraft;
 export type InvoiceTaxDefault = DocumentTaxDefault;
-export type InvoiceLifecycle = 'DRAFT' | 'ISSUED';
+export type InvoiceLifecycle = 'DRAFT' | 'ISSUED' | 'CANCELLED';
 export type InvoicePaymentState = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
 export type InvoiceDisplayStatus =
-    'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
+    'DRAFT' | 'ISSUED' | 'CANCELLED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
+
+export type InvoiceLifecycleActions = {
+    cancelUrl: string | null;
+    reopenUrl: string | null;
+    canCancel: boolean;
+    state:
+        | 'READY'
+        | 'REFUND_REQUIRED'
+        | 'ADJUSTMENT_REQUIRED'
+        | 'REFUND_AND_ADJUSTMENT_REQUIRED'
+        | 'OWNER_ADMIN_REQUIRED';
+    stateTitle: string;
+    stateDescription: string;
+};
 
 export type InvoiceDraft = {
     id: string;
@@ -147,6 +161,22 @@ export type InvoiceTranslations = {
         'trigger' | 'title' | 'description' | 'confirm' | 'save_first',
         string
     >;
+    lifecycle: {
+        cancel: Record<
+            'trigger' | 'title' | 'description' | 'confirm' | 'save_first',
+            string
+        >;
+        reopen: Record<
+            | 'trigger'
+            | 'title'
+            | 'description'
+            | 'reason'
+            | 'confirmation'
+            | 'confirm'
+            | 'save_first',
+            string
+        >;
+    };
     transactions: InvoiceTransactionTranslations;
     feedback: Record<string, string>;
     errors: Record<string, string>;

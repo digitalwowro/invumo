@@ -21,7 +21,7 @@ final class InvoiceListRequest extends FormRequest
             'issue_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:issue_from'],
             'due_from' => ['nullable', 'date_format:Y-m-d'],
             'due_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:due_from'],
-            'lifecycle' => ['nullable', Rule::in(['all', 'DRAFT', 'ISSUED'])],
+            'lifecycle' => ['nullable', Rule::in(['all', 'DRAFT', 'ISSUED', 'CANCELLED'])],
             'payment' => ['nullable', Rule::in(['all', 'UNPAID', 'PARTIALLY_PAID', 'PAID'])],
             'overdue' => ['nullable', Rule::in(['all', 'overdue'])],
             'sort' => ['nullable', Rule::in(['issue_desc', 'issue_asc', 'recent'])],

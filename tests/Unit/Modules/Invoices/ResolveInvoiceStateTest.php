@@ -62,6 +62,10 @@ final class ResolveInvoiceStateTest extends TestCase
             InvoiceLifecycle::Issued, '10.00', '10.00', '2026-08-25',
             InvoicePaymentState::Paid, false, InvoiceDisplayStatus::Paid,
         ];
+        yield 'Cancelled keeps internal payment facts but presents its lifecycle' => [
+            InvoiceLifecycle::Cancelled, '10.00', '0', '2026-08-25',
+            InvoicePaymentState::Unpaid, false, InvoiceDisplayStatus::Cancelled,
+        ];
     }
 
     #[DataProvider('invalidLedgers')]

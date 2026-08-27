@@ -73,6 +73,7 @@ return [
             'all' => 'All lifecycle states',
             'DRAFT' => 'Draft',
             'ISSUED' => 'Issued',
+            'CANCELLED' => 'Cancelled',
         ],
         'payment_options' => [
             'all' => 'All payment states',
@@ -87,6 +88,7 @@ return [
         'statuses' => [
             'DRAFT' => 'Draft',
             'ISSUED' => 'Issued',
+            'CANCELLED' => 'Cancelled',
             'UNPAID' => 'Unpaid',
             'PARTIALLY_PAID' => 'Partially paid',
             'PAID' => 'Paid',
@@ -109,10 +111,52 @@ return [
         'confirm' => 'Issue invoice',
         'save_first' => 'Save the current Invoice changes before issuing.',
     ],
+    'lifecycle' => [
+        'cancel' => [
+            'trigger' => 'Cancel invoice',
+            'title' => 'Cancel this invoice?',
+            'description' => 'Cancellation preserves the Invoice and its complete transaction history. Net paid must be exactly zero.',
+            'confirm' => 'Cancel invoice',
+            'save_first' => 'Save the current Invoice changes before cancelling.',
+        ],
+        'reopen' => [
+            'trigger' => 'Reopen invoice',
+            'title' => 'Reopen this invoice?',
+            'description' => 'Reopening returns the Invoice to Issued without changing its number, history, or public identity.',
+            'reason' => 'Reason for reopening',
+            'confirmation' => 'I confirm that this Invoice should return to Issued.',
+            'confirm' => 'Reopen invoice',
+            'save_first' => 'Save the current Invoice changes before reopening.',
+        ],
+        'states' => [
+            'READY' => [
+                'title' => 'Ready to cancel',
+                'description' => 'Net paid is zero. Cancellation will preserve every existing transaction as read-only history.',
+            ],
+            'REFUND_REQUIRED' => [
+                'title' => 'Refund required',
+                'description' => 'Record Refunds totaling :refund before cancelling. Invumo will not allow a Refund beyond actual refundable cash.',
+            ],
+            'ADJUSTMENT_REQUIRED' => [
+                'title' => 'Adjustment required',
+                'description' => 'Record a decrease-paid Adjustment of :adjustment before cancelling.',
+            ],
+            'REFUND_AND_ADJUSTMENT_REQUIRED' => [
+                'title' => 'Refund and Adjustment required',
+                'description' => 'Record Refunds up to :refund, then a decrease-paid Adjustment of :adjustment before cancelling.',
+            ],
+            'OWNER_ADMIN_REQUIRED' => [
+                'title' => 'Owner/Admin action required',
+                'description' => 'Refunds are limited to :refund. After that, an Owner or Admin must record a decrease-paid Adjustment of :adjustment before cancellation.',
+                'description_no_refund' => 'No refundable cash remains. An Owner or Admin must record a decrease-paid Adjustment of :adjustment before cancellation.',
+            ],
+        ],
+    ],
     'transactions' => [
         'title' => 'Payments and adjustments',
         'description' => 'Record the Invoice’s exact payment, refund, and adjustment history.',
         'draft_notice' => 'Issue this Invoice before recording financial transactions.',
+        'cancelled_notice' => 'Transactions are retained as read-only history while this Invoice is Cancelled.',
         'unsaved_notice' => 'Save the current Invoice changes before changing its transactions.',
         'balance_notice' => 'The current Invoice balance does not allow this transaction.',
         'summary' => [
@@ -174,6 +218,8 @@ return [
     'feedback' => [
         'saved' => 'Invoice saved.',
         'issued' => 'Invoice issued.',
+        'cancelled' => 'Invoice cancelled.',
+        'reopened' => 'Invoice reopened.',
         'transaction_created' => 'Transaction recorded.',
         'transaction_updated' => 'Transaction updated.',
         'transaction_deleted' => 'Transaction deleted.',
@@ -195,6 +241,10 @@ return [
         'due_date_out_of_range' => 'This issue date and payment-term offset produce a date outside the supported range.',
         'due_date_before_issue' => 'The due date cannot be before the issue date.',
         'issue_incomplete' => 'Add a Customer, issue and due dates, currency, language, and at least one complete billable line before issuing.',
+        'lifecycle_confirmation_required' => 'Confirm this Invoice lifecycle change.',
+        'lifecycle_reason_invalid' => 'Enter a reason of no more than 500 characters.',
+        'lifecycle_unavailable' => 'This Invoice cannot make that lifecycle change from its current state.',
+        'cancellation_positive_net_paid' => 'Net paid must be exactly zero before this Invoice can be cancelled.',
         'invoice_currency_locked_by_transactions' => 'The Invoice currency cannot change while transactions exist.',
         'invoice_total_below_net_paid' => 'The Invoice total cannot be lower than its current net paid amount.',
         'transaction_confirmation_required' => 'Confirm this financial change before continuing.',

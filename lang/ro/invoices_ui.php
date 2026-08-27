@@ -73,6 +73,7 @@ return [
             'all' => 'Toate stările ciclului de viață',
             'DRAFT' => 'Ciornă',
             'ISSUED' => 'Emisă',
+            'CANCELLED' => 'Anulată',
         ],
         'payment_options' => [
             'all' => 'Toate stările plății',
@@ -87,6 +88,7 @@ return [
         'statuses' => [
             'DRAFT' => 'Ciornă',
             'ISSUED' => 'Emisă',
+            'CANCELLED' => 'Anulată',
             'UNPAID' => 'Neplătită',
             'PARTIALLY_PAID' => 'Plătită parțial',
             'PAID' => 'Plătită',
@@ -109,10 +111,52 @@ return [
         'confirm' => 'Emite factura',
         'save_first' => 'Salvează modificările curente ale Facturii înainte de emitere.',
     ],
+    'lifecycle' => [
+        'cancel' => [
+            'trigger' => 'Anulează factura',
+            'title' => 'Anulezi această factură?',
+            'description' => 'Anularea păstrează Factura și istoricul complet al tranzacțiilor. Suma plătită net trebuie să fie exact zero.',
+            'confirm' => 'Anulează factura',
+            'save_first' => 'Salvează modificările curente ale Facturii înainte de anulare.',
+        ],
+        'reopen' => [
+            'trigger' => 'Redeschide factura',
+            'title' => 'Redeschizi această factură?',
+            'description' => 'Redeschiderea readuce Factura în starea Emisă fără să-i schimbe numărul, istoricul sau identitatea publică.',
+            'reason' => 'Motivul redeschiderii',
+            'confirmation' => 'Confirm că această Factură trebuie să revină în starea Emisă.',
+            'confirm' => 'Redeschide factura',
+            'save_first' => 'Salvează modificările curente ale Facturii înainte de redeschidere.',
+        ],
+        'states' => [
+            'READY' => [
+                'title' => 'Pregătită pentru anulare',
+                'description' => 'Suma plătită net este zero. Anularea va păstra toate tranzacțiile existente ca istoric protejat la modificare.',
+            ],
+            'REFUND_REQUIRED' => [
+                'title' => 'Este necesară rambursarea',
+                'description' => 'Înregistrează Rambursări în valoare totală de :refund înainte de anulare. Invumo nu va permite o Rambursare peste numerarul rambursabil efectiv.',
+            ],
+            'ADJUSTMENT_REQUIRED' => [
+                'title' => 'Este necesară o Ajustare',
+                'description' => 'Înregistrează o Ajustare de micșorare a soldului plătit în valoare de :adjustment înainte de anulare.',
+            ],
+            'REFUND_AND_ADJUSTMENT_REQUIRED' => [
+                'title' => 'Sunt necesare o Rambursare și o Ajustare',
+                'description' => 'Înregistrează Rambursări de cel mult :refund, apoi o Ajustare de micșorare a soldului plătit în valoare de :adjustment înainte de anulare.',
+            ],
+            'OWNER_ADMIN_REQUIRED' => [
+                'title' => 'Este necesară acțiunea unui Proprietar/Administrator',
+                'description' => 'Rambursările sunt limitate la :refund. După aceea, un Proprietar sau Administrator trebuie să înregistreze o Ajustare de micșorare a soldului plătit în valoare de :adjustment înainte de anulare.',
+                'description_no_refund' => 'Nu mai există numerar rambursabil. Un Proprietar sau Administrator trebuie să înregistreze o Ajustare de micșorare a soldului plătit în valoare de :adjustment înainte de anulare.',
+            ],
+        ],
+    ],
     'transactions' => [
         'title' => 'Plăți și ajustări',
         'description' => 'Înregistrează istoricul exact al plăților, rambursărilor și ajustărilor Facturii.',
         'draft_notice' => 'Emite această Factură înainte de a înregistra tranzacții financiare.',
+        'cancelled_notice' => 'Tranzacțiile sunt păstrate ca istoric protejat la modificare cât timp această Factură este Anulată.',
         'unsaved_notice' => 'Salvează modificările curente ale Facturii înainte de a-i modifica tranzacțiile.',
         'balance_notice' => 'Soldul curent al Facturii nu permite această tranzacție.',
         'summary' => [
@@ -174,6 +218,8 @@ return [
     'feedback' => [
         'saved' => 'Factura a fost salvată.',
         'issued' => 'Factura a fost emisă.',
+        'cancelled' => 'Factura a fost anulată.',
+        'reopened' => 'Factura a fost redeschisă.',
         'transaction_created' => 'Tranzacția a fost înregistrată.',
         'transaction_updated' => 'Tranzacția a fost actualizată.',
         'transaction_deleted' => 'Tranzacția a fost ștearsă.',
@@ -195,6 +241,10 @@ return [
         'due_date_out_of_range' => 'Data emiterii și termenul de plată produc o dată în afara intervalului acceptat.',
         'due_date_before_issue' => 'Data scadenței nu poate fi înaintea datei emiterii.',
         'issue_incomplete' => 'Adaugă un Client, data emiterii și scadenței, moneda, limba și cel puțin o linie facturabilă completă înainte de emitere.',
+        'lifecycle_confirmation_required' => 'Confirmă această schimbare a ciclului de viață al Facturii.',
+        'lifecycle_reason_invalid' => 'Introdu un motiv de cel mult 500 de caractere.',
+        'lifecycle_unavailable' => 'Această Factură nu poate face schimbarea solicitată din starea curentă.',
+        'cancellation_positive_net_paid' => 'Suma plătită net trebuie să fie exact zero înainte ca această Factură să poată fi anulată.',
         'invoice_currency_locked_by_transactions' => 'Moneda Facturii nu poate fi schimbată cât timp există tranzacții.',
         'invoice_total_below_net_paid' => 'Totalul Facturii nu poate fi mai mic decât suma plătită net în prezent.',
         'transaction_confirmation_required' => 'Confirmă această modificare financiară înainte de a continua.',

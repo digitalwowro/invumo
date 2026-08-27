@@ -11,6 +11,7 @@ return [
         'REJECTED' => 'Respinsă',
         'EXPIRED' => 'Expirată',
         'ISSUED' => 'Emisă',
+        'CANCELLED' => 'Anulată',
         'PARTIALLY_PAID' => 'Plătită parțial',
         'PAID' => 'Plătită',
         'OVERDUE' => 'Restantă',

@@ -18,6 +18,7 @@ import type {
     InvoiceCustomerSelection,
     InvoiceDraft,
     InvoiceLimits,
+    InvoiceLifecycleActions,
     InvoiceProductDefaults,
     InvoiceSourceOption,
     InvoiceSourceUrls,
@@ -28,6 +29,7 @@ import type { InvoiceTransactions } from '@/types/invoice-transaction';
 type Props = {
     invoice: InvoiceDraft;
     transactions: InvoiceTransactions;
+    lifecycleActions: InvoiceLifecycleActions;
     limits: InvoiceLimits;
     updateUrl: string;
     issueUrl: string;
@@ -54,6 +56,7 @@ type Props = {
 export default function EditInvoice({
     invoice,
     transactions,
+    lifecycleActions,
     limits,
     updateUrl,
     issueUrl,
@@ -117,8 +120,10 @@ export default function EditInvoice({
                         limits={limits}
                         updateUrl={updateUrl}
                         issueUrl={issueUrl}
+                        lifecycleActions={lifecycleActions}
                         labels={translations.edit}
                         issueLabels={translations.issue}
+                        lifecycleLabels={translations.lifecycle}
                         customerLabels={customerTranslations}
                         catalogLabels={catalogTranslations}
                         onDirtyChange={setInvoiceDirty}

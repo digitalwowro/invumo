@@ -127,6 +127,8 @@ Sending is an external effect, not a lifecycle state beyond `ISSUED`. Provider D
 
 A Member may record or correct Payments and Refunds but cannot create, edit, or delete an Adjustment. If an eligible cancellation remains blocked by positive net paid that can be resolved only through an Adjustment, Invumo keeps the cancellation blocked and clearly directs the Member to an Owner/Admin. This is an expected workflow, not an error in the financial model. The UI must not suggest an artificial Refund beyond actual refundable cash or weaken the zero-net-paid cancellation invariant.
 
+Batch 7B implements this presentation contract through one server-resolved cancellation state. It reports the exact Refund amount bounded by the lesser of refundable cash and net paid, the remaining decrease-paid Adjustment, and whether the current actor may perform that Adjustment. A Member receives the explicit **Owner/Admin action required** state before attempting cancellation; direct unauthorized Adjustment mutations remain ordinary authorization denials and are not converted into misleading field validation.
+
 ### Reopening a Cancelled Invoice
 
 - Reopen always changes `CANCELLED → ISSUED`; it never returns a previously issued number to Draft.

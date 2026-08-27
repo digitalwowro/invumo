@@ -41,6 +41,7 @@ export type InvoiceTransactionTranslations = {
     title: string;
     description: string;
     draft_notice: string;
+    cancelled_notice: string;
     unsaved_notice: string;
     balance_notice: string;
     summary: Record<

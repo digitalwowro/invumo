@@ -12,7 +12,7 @@ import type {
 } from '@/types/invoice-transaction';
 
 type Props = {
-    lifecycle: 'DRAFT' | 'ISSUED';
+    lifecycle: 'DRAFT' | 'ISSUED' | 'CANCELLED';
     currencyCode: string | null;
     transactions: InvoiceTransactions;
     labels: InvoiceTransactionTranslations;
@@ -83,6 +83,12 @@ export function InvoiceTransactionsPanel(props: Props) {
                 {props.lifecycle === 'DRAFT' && (
                     <SystemMessage
                         title={props.labels.draft_notice}
+                        tone="neutral"
+                    />
+                )}
+                {props.lifecycle === 'CANCELLED' && (
+                    <SystemMessage
+                        title={props.labels.cancelled_notice}
                         tone="neutral"
                     />
                 )}

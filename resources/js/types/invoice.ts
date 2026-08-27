@@ -163,7 +163,13 @@ export type InvoiceTranslations = {
     >;
     lifecycle: {
         cancel: Record<
-            'trigger' | 'title' | 'description' | 'confirm' | 'save_first',
+            | 'trigger'
+            | 'title'
+            | 'description'
+            | 'reason'
+            | 'confirmation'
+            | 'confirm'
+            | 'save_first',
             string
         >;
         reopen: Record<
@@ -177,6 +183,17 @@ export type InvoiceTranslations = {
             string
         >;
     };
+    deletion: Record<
+        | 'trigger'
+        | 'title'
+        | 'description'
+        | 'high_risk_description'
+        | 'number_label'
+        | 'number_description'
+        | 'acknowledgment'
+        | 'confirm',
+        string
+    >;
     transactions: InvoiceTransactionTranslations;
     feedback: Record<string, string>;
     errors: Record<string, string>;

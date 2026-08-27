@@ -60,7 +60,8 @@ final class QuoteRepresentationHttpTest extends TestCase
 
         $pdfResponse = $this->get(route('quotes.current.pdf', [$company, $quote]))
             ->assertOk()
-            ->assertHeader('Content-Type', 'application/pdf');
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertDownload($quote->rendered_number.'.pdf');
         $this->assertTrue($pdfResponse->baseResponse->headers->hasCacheControlDirective('private'));
         $this->assertTrue($pdfResponse->baseResponse->headers->hasCacheControlDirective('no-store'));
         $text = (new Parser)->parseContent($pdfResponse->getContent())->getText();

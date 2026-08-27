@@ -18,6 +18,7 @@ use App\Modules\Identity\Models\Plan;
 use App\Modules\Invoices\Actions\CancelInvoice;
 use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Actions\IssueInvoice;
+use App\Modules\Invoices\Data\CancelInvoiceData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Exceptions\InvoiceLifecycleException;
 use App\Modules\Invoices\Models\Invoice;
@@ -161,7 +162,10 @@ final class InvoiceCancellationDatabaseTest extends TestCase
             $owner = User::query()->findOrFail($ownerId);
 
             if ($operation === 'cancel') {
-                app(CancelInvoice::class)->handle($company, $owner, $invoiceId, 2, true);
+                app(CancelInvoice::class)->handle(
+                    $company, $owner, $invoiceId,
+                    new CancelInvoiceData(2, 'Concurrent cancellation', true),
+                );
             } else {
                 app(CreateInvoiceTransaction::class)->handle(
                     $company,

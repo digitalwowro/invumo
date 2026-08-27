@@ -42,8 +42,7 @@ final class InvoiceLifecycleController extends Controller
                 $company,
                 $request->user(),
                 $invoice,
-                $request->editVersion(),
-                $request->boolean('confirmed'),
+                $request->change(),
             );
         } catch (InvoiceLifecycleException $exception) {
             $this->validationError($exception);

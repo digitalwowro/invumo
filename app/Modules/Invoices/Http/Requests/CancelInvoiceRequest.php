@@ -2,6 +2,7 @@
 
 namespace App\Modules\Invoices\Http\Requests;
 
+use App\Modules\Invoices\Data\CancelInvoiceData;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class CancelInvoiceRequest extends FormRequest
@@ -16,17 +17,25 @@ final class CancelInvoiceRequest extends FormRequest
     {
         return [
             'edit_version' => ['required', 'integer', 'min:1'],
+            'reason' => ['required', 'string', 'max:500'],
             'confirmed' => ['required', 'accepted'],
         ];
     }
 
-    public function editVersion(): int
+    public function change(): CancelInvoiceData
     {
-        return (int) $this->validated('edit_version');
+        return new CancelInvoiceData(
+            editVersion: (int) $this->validated('edit_version'),
+            reason: (string) $this->validated('reason'),
+            confirmed: (bool) $this->validated('confirmed'),
+        );
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['confirmed' => $this->boolean('confirmed')]);
+        $this->merge([
+            'reason' => trim((string) $this->input('reason')),
+            'confirmed' => $this->boolean('confirmed'),
+        ]);
     }
 }

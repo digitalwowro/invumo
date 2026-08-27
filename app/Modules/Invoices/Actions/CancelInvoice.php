@@ -12,6 +12,7 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Invoices\Data\CancelInvoiceData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Exceptions\InvoiceLifecycleException;
 use App\Modules\Transactions\Actions\LockInvoiceTransactionAggregate;
@@ -31,15 +32,14 @@ final readonly class CancelInvoice
         Company $company,
         User $actor,
         string $documentId,
-        int $editVersion,
-        bool $confirmed,
+        CancelInvoiceData $data,
     ): Document {
         return $this->tenantContext->runForMember(
             $actor,
             $company->id,
             fn (): Document => DB::connection(config('database.tenant_connection'))->transaction(
                 fn (): Document => $this->cancel(
-                    $company, $actor, $documentId, $editVersion, $confirmed,
+                    $company, $actor, $documentId, $data,
                 ),
                 3,
             ),
@@ -50,13 +50,16 @@ final readonly class CancelInvoice
         Company $company,
         User $actor,
         string $documentId,
-        int $editVersion,
-        bool $confirmed,
+        CancelInvoiceData $data,
     ): Document {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
 
-        if (! $confirmed) {
+        if (! $data->confirmed) {
             throw InvoiceLifecycleException::confirmationRequired();
+        }
+
+        if ($data->reason === '' || mb_strlen($data->reason) > 500) {
+            throw InvoiceLifecycleException::reasonInvalid();
         }
 
         $context = $this->lockAggregate->handle($documentId);
@@ -69,7 +72,7 @@ final readonly class CancelInvoice
             throw InvoiceLifecycleException::unavailable();
         }
 
-        if ($context->document->edit_version !== $editVersion) {
+        if ($context->document->edit_version !== $data->editVersion) {
             throw InvoiceLifecycleException::stale();
         }
 
@@ -88,6 +91,7 @@ final readonly class CancelInvoice
             action: 'company.invoice.cancelled',
             targetType: 'Invoice',
             targetId: $context->document->id,
+            reason: $data->reason,
             before: AuditPayload::fromAllowedFields([
                 'lifecycle' => InvoiceLifecycle::Issued->value,
             ], ['lifecycle']),

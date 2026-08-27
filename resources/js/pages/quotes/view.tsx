@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Download, Pencil } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
+import { DownloadLink } from '@/components/app/download-link';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
@@ -29,13 +30,13 @@ export default function ViewQuote(props: Props) {
                         subtitle={labels.description}
                         actions={
                             <>
-                                <ActionLink
+                                <DownloadLink
                                     href={props.pdfUrl}
-                                    variant="secondary"
+                                    testId="pdf-download"
                                 >
                                     <Download aria-hidden="true" />
                                     {labels.download_pdf}
-                                </ActionLink>
+                                </DownloadLink>
                                 <ActionLink href={props.editUrl}>
                                     <Pencil aria-hidden="true" />
                                     {labels.edit}

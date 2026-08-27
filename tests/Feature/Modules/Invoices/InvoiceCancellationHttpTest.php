@@ -71,7 +71,7 @@ final class InvoiceCancellationHttpTest extends TestCase
             $invoice = $this->issuedInvoice($company, $owner);
             $this->actingAs($actor)->post(route('invoices.cancel', [$company, $invoice]), [
                 'edit_version' => 2,
-                'confirmed' => true,
+                'reason' => 'Invoice issued in error', 'confirmed' => true,
             ])->assertRedirect()->assertSessionHas('status');
             $this->post(route('invoices.reopen', [$company, $invoice]), [
                 'edit_version' => 3,
@@ -94,6 +94,8 @@ final class InvoiceCancellationHttpTest extends TestCase
             }
             $this->assertSame(3, $events->where('action', 'company.invoice.reopened')
                 ->where('reason', 'Customer requested correction')->count());
+            $this->assertSame(3, $events->where('action', 'company.invoice.cancelled')
+                ->where('reason', 'Invoice issued in error')->count());
         });
     }
 
@@ -114,7 +116,7 @@ final class InvoiceCancellationHttpTest extends TestCase
         );
         $this->post(route('invoices.cancel', [$company, $invoice]), [
             'edit_version' => 4,
-            'confirmed' => true,
+            'reason' => 'Duplicate invoice', 'confirmed' => true,
         ])->assertRedirect();
 
         $this->get(route('invoices.edit', [$company, $invoice]))
@@ -185,17 +187,20 @@ final class InvoiceCancellationHttpTest extends TestCase
         $invoice = $this->issuedInvoice($company, $owner);
         $this->actingAs($owner);
         $this->post(route('invoices.cancel', [$company, $invoice]), [
-            'edit_version' => 1, 'confirmed' => true,
+            'edit_version' => 2, 'reason' => '', 'confirmed' => false,
+        ])->assertSessionHasErrors(['reason', 'confirmed']);
+        $this->post(route('invoices.cancel', [$company, $invoice]), [
+            'edit_version' => 1, 'reason' => 'Stale change', 'confirmed' => true,
         ])->assertSessionHasErrors('edit_version');
         $this->post(route('invoice-transactions.store', [$company, $invoice]), $this->transaction('PAYMENT', '10'))
             ->assertRedirect();
         $this->post(route('invoices.cancel', [$company, $invoice]), [
-            'edit_version' => 3, 'confirmed' => true,
+            'edit_version' => 3, 'reason' => 'Balance remains', 'confirmed' => true,
         ])->assertSessionHasErrors('invoice');
         $this->post(route('invoice-transactions.store', [$company, $invoice]), $this->transaction('REFUND', '10'))
             ->assertRedirect();
         $this->post(route('invoices.cancel', [$company, $invoice]), [
-            'edit_version' => 4, 'confirmed' => true,
+            'edit_version' => 4, 'reason' => 'Paid in error', 'confirmed' => true,
         ])->assertRedirect();
         $this->post(route('invoices.issue', [$company, $invoice]), ['edit_version' => 5])
             ->assertSessionHasErrors('invoice');

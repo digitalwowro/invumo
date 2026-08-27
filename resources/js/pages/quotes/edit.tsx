@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Download, Eye } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
+import { DownloadLink } from '@/components/app/download-link';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
@@ -93,10 +94,13 @@ export default function EditQuote({
                                     <Eye aria-hidden="true" />
                                     {translations.representation.view}
                                 </ActionLink>
-                                <ActionLink href={pdfUrl} variant="secondary">
+                                <DownloadLink
+                                    href={pdfUrl}
+                                    testId="pdf-download"
+                                >
                                     <Download aria-hidden="true" />
                                     {translations.representation.download_pdf}
-                                </ActionLink>
+                                </DownloadLink>
                                 <StatusBadge
                                     status={
                                         quote.status.toLowerCase() as Status

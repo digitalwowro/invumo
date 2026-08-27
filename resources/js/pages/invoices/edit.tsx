@@ -2,11 +2,13 @@ import { Head } from '@inertiajs/react';
 import { Download, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { ActionLink } from '@/components/app/action-link';
+import { DownloadLink } from '@/components/app/download-link';
 import { Cluster, Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
+import { InvoiceDeleteDialog } from '@/features/invoices/components/invoice-delete-dialog';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
 import { InvoiceTransactionsPanel } from '@/features/invoices/components/invoice-transactions-panel';
 import type { CatalogTranslations } from '@/types/catalog';
@@ -35,6 +37,7 @@ type Props = {
     issueUrl: string;
     representationUrl: string;
     pdfUrl: string;
+    deletion: { url: string | null; highRisk: boolean };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
     inlineCustomerStoreUrl: string;
@@ -62,6 +65,7 @@ export default function EditInvoice({
     issueUrl,
     representationUrl,
     pdfUrl,
+    deletion,
     indexUrl,
     status,
     translations,
@@ -88,16 +92,27 @@ export default function EditInvoice({
                                     <Eye aria-hidden="true" />
                                     {translations.representation.view}
                                 </ActionLink>
-                                <ActionLink href={pdfUrl} variant="secondary">
+                                <DownloadLink
+                                    href={pdfUrl}
+                                    testId="pdf-download"
+                                >
                                     <Download aria-hidden="true" />
                                     {translations.representation.download_pdf}
-                                </ActionLink>
+                                </DownloadLink>
                                 <InvoiceStatusBadges
                                     lifecycle={invoice.lifecycle}
                                     paymentState={invoice.paymentState}
                                     overdue={invoice.isOverdue}
                                     labels={translations.index.statuses}
                                 />
+                                {deletion.url && (
+                                    <InvoiceDeleteDialog
+                                        url={deletion.url}
+                                        number={invoice.number}
+                                        highRisk={deletion.highRisk}
+                                        labels={translations.deletion}
+                                    />
+                                )}
                             </>
                         }
                     />

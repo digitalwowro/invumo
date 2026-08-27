@@ -56,7 +56,8 @@ final class InvoiceRepresentationHttpTest extends TestCase
 
         $response = $this->get(route('invoices.current.pdf', [$company, $invoice]))
             ->assertOk()
-            ->assertHeader('Content-Type', 'application/pdf');
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertDownload($invoice->rendered_number.'.pdf');
         $this->assertTrue($response->baseResponse->headers->hasCacheControlDirective('private'));
         $this->assertTrue($response->baseResponse->headers->hasCacheControlDirective('no-store'));
         $text = (new Parser)->parseContent($response->getContent())->getText();

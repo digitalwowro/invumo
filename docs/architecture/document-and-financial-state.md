@@ -129,6 +129,10 @@ A Member may record or correct Payments and Refunds but cannot create, edit, or 
 
 Batch 7B implements this presentation contract through one server-resolved cancellation state. It reports the exact Refund amount bounded by the lesser of refundable cash and net paid, the remaining decrease-paid Adjustment, and whether the current actor may perform that Adjustment. A Member receives the explicit **Owner/Admin action required** state before attempting cancellation; direct unauthorized Adjustment mutations remain ordinary authorization denials and are not converted into misleading field validation.
 
+The role-specific state names are intentional. Owner/Admin receive `ADJUSTMENT_REQUIRED` or `REFUND_AND_ADJUSTMENT_REQUIRED` because they can complete those mutations. A Member receives `OWNER_ADMIN_REQUIRED` whenever any Adjustment remains, but its localized description still includes the exact refundable-cash-bounded Refund and remaining Adjustment amounts. The escalation is therefore not a fallthrough and does not hide the amount breakdown.
+
+Cancellation and reopening each require an explicit confirmation and a trimmed, non-empty reason of at most 500 characters. The reason is retained in the dedicated bounded audit-reason field; it is not copied into the before/after payload.
+
 ### Reopening a Cancelled Invoice
 
 - Reopen always changes `CANCELLED → ISSUED`; it never returns a previously issued number to Draft.
@@ -138,6 +142,8 @@ Batch 7B implements this presentation contract through one server-resolved cance
 - A valid, non-revoked public link remains viewable while Cancelled and clearly displays Cancelled; after reopening it displays the current Issued/payment state.
 - Reopening recalculates pending reminders from the current due date and balance. It never recreates reminders already sent. Past before-due reminders become stale; at most the newest currently eligible after-due reminder is scheduled for the next Company automation time.
 - Reopening requires confirmation, a reason, authorization defined by the permission matrix, and an audit record.
+
+Reminder-instance persistence does not exist through Batch 7C, so the current cancellation/reopening Actions have no reminder rows to suppress or recalculate. Phase 9 owns the first reminder materialization and must extend these existing root Actions inside their lifecycle transaction before any reminder can exist: cancellation suppresses pending instances, while reopening applies the rules above without replaying sent reminders. Phase 9 cannot pass its owning batch without cancellation/reopening integration tests; placeholder reminder writes are deliberately absent from Phase 7.
 
 ## 5. Derived Invoice state
 
@@ -280,7 +286,7 @@ When an edit, Refund, transaction correction, or reopening makes an Invoice coll
 
 - A Quote may be permanently deleted in any lifecycle state only when it has no linked Invoice.
 - An Invoice may be permanently deleted in Draft, Issued, or Cancelled only when it has no transaction rows.
-- Sent/decided/issued history causes a stronger warning but does not independently block deletion in v1. Permanently deleting a transaction-free Invoice that has already been issued, sent, or publicly shared is the highest-friction destructive document action: it requires materially stronger confirmation than an ordinary warning. The UI gate must define and test that confirmation interaction before Invoice deletion ships.
+- Sent/decided/issued history causes a stronger warning but does not independently block deletion in v1. Permanently deleting a transaction-free Invoice that has already been issued, sent, or publicly shared is the highest-friction destructive document action. Its strong confirmation requires both the exact current Invoice number and an explicit irreversible-action acknowledgment; Draft deletion uses the ordinary destructive confirmation. Phase 8 public-link and Phase 9 delivery records extend the same server-resolved high-risk signal before those exposure paths ship.
 - Deletion transactionally revokes public access, suppresses pending reminders/jobs, removes or safely detaches dependent delivery records according to the schema retention plan, and writes a minimal audit tombstone that identifies the deletion without retaining a complete customer/document copy.
 - Deletion never rewinds the automatic number counter or silently reuses the removed number.
 - No cascade from Customer, Quote, Company settings, or another ordinary parent operation may bypass these guards.

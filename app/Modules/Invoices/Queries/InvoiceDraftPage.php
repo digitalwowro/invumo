@@ -24,6 +24,7 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
+use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Transactions\Queries\InvoiceTransactionsForInvoice;
@@ -200,6 +201,12 @@ final readonly class InvoiceDraftPage
             'issueUrl' => route('invoices.issue', [$company, $document], false),
             'representationUrl' => route('invoices.current.show', [$company, $document], false),
             'pdfUrl' => route('invoices.current.pdf', [$company, $document], false),
+            'deletion' => [
+                'url' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices)
+                    ? route('invoices.destroy', [$company, $document], false)
+                    : null,
+                'highRisk' => $invoice->lifecycle !== InvoiceLifecycle::Draft,
+            ],
             'indexUrl' => route('invoices.index', $company, false),
             'sourceUrls' => [
                 'customerSearch' => route('quote-sources.customers.index', $company, false),

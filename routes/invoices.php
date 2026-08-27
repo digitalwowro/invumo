@@ -21,6 +21,9 @@ Route::get('companies/{company}/invoices/{invoice}', [InvoiceDraftController::cl
 Route::patch('companies/{company}/invoices/{invoice}', [InvoiceDraftController::class, 'update'])
     ->middleware('throttle:30,1')
     ->name('invoices.update');
+Route::delete('companies/{company}/invoices/{invoice}', [InvoiceController::class, 'destroy'])
+    ->middleware('throttle:10,1')
+    ->name('invoices.destroy');
 Route::post('companies/{company}/invoices/{invoice}/issue', [InvoiceLifecycleController::class, 'issue'])
     ->middleware('throttle:20,1')
     ->name('invoices.issue');

@@ -137,7 +137,7 @@ Customer Accept/Reject is outside this membership matrix and follows the approve
 | Confirm a duplicate Invoice number or renumber an Issued/Cancelled Invoice | Guarded | Guarded | No      | Warning, reason, and audit; no silent counter change                                         |
 | Permanently delete a transaction-free Invoice                              | Guarded | Guarded | No      | Highest-friction confirmation if ever issued, sent, or shared; transaction rows always block |
 
-The UI must treat deletion of an already issued, sent, or publicly shared transaction-free Invoice as the strongest irreversible document action, materially above an ordinary warning. The Phase 6 UI must test the final confirmation interaction.
+The UI treats deletion of an already issued, sent, or publicly shared transaction-free Invoice as the strongest irreversible document action: the operator must type the exact Invoice number and separately acknowledge that deletion is irreversible. Draft deletion uses the ordinary destructive confirmation. The Phase 7 UI tests both server enforcement and the strong interaction.
 
 ## 9. Payments, Refunds, and Adjustments
 

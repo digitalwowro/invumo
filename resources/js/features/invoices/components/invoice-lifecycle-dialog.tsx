@@ -26,7 +26,7 @@ export function InvoiceLifecycleDialog(props: Props) {
     const form = useForm({
         edit_version: props.editVersion,
         reason: '',
-        confirmed: props.action === 'cancel',
+        confirmed: false,
     });
     const errors = form.errors as typeof form.errors & { invoice?: string };
     const errorMessage = errors.invoice ?? errors.edit_version;
@@ -75,38 +75,30 @@ export function InvoiceLifecycleDialog(props: Props) {
                         tone={blocked ? 'warning' : 'info'}
                     />
                 )}
-                {props.action === 'reopen' && (
-                    <form id="invoice-reopen-form" onSubmit={submit}>
-                        <Stack gap="lg">
-                            <TextareaField
-                                label={props.labels.reopen.reason}
-                                error={form.errors.reason}
-                                textarea={{
-                                    value: form.data.reason,
-                                    maxLength: 500,
-                                    rows: 4,
-                                    onChange: (event) =>
-                                        form.setData(
-                                            'reason',
-                                            event.target.value,
-                                        ),
-                                }}
-                            />
-                            <CheckboxField
-                                label={props.labels.reopen.confirmation}
-                                error={form.errors.confirmed}
-                                checkbox={{
-                                    checked: form.data.confirmed,
-                                    onCheckedChange: (checked) =>
-                                        form.setData(
-                                            'confirmed',
-                                            checked === true,
-                                        ),
-                                }}
-                            />
-                        </Stack>
-                    </form>
-                )}
+                <form id={`invoice-${props.action}-form`} onSubmit={submit}>
+                    <Stack gap="lg">
+                        <TextareaField
+                            label={labels.reason}
+                            error={form.errors.reason}
+                            textarea={{
+                                value: form.data.reason,
+                                maxLength: 500,
+                                rows: 4,
+                                onChange: (event) =>
+                                    form.setData('reason', event.target.value),
+                            }}
+                        />
+                        <CheckboxField
+                            label={labels.confirmation}
+                            error={form.errors.confirmed}
+                            checkbox={{
+                                checked: form.data.confirmed,
+                                onCheckedChange: (checked) =>
+                                    form.setData('confirmed', checked === true),
+                            }}
+                        />
+                    </Stack>
+                </form>
                 {errorMessage && (
                     <SystemMessage title={errorMessage} tone="error" />
                 )}

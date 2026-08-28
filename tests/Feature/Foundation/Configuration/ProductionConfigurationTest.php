@@ -146,6 +146,7 @@ class ProductionConfigurationTest extends TestCase
             'invumo.document_artifacts.disk' => 'public',
             'services.zeptomail.endpoint' => 'http://example.test/send',
             'services.zeptomail.token' => '',
+            'services.zeptomail.webhook_secret' => 'short',
             'services.zeptomail.connect_timeout' => 30,
             'services.zeptomail.timeout' => 20,
         ]);
@@ -157,6 +158,7 @@ class ProductionConfigurationTest extends TestCase
             $this->assertStringContainsString('filesystem.document_artifacts', $exception->getMessage());
             $this->assertStringContainsString('zeptomail.endpoint', $exception->getMessage());
             $this->assertStringContainsString('zeptomail.token', $exception->getMessage());
+            $this->assertStringContainsString('zeptomail.webhook_secret', $exception->getMessage());
             $this->assertStringContainsString('zeptomail.timeouts', $exception->getMessage());
             $this->assertStringNotContainsString('zeptomail-test-secret', $exception->getMessage());
         } finally {
@@ -175,6 +177,21 @@ class ProductionConfigurationTest extends TestCase
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('zeptomail.token', $exception->getMessage());
             $this->assertStringNotContainsString('zeptomail-test-secret', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_document_delivery_quotas_cannot_exceed_shared_reputation_caps(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('invumo.document_delivery.platform_recipients_per_hour', 1001);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('An unsafe shared-provider quota was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('document_delivery.quotas', $exception->getMessage());
         } finally {
             $this->app['env'] = 'testing';
         }
@@ -228,6 +245,7 @@ class ProductionConfigurationTest extends TestCase
             'invumo.document_artifacts.disk' => 'document_artifacts_local',
             'services.zeptomail.endpoint' => 'https://api.zeptomail.eu/v1.1/email',
             'services.zeptomail.token' => 'zeptomail-test-secret',
+            'services.zeptomail.webhook_secret' => str_repeat('w', 32),
             'services.zeptomail.timeout' => 20,
             'services.zeptomail.connect_timeout' => 5,
             'localization.supported_locales' => ['en', 'ro'],

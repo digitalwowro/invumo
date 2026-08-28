@@ -38,6 +38,7 @@ return [
     'zeptomail' => [
         'endpoint' => env('ZEPTOMAIL_API_ENDPOINT', 'https://api.zeptomail.eu/v1.1/email'),
         'token' => env('ZEPTOMAIL_SEND_API_TOKEN'),
+        'webhook_secret' => env('ZEPTOMAIL_WEBHOOK_SECRET'),
         'timeout' => (int) env('ZEPTOMAIL_API_TIMEOUT', 20),
         'connect_timeout' => (int) env('ZEPTOMAIL_API_CONNECT_TIMEOUT', 5),
     ],

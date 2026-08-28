@@ -20,6 +20,7 @@ use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
+use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Delivery\Support\PublicDocumentUrl;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\DocumentLine;
@@ -65,6 +66,10 @@ final readonly class SendDocument
         DocumentKind $kind,
         SendDocumentData $data,
     ): EmailDelivery {
+        if (count($data->recipients) > DocumentDeliveryLimits::recipientsPerMessage()) {
+            throw DocumentDeliveryException::recipientLimitExceeded();
+        }
+
         $access = $this->lockAccess->handle($company, $actor, $documentId, $kind);
         $existing = EmailDelivery::query()->where('delivery_key', $data->deliveryKey)->first();
 

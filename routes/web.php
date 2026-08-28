@@ -18,6 +18,7 @@ use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
 use App\Modules\Delivery\Http\Controllers\CompanyEmailTemplateController;
+use App\Modules\Delivery\Http\Controllers\ZeptoMailWebhookController;
 use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
 use App\Modules\Platform\Http\Controllers\AccountSuspensionController;
@@ -36,6 +37,10 @@ use Laravel\Fortify\Http\Controllers\ConfirmedPasswordStatusController;
 Route::get('/', CompanyLandingController::class)->name('home');
 
 require __DIR__.'/public-documents.php';
+
+Route::match(['GET', 'POST'], 'webhooks/zeptomail', ZeptoMailWebhookController::class)
+    ->middleware('throttle:zeptomail-webhook')
+    ->name('webhooks.zeptomail');
 
 Route::get('invitations/{token}', [CompanyInvitationController::class, 'show'])
     ->middleware('throttle:20,1')

@@ -32,7 +32,7 @@ Route::post('companies/{company}/quotes/{quote}/invoices', [QuoteInvoiceControll
     ->middleware('throttle:20,1')
     ->name('quotes.invoices.store');
 Route::post('companies/{company}/quotes/{quote}/invoices/{invoice}/unlink', [QuoteInvoiceController::class, 'unlink'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:20,1')
     ->name('quotes.invoices.unlink');
 Route::delete('companies/{company}/quotes/{quote}', [QuoteController::class, 'destroy'])
     ->middleware('throttle:10,1')
@@ -59,11 +59,11 @@ Route::delete('companies/{company}/quotes/{document}/public-link', [DocumentPubl
     ->name('quotes.public-link.destroy');
 Route::post('companies/{company}/quotes/{document}/deliveries', [DocumentDeliveryController::class, 'store'])
     ->defaults('document_kind', 'QUOTE')
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:document-delivery')
     ->name('quotes.deliveries.store');
 Route::post('companies/{company}/quotes/{document}/deliveries/{delivery}/retry', [DocumentDeliveryController::class, 'retry'])
     ->defaults('document_kind', 'QUOTE')
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:document-delivery')
     ->name('quotes.deliveries.retry');
 
 Route::get('companies/{company}/document-sources/customers', [CustomerDocumentSourceController::class, 'index'])

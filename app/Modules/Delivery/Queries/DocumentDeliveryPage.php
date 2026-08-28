@@ -9,7 +9,9 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Delivery\Data\EmailTemplateFieldLimits;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
+use App\Modules\Delivery\Models\EmailProviderEvent;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
@@ -26,7 +28,7 @@ final readonly class DocumentDeliveryPage
     {
         $canSend = $this->abilities->allows($actor, $company, $kind->manageAbility());
         $deliveries = EmailDelivery::query()
-            ->with('recipients')
+            ->with(['recipients', 'providerEvents'])
             ->withCount('attempts')
             ->where('document_id', $documentId)
             ->orderByDesc('created_at')
@@ -56,6 +58,10 @@ final readonly class DocumentDeliveryPage
                 'acceptedAt' => $delivery->accepted_at?->toIso8601String(),
                 'failureSummary' => $this->failureSummary($delivery->failure_category),
                 'attemptCount' => $delivery->attempts_count,
+                'providerEvents' => $delivery->providerEvents->map(fn (EmailProviderEvent $event): array => [
+                    'type' => $event->event_type->value,
+                    'occurredAt' => $event->occurred_at->toIso8601String(),
+                ])->values()->all(),
                 'recipients' => $delivery->recipients->map(
                     fn (EmailDeliveryRecipient $recipient): array => [
                         'role' => $recipient->role->value,
@@ -81,7 +87,7 @@ final readonly class DocumentDeliveryPage
                 'body' => EmailTemplateFieldLimits::BODY,
                 'buttonLabel' => EmailTemplateFieldLimits::BUTTON_LABEL,
                 'signature' => EmailTemplateFieldLimits::SIGNATURE,
-                'recipients' => 100,
+                'recipients' => DocumentDeliveryLimits::recipientsPerMessage(),
             ],
         ];
     }

@@ -2,6 +2,13 @@ export type DeliveryRecipientRole = 'TO' | 'CC' | 'BCC';
 export type DeliveryAttachmentMode = 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
 export type DeliveryState =
     'QUEUED' | 'RETRYING' | 'ACCEPTED' | 'REJECTED' | 'UNKNOWN';
+export type DeliveryProviderEventType =
+    | 'DELIVERED'
+    | 'SOFT_BOUNCED'
+    | 'HARD_BOUNCED'
+    | 'OPENED'
+    | 'CLICKED'
+    | 'FEEDBACK_LOOP';
 
 export type DeliveryRecipient = {
     role: DeliveryRecipientRole;
@@ -32,6 +39,10 @@ export type DeliveryHistoryItem = {
     acceptedAt: string | null;
     failureSummary: string | null;
     attemptCount: number;
+    providerEvents: {
+        type: DeliveryProviderEventType;
+        occurredAt: string;
+    }[];
     recipients: DeliveryRecipient[];
     retryUrl: string | null;
 };
@@ -84,6 +95,8 @@ export type DocumentDeliveryTranslations = {
         attempts: string;
         recipients: string;
         attachment: string;
+        provider_reported: string;
+        provider_events: Record<DeliveryProviderEventType, string>;
         statuses: Record<DeliveryState, string>;
         retry: string;
         retry_title: string;

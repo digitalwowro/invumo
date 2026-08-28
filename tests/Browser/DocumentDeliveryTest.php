@@ -12,6 +12,7 @@ use App\Modules\Delivery\Data\PublicDocumentToken;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
+use App\Modules\Delivery\Models\EmailProviderEvent;
 use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
@@ -89,6 +90,14 @@ function deliveryBrowserContext(string $locale): array
             'failure_summary' => 'Provider rejection.',
             'submitted_at' => now(), 'completed_at' => now(),
         ]);
+        EmailProviderEvent::query()->create([
+            'delivery_id' => $delivery->id,
+            'provider_name' => 'ZEPTOMAIL',
+            'provider_event_identifier' => (string) Str::uuid7(),
+            'event_type' => 'OPENED',
+            'occurred_at' => now(),
+            'received_at' => now(),
+        ]);
     });
 
     return [$owner, $company, $quote];
@@ -104,6 +113,8 @@ it('keeps English direct delivery composer and retry history usable on desktop',
         ->navigate(route('quotes.edit', [$company, $quote], false))
         ->assertSee('Email delivery')
         ->assertSee('The provider rejected the email.')
+        ->assertSee('Provider-reported activity may be incomplete.')
+        ->assertSee('Opened')
         ->click('Retry')
         ->assertSee('Create a new provider attempt?')
         ->click('Cancel')
@@ -125,6 +136,8 @@ it('keeps Romanian direct delivery history and composer usable on mobile', funct
         ->navigate(route('quotes.edit', [$company, $quote], false))
         ->assertSee('Livrare prin email')
         ->assertSee('Furnizorul a respins emailul.')
+        ->assertSee('Activitatea raportată de furnizor poate fi incompletă.')
+        ->assertSee('Deschis')
         ->click('Trimite emailul')
         ->assertSee('Trimite documentul prin email')
         ->wait(0.3)

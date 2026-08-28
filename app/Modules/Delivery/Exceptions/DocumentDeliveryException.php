@@ -51,6 +51,11 @@ final class DocumentDeliveryException extends RuntimeException
         return new self('delivery_pending');
     }
 
+    public static function recipientLimitExceeded(): self
+    {
+        return new self('recipient_limit_exceeded', 'recipients');
+    }
+
     public static function invoiceIncomplete(): self
     {
         return new self('issue_incomplete');

@@ -69,11 +69,11 @@ Route::delete('companies/{company}/invoices/{document}/public-link', [DocumentPu
     ->name('invoices.public-link.destroy');
 Route::post('companies/{company}/invoices/{document}/deliveries', [DocumentDeliveryController::class, 'store'])
     ->defaults('document_kind', 'INVOICE')
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:document-delivery')
     ->name('invoices.deliveries.store');
 Route::post('companies/{company}/invoices/{document}/deliveries/{delivery}/retry', [DocumentDeliveryController::class, 'retry'])
     ->defaults('document_kind', 'INVOICE')
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:document-delivery')
     ->name('invoices.deliveries.retry');
 Route::post('companies/{company}/invoices/{document}/inline-customers', InlineCustomerController::class)
     ->middleware('throttle:20,1')

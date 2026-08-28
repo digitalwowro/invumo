@@ -6,6 +6,9 @@ use App\Foundation\Jobs\JobIdentity;
 use App\Foundation\Jobs\TenantJob;
 use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\TenantContext;
+use App\Models\User;
+use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\ResolveOutwardBrandTheme;
 use App\Modules\Delivery\Actions\CompleteDocumentDeliveryAttempt;
@@ -23,6 +26,8 @@ use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Support\DocumentDeliveryLimits;
+use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -60,6 +65,7 @@ final class SendDocumentDelivery extends TenantJob
         DocumentEmailHtml $html,
         PrepareDocumentDeliveryArtifact $artifact,
         CompleteDocumentDeliveryAttempt $complete,
+        DocumentDeliveryQuota $quota,
     ): void {
         if (! $artifact->handle(
             $this->identity->companyId,
@@ -73,7 +79,7 @@ final class SendDocumentDelivery extends TenantJob
         $prepared = $tenantContext->runAsSystem(
             $this->identity->companyId,
             fn (): ?PreparedProviderAttempt => $this->prepare(
-                $execution, $filesystems, $brandTheme, $html, $complete,
+                $execution, $filesystems, $brandTheme, $html, $complete, $quota,
             ),
         );
 
@@ -113,6 +119,7 @@ final class SendDocumentDelivery extends TenantJob
         ResolveOutwardBrandTheme $brandTheme,
         DocumentEmailHtml $html,
         CompleteDocumentDeliveryAttempt $completion,
+        DocumentDeliveryQuota $quota,
     ): ?PreparedProviderAttempt {
         $unlocked = EmailDelivery::query()->whereKey($this->deliveryId)->first();
 
@@ -141,6 +148,32 @@ final class SendDocumentDelivery extends TenantJob
             || ! in_array($delivery->dispatch_state, [EmailDeliveryState::Queued, EmailDeliveryState::Retrying], true)
             || $delivery->document_id === null) {
             $execution->skip('delivery_unavailable');
+
+            return null;
+        }
+
+        $companyRecord = Company::query()->whereKey($this->identity->companyId)->firstOrFail();
+        $account = $companyRecord->owningAccount()->firstOrFail();
+        $initiator = $delivery->initiated_by_user_id === null
+            ? null : User::query()->whereKey($delivery->initiated_by_user_id)->first();
+        $initiatorIsMember = $initiator instanceof User
+            && CompanyMembership::query()
+                ->where('company_id', $companyRecord->id)
+                ->where('user_id', $initiator->id)
+                ->exists();
+
+        if ($companyRecord->archived_at !== null
+            || $account->suspended_at !== null
+            || ! $initiator instanceof User
+            || ! $initiatorIsMember
+            || $initiator->suspended_at !== null) {
+            $completion->rejectBeforeSubmission(
+                $delivery,
+                $this->dispatchCycle,
+                'sender_access_unavailable',
+                'The initiating Company, Account, or User cannot submit provider email.',
+            );
+            $execution->skip('sender_access_unavailable');
 
             return null;
         }
@@ -186,6 +219,23 @@ final class SendDocumentDelivery extends TenantJob
 
         $recipients = EmailDeliveryRecipient::query()
             ->where('delivery_id', $delivery->id)->orderBy('display_order')->get();
+
+        if ($recipients->count() > DocumentDeliveryLimits::recipientsPerMessage()
+            || ! $quota->consume(
+                $companyRecord->id,
+                $companyRecord->owning_account_id,
+                $recipients->count(),
+            )) {
+            $completion->rejectBeforeSubmission(
+                $delivery,
+                $this->dispatchCycle,
+                'sending_quota_exceeded',
+                'The shared provider sending quota was exhausted before submission.',
+            );
+            $execution->skip('sending_quota_exceeded');
+
+            return null;
+        }
         $artifact = $delivery->artifact_id === null
             ? null : DocumentArtifact::query()->whereKey($delivery->artifact_id)->firstOrFail();
         $company = DocumentCompanySnapshot::query()

@@ -498,7 +498,7 @@ The authenticated current PDF remains a fresh read-only projection, so a normal 
 - resolved language, subject, body, button label, signature, and attachment mode
 - optional immutable attachment-artifact reference
 - provider name/message identifier
-- dispatch state and accepted/failed timestamps
+- dispatch state, accepted/failed timestamps, and earliest delivered/soft-bounced/hard-bounced/opened/clicked/feedback-loop milestones
 - failure category and safe summary
 - nullable `redacted_at`; content fields become nullable only through approved permanent-document cleanup
 
@@ -511,7 +511,7 @@ A partial unique index permits only one `QUEUED` or `RETRYING` logical delivery 
 - immutable resolved name and email
 - display order
 
-Recipient order is unique per role, at least one `TO` recipient is required, and normalized email addresses may occur only once across all roles in a logical delivery.
+Recipient order is unique per role, at least one `TO` recipient is required, normalized email addresses may occur only once across all roles in a logical delivery, and the database rejects more than ten resolved recipients.
 
 ### `email_delivery_attempts`
 
@@ -527,10 +527,10 @@ Only one provider attempt for a logical delivery may be `PENDING`. Completed att
 - `id`, `company_id`, delivery reference
 - provider name, event identifier, and type
 - occurred/received timestamps
-- bounded, redacted provider metadata `jsonb`
+- nullable erasure timestamp; provider identity becomes nullable only through approved document cleanup
 - unique `(provider_name, provider_event_identifier)`
 
-Provider events update the delivery's operational status idempotently but never alter its resolved content or attachment. Batch 9D creates this inbound table and processing boundary; Batch 9C creates only the outbound delivery, recipient, artifact, and provider-attempt records.
+Provider events update the delivery's earliest operational milestones idempotently but never alter its resolved content, attachment, dispatch outcome, or other event history. No raw payload, recipient identity, diagnostic, IP, geolocation, browser, device, User-Agent, or clicked URL is stored. One exact `client_reference` bootstrap policy lets the restricted runtime role find only the mapped provider attempt before ordinary Company context and forced RLS are re-established.
 
 Permanent document deletion is blocked while provider submission is in flight. Otherwise it rejects queued work, erases recipients and artifact bytes, nulls customer-visible email content, exact link/document/provider identity, and diagnostic summaries, and preserves only a non-sensitive logical-delivery/attempt fact plus the minimal audit tombstone. Delivery-history presence permanently blocks unlinking a Quote-derived Invoice, even after redaction.
 

@@ -478,9 +478,10 @@ Recurring template
 - Support one primary/default recipient and optional multiple CC and BCC recipients.
 - Show resolved recipients and secure-link-only/attach-PDF choice in the send composer before sending.
 - Require at least one valid primary recipient; validate and deduplicate To/CC/BCC addresses.
+- Bound one direct document email to ten recipients and apply weighted Company, Account, and shared-provider recipient budgets at the provider-submission boundary, including every retry. Quota exhaustion or lost sender authority must fail visibly without a provider call.
 - Automated sends with no valid recipient fail visibly and record the reason rather than retrying indefinitely.
 - Track Sent, Delivered, soft/hard bounce, Opened, and clicked provider events. Treat open/click signals as provider-reported and potentially incomplete.
-- Authenticate ZeptoMail webhooks with the pinned HMAC-SHA256 signature and bounded timestamp skew, discard raw/privacy-rich provider fields, and process duplicate or out-of-order events idempotently.
+- Authenticate ZeptoMail webhooks with the pinned `X-Invumo-Webhook-Key` static secret supported by the live Agent UI, compare it in constant time before parsing, discard raw/privacy-rich provider fields, and process duplicate or out-of-order events idempotently. HTTPS protects the static secret in transit; provider event identifiers, not an unavailable signed request timestamp, make replays effect-idempotent.
 - A provider outcome that may have been transmitted but cannot be confirmed becomes `UNKNOWN` and is never resent automatically. An authorized manual retry creates a new immutable attempt after a duplicate-delivery warning.
 - Permanent document deletion erases delivery content, recipients, attachment artifacts, public URLs, and provider identity while retaining only non-sensitive operational facts.
 - Customer SMTP is excluded from v1.

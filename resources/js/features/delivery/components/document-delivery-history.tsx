@@ -72,6 +72,25 @@ export function DocumentDeliveryHistory({
                                 {item.failureSummary}
                             </p>
                         )}
+                        {item.providerEvents.length > 0 && (
+                            <div className="space-y-1 text-sm text-foreground-muted">
+                                <p>{labels.history.provider_reported}</p>
+                                <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                                    {item.providerEvents.map((event, index) => (
+                                        <li
+                                            key={`${event.type}-${event.occurredAt}-${index}`}
+                                        >
+                                            {
+                                                labels.history.provider_events[
+                                                    event.type
+                                                ]
+                                            }{' '}
+                                            · {date(event.occurredAt)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-start gap-3 text-sm text-foreground-muted lg:flex-col lg:items-end">
                         <span>{date(item.createdAt)}</span>

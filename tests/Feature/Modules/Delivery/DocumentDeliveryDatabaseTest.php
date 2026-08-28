@@ -13,6 +13,7 @@ use App\Modules\Delivery\Models\DocumentArtifact;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
+use App\Modules\Delivery\Models\EmailProviderEvent;
 use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -172,11 +173,17 @@ final class DocumentDeliveryDatabaseTest extends DocumentDeliveryTestCase
         [$owner, $company] = $this->company();
         $quote = $this->completeQuote($company, $this->quote($company, $owner));
         Storage::disk('document_artifacts_local')->put('history.pdf', '%PDF retained test');
-        $this->tenant($company, fn () => $this->history(
-            $quote,
-            EmailDeliveryState::Rejected,
-            withArtifact: true,
-        ));
+        $this->tenant($company, function () use ($quote): void {
+            $delivery = $this->history($quote, EmailDeliveryState::Rejected, withArtifact: true);
+            EmailProviderEvent::query()->create([
+                'delivery_id' => $delivery->id,
+                'provider_name' => 'ZEPTOMAIL',
+                'provider_event_identifier' => 'private-provider-event',
+                'event_type' => 'HARD_BOUNCED',
+                'occurred_at' => now(),
+                'received_at' => now(),
+            ]);
+        });
         Queue::fake();
 
         $this->actingAs($owner)->delete(route('quotes.destroy', [$company, $quote]), [
@@ -202,6 +209,10 @@ final class DocumentDeliveryDatabaseTest extends DocumentDeliveryTestCase
             $this->assertNull($attempt->failure_summary);
             $this->assertSame('provider_permanent_rejection', $attempt->failure_category);
             $this->assertNotNull($attempt->redacted_at);
+            $providerEvent = EmailProviderEvent::query()->sole();
+            $this->assertNull($providerEvent->provider_name);
+            $this->assertNull($providerEvent->provider_event_identifier);
+            $this->assertNotNull($providerEvent->redacted_at);
         });
         Queue::assertPushed(DeleteDocumentArtifactFiles::class, 1);
     }

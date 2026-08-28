@@ -64,6 +64,15 @@ const labels: DocumentDeliveryTranslations = {
         attempts: 'Attempts',
         recipients: 'Recipients',
         attachment: 'PDF attached',
+        provider_reported: 'Provider-reported activity may be incomplete.',
+        provider_events: {
+            DELIVERED: 'Delivered',
+            SOFT_BOUNCED: 'Soft bounced',
+            HARD_BOUNCED: 'Hard bounced',
+            OPENED: 'Opened',
+            CLICKED: 'Clicked',
+            FEEDBACK_LOOP: 'Spam complaint',
+        },
         statuses: {
             QUEUED: 'Queued',
             RETRYING: 'Retrying',
@@ -101,7 +110,7 @@ const delivery: DocumentDelivery = {
         body: 20_000,
         buttonLabel: 80,
         signature: 5_000,
-        recipients: 100,
+        recipients: 10,
     },
 };
 
@@ -143,6 +152,12 @@ describe('DocumentDeliveryPanel', () => {
                             acceptedAt: null,
                             failureSummary: 'The provider rejected the email.',
                             attemptCount: 2,
+                            providerEvents: [
+                                {
+                                    type: 'OPENED',
+                                    occurredAt: '2026-08-28T09:05:00Z',
+                                },
+                            ],
                             recipients: [
                                 {
                                     role: 'TO',
@@ -160,6 +175,10 @@ describe('DocumentDeliveryPanel', () => {
         expect(screen.getByText('Failed')).toBeInTheDocument();
         expect(screen.getByText('PDF attached')).toBeInTheDocument();
         expect(screen.getByText('Attempts: 2')).toBeInTheDocument();
+        expect(
+            screen.getByText(/Provider-reported activity/),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/Opened/)).toBeInTheDocument();
         expect(
             screen.getByText('The provider rejected the email.'),
         ).toBeInTheDocument();

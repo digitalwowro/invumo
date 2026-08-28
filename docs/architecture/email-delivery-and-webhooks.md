@@ -33,6 +33,8 @@ Already-resolved delivery content and attachments do not change when the Company
 
 Only one logical delivery may be queued or retrying for a document at a time. Document edits and lifecycle/transaction mutations are blocked while that delivery is pending. Emergency public-link revocation remains available; a worker that sees the exact persisted link revoked, expired, or disabled rejects the delivery before provider submission.
 
+Direct composition remains editable, including one-off recipient addresses, but it is not an unbounded mail relay. One logical delivery accepts at most ten case-insensitively unique recipients. A shared named HTTP limiter bounds user and Account submission bursts, while the provider-neutral worker boundary atomically consumes weighted recipient budgets for the Company, owning Account, and shared provider identity immediately before creating a provider attempt. Initial sends, manual retries, automatic retries, and non-HTTP callers therefore converge on the same provider-submission guard. The worker also rechecks Company archive, Account suspension, and initiating-User suspension before any provider call. Quota excess and lost sender authority fail visibly without contacting ZeptoMail. Production readiness rejects absent, non-positive, or overly permissive quota configuration.
+
 ## 3. Provider identity and duplicate control
 
 - Every logical delivery has one stable Invumo delivery UUID and idempotency key enforced by the database.
@@ -81,15 +83,15 @@ Provider-specific values are mapped at the webhook boundary and do not leak into
 
 ## 6. Webhook authentication and containment
 
-The webhook endpoint accepts only the ZeptoMail signature format documented for the configured Mail Agent:
+The live ZeptoMail Agent UI supports one static authorization header per webhook but no longer exposes the Authentication Key required by its published `producer-signature` HMAC instructions. The owner therefore approved the provider-supported static-header boundary before Batch 9D closeout:
 
-1. Read the exact form-encoded `data` value without normalizing or rebuilding it.
-2. Parse `producer-signature` into its timestamp, signature, and algorithm fields.
-3. Require the pinned `HmacSHA256` algorithm and reject missing, duplicate, or unknown signature fields.
-4. Reject timestamps outside an absolute five-minute clock-skew window.
-5. Compute HMAC-SHA256 over the documented URL-decoded `data` value with the environment-backed webhook secret and compare in constant time.
-6. Parse and validate the JSON only after signature verification.
-7. Resolve only the mapped internal attempt through its non-sensitive `client_reference`; never accept a Company or document identity as authority from the payload.
+1. Configure the pinned header name `X-Invumo-Webhook-Key` and a distinct environment-backed random value of 32–512 characters in the ZeptoMail Agent. The value is not the Send API key.
+2. Require the exact header before processing either a reachability probe or an event and compare its SHA-256 digest with the configured secret in constant time.
+3. Accept an authenticated empty `GET`, `HEAD`, or `POST` only as the provider's side-effect-free reachability probe. Event requests remain strict form-encoded `POST` bodies containing one bounded `data` field.
+4. Parse and validate event JSON only after authentication. Authenticated Agent events without an Invumo UUID `client_reference` are acknowledged and ignored, so provider tests and unrelated Agent traffic cannot create tenant effects or retry indefinitely.
+5. Resolve only a mapped internal attempt through its non-sensitive `client_reference`; never accept a Company or document identity as authority from the payload. The runtime role receives one exact-reference bootstrap `SELECT` policy; normal forced RLS remains in force and the mapped Company context is revalidated before the event write.
+
+The static header is protected in transit by HTTPS but supplies no signed per-request timestamp or payload MAC. Invumo therefore does not claim the superseded five-minute producer-signature freshness property. Replayed authentic events remain effect-idempotent through the globally unique provider event identifier, and delayed legitimate events remain acceptable. A provider-reported occurrence more than five minutes in the future is still rejected as malformed, but that event time is not treated as request authentication.
 
 The endpoint is rate limited, has a bounded request size, returns a uniform response after authenticated processing, and never establishes general Company or RLS-bypass access. The system actor may append normalized events and update the mapped delivery projection only.
 
@@ -117,6 +119,8 @@ Permanent document deletion must extend the document-owning destructive Action t
 
 Provider events are never a second store for recipient identity or message content. No raw webhook payload is persisted. Company erasure removes the complete tenant-owned delivery history under the existing Company-erasure boundary.
 
+The normalized event row contains only provider name/event identifier, event type, and occurred/received timestamps. The delivery projection stores the earliest timestamp for each normalized milestone. Document erasure nulls the provider identity and idempotency identifier while retaining only the event type and timestamps.
+
 ## 9. Authorization and audit
 
 - Owner/Admin manage Company email templates, reminder defaults, and Company-wide failure operations.
@@ -135,7 +139,7 @@ Phase 9 implementation must prove:
 - resolved delivery content is immutable and external calls begin only after commit;
 - known rejection, retryable pre-send failure, ambiguous post-transmission failure, manual retry, and provider acceptance are distinct states;
 - ambiguous outcomes do not auto-resend;
-- webhook signatures, timestamp skew, malformed inputs, duplicate IDs, unknown events, and cross-attempt mappings fail safely;
+- webhook secrets, verification probes, malformed inputs, duplicate IDs, unknown events, and cross-attempt mappings fail safely;
 - duplicate/out-of-order webhooks do not duplicate effects or regress projections;
 - click/open tracking is displayed as provider-reported and webhook privacy fields are discarded;
 - forced RLS and Laravel authorization independently isolate every delivery, recipient, artifact, reminder, and event row;

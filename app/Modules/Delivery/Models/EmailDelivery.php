@@ -35,6 +35,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $failure_summary
  * @property CarbonImmutable|null $accepted_at
  * @property CarbonImmutable|null $failed_at
+ * @property CarbonImmutable|null $delivered_at
+ * @property CarbonImmutable|null $soft_bounced_at
+ * @property CarbonImmutable|null $hard_bounced_at
+ * @property CarbonImmutable|null $opened_at
+ * @property CarbonImmutable|null $clicked_at
+ * @property CarbonImmutable|null $feedback_loop_at
  * @property CarbonImmutable|null $redacted_at
  * @property string|null $initiated_by_user_id
  * @property CarbonImmutable $created_at
@@ -46,6 +52,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'subject', 'body', 'button_label', 'signature', 'button_url', 'attachment_mode',
     'artifact_id', 'provider_name', 'dispatch_state', 'provider_message_identifier',
     'failure_category', 'failure_summary', 'accepted_at', 'failed_at', 'redacted_at',
+    'delivered_at', 'soft_bounced_at', 'hard_bounced_at', 'opened_at', 'clicked_at',
+    'feedback_loop_at',
     'initiated_by_user_id',
 ])]
 final class EmailDelivery extends TenantOwnedModel
@@ -62,6 +70,12 @@ final class EmailDelivery extends TenantOwnedModel
         return $this->hasMany(EmailDeliveryAttempt::class, 'delivery_id')->orderBy('attempt_number');
     }
 
+    /** @return HasMany<EmailProviderEvent, $this> */
+    public function providerEvents(): HasMany
+    {
+        return $this->hasMany(EmailProviderEvent::class, 'delivery_id')->orderBy('occurred_at');
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -73,6 +87,12 @@ final class EmailDelivery extends TenantOwnedModel
             'dispatch_state' => EmailDeliveryState::class,
             'accepted_at' => 'immutable_datetime',
             'failed_at' => 'immutable_datetime',
+            'delivered_at' => 'immutable_datetime',
+            'soft_bounced_at' => 'immutable_datetime',
+            'hard_bounced_at' => 'immutable_datetime',
+            'opened_at' => 'immutable_datetime',
+            'clicked_at' => 'immutable_datetime',
+            'feedback_loop_at' => 'immutable_datetime',
             'redacted_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',

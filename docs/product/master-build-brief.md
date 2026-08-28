@@ -835,6 +835,8 @@ The send composer must display the resolved recipients and attachment choice bef
 
 Sending requires at least one valid primary recipient. Validate and deduplicate To/CC/BCC addresses. An automated send with no valid recipient must fail visibly and record the reason rather than retrying indefinitely or silently succeeding.
 
+Editable direct sends remain transactional rather than bulk mail: one message is limited to ten recipients, and every initial or retry submission consumes bounded Company, Account, and shared-provider recipient budgets immediately before the provider call. A suspended initiating User or Account, an archived Company, or an exhausted budget must stop the provider call and remain visible in delivery history.
+
 Track Sent, Delivered, bounced, Opened, and clicked provider events under the approved privacy-minimal webhook contract. Authenticate webhooks and process duplicate or out-of-order provider events idempotently. An ambiguous send outcome is never retried automatically; show it as potentially delivered and require an authorized, warned manual retry.
 
 The company's primary brand color may be used for restrained accents in transactional email where client compatibility and readable contrast permit it.

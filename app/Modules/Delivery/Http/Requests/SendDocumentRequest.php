@@ -7,6 +7,7 @@ use App\Modules\Customers\Data\DeliveryRecipientRole;
 use App\Modules\Delivery\Data\EmailRecipientData;
 use App\Modules\Delivery\Data\EmailTemplateFieldLimits;
 use App\Modules\Delivery\Data\SendDocumentData;
+use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -25,7 +26,7 @@ final class SendDocumentRequest extends FormRequest
             'button_label' => ['required', 'string', 'max:'.EmailTemplateFieldLimits::BUTTON_LABEL],
             'signature' => ['nullable', 'string', 'max:'.EmailTemplateFieldLimits::SIGNATURE],
             'confirmed_final_quote_state' => ['required', 'boolean'],
-            'recipients' => ['required', 'array', 'min:1', 'max:100'],
+            'recipients' => ['required', 'array', 'min:1', 'max:'.DocumentDeliveryLimits::recipientsPerMessage()],
             'recipients.*.role' => ['required', Rule::enum(DeliveryRecipientRole::class)],
             'recipients.*.name' => ['nullable', 'string', 'max:160'],
             'recipients.*.email' => ['required', 'email:rfc', 'max:254'],

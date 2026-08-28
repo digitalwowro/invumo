@@ -9,6 +9,7 @@ use App\Modules\Delivery\Models\DocumentArtifact;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
+use App\Modules\Delivery\Models\EmailProviderEvent;
 use LogicException;
 
 final class RedactDocumentDeliveries
@@ -26,6 +27,8 @@ final class RedactDocumentDeliveries
         $attempts = EmailDeliveryAttempt::query()
             ->whereIn('delivery_id', $ids)->orderBy('id')->lockForUpdate()->get();
         $recipients = EmailDeliveryRecipient::query()
+            ->whereIn('delivery_id', $ids)->orderBy('id')->lockForUpdate()->get();
+        $providerEvents = EmailProviderEvent::query()
             ->whereIn('delivery_id', $ids)->orderBy('id')->lockForUpdate()->get();
         $artifacts = DocumentArtifact::query()
             ->where('document_id', $documentId)->orderBy('id')->lockForUpdate()->get();
@@ -65,6 +68,14 @@ final class RedactDocumentDeliveries
         }
 
         $recipients->each->delete();
+
+        foreach ($providerEvents as $providerEvent) {
+            $providerEvent->update([
+                'provider_name' => null,
+                'provider_event_identifier' => null,
+                'redacted_at' => now(),
+            ]);
+        }
 
         foreach ($attempts as $attempt) {
             $attempt->update([

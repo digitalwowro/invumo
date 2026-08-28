@@ -37,6 +37,15 @@ return [
         'attempts' => 'Încercări',
         'recipients' => 'Destinatari',
         'attachment' => 'PDF atașat',
+        'provider_reported' => 'Activitatea raportată de furnizor poate fi incompletă.',
+        'provider_events' => [
+            'DELIVERED' => 'Livrat',
+            'SOFT_BOUNCED' => 'Respins temporar',
+            'HARD_BOUNCED' => 'Respins permanent',
+            'OPENED' => 'Deschis',
+            'CLICKED' => 'Accesat',
+            'FEEDBACK_LOOP' => 'Reclamație spam',
+        ],
         'statuses' => [
             'QUEUED' => 'În coadă',
             'RETRYING' => 'Se reîncearcă',
@@ -67,6 +76,7 @@ return [
         'lifecycle_unavailable' => 'Factura nu poate fi trimisă în starea curentă.',
         'resolved_content_too_long' => 'Scurtează acest conținut deoarece linkul securizat completat depășește lungimea permisă.',
         'delivery_pending' => 'Așteaptă finalizarea livrării emailului curent înainte de a trimite din nou acest document.',
+        'recipient_limit_exceeded' => 'Reduce lista de destinatari înainte de a trimite acest email.',
     ],
     'failures' => [
         'artifact_too_large' => 'PDF-ul generat a fost prea mare pentru a fi atașat.',
@@ -76,6 +86,8 @@ return [
         'ambiguous_transmission' => 'Rezultatul transmiterii către furnizor nu a putut fi confirmat.',
         'internal_delivery_failure' => 'Procesul de livrare nu a putut finaliza acest email.',
         'public_link_unavailable' => 'Linkul public securizat a devenit indisponibil înainte de trimiterea emailului.',
+        'sending_quota_exceeded' => 'Limita comună de trimitere a emailurilor a fost atinsă. Încearcă din nou mai târziu.',
+        'sender_access_unavailable' => 'Expeditorul nu mai are permisiunea de a trimite acest email.',
         'generic' => 'Emailul nu a putut fi livrat.',
     ],
     'feedback' => [

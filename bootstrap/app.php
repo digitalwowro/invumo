@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(CapturePublicDocumentToken::class);
         $middleware->encryptCookies(except: ['sidebar_state']);
+        $middleware->validateCsrfTokens(except: ['webhooks/zeptomail']);
 
         $middleware->alias([
             'company.context' => EnterCompanyContext::class,

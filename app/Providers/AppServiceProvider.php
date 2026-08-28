@@ -12,13 +12,16 @@ use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
 use App\Integrations\Dompdf\DompdfDocumentPdfRenderer;
 use App\Integrations\ZeptoMail\ZeptoMailSendApi;
+use App\Integrations\ZeptoMail\ZeptoMailWebhook;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
 use App\Modules\Delivery\Contracts\GeneratesPublicDocumentTokens;
+use App\Modules\Delivery\Contracts\ParsesProviderWebhook;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Support\CryptographicPublicDocumentToken;
+use App\Modules\Delivery\Support\DocumentDeliveryRateLimitKey;
 use App\Modules\Delivery\Support\PublicDocumentRateLimitKey;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
 use App\Modules\Documents\Numbering\LockedDocumentNumberAllocator;
@@ -56,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AllocatesDocumentNumbers::class, LockedDocumentNumberAllocator::class);
         $this->app->bind(RendersDocumentPdf::class, DompdfDocumentPdfRenderer::class);
         $this->app->bind(SendsProviderEmail::class, ZeptoMailSendApi::class);
+        $this->app->bind(ParsesProviderWebhook::class, ZeptoMailWebhook::class);
         $this->app->bind(
             GeneratesPublicDocumentTokens::class,
             CryptographicPublicDocumentToken::class,
@@ -75,6 +79,8 @@ class AppServiceProvider extends ServiceProvider
         );
         $this->configureDefaults();
         $this->configurePublicDocumentRateLimits();
+        $this->configureDocumentDeliveryRateLimits();
+        $this->configureZeptoMailWebhookRateLimits();
     }
 
     /**
@@ -118,6 +124,23 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public-document-decision', fn (Request $request): array => [
             Limit::perMinute(10)->by('source:'.PublicDocumentRateLimitKey::source($request)),
             Limit::perMinute(5)->by('token:'.PublicDocumentRateLimitKey::token($request)),
+        ]);
+    }
+
+    private function configureDocumentDeliveryRateLimits(): void
+    {
+        RateLimiter::for('document-delivery', fn (Request $request): array => [
+            Limit::perMinute(5)->by('user:'.DocumentDeliveryRateLimitKey::user($request)),
+            Limit::perHour(20)->by('account:'.DocumentDeliveryRateLimitKey::account($request)),
+            Limit::perMinute(100)->by('platform:shared-provider'),
+        ]);
+    }
+
+    private function configureZeptoMailWebhookRateLimits(): void
+    {
+        RateLimiter::for('zeptomail-webhook', fn (Request $request): array => [
+            Limit::perMinute(120)->by('source:'.hash('sha256', (string) $request->ip())),
+            Limit::perMinute(300)->by('platform:zeptomail-webhook'),
         ]);
     }
 }

@@ -62,9 +62,11 @@ final class ProductionConfiguration
             'mail.from' => filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL) === false,
             'zeptomail.endpoint' => config('services.zeptomail.endpoint') !== 'https://api.zeptomail.eu/v1.1/email',
             'zeptomail.token' => ! $this->bareCredential(config('services.zeptomail.token')),
+            'zeptomail.webhook_secret' => ! $this->webhookSecretIsSafe(),
             'zeptomail.timeouts' => (int) config('services.zeptomail.connect_timeout') < 1
                 || (int) config('services.zeptomail.timeout') < (int) config('services.zeptomail.connect_timeout')
                 || (int) config('services.zeptomail.timeout') > 60,
+            'document_delivery.quotas' => ! $this->documentDeliveryQuotasAreSafe(),
             'localization.supported_locales' => ! SupportedLocales::configurationIsValid(),
         ]));
 
@@ -94,12 +96,59 @@ final class ProductionConfiguration
         return $this->privateDiskIsSafe(config('invumo.company_assets.disk'));
     }
 
+    private function documentDeliveryQuotasAreSafe(): bool
+    {
+        $quota = config('invumo.document_delivery');
+
+        if (! is_array($quota)) {
+            return false;
+        }
+
+        $maximums = [
+            'max_recipients_per_message' => 10,
+            'company_recipients_per_hour' => 100,
+            'company_recipients_per_day' => 500,
+            'account_recipients_per_hour' => 250,
+            'account_recipients_per_day' => 1000,
+            'platform_recipients_per_hour' => 1000,
+            'platform_recipients_per_day' => 5000,
+        ];
+
+        foreach ($maximums as $key => $maximum) {
+            $value = $quota[$key] ?? null;
+
+            if (! is_int($value) || $value < 1 || $value > $maximum) {
+                return false;
+            }
+        }
+
+        return $quota['company_recipients_per_hour'] <= $quota['company_recipients_per_day']
+            && $quota['account_recipients_per_hour'] <= $quota['account_recipients_per_day']
+            && $quota['platform_recipients_per_hour'] <= $quota['platform_recipients_per_day']
+            && $quota['max_recipients_per_message'] <= $quota['company_recipients_per_hour']
+            && $quota['company_recipients_per_hour'] <= $quota['account_recipients_per_hour']
+            && $quota['account_recipients_per_hour'] <= $quota['platform_recipients_per_hour']
+            && $quota['company_recipients_per_day'] <= $quota['account_recipients_per_day']
+            && $quota['account_recipients_per_day'] <= $quota['platform_recipients_per_day'];
+    }
+
     private function bareCredential(mixed $value): bool
     {
         return $this->nonEmpty($value)
             && trim($value) === $value
             && preg_match('/\s/u', $value) !== 1
             && ! str_starts_with(strtolower($value), 'zoho-enczapikey');
+    }
+
+    private function webhookSecretIsSafe(): bool
+    {
+        $secret = config('services.zeptomail.webhook_secret');
+
+        return $this->nonEmpty($secret)
+            && is_string($secret)
+            && strlen($secret) >= 32
+            && strlen($secret) <= 512
+            && trim($secret) === $secret;
     }
 
     private function privateDiskIsSafe(mixed $diskName): bool

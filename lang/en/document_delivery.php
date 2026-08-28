@@ -37,6 +37,15 @@ return [
         'attempts' => 'Attempts',
         'recipients' => 'Recipients',
         'attachment' => 'PDF attached',
+        'provider_reported' => 'Provider-reported activity may be incomplete.',
+        'provider_events' => [
+            'DELIVERED' => 'Delivered',
+            'SOFT_BOUNCED' => 'Soft bounced',
+            'HARD_BOUNCED' => 'Hard bounced',
+            'OPENED' => 'Opened',
+            'CLICKED' => 'Clicked',
+            'FEEDBACK_LOOP' => 'Spam complaint',
+        ],
         'statuses' => [
             'QUEUED' => 'Queued',
             'RETRYING' => 'Retrying',
@@ -67,6 +76,7 @@ return [
         'lifecycle_unavailable' => 'This Invoice cannot be sent in its current state.',
         'resolved_content_too_long' => 'Shorten this content because the resolved secure link makes it exceed the allowed length.',
         'delivery_pending' => 'Wait for the current email delivery to finish before sending this document again.',
+        'recipient_limit_exceeded' => 'Reduce the recipient list before sending this email.',
     ],
     'failures' => [
         'artifact_too_large' => 'The generated PDF was too large to attach.',
@@ -76,6 +86,8 @@ return [
         'ambiguous_transmission' => 'The provider transmission outcome could not be confirmed.',
         'internal_delivery_failure' => 'The delivery worker could not complete this email.',
         'public_link_unavailable' => 'The secure public link became unavailable before the email was submitted.',
+        'sending_quota_exceeded' => 'The shared email sending limit was reached. Try again later.',
+        'sender_access_unavailable' => 'The sender no longer has permission to submit this email.',
         'generic' => 'The email could not be delivered.',
     ],
     'feedback' => [

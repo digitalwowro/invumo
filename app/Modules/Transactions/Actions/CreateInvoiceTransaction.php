@@ -11,10 +11,12 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Transactions\Data\InvoiceLedger;
 use App\Modules\Transactions\Data\InvoiceTransactionData;
 use App\Modules\Transactions\Data\InvoiceTransactionKind;
+use App\Modules\Transactions\Exceptions\InvoiceTransactionException;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,7 @@ final readonly class CreateInvoiceTransaction
         private LockInvoiceTransactionAggregate $lockAggregate,
         private ValidateInvoiceTransactionMutation $validate,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -56,10 +59,15 @@ final readonly class CreateInvoiceTransaction
             $this->authorizer->authorize($actor, $company, CompanyAbility::ManageAdjustments);
         }
         $context = $this->lockAggregate->handle($invoiceId);
+
         $existing = $context->transactions->firstWhere('creation_key', $data->mutationKey);
 
         if ($existing instanceof InvoiceTransaction) {
             return $existing;
+        }
+
+        if ($this->deliveryHistory->hasPending($context->document->id)) {
+            throw InvoiceTransactionException::deliveryPending();
         }
 
         $amount = $this->validate->handle($data, $context);

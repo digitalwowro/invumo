@@ -21,6 +21,11 @@ final class PublicQuoteDecisionException extends DomainException
         return new self('idempotency_conflict');
     }
 
+    public static function deliveryPending(): self
+    {
+        return new self('decision_delivery_pending');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

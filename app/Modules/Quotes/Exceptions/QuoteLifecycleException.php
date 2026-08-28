@@ -16,6 +16,11 @@ final class QuoteLifecycleException extends DomainException
         return new self('lifecycle_reason_invalid');
     }
 
+    public static function deliveryPending(): self
+    {
+        return new self('document_delivery_pending');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

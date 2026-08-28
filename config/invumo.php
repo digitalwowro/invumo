@@ -9,4 +9,7 @@ return [
         'logo_max_width' => 4096,
         'logo_max_height' => 4096,
     ],
+    'document_artifacts' => [
+        'disk' => env('DOCUMENT_ARTIFACTS_DISK', 'document_artifacts_local'),
+    ],
 ];

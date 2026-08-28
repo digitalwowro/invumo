@@ -4,9 +4,9 @@ namespace App\Modules\Quotes\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
-use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Delivery\Queries\CurrentDocumentLogo;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
+use App\Modules\Delivery\Queries\DocumentPdfContent;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Support\Inertia\QuotesUiTranslationBag;
 use Illuminate\Http\Request;
@@ -42,26 +42,14 @@ final class QuoteRepresentationController extends Controller
         Company $company,
         string $quote,
         CurrentDocumentRepresentation $representation,
-        CurrentDocumentLogo $logo,
-        RendersDocumentPdf $renderer,
+        DocumentPdfContent $pdf,
     ): HttpResponse {
         $document = $representation->forQuote($company, $request->user(), $quote);
-        $html = view('pdf.outward-document', [
-            'document' => $document->toArray(),
-            'logoDataUri' => $document->hasLogo
-                ? $logo->dataUri($company, $request->user(), $quote, DocumentKind::Quote)
-                : null,
-            'fontRegular' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Regular.ttf'),
-            'fontBold' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Bold.ttf'),
-            'fontMono' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleMono-Regular.ttf'),
-            'fontMonoBold' => base_path('resources/fonts/atkinson-hyperlegible/AtkinsonHyperlegibleMono-Bold.ttf'),
-        ])->render();
-        $filename = trim((string) preg_replace('/[^A-Za-z0-9._-]+/', '-', $document->number), '-');
-        $filename = ($filename === '' ? 'quote' : $filename).'.pdf';
+        $rendered = $pdf->render($quote, $document);
 
-        return response($renderer->render($html), 200, [
+        return response($rendered->bytes, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$rendered->fileName.'"',
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Content-Type-Options' => 'nosniff',
         ]);

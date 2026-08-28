@@ -11,6 +11,7 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Quotes\Data\QuoteLifecycleCorrectionData;
@@ -24,6 +25,7 @@ final readonly class CorrectQuoteLifecycle
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -64,6 +66,10 @@ final readonly class CorrectQuoteLifecycle
             ->lockForUpdate()
             ->firstOrFail();
         $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
+
+        if ($this->deliveryHistory->hasPending($document->id)) {
+            throw QuoteLifecycleException::deliveryPending();
+        }
 
         if ($quote->lifecycle === $data->lifecycle) {
             return $document;

@@ -2,6 +2,7 @@
 
 use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
+use App\Modules\Delivery\Http\Controllers\DocumentDeliveryController;
 use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
 use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
@@ -66,6 +67,14 @@ Route::delete('companies/{company}/invoices/{document}/public-link', [DocumentPu
     ->defaults('document_kind', 'INVOICE')
     ->middleware('throttle:20,1')
     ->name('invoices.public-link.destroy');
+Route::post('companies/{company}/invoices/{document}/deliveries', [DocumentDeliveryController::class, 'store'])
+    ->defaults('document_kind', 'INVOICE')
+    ->middleware('throttle:20,1')
+    ->name('invoices.deliveries.store');
+Route::post('companies/{company}/invoices/{document}/deliveries/{delivery}/retry', [DocumentDeliveryController::class, 'retry'])
+    ->defaults('document_kind', 'INVOICE')
+    ->middleware('throttle:10,1')
+    ->name('invoices.deliveries.retry');
 Route::post('companies/{company}/invoices/{document}/inline-customers', InlineCustomerController::class)
     ->middleware('throttle:20,1')
     ->name('invoices.inline-customers.store');

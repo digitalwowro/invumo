@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
-use App\Modules\Delivery\Contracts\RendersDocumentPdf;
 use App\Modules\Delivery\Queries\CurrentDocumentLogo;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
+use App\Modules\Delivery\Queries\DocumentPdfContent;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Support\Inertia\InvoicesUiTranslationBag;
 use Illuminate\Http\Request;
@@ -47,26 +47,14 @@ final class InvoiceRepresentationController extends Controller
         Company $company,
         string $invoice,
         CurrentDocumentRepresentation $representation,
-        CurrentDocumentLogo $logo,
-        RendersDocumentPdf $renderer,
+        DocumentPdfContent $pdf,
     ): HttpResponse {
         $document = $representation->forInvoice($company, $request->user(), $invoice);
-        $html = view('pdf.outward-document', [
-            'document' => $document->toArray(),
-            'logoDataUri' => $document->hasLogo
-                ? $logo->dataUri($company, $request->user(), $invoice, DocumentKind::Invoice)
-                : null,
-            'fontRegular' => resource_path('fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Regular.ttf'),
-            'fontBold' => resource_path('fonts/atkinson-hyperlegible/AtkinsonHyperlegibleNext-Bold.ttf'),
-            'fontMono' => resource_path('fonts/atkinson-hyperlegible/AtkinsonHyperlegibleMono-Regular.ttf'),
-            'fontMonoBold' => resource_path('fonts/atkinson-hyperlegible/AtkinsonHyperlegibleMono-Bold.ttf'),
-        ])->render();
-        $filename = trim((string) preg_replace('/[^A-Za-z0-9._-]+/', '-', $document->number), '-');
-        $filename = ($filename === '' ? 'invoice' : $filename).'.pdf';
+        $rendered = $pdf->render($invoice, $document);
 
-        return response($renderer->render($html), 200, [
+        return response($rendered->bytes, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$rendered->fileName.'"',
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Content-Type-Options' => 'nosniff',
         ]);

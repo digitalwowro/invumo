@@ -15,6 +15,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Actions\ApplyDocumentCustomer;
 use App\Modules\Documents\Actions\ApplyDocumentDraftSources;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
@@ -42,6 +43,7 @@ final readonly class UpdateQuoteDraft
         private LockDocumentLineSources $sourceGuard,
         private PersistDocumentLines $persistLines,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(Company $company, User $actor, string $documentId, QuoteDraftData $data): Document
@@ -69,6 +71,10 @@ final readonly class UpdateQuoteDraft
 
         if ($document->edit_version !== $data->editVersion) {
             throw QuoteDraftException::stale();
+        }
+
+        if ($this->deliveryHistory->hasPending($document->id)) {
+            throw QuoteDraftException::deliveryPending();
         }
 
         $quote = Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();

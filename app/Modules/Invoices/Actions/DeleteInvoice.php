@@ -12,6 +12,8 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Actions\DeleteDocumentPublicLinks;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
+use App\Modules\Delivery\Actions\RedactDocumentDeliveries;
 use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Data\DocumentNumberEventType;
@@ -33,6 +35,8 @@ final readonly class DeleteInvoice
         private RecordAuditEvent $recordAuditEvent,
         private DocumentPublicLinkHistory $publicLinkHistory,
         private DeleteDocumentPublicLinks $deletePublicLinks,
+        private LockDocumentDeliveryHistory $deliveryHistory,
+        private RedactDocumentDeliveries $redactDeliveries,
     ) {}
 
     public function handle(
@@ -73,6 +77,7 @@ final readonly class DeleteInvoice
             ->lockForUpdate()
             ->get();
         $publicLinks = $this->publicLinkHistory->lock($documentId);
+        $deliveries = $this->deliveryHistory->all($documentId);
 
         if ($context->transactions->isNotEmpty()) {
             throw InvoiceDeletionException::transactionDependency();
@@ -82,12 +87,17 @@ final readonly class DeleteInvoice
             throw InvoiceDeletionException::quoteDependency();
         }
 
+        if ($this->deliveryHistory->hasSubmissionInFlight($deliveries)) {
+            throw InvoiceDeletionException::deliveryInProgress();
+        }
+
         if (! $data->confirmed) {
             throw InvoiceDeletionException::confirmationRequired();
         }
 
         $highRisk = $context->invoice->lifecycle !== InvoiceLifecycle::Draft
-            || $publicLinks->isNotEmpty();
+            || $publicLinks->isNotEmpty()
+            || $deliveries->isNotEmpty();
 
         if ($highRisk && ! $data->confirmedHighRisk) {
             throw InvoiceDeletionException::highRiskConfirmationRequired();
@@ -107,7 +117,8 @@ final readonly class DeleteInvoice
                 'document_number' => $context->document->rendered_number,
                 'lifecycle' => $context->invoice->lifecycle->value,
                 'had_public_link_history' => $publicLinks->isNotEmpty(),
-            ], ['document_number', 'lifecycle', 'had_public_link_history']),
+                'had_delivery_history' => $deliveries->isNotEmpty(),
+            ], ['document_number', 'lifecycle', 'had_public_link_history', 'had_delivery_history']),
         ));
         DocumentNumberEvent::query()->create([
             'document_id' => $context->document->id,
@@ -118,6 +129,7 @@ final readonly class DeleteInvoice
             'occurred_at' => now(),
             'related_audit_event_id' => $audit->id,
         ]);
+        $this->redactDeliveries->handle($company->id, $context->document->id);
         $this->deletePublicLinks->handle($context->document->id);
         $context->document->delete();
 

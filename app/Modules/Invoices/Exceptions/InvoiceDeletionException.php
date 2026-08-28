@@ -36,6 +36,11 @@ final class InvoiceDeletionException extends DomainException
         return new self('delete_dependency');
     }
 
+    public static function deliveryInProgress(): self
+    {
+        return new self('delete_delivery_in_progress');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

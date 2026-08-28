@@ -139,6 +139,47 @@ class ProductionConfigurationTest extends TestCase
         }
     }
 
+    public function test_document_delivery_requires_private_artifacts_and_safe_zeptomail_configuration(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set([
+            'invumo.document_artifacts.disk' => 'public',
+            'services.zeptomail.endpoint' => 'http://example.test/send',
+            'services.zeptomail.token' => '',
+            'services.zeptomail.connect_timeout' => 30,
+            'services.zeptomail.timeout' => 20,
+        ]);
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('Unsafe production document-delivery configuration was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('filesystem.document_artifacts', $exception->getMessage());
+            $this->assertStringContainsString('zeptomail.endpoint', $exception->getMessage());
+            $this->assertStringContainsString('zeptomail.token', $exception->getMessage());
+            $this->assertStringContainsString('zeptomail.timeouts', $exception->getMessage());
+            $this->assertStringNotContainsString('zeptomail-test-secret', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_zeptomail_token_must_be_the_bare_send_api_key(): void
+    {
+        $this->setSafeProductionConfiguration();
+        config()->set('services.zeptomail.token', 'Zoho-enczapikey zeptomail-test-secret');
+
+        try {
+            app(ProductionConfiguration::class)->assertSafe();
+            $this->fail('A complete Authorization header was accepted as a Send API key.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('zeptomail.token', $exception->getMessage());
+            $this->assertStringNotContainsString('zeptomail-test-secret', $exception->getMessage());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
     public function test_postgresql_client_must_match_the_configured_major_version(): void
     {
         $this->setSafeProductionConfiguration();
@@ -184,6 +225,11 @@ class ProductionConfigurationTest extends TestCase
             'mail.default' => 'smtp',
             'mail.mailers.smtp.password' => 'mail-test-secret',
             'mail.from.address' => 'app@example.com',
+            'invumo.document_artifacts.disk' => 'document_artifacts_local',
+            'services.zeptomail.endpoint' => 'https://api.zeptomail.eu/v1.1/email',
+            'services.zeptomail.token' => 'zeptomail-test-secret',
+            'services.zeptomail.timeout' => 20,
+            'services.zeptomail.connect_timeout' => 5,
             'localization.supported_locales' => ['en', 'ro'],
         ]);
     }

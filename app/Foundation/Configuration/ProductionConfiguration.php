@@ -54,9 +54,17 @@ final class ProductionConfiguration
             'cache.tenant_job_connection' => config('cache.stores.tenant_jobs.connection')
                 !== $tenantConnection,
             'filesystem.company_assets' => ! $this->companyAssetDiskIsPrivate(),
+            'filesystem.document_artifacts' => ! $this->privateDiskIsSafe(
+                config('invumo.document_artifacts.disk'),
+            ),
             'mail.default' => config('mail.default') !== 'smtp',
             'mail.smtp_password' => ! $this->nonEmpty(config('mail.mailers.smtp.password')),
             'mail.from' => filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL) === false,
+            'zeptomail.endpoint' => config('services.zeptomail.endpoint') !== 'https://api.zeptomail.eu/v1.1/email',
+            'zeptomail.token' => ! $this->bareCredential(config('services.zeptomail.token')),
+            'zeptomail.timeouts' => (int) config('services.zeptomail.connect_timeout') < 1
+                || (int) config('services.zeptomail.timeout') < (int) config('services.zeptomail.connect_timeout')
+                || (int) config('services.zeptomail.timeout') > 60,
             'localization.supported_locales' => ! SupportedLocales::configurationIsValid(),
         ]));
 
@@ -83,7 +91,19 @@ final class ProductionConfiguration
 
     private function companyAssetDiskIsPrivate(): bool
     {
-        $diskName = config('invumo.company_assets.disk');
+        return $this->privateDiskIsSafe(config('invumo.company_assets.disk'));
+    }
+
+    private function bareCredential(mixed $value): bool
+    {
+        return $this->nonEmpty($value)
+            && trim($value) === $value
+            && preg_match('/\s/u', $value) !== 1
+            && ! str_starts_with(strtolower($value), 'zoho-enczapikey');
+    }
+
+    private function privateDiskIsSafe(mixed $diskName): bool
+    {
 
         if (! is_string($diskName) || $diskName === '' || $diskName === 'public') {
             return false;

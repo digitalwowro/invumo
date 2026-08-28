@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Delivery\Queries\DocumentDeliveryHistory;
 use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
@@ -18,6 +19,7 @@ final readonly class QuoteInvoiceAllocation
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private DocumentPublicLinkHistory $publicLinkHistory,
+        private DocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     /**
@@ -70,7 +72,8 @@ final readonly class QuoteInvoiceAllocation
                 'unlinkUrl' => route('quotes.invoices.unlink', [$company, $quoteId, $link->invoice_id], false),
                 'canUnlink' => $canUnlink
                     && $link->invoice->lifecycle->value === 'DRAFT'
-                    && ! $this->publicLinkHistory->exists($link->invoice_id),
+                    && ! $this->publicLinkHistory->exists($link->invoice_id)
+                    && ! $this->deliveryHistory->exists($link->invoice_id),
             ])->values()->all(),
         ];
     }

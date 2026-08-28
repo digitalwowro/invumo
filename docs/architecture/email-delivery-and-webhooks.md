@@ -18,7 +18,7 @@ The Send API is selected because it returns structured outcomes and supports Inv
 
 ## 2. Resolved delivery boundary
 
-Before the external call, the owning Action persists one immutable delivery attempt containing the exact resolved:
+Before the external call, the owning Action persists one immutable logical delivery containing the exact resolved:
 
 - Company, document, event, language, and internal idempotency identity;
 - `TO`, `CC`, and `BCC` recipients after validation and case-insensitive deduplication;
@@ -27,9 +27,11 @@ Before the external call, the owning Action persists one immutable delivery atte
 - immutable PDF artifact reference when attached; and
 - provider-safe tracking settings.
 
-The queued job carries only the attempt UUID, Company UUID, and non-sensitive machine idempotency metadata. It reloads the attempt under forced RLS, rechecks current dispatch eligibility where the workflow requires it, closes the database transaction, and only then contacts ZeptoMail.
+The queued job carries only the logical delivery UUID, Company UUID, and non-sensitive machine idempotency metadata. It reloads the delivery under forced RLS, rechecks the exact public-link generation and document version, prepares any immutable PDF artifact, and creates a new provider-attempt row immediately before submission. The provider call begins only after that transaction closes.
 
 Already-resolved delivery content and attachments do not change when the Company template, Customer, document, or current PDF changes later.
+
+Only one logical delivery may be queued or retrying for a document at a time. Document edits and lifecycle/transaction mutations are blocked while that delivery is pending. Emergency public-link revocation remains available; a worker that sees the exact persisted link revoked, expired, or disabled rejects the delivery before provider submission.
 
 ## 3. Provider identity and duplicate control
 
@@ -51,8 +53,11 @@ The shared retry schedule remains one initial attempt followed by five retries a
 - `UNKNOWN` attempts are never resent automatically. The UI explains that delivery may have occurred.
 - An authorized manual retry rechecks current eligibility and creates a new immutable provider attempt with a new `client_reference`, after explicit duplicate-delivery warning. It does not rewrite the unknown attempt.
 - Provider acceptance followed by a local persistence failure is reconciled from authenticated provider events when possible and otherwise remains visibly unknown for operator review.
+- A worker interruption after a provider-attempt row becomes `PENDING` is treated as ambiguous and becomes `UNKNOWN`; an interruption before an attempt exists is a known internal failure and is not represented as provider rejection.
 
 Operational logs retain only correlation ID, component, duration, attempt number, provider HTTP class, and a bounded failure category. They exclude recipients, content, URLs, tokens, provider bodies, provider identifiers, and exception text.
+
+Attached PDFs are limited to 11 MiB of raw bytes. This leaves deterministic room for base64 expansion, MIME/request overhead, and resolved message content beneath ZeptoMail's documented 15 MB total-message limit.
 
 ## 5. Tracking contract
 

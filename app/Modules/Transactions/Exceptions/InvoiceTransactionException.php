@@ -56,6 +56,11 @@ final class InvoiceTransactionException extends RuntimeException
         return new self('transaction_ledger_invalid');
     }
 
+    public static function deliveryPending(): self
+    {
+        return new self('document_delivery_pending');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

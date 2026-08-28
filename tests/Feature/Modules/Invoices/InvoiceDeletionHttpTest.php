@@ -96,7 +96,7 @@ final class InvoiceDeletionHttpTest extends TestCase
             $audit = AuditEvent::query()->where('action', 'company.invoice.deleted')
                 ->where('target_id', $issued->id)->sole();
             $this->assertEqualsCanonicalizing(
-                ['document_number', 'lifecycle', 'had_public_link_history'],
+                ['document_number', 'lifecycle', 'had_public_link_history', 'had_delivery_history'],
                 array_keys($audit->before),
             );
             $this->assertNull($audit->after);

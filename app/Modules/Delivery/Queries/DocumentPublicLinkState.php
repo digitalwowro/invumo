@@ -6,17 +6,19 @@ use App\Models\User;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
-use App\Modules\Delivery\Data\PublicDocumentToken;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Support\PublicDocumentUrl;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use Illuminate\Auth\Access\AuthorizationException;
-use RuntimeException;
 
 final readonly class DocumentPublicLinkState
 {
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private PublicDocumentUrl $publicUrl,
+    ) {}
 
     /** @return array<string, mixed> */
     public function for(
@@ -52,7 +54,7 @@ final readonly class DocumentPublicLinkState
                 $current->expires_at->isPast() => 'EXPIRED',
                 default => 'ACTIVE',
             },
-            'url' => $active ? $this->publicUrl($kind, $current) : null,
+            'url' => $active ? $this->publicUrl->for($kind, $current) : null,
             'expiresAt' => $current?->expires_at->toIso8601String(),
             'locale' => app()->getLocale(),
             'timezone' => $timezone,
@@ -64,18 +66,6 @@ final readonly class DocumentPublicLinkState
                 ? $this->actionUrl($company, $document, $kind, 'regenerate')
                 : null,
         ];
-    }
-
-    private function publicUrl(DocumentKind $kind, PublicDocumentLink $link): string
-    {
-        if (! PublicDocumentToken::accepts($link->token_ciphertext)) {
-            throw new RuntimeException('Stored public document token plaintext is invalid.');
-        }
-
-        return route(
-            $kind === DocumentKind::Quote ? 'public-quotes.show' : 'public-invoices.show',
-            ['token' => $link->token_ciphertext],
-        );
     }
 
     private function actionUrl(

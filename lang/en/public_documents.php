@@ -47,6 +47,7 @@ return [
     'errors' => [
         'unavailable' => 'The secure public link is no longer available. Create a new link first.',
         'decision_unavailable' => 'This quote can no longer receive a public response.',
+        'decision_delivery_pending' => 'This quote is currently being sent. Wait a moment, then try again.',
         'decision_conflict' => 'A different response has already been recorded. Contact the Company if it needs correction.',
         'idempotency_conflict' => 'This response could not be safely retried. Reload the page and try again.',
     ],

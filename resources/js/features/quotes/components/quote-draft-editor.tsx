@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
@@ -32,6 +32,7 @@ import type {
 } from '@/types/quote';
 
 export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
+    const { onDirtyChange } = props;
     const form = useForm(quoteFormData(props.quote));
     const [customer, setCustomer] = useState(customerFromQuote(props.quote));
     const [precision, setPrecision] = useState(props.quote.currencyPrecision);
@@ -51,6 +52,10 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                   calculated.filter(completeLine),
                   precision,
               );
+
+    useEffect(() => {
+        onDirtyChange?.(form.isDirty);
+    }, [form.isDirty, onDirtyChange]);
 
     const changeLines = (change: (lines: QuoteLine[]) => QuoteLine[]) => {
         form.setData((current) => ({

@@ -11,6 +11,7 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
@@ -28,6 +29,7 @@ final readonly class ReopenInvoice
         private LockInvoiceTransactionAggregate $lockAggregate,
         private InvoiceIssuability $issuability,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -63,6 +65,10 @@ final readonly class ReopenInvoice
         }
 
         $context = $this->lockAggregate->handle($documentId);
+
+        if ($this->deliveryHistory->hasPending($context->document->id)) {
+            throw InvoiceLifecycleException::deliveryPending();
+        }
 
         if ($context->invoice->lifecycle === InvoiceLifecycle::Issued) {
             return $context->document;

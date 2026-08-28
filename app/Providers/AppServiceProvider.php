@@ -11,11 +11,13 @@ use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\Contracts\VerifiesTenantMembership;
 use App\Foundation\Tenancy\TenantContext;
 use App\Integrations\Dompdf\DompdfDocumentPdfRenderer;
+use App\Integrations\ZeptoMail\ZeptoMailSendApi;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Companies\Queries\CompanyMembershipVerifier;
 use App\Modules\Delivery\Contracts\GeneratesPublicDocumentTokens;
 use App\Modules\Delivery\Contracts\RendersDocumentPdf;
+use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Support\CryptographicPublicDocumentToken;
 use App\Modules\Delivery\Support\PublicDocumentRateLimitKey;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
@@ -53,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SqlDumpProcess::class, ProductionSqlDump::class);
         $this->app->bind(AllocatesDocumentNumbers::class, LockedDocumentNumberAllocator::class);
         $this->app->bind(RendersDocumentPdf::class, DompdfDocumentPdfRenderer::class);
+        $this->app->bind(SendsProviderEmail::class, ZeptoMailSendApi::class);
         $this->app->bind(
             GeneratesPublicDocumentTokens::class,
             CryptographicPublicDocumentToken::class,

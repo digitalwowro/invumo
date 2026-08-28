@@ -13,6 +13,7 @@ use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Transactions\Data\InvoiceLedger;
 use App\Modules\Transactions\Data\InvoiceTransactionData;
 use App\Modules\Transactions\Data\InvoiceTransactionKind;
@@ -28,6 +29,7 @@ final readonly class UpdateInvoiceTransaction
         private LockInvoiceTransactionAggregate $lockAggregate,
         private ValidateInvoiceTransactionMutation $validate,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -56,12 +58,17 @@ final readonly class UpdateInvoiceTransaction
     ): InvoiceTransaction {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
         $context = $this->lockAggregate->handle($invoiceId);
+
         $transaction = $context->transactions->firstWhere('id', $transactionId);
         abort_unless($transaction instanceof InvoiceTransaction, 404);
         $this->authorizeKind($company, $actor, $transaction->kind, $data->kind);
 
         if ($this->wasApplied($transaction, $data->mutationKey)) {
             return $transaction;
+        }
+
+        if ($this->deliveryHistory->hasPending($context->document->id)) {
+            throw InvoiceTransactionException::deliveryPending();
         }
 
         if ($data->editVersion !== $transaction->edit_version) {

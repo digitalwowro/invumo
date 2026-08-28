@@ -46,6 +46,14 @@ return [
             'report' => true,
         ],
 
+        'document_artifacts_local' => [
+            'driver' => 'local',
+            'root' => storage_path('app/document-artifacts'),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

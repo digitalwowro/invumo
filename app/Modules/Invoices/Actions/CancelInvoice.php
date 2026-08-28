@@ -11,6 +11,7 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Invoices\Data\CancelInvoiceData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
@@ -26,6 +27,7 @@ final readonly class CancelInvoice
         private AuthorizesCompanyActions $authorizer,
         private LockInvoiceTransactionAggregate $lockAggregate,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -63,6 +65,10 @@ final readonly class CancelInvoice
         }
 
         $context = $this->lockAggregate->handle($documentId);
+
+        if ($this->deliveryHistory->hasPending($context->document->id)) {
+            throw InvoiceLifecycleException::deliveryPending();
+        }
 
         if ($context->invoice->lifecycle === InvoiceLifecycle::Cancelled) {
             return $context->document;

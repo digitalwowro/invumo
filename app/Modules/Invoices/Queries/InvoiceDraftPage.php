@@ -17,6 +17,7 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
 use App\Modules\Customers\Queries\CustomerFormOptions;
+use App\Modules\Delivery\Queries\DocumentDeliveryPage;
 use App\Modules\Delivery\Queries\DocumentPublicLinkState;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
@@ -44,6 +45,7 @@ final readonly class InvoiceDraftPage
         private InvoiceTransactionsForInvoice $transactions,
         private InvoiceLifecycleActionsForInvoice $lifecycleActions,
         private DocumentPublicLinkState $publicLinkState,
+        private DocumentDeliveryPage $deliveryPage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -204,6 +206,12 @@ final readonly class InvoiceDraftPage
             'representationUrl' => route('invoices.current.show', [$company, $document], false),
             'pdfUrl' => route('invoices.current.pdf', [$company, $document], false),
             'publicLink' => $this->publicLinkState->for(
+                $company,
+                $actor,
+                $document->id,
+                DocumentKind::Invoice,
+            ),
+            'directDelivery' => $this->deliveryPage->for(
                 $company,
                 $actor,
                 $document->id,

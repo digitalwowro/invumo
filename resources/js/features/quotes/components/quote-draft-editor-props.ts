@@ -34,4 +34,5 @@ export type QuoteDraftEditorProps = {
     catalogLabels: CatalogTranslations;
     conversion: QuoteConversionControl;
     conversionLabels: QuoteTranslations['conversion'];
+    onDirtyChange?: (dirty: boolean) => void;
 };

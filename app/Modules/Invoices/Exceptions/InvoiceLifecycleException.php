@@ -36,6 +36,11 @@ final class InvoiceLifecycleException extends RuntimeException
         return new self('cancellation_positive_net_paid');
     }
 
+    public static function deliveryPending(): self
+    {
+        return new self('document_delivery_pending');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

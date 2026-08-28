@@ -21,6 +21,11 @@ final class QuoteDeletionException extends DomainException
         return new self('delete_invoice_dependency');
     }
 
+    public static function deliveryInProgress(): self
+    {
+        return new self('delete_delivery_in_progress');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

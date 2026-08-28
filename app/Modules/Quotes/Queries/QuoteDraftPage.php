@@ -17,6 +17,7 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
 use App\Modules\Customers\Queries\CustomerFormOptions;
+use App\Modules\Delivery\Queries\DocumentDeliveryPage;
 use App\Modules\Delivery\Queries\DocumentPublicLinkState;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
@@ -41,6 +42,7 @@ final readonly class QuoteDraftPage
         private CatalogLineDefaults $catalogDefaults,
         private QuoteInvoiceAllocation $invoiceAllocation,
         private DocumentPublicLinkState $publicLinkState,
+        private DocumentDeliveryPage $deliveryPage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -191,6 +193,12 @@ final readonly class QuoteDraftPage
             'representationUrl' => route('quotes.current.show', [$company, $document], false),
             'pdfUrl' => route('quotes.current.pdf', [$company, $document], false),
             'publicLink' => $this->publicLinkState->for(
+                $company,
+                $actor,
+                $document->id,
+                DocumentKind::Quote,
+            ),
+            'directDelivery' => $this->deliveryPage->for(
                 $company,
                 $actor,
                 $document->id,

@@ -484,22 +484,25 @@ The forced-RLS table permits ordinary access only under Company context. A secon
 ### `document_artifacts`
 
 - `id`, `company_id`, document reference
-- artifact type, document edit version, immutable asset reference, content hash
-- current/historical purpose and generation timestamp
+- artifact type, document edit version, private storage disk/key, content hash, file name, media type, and bounded byte size
+- immutable generation timestamp
 
-The Phase 5 authenticated current PDF is rendered directly and read-only from the current aggregate and its snapshots, so a normal view/download creates no artifact and an edit is reflected on the next request. `content_version` is retained for future cache/delivery coordination. Phase 9 introduces immutable attachment artifacts when delivery provides the first persistence consumer. An artifact already attached to a delivery is immutable and remains associated with that delivery while the document exists.
+The authenticated current PDF remains a fresh read-only projection, so a normal view/download creates no artifact and an edit is reflected on the next request. Direct email delivery creates an immutable PDF artifact only when the resolved mode includes an attachment. The persisted edit version and content hash bind the artifact to the representation that was resolved for that delivery. Attached artifacts cannot be changed or removed while their document remains.
 
 ### `email_deliveries`
 
 - `id`, `company_id`
 - event type and nullable document, transaction, reminder, or recurring-occurrence references as applicable
 - delivery idempotency key, unique within the Company
+- exact public-link generation and document edit version used for the send
 - resolved language, subject, body, button label, signature, and attachment mode
 - optional immutable attachment-artifact reference
 - provider name/message identifier
-- dispatch state and accepted/delivered/opened/failed timestamps
+- dispatch state and accepted/failed timestamps
 - failure category and safe summary
 - nullable `redacted_at`; content fields become nullable only through approved permanent-document cleanup
+
+A partial unique index permits only one `QUEUED` or `RETRYING` logical delivery per document. A database trigger independently blocks edits to that document version while delivery is pending. The dispatch Action also takes the document lock and performs the same check so ordinary users receive a localized validation response rather than a constraint error.
 
 ### `email_delivery_recipients`
 
@@ -507,6 +510,17 @@ The Phase 5 authenticated current PDF is rendered directly and read-only from th
 - role `TO`, `CC`, or `BCC`
 - immutable resolved name and email
 - display order
+
+Recipient order is unique per role, at least one `TO` recipient is required, and normalized email addresses may occur only once across all roles in a logical delivery.
+
+### `email_delivery_attempts`
+
+- `id`, `company_id`, logical delivery reference, and positive attempt number
+- unique opaque `client_reference`, created immediately before the provider call
+- `PENDING`, `ACCEPTED`, `RETRYABLE_REJECTION`, `PERMANENT_REJECTION`, or `UNKNOWN` state
+- bounded provider identifier, failure category/summary, submitted/completed timestamps, and nullable `redacted_at`
+
+Only one provider attempt for a logical delivery may be `PENDING`. Completed attempts are immutable. A worker that resumes with a preceding `PENDING` attempt marks that attempt and its logical delivery `UNKNOWN` and does not resend automatically.
 
 ### `email_provider_events`
 
@@ -516,9 +530,9 @@ The Phase 5 authenticated current PDF is rendered directly and read-only from th
 - bounded, redacted provider metadata `jsonb`
 - unique `(provider_name, provider_event_identifier)`
 
-Provider events update the delivery's operational status idempotently but never alter its resolved content or attachment.
+Provider events update the delivery's operational status idempotently but never alter its resolved content or attachment. Batch 9D creates this inbound table and processing boundary; Batch 9C creates only the outbound delivery, recipient, artifact, and provider-attempt records.
 
-Permanent document deletion revokes/deletes public links, cancels pending work, removes the document aggregate and customer-visible PDF/email content and recipients, deletes or redacts provider payloads, and preserves only a non-sensitive delivery fact plus the minimal audit tombstone.
+Permanent document deletion is blocked while provider submission is in flight. Otherwise it rejects queued work, erases recipients and artifact bytes, nulls customer-visible email content, exact link/document/provider identity, and diagnostic summaries, and preserves only a non-sensitive logical-delivery/attempt fact plus the minimal audit tombstone. Delivery-history presence permanently blocks unlinking a Quote-derived Invoice, even after redaction.
 
 ## 11. Reminder and scheduling records
 

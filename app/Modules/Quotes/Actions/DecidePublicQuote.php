@@ -8,6 +8,7 @@ use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Delivery\Data\ResolvedPublicDocument;
 use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Delivery\Queries\ResolvePublicDocument;
@@ -32,6 +33,7 @@ final readonly class DecidePublicQuote
         private TenantContext $tenantContext,
         private ResolvePublicDocument $resolvePublicDocument,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -107,6 +109,10 @@ final readonly class DecidePublicQuote
         if ($quote->lifecycle === $data->decision->lifecycle()
             && $decisions->contains('decision', $data->decision)) {
             return $data->decision;
+        }
+
+        if ($this->deliveryHistory->hasPending($document->id)) {
+            throw PublicQuoteDecisionException::deliveryPending();
         }
 
         if (in_array($quote->lifecycle, [QuoteLifecycle::Accepted, QuoteLifecycle::Rejected], true)) {

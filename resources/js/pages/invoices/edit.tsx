@@ -9,11 +9,16 @@ import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { PublicDocumentLinkPanel } from '@/components/domain/documents/public-document-link-panel';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
+import { DocumentDeliveryPanel } from '@/features/delivery/components/document-delivery-panel';
 import { InvoiceDeleteDialog } from '@/features/invoices/components/invoice-delete-dialog';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
 import { InvoiceTransactionsPanel } from '@/features/invoices/components/invoice-transactions-panel';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type {
+    DocumentDelivery,
+    DocumentDeliveryTranslations,
+} from '@/types/document-delivery';
 import type {
     InvoiceCatalogFormOptions,
     InvoiceCurrencyOption,
@@ -43,6 +48,7 @@ type Props = {
     representationUrl: string;
     pdfUrl: string;
     publicLink: PublicDocumentLink;
+    directDelivery: DocumentDelivery;
     deletion: { url: string | null; highRisk: boolean };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
@@ -61,6 +67,7 @@ type Props = {
     customerTranslations: CustomerTranslations;
     catalogTranslations: CatalogTranslations;
     publicDocumentTranslations: PublicDocumentTranslations;
+    deliveryTranslations: DocumentDeliveryTranslations;
 };
 
 export default function EditInvoice({
@@ -73,6 +80,7 @@ export default function EditInvoice({
     representationUrl,
     pdfUrl,
     publicLink,
+    directDelivery,
     deletion,
     indexUrl,
     status,
@@ -80,6 +88,7 @@ export default function EditInvoice({
     customerTranslations,
     catalogTranslations,
     publicDocumentTranslations,
+    deliveryTranslations,
     ...sourceProps
 }: Props) {
     const [invoiceDirty, setInvoiceDirty] = useState(false);
@@ -141,6 +150,11 @@ export default function EditInvoice({
                     <PublicDocumentLinkPanel
                         link={publicLink}
                         labels={publicDocumentTranslations.management}
+                    />
+                    <DocumentDeliveryPanel
+                        delivery={directDelivery}
+                        labels={deliveryTranslations}
+                        documentDirty={invoiceDirty}
                     />
                     <InvoiceDraftEditor
                         key={invoice.editVersion}

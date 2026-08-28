@@ -4,6 +4,7 @@ use App\Modules\Catalog\Http\Controllers\CatalogDocumentSourceController;
 use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Customers\Http\Controllers\CustomerDocumentSourceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
+use App\Modules\Delivery\Http\Controllers\DocumentDeliveryController;
 use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
 use App\Modules\Quotes\Http\Controllers\QuoteController;
 use App\Modules\Quotes\Http\Controllers\QuoteDraftController;
@@ -56,6 +57,14 @@ Route::delete('companies/{company}/quotes/{document}/public-link', [DocumentPubl
     ->defaults('document_kind', 'QUOTE')
     ->middleware('throttle:20,1')
     ->name('quotes.public-link.destroy');
+Route::post('companies/{company}/quotes/{document}/deliveries', [DocumentDeliveryController::class, 'store'])
+    ->defaults('document_kind', 'QUOTE')
+    ->middleware('throttle:20,1')
+    ->name('quotes.deliveries.store');
+Route::post('companies/{company}/quotes/{document}/deliveries/{delivery}/retry', [DocumentDeliveryController::class, 'retry'])
+    ->defaults('document_kind', 'QUOTE')
+    ->middleware('throttle:10,1')
+    ->name('quotes.deliveries.retry');
 
 Route::get('companies/{company}/document-sources/customers', [CustomerDocumentSourceController::class, 'index'])
     ->name('quote-sources.customers.index');

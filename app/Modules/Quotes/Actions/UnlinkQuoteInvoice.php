@@ -11,6 +11,7 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -30,6 +31,7 @@ final readonly class UnlinkQuoteInvoice
         private AuthorizesCompanyActions $authorizer,
         private RecordAuditEvent $recordAuditEvent,
         private DocumentPublicLinkHistory $publicLinkHistory,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -84,10 +86,12 @@ final readonly class UnlinkQuoteInvoice
             ->lockForUpdate()
             ->get();
         $publicLinks = $this->publicLinkHistory->lock($invoiceDocument->id);
+        $deliveries = $this->deliveryHistory->all($invoiceDocument->id);
 
         if ($invoice->lifecycle !== InvoiceLifecycle::Draft
             || $transactions->isNotEmpty()
-            || $publicLinks->isNotEmpty()) {
+            || $publicLinks->isNotEmpty()
+            || $deliveries->isNotEmpty()) {
             throw QuoteInvoiceUnlinkException::unavailable();
         }
 

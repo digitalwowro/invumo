@@ -15,6 +15,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Actions\ApplyDocumentCustomer;
 use App\Modules\Documents\Actions\ApplyDocumentDraftSources;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
@@ -46,6 +47,7 @@ final readonly class UpdateInvoiceDraft
         private PersistDocumentLines $persistLines,
         private InvoiceIssuability $issuability,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(Company $company, User $actor, string $documentId, InvoiceDraftData $data): Document
@@ -73,6 +75,10 @@ final readonly class UpdateInvoiceDraft
 
         if ($document->edit_version !== $data->editVersion) {
             throw InvoiceDraftException::stale();
+        }
+
+        if ($this->deliveryHistory->hasPending($document->id)) {
+            throw InvoiceDraftException::deliveryPending();
         }
 
         $invoice = Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();

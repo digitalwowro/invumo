@@ -12,6 +12,7 @@ use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Transactions\Data\InvoiceLedger;
 use App\Modules\Transactions\Data\InvoiceTransactionKind;
@@ -26,6 +27,7 @@ final readonly class DeleteInvoiceTransaction
         private AuthorizesCompanyActions $authorizer,
         private LockInvoiceTransactionAggregate $lockAggregate,
         private RecordAuditEvent $recordAuditEvent,
+        private LockDocumentDeliveryHistory $deliveryHistory,
     ) {}
 
     public function handle(
@@ -59,6 +61,7 @@ final readonly class DeleteInvoiceTransaction
     ): bool {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
         $context = $this->lockAggregate->handle($invoiceId);
+
         $applied = AuditEvent::query()
             ->where('action', 'company.invoice_transaction.deleted')
             ->where('target_id', $transactionId)
@@ -71,6 +74,10 @@ final readonly class DeleteInvoiceTransaction
             }
 
             return true;
+        }
+
+        if ($this->deliveryHistory->hasPending($context->document->id)) {
+            throw InvoiceTransactionException::deliveryPending();
         }
 
         $transaction = $context->transactions->firstWhere('id', $transactionId);

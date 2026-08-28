@@ -47,6 +47,7 @@ return [
     'errors' => [
         'unavailable' => 'Linkul public securizat nu mai este disponibil. Creează mai întâi un link nou.',
         'decision_unavailable' => 'Această ofertă nu mai poate primi un răspuns public.',
+        'decision_delivery_pending' => 'Această ofertă este în curs de trimitere. Așteaptă puțin, apoi încearcă din nou.',
         'decision_conflict' => 'A fost deja înregistrat un răspuns diferit. Contactează Compania dacă trebuie corectat.',
         'idempotency_conflict' => 'Răspunsul nu a putut fi reîncercat în siguranță. Reîncarcă pagina și încearcă din nou.',
     ],

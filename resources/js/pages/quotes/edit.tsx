@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Download, Eye } from 'lucide-react';
+import { useState } from 'react';
 import { ActionLink } from '@/components/app/action-link';
 import { DownloadLink } from '@/components/app/download-link';
 import { Cluster, Stack } from '@/components/app/layout';
@@ -8,12 +9,17 @@ import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { PublicDocumentLinkPanel } from '@/components/domain/documents/public-document-link-panel';
 import { StatusBadge } from '@/components/domain/status-badge';
+import { DocumentDeliveryPanel } from '@/features/delivery/components/document-delivery-panel';
 import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
 import { QuoteInvoiceAllocationSection } from '@/features/quotes/components/quote-invoice-allocation';
 import { QuoteLifecycleDialog } from '@/features/quotes/components/quote-lifecycle-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type {
+    DocumentDelivery,
+    DocumentDeliveryTranslations,
+} from '@/types/document-delivery';
 import type {
     PublicDocumentLink,
     PublicDocumentTranslations,
@@ -45,6 +51,7 @@ type Props = {
     representationUrl: string;
     pdfUrl: string;
     publicLink: PublicDocumentLink;
+    directDelivery: DocumentDelivery;
     indexUrl: string;
     quoteAbilities: { correctLifecycle: boolean; delete: boolean };
     sourceUrls: QuoteSourceUrls;
@@ -63,6 +70,7 @@ type Props = {
     customerTranslations: CustomerTranslations;
     catalogTranslations: CatalogTranslations;
     publicDocumentTranslations: PublicDocumentTranslations;
+    deliveryTranslations: DocumentDeliveryTranslations;
 };
 
 export default function EditQuote({
@@ -77,6 +85,7 @@ export default function EditQuote({
     representationUrl,
     pdfUrl,
     publicLink,
+    directDelivery,
     indexUrl,
     quoteAbilities,
     status,
@@ -84,8 +93,11 @@ export default function EditQuote({
     customerTranslations,
     catalogTranslations,
     publicDocumentTranslations,
+    deliveryTranslations,
     ...sourceProps
 }: Props) {
+    const [quoteDirty, setQuoteDirty] = useState(false);
+
     return (
         <>
             <Head title={`${translations.edit.head_title} ${quote.number}`} />
@@ -152,6 +164,11 @@ export default function EditQuote({
                         link={publicLink}
                         labels={publicDocumentTranslations.management}
                     />
+                    <DocumentDeliveryPanel
+                        delivery={directDelivery}
+                        labels={deliveryTranslations}
+                        documentDirty={quoteDirty}
+                    />
                     <QuoteDraftEditor
                         quote={quote}
                         limits={limits}
@@ -165,6 +182,7 @@ export default function EditQuote({
                             allocation: invoiceAllocation,
                         }}
                         conversionLabels={translations.conversion}
+                        onDirtyChange={setQuoteDirty}
                         {...sourceProps}
                     />
                     <QuoteInvoiceAllocationSection

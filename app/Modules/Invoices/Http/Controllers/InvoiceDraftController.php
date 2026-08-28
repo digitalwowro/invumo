@@ -16,6 +16,7 @@ use App\Modules\Invoices\Http\Requests\UpdateInvoiceDraftRequest;
 use App\Modules\Invoices\Queries\InvoiceDraftPage;
 use App\Support\Inertia\CatalogUiTranslationBag;
 use App\Support\Inertia\CustomersUiTranslationBag;
+use App\Support\Inertia\DocumentDeliveryTranslationBag;
 use App\Support\Inertia\InvoicesUiTranslationBag;
 use App\Support\Inertia\PublicDocumentsTranslationBag;
 use Illuminate\Http\RedirectResponse;
@@ -63,6 +64,7 @@ final class InvoiceDraftController extends Controller
         CustomersUiTranslationBag $customerTranslations,
         CatalogUiTranslationBag $catalogTranslations,
         PublicDocumentsTranslationBag $publicDocumentTranslations,
+        DocumentDeliveryTranslationBag $deliveryTranslations,
     ): Response {
         return Inertia::render('invoices/edit', [
             ...$page->edit(
@@ -78,6 +80,7 @@ final class InvoiceDraftController extends Controller
             'customerTranslations' => $customerTranslations->toArray(),
             'catalogTranslations' => $catalogTranslations->toArray(),
             'publicDocumentTranslations' => $publicDocumentTranslations->toArray(),
+            'deliveryTranslations' => $deliveryTranslations->toArray(),
         ]);
     }
 

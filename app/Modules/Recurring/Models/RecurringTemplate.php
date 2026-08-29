@@ -35,6 +35,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property CarbonImmutable|null $last_run_completed_at
  * @property RecurringRunOutcome|null $last_run_outcome
  * @property string|null $last_failure_category
+ * @property bool $automatic_email_enabled
+ * @property string|null $last_confirmed_delivery_currency
+ * @property bool $currency_review_required
+ * @property string|null $currency_review_currency
+ * @property CarbonImmutable|null $currency_review_detected_at
  * @property int $edit_version
  */
 #[Fillable([
@@ -46,6 +51,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'successful_occurrence_count', 'activated_at', 'paused_at', 'resumed_at',
     'completed_at', 'last_run_started_at', 'last_run_completed_at',
     'last_run_outcome', 'last_failure_category', 'edit_version',
+    'automatic_email_enabled', 'last_confirmed_delivery_currency',
+    'currency_review_required', 'currency_review_currency',
+    'currency_review_detected_at',
 ])]
 class RecurringTemplate extends TenantOwnedModel
 {
@@ -72,6 +80,9 @@ class RecurringTemplate extends TenantOwnedModel
             'last_run_started_at' => 'immutable_datetime',
             'last_run_completed_at' => 'immutable_datetime',
             'last_run_outcome' => RecurringRunOutcome::class,
+            'automatic_email_enabled' => 'boolean',
+            'currency_review_required' => 'boolean',
+            'currency_review_detected_at' => 'immutable_datetime',
             'edit_version' => 'integer',
         ];
     }

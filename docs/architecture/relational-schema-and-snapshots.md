@@ -574,7 +574,7 @@ The dispatcher is a `NOLOGIN`, `NOBYPASSRLS` PostgreSQL role with schema usage, 
 - start date, optional inclusive end date, optional positive maximum occurrence count
 - original calendar anchor, next logical ordinal/date, and successful-occurrence count
 - automatic-email flag
-- last confirmed delivery currency, currency-review-latch fields, and optional confirming delivery reference
+- last confirmed delivery currency and currency-review-latch code/detection fields
 - current scheduling timezone/local time/next UTC run index
 - activation, pause, resume, and completion timestamps needed to distinguish active downtime from intentional pause time
 - edit version and run/outcome metadata
@@ -629,11 +629,14 @@ Batch 10A stores the editable input snapshot subset with optional restrictive Pr
 - stable occurrence key and logical ordinal
 - scheduled local date/time, timezone, and resolved UTC time
 - dispatch reference, actual start/completion timestamps, attempt count, and successful outcome
+- whether currency was inherited, whether automatic email was requested, and an allowlisted issue-only suppression reason
 - unique generated Invoice reference; terminal failure metadata remains on the dispatch and template because a failed Invoice/occurrence transaction leaves no partial occurrence row
 - unique `(company_id, recurring_template_id, occurrence_key)`
 - unique Company-scoped dispatch, logical-ordinal, and Invoice references
 
 Occurrence creation, Invoice creation/numbering, issue, reminder materialization, and the next template cursor update share one short transaction. The stable dispatch identity and database uniqueness constraints make a committed occurrence idempotent; a failed transaction leaves neither occurrence nor Invoice and authorized retry reuses that dispatch identity. PDF and eligible email work is queued after commit by its consuming batch.
+
+An automatic recurring delivery is an ordinary immutable Invoice delivery marked with a system-source boolean and unique per generated Invoice. It retains the existing delivery content, recipient, provider-attempt, quota, retry, erasure, and public-link boundaries. The worker locks and rechecks the occurrence/template currency latch, Invoice lifecycle/version, Company/Account eligibility, and public link immediately before provider submission. A provider-accepted manual delivery of the affected Invoice is the only operation that may clear a currency-review latch; the audit event retains only operational booleans and opaque identifiers.
 
 The generated-Invoice foreign key is restrictive so ordinary cascades cannot silently erase occurrence identity. Deliberate Invoice deletion explicitly removes the owning occurrence and its dispatch first in the same transaction. This is cleanup of the deleted effect, not permission to rewind scheduling: the template's next logical ordinal, cursor, and successful-occurrence count remain advanced. A stale job targets the removed dispatch and exits without recreating it. Cancellation does not delete either row. Consequently idempotency protects every live occurrence while later distinct scheduled occurrences remain unaffected by deletion or cancellation.
 

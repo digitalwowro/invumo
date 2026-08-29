@@ -16,12 +16,14 @@ use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
+use App\Modules\Recurring\Queries\RecurringAutomaticDeliveryEligibility;
 
 final readonly class DocumentDeliveryPage
 {
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private DocumentDeliveryComposer $composer,
+        private RecurringAutomaticDeliveryEligibility $recurringEligibility,
     ) {}
 
     /** @return array<string, mixed> */
@@ -48,7 +50,7 @@ final readonly class DocumentDeliveryPage
             ->whereNull('revoked_at')
             ->where('expires_at', '>', now())
             ->pluck('id');
-        $currentEditVersion = Document::query()->whereKey($documentId)->value('edit_version');
+        $currentDocument = Document::query()->whereKey($documentId)->firstOrFail();
 
         return [
             'locale' => app()->getLocale(),
@@ -79,8 +81,9 @@ final readonly class DocumentDeliveryPage
                     && $accessEnabled
                     && $delivery->public_document_link_id !== null
                     && $activeLinkIds->contains($delivery->public_document_link_id)
-                    && $delivery->document_edit_version === $currentEditVersion
+                    && $delivery->document_edit_version === $currentDocument->edit_version
                     && $delivery->dispatch_state->canRetryManually()
+                    && $this->recurringEligibility->allowsCurrent($delivery, $currentDocument)
                     ? route(
                         $kind === DocumentKind::Quote
                             ? 'quotes.deliveries.retry' : 'invoices.deliveries.retry',

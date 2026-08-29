@@ -46,6 +46,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $feedback_loop_at
  * @property CarbonImmutable|null $redacted_at
  * @property string|null $initiated_by_user_id
+ * @property bool $recurring_automatic
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property int $attempts_count
@@ -59,7 +60,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'failure_category', 'failure_summary', 'accepted_at', 'failed_at', 'redacted_at',
     'delivered_at', 'soft_bounced_at', 'hard_bounced_at', 'opened_at', 'clicked_at',
     'feedback_loop_at',
-    'initiated_by_user_id',
+    'initiated_by_user_id', 'recurring_automatic',
 ])]
 final class EmailDelivery extends TenantOwnedModel
 {
@@ -100,6 +101,7 @@ final class EmailDelivery extends TenantOwnedModel
             'clicked_at' => 'immutable_datetime',
             'feedback_loop_at' => 'immutable_datetime',
             'redacted_at' => 'immutable_datetime',
+            'recurring_automatic' => 'boolean',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

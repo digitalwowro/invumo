@@ -139,6 +139,11 @@ final class InvoiceReminderRetryTest extends DocumentDeliveryTestCase
             ReminderInstanceStatus::Failed,
             ReminderInstance::query()->sole()->status,
         ));
+        $this->actingAs($owner)
+            ->post(route('invoices.deliveries.retry', [
+                $company, $invoice, $firstDelivery,
+            ]), ['confirmed' => true])
+            ->assertSessionHasErrors('delivery');
         Date::setTestNow('2026-11-01 12:00:00 Europe/Bucharest');
 
         $this->actingAs($owner)

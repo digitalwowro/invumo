@@ -97,6 +97,7 @@ return [
         'sending_quota_exceeded' => 'Limita comună de trimitere a emailurilor a fost atinsă. Încearcă din nou mai târziu.',
         'sender_access_unavailable' => 'Expeditorul nu mai are permisiunea de a trimite acest email.',
         'payment_received_no_longer_eligible' => 'Plata asociată s-a modificat înainte ca emailul să poată fi trimis.',
+        'recurring_delivery_no_longer_eligible' => 'Factura recurentă nu mai este eligibilă pentru livrare automată. Verific-o și trimite-o manual.',
         'generic' => 'Emailul nu a putut fi livrat.',
     ],
     'feedback' => [

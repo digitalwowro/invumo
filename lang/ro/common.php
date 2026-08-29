@@ -44,6 +44,7 @@ return [
         'navigation_description' => 'Navigarea companiei și comenzile contului.',
         'open_navigation' => 'Deschide navigarea',
         'close_navigation' => 'Închide navigarea',
+        'recurring_attention' => ':count șabloane recurente necesită atenție',
     ],
     'pagination' => [
         'showing' => 'Se afișează :from–:to din :total',

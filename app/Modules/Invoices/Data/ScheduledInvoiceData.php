@@ -16,6 +16,7 @@ final readonly class ScheduledInvoiceData
         public string $idempotencyReference,
         public string $issueDate,
         public ResolvedDocumentCustomer $customer,
+        public bool $currencyInherited,
         public ?string $customerReference,
         public ?int $paymentTermDays,
         public ?string $termsAndConditions,

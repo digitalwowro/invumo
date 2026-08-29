@@ -9,6 +9,7 @@ return [
         'search_label' => 'Search',
         'search_placeholder' => 'Search name, Customer, or reference',
         'sort_label' => 'Sort',
+        'outcome_filter_label' => 'Generation outcome',
         'per_page_label' => 'Rows per page',
         'clear' => 'Clear filters',
         'previous' => 'Previous',
@@ -28,6 +29,7 @@ return [
             'state' => 'State',
             'next_run' => 'Next run',
             'outcome' => 'Last outcome',
+            'automation' => 'Automatic email',
             'updated' => 'Updated',
             'actions' => 'Actions',
             'open' => 'Open',
@@ -37,6 +39,10 @@ return [
             'recent' => 'Recently updated',
             'name_asc' => 'Name A–Z',
             'name_desc' => 'Name Z–A',
+        ],
+        'outcome_filter_options' => [
+            'all' => 'All outcomes',
+            'failed' => 'Needs attention',
         ],
         'states' => [
             'DRAFT' => 'Draft',
@@ -48,6 +54,11 @@ return [
             'SUCCEEDED' => 'Succeeded',
             'FAILED' => 'Failed',
             'SKIPPED' => 'Skipped',
+        ],
+        'automation' => [
+            'enabled' => 'Enabled',
+            'disabled' => 'Disabled',
+            'review_required' => 'Review required',
         ],
     ],
     'create' => [
@@ -224,6 +235,16 @@ return [
             'MONTH' => 'Months', 'YEAR' => 'Years',
         ],
     ],
+    'automation' => [
+        'title' => 'Automatic email',
+        'description' => 'Deliver each generated Invoice after issue when all safety checks pass.',
+        'enabled' => 'Send generated Invoices automatically',
+        'enabled_description' => 'Uses the resolved recipients, email template, secure link, delivery mode, and shared sending limits.',
+        'confirmation' => 'I understand this changes future unattended delivery.',
+        'save' => 'Save automatic email',
+        'review_title' => 'Currency changed — review required',
+        'review_description' => 'Automatic email is paused for inherited :currency Invoices. Review and manually send one affected Invoice to confirm the new currency.',
+    ],
     'lifecycle' => [
         'activate' => 'Activate', 'pause' => 'Pause', 'resume' => 'Resume',
         'complete' => 'Complete', 'duplicate' => 'Duplicate to Draft',
@@ -272,6 +293,7 @@ return [
         'deleted' => 'Recurring template permanently deleted.',
         'schedule_saved' => 'Recurring schedule saved.',
         'retry_requested' => 'The failed occurrence is ready to retry.',
+        'automatic_email_saved' => 'Automatic email settings saved.',
         'ACTIVATE' => 'Recurring template activated.',
         'PAUSE' => 'Recurring template paused.',
         'RESUME' => 'Recurring template resumed.',

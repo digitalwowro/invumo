@@ -12,7 +12,6 @@ use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\JobDispatchStatus;
 use App\Modules\Delivery\Data\LockedPublicDocumentAccess;
-use App\Modules\Delivery\Data\PublicDocumentLinkRevocationKind;
 use App\Modules\Delivery\Data\ReminderInstanceStatus;
 use App\Modules\Delivery\Data\ReminderRelation;
 use App\Modules\Delivery\Exceptions\RetryableReminderException;
@@ -38,7 +37,7 @@ use Illuminate\Support\Str;
 final readonly class PrepareInvoiceReminder
 {
     public function __construct(
-        private CreatePublicDocumentLinkGeneration $createLink,
+        private EnsurePublicDocumentLink $ensureLink,
         private PublicDocumentUrl $publicUrl,
         private ReminderDeliveryComposer $composer,
         private LockDocumentDeliveryHistory $deliveryHistory,
@@ -130,7 +129,7 @@ final readonly class PrepareInvoiceReminder
 
         $company = Company::query()->whereKey($document->company_id)->firstOrFail();
         $access = new LockedPublicDocumentAccess($settings, $document, $deliverySetting, $links);
-        $link = $this->link($access);
+        $link = $this->ensureLink->handle($access, null);
         $url = $this->publicUrl->for(DocumentKind::Invoice, $link);
         $content = $this->composer->for($company, $document, $ledger, $url);
         $delivery = EmailDelivery::query()->create([
@@ -221,37 +220,6 @@ final readonly class PrepareInvoiceReminder
         }
 
         return false;
-    }
-
-    private function link(LockedPublicDocumentAccess $access): PublicDocumentLink
-    {
-        $current = $access->current();
-
-        if ($current instanceof PublicDocumentLink && $current->expires_at->isFuture()) {
-            return $current;
-        }
-
-        if ($current instanceof PublicDocumentLink) {
-            $current->update([
-                'revoked_at' => now(),
-                'revocation_kind' => PublicDocumentLinkRevocationKind::Regenerated,
-            ]);
-        }
-
-        $link = $this->createLink->handle($access, null);
-        $this->audit->handle(new AuditEventData(
-            actorType: AuditActorType::System,
-            action: 'company.document.public_link.created',
-            targetType: 'Invoice',
-            targetId: $access->document->id,
-            after: AuditPayload::fromAllowedFields([
-                'access_enabled' => true,
-                'generation' => $link->generation,
-                'expires_at' => $link->expires_at->toIso8601String(),
-            ], ['access_enabled', 'generation', 'expires_at']),
-        ));
-
-        return $link;
     }
 
     private function finish(

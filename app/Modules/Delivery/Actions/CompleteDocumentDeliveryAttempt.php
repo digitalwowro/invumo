@@ -21,10 +21,16 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Recurring\Actions\ConfirmRecurringDeliveryCurrency;
+use App\Modules\Recurring\Queries\RecurringAutomaticDeliveryEligibility;
 
 final readonly class CompleteDocumentDeliveryAttempt
 {
-    public function __construct(private RecordAuditEvent $audit) {}
+    public function __construct(
+        private RecordAuditEvent $audit,
+        private RecurringAutomaticDeliveryEligibility $recurringEligibility,
+        private ConfirmRecurringDeliveryCurrency $confirmRecurringCurrency,
+    ) {}
 
     public function handle(
         string $deliveryId,
@@ -34,6 +40,7 @@ final readonly class CompleteDocumentDeliveryAttempt
         int $maxAttempts,
     ): bool {
         CompanySetting::query()->lockForUpdate()->firstOrFail();
+        $recurringSource = $this->recurringEligibility->lockForInvoice($prepared->documentId);
         $document = Document::query()->whereKey($prepared->documentId)->lockForUpdate()->firstOrFail();
         match ($document->kind) {
             DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
@@ -68,6 +75,11 @@ final readonly class CompleteDocumentDeliveryAttempt
         $this->completeReminder($delivery, $state, $result->failureCategory);
 
         if ($state === EmailDeliveryState::Accepted) {
+            $this->confirmRecurringCurrency->handle(
+                $recurringSource,
+                $delivery,
+                $document,
+            );
             $this->markQuoteSent($document);
         }
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Recurring\Data\RecurringRunOutcome;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Http\Requests\RecurringTemplateListRequest;
 use App\Modules\Recurring\Models\RecurringOccurrence;
@@ -84,16 +85,23 @@ final readonly class RecurringTemplateListPage
                 'recurring_templates.customer_reference', 'recurring_templates.state',
                 'recurring_templates.next_run_at', 'recurring_templates.updated_at',
                 'recurring_templates.last_run_outcome',
+                'recurring_templates.automatic_email_enabled',
+                'recurring_templates.currency_review_required',
             ])
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
     }
 
-    /** @param array{q: string, sort: string, perPage: int} $filters */
+    /** @param array{q: string, sort: string, outcome: string, perPage: int} $filters */
     private function applyFilters(Builder $query, array $filters): void
     {
         if ($filters['q'] !== '') {
             $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $filters['q']);
             $query->whereRaw('('.self::SEARCH.") ILIKE ? ESCAPE '!'", ["%{$escaped}%"]);
+        }
+
+        if ($filters['outcome'] === 'failed') {
+            $query->where('recurring_templates.state', RecurringTemplateState::Active)
+                ->where('recurring_templates.last_run_outcome', RecurringRunOutcome::Failed);
         }
     }
 
@@ -127,6 +135,8 @@ final readonly class RecurringTemplateListPage
             'nextRunAt' => $row->next_run_at === null
                 ? null : CarbonImmutable::parse((string) $row->next_run_at)->toISOString(),
             'lastRunOutcome' => $row->last_run_outcome,
+            'automaticEmailEnabled' => (bool) $row->automatic_email_enabled,
+            'currencyReviewRequired' => (bool) $row->currency_review_required,
             'lastInvoiceUrl' => $occurrence === null
                 ? null : route('invoices.edit', [$company, $occurrence->invoice_id], false),
             'updatedAt' => CarbonImmutable::parse((string) $row->updated_at)->toISOString(),

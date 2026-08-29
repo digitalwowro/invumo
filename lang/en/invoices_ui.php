@@ -104,6 +104,11 @@ return [
         'edit' => 'Edit invoice',
         'back' => 'Back to invoices',
     ],
+    'recurring' => [
+        'review_title' => 'Currency changed — review required',
+        'review_description' => 'Automatic email is paused for this recurring Invoice. Review its currency and send it manually to confirm the new delivery baseline.',
+        'open_template' => 'Open recurring template',
+    ],
     'issue' => [
         'trigger' => 'Issue invoice',
         'title' => 'Issue this invoice?',

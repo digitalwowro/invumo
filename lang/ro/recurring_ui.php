@@ -9,6 +9,7 @@ return [
         'search_label' => 'Căutare',
         'search_placeholder' => 'Caută după nume, client sau referință',
         'sort_label' => 'Sortare',
+        'outcome_filter_label' => 'Rezultatul generării',
         'per_page_label' => 'Rânduri pe pagină',
         'clear' => 'Șterge filtrele',
         'previous' => 'Anterior',
@@ -28,6 +29,7 @@ return [
             'state' => 'Stare',
             'next_run' => 'Următoarea rulare',
             'outcome' => 'Ultimul rezultat',
+            'automation' => 'E-mail automat',
             'updated' => 'Actualizat',
             'actions' => 'Acțiuni',
             'open' => 'Deschide',
@@ -37,6 +39,10 @@ return [
             'recent' => 'Actualizate recent',
             'name_asc' => 'Nume A–Z',
             'name_desc' => 'Nume Z–A',
+        ],
+        'outcome_filter_options' => [
+            'all' => 'Toate rezultatele',
+            'failed' => 'Necesită atenție',
         ],
         'states' => [
             'DRAFT' => 'Ciornă',
@@ -48,6 +54,11 @@ return [
             'SUCCEEDED' => 'Reușit',
             'FAILED' => 'Eșuat',
             'SKIPPED' => 'Omis',
+        ],
+        'automation' => [
+            'enabled' => 'Activat',
+            'disabled' => 'Dezactivat',
+            'review_required' => 'Necesită verificare',
         ],
     ],
     'create' => [
@@ -224,6 +235,16 @@ return [
             'MONTH' => 'Luni', 'YEAR' => 'Ani',
         ],
     ],
+    'automation' => [
+        'title' => 'E-mail automat',
+        'description' => 'Livrează fiecare factură generată după emitere când toate verificările de siguranță sunt îndeplinite.',
+        'enabled' => 'Trimite automat facturile generate',
+        'enabled_description' => 'Folosește destinatarii, șablonul de e-mail, linkul securizat, modul de livrare și limitele comune de trimitere rezolvate.',
+        'confirmation' => 'Înțeleg că această modificare afectează livrările automate viitoare.',
+        'save' => 'Salvează e-mailul automat',
+        'review_title' => 'Moneda s-a schimbat — este necesară verificarea',
+        'review_description' => 'E-mailul automat este suspendat pentru facturile moștenite în :currency. Verifică și trimite manual o factură afectată pentru a confirma moneda nouă.',
+    ],
     'lifecycle' => [
         'activate' => 'Activează', 'pause' => 'Pune în pauză', 'resume' => 'Reia',
         'complete' => 'Finalizează', 'duplicate' => 'Duplică în Ciornă',
@@ -272,6 +293,7 @@ return [
         'deleted' => 'Șablonul recurent a fost șters definitiv.',
         'schedule_saved' => 'Programarea recurentă a fost salvată.',
         'retry_requested' => 'Apariția eșuată este pregătită pentru reîncercare.',
+        'automatic_email_saved' => 'Setările e-mailului automat au fost salvate.',
         'ACTIVATE' => 'Șablonul recurent a fost activat.',
         'PAUSE' => 'Șablonul recurent a fost pus în pauză.',
         'RESUME' => 'Șablonul recurent a fost reluat.',

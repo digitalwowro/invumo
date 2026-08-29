@@ -16,6 +16,7 @@ export type RecurringTranslations = {
         search_label: string;
         search_placeholder: string;
         sort_label: string;
+        outcome_filter_label: string;
         per_page_label: string;
         clear: string;
         previous: string;
@@ -35,6 +36,7 @@ export type RecurringTranslations = {
             | 'state'
             | 'next_run'
             | 'outcome'
+            | 'automation'
             | 'updated'
             | 'actions'
             | 'open'
@@ -42,8 +44,13 @@ export type RecurringTranslations = {
             string
         >;
         sort_options: Record<RecurringTemplateFilters['sort'], string>;
+        outcome_filter_options: Record<
+            RecurringTemplateFilters['outcome'],
+            string
+        >;
         states: Record<RecurringTemplateState, string>;
         outcomes: Record<RecurringRunOutcome, string>;
+        automation: Record<'enabled' | 'disabled' | 'review_required', string>;
     };
     create: {
         head_title: string;
@@ -80,6 +87,16 @@ export type RecurringTranslations = {
         next_run_empty: string;
         kinds: Record<RecurrenceKind, string>;
         units: Record<RecurringIntervalUnit, string>;
+    };
+    automation: {
+        title: string;
+        description: string;
+        enabled: string;
+        enabled_description: string;
+        confirmation: string;
+        save: string;
+        review_title: string;
+        review_description: string;
     };
     lifecycle: {
         activate: string;

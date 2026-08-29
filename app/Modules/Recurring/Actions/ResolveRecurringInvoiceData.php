@@ -57,6 +57,8 @@ final readonly class ResolveRecurringInvoiceData
             ->where('recurring_template_id', $template->id)
             ->orderBy('id')->lockForUpdate()->get()->sortBy('position')->values();
         $resolved = $this->customer($customer, $values, $recipients);
+        $currencyInherited = ! ($values instanceof RecurringTemplateCustomerValue
+            && in_array('currency', $values->explicit_fields, true));
 
         return new ScheduledInvoiceData(
             creationKey: $dispatchId,
@@ -65,6 +67,7 @@ final readonly class ResolveRecurringInvoiceData
             ),
             issueDate: $issueDate,
             customer: $resolved,
+            currencyInherited: $currencyInherited,
             customerReference: $template->customer_reference,
             paymentTermDays: $resolved->paymentTermDays,
             termsAndConditions: $defaults?->terms_mode === RecurringValueMode::Explicit

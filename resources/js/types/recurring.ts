@@ -37,6 +37,8 @@ export type RecurringTemplateRow = {
     state: RecurringTemplateState;
     nextRunAt: string | null;
     lastRunOutcome: RecurringRunOutcome | null;
+    automaticEmailEnabled: boolean;
+    currencyReviewRequired: boolean;
     lastInvoiceUrl: string | null;
     updatedAt: string;
     editUrl: string;
@@ -53,6 +55,7 @@ export type RecurringTemplateCursorPage = {
 export type RecurringTemplateFilters = {
     q: string;
     sort: 'name_asc' | 'name_desc' | 'recent';
+    outcome: 'all' | 'failed';
     perPage: number;
 };
 
@@ -64,10 +67,18 @@ export type RecurringTemplateDraft = {
     editVersion: number;
     schedule: RecurringSchedule;
     execution: RecurringExecution;
+    automation: RecurringAutomation;
     customer: DocumentCustomerSelection;
     currencyCode: string | null;
     currencyPrecision: number | null;
     lines: DocumentLineDraft[];
+};
+
+export type RecurringAutomation = {
+    automaticEmailEnabled: boolean;
+    lastConfirmedCurrency: string | null;
+    currencyReviewRequired: boolean;
+    currencyReviewCurrency: string | null;
 };
 
 export type RecurringExecution = {

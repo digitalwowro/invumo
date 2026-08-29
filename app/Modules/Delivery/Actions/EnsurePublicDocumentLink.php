@@ -18,7 +18,7 @@ final readonly class EnsurePublicDocumentLink
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
-    public function handle(LockedPublicDocumentAccess $access, User $actor): PublicDocumentLink
+    public function handle(LockedPublicDocumentAccess $access, ?User $actor): PublicDocumentLink
     {
         $current = $access->current();
 
@@ -31,7 +31,7 @@ final readonly class EnsurePublicDocumentLink
         if ($current instanceof PublicDocumentLink) {
             $current->update([
                 'revoked_at' => now(),
-                'revoked_by_user_id' => $actor->id,
+                'revoked_by_user_id' => $actor?->id,
                 'revocation_kind' => PublicDocumentLinkRevocationKind::Regenerated,
             ]);
         }
@@ -40,8 +40,8 @@ final readonly class EnsurePublicDocumentLink
         $access->delivery->update(['public_access_enabled' => true]);
         $kind = $access->document->kind;
         $this->recordAuditEvent->handle(new AuditEventData(
-            actorType: AuditActorType::User,
-            actorUserId: $actor->id,
+            actorType: $actor instanceof User ? AuditActorType::User : AuditActorType::System,
+            actorUserId: $actor?->id,
             action: 'company.document.public_link.created',
             targetType: $kind->value === 'QUOTE' ? 'Quote' : 'Invoice',
             targetId: $access->document->id,

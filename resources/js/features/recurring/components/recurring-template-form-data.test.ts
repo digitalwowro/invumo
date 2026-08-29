@@ -85,6 +85,12 @@ const template: RecurringTemplateDraft = {
         lastFailure: null,
         lastInvoiceUrl: null,
     },
+    automation: {
+        automaticEmailEnabled: false,
+        lastConfirmedCurrency: null,
+        currencyReviewRequired: false,
+        currencyReviewCurrency: null,
+    },
     customer,
     currencyCode: 'RON',
     currencyPrecision: 2,

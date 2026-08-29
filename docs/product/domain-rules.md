@@ -441,6 +441,7 @@ Recurring template
 - Calculate each occurrence from its local calendar rule at the company automation time, then resolve it through the company IANA timezone into UTC; never add a fixed UTC duration for monthly/quarterly/yearly recurrence.
 - A nonexistent spring-forward time shifts by the DST gap; a repeated fall-back time uses its first occurrence and executes once.
 - After service downtime, catch up every occurrence due while Active, oldest first and in bounded batches. Intentional pause time is not backfilled without explicit confirmation.
+- A permanent occurrence failure keeps the Active template at that ordinal until authorized retry. Owner/Admin must receive a proactive Company-wide attention count linked to the failed-template filter; do not silently advance or rely only on someone inspecting every row.
 - Use the approved PostgreSQL-backed Laravel queue, one supervised PHP worker, and cron-triggered scheduler. Create the occurrence and invoice transactionally; queue PDF/email only after commit.
 - After one initial attempt, retry transient failures up to five times: after 1 minute, 5 minutes, 15 minutes, 1 hour, and 6 hours. Permanent failures and exhausted retries stop visibly; an authorized retry retains the same idempotency key.
 - The complete approved behavior is defined in [`../architecture/scheduling-and-jobs.md`](../architecture/scheduling-and-jobs.md).

@@ -84,6 +84,7 @@ final readonly class DuplicateCompletedRecurringTemplate
             'start_date' => $source->start_date,
             'end_date' => $source->end_date,
             'maximum_occurrence_count' => $source->maximum_occurrence_count,
+            'automatic_email_enabled' => $source->automatic_email_enabled,
         ]);
 
         foreach ([$values, $defaults, $recipients, $reminders, $lines] as $rows) {

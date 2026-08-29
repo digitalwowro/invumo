@@ -47,6 +47,10 @@ export type CompanyContext = {
     current: CompanySummary | null;
     available: CompanySummary[];
     abilities: CompanyAbilities;
+    automation: {
+        failedRecurringCount: number;
+        failedRecurringUrl: string;
+    } | null;
     landingUrl: string;
     indexUrl: string | null;
     createUrl: string | null;

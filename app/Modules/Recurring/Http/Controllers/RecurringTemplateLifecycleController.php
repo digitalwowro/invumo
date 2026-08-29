@@ -7,17 +7,41 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Recurring\Actions\DuplicateCompletedRecurringTemplate;
 use App\Modules\Recurring\Actions\RetryRecurringGeneration;
 use App\Modules\Recurring\Actions\TransitionRecurringTemplate;
+use App\Modules\Recurring\Actions\UpdateRecurringAutomaticEmail;
 use App\Modules\Recurring\Actions\UpdateRecurringTemplateSchedule;
 use App\Modules\Recurring\Data\RecurringTemplateTransition;
 use App\Modules\Recurring\Exceptions\RecurringTemplateException;
 use App\Modules\Recurring\Http\Requests\DuplicateRecurringTemplateRequest;
 use App\Modules\Recurring\Http\Requests\RecurringTransitionRequest;
+use App\Modules\Recurring\Http\Requests\UpdateRecurringAutomaticEmailRequest;
 use App\Modules\Recurring\Http\Requests\UpdateRecurringScheduleRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 
 final class RecurringTemplateLifecycleController extends Controller
 {
+    public function automaticEmail(
+        UpdateRecurringAutomaticEmailRequest $request,
+        Company $company,
+        string $template,
+        UpdateRecurringAutomaticEmail $update,
+    ): RedirectResponse {
+        try {
+            $update->handle(
+                $company,
+                $request->user(),
+                $template,
+                (int) $request->validated('edit_version'),
+                (bool) $request->validated('automatic_email_enabled'),
+                $request->boolean('confirmed'),
+            );
+        } catch (RecurringTemplateException $exception) {
+            $this->validationError($exception, 'automatic_email');
+        }
+
+        return back()->with('status', __('recurring_ui.feedback.automatic_email_saved'));
+    }
+
     public function schedule(
         UpdateRecurringScheduleRequest $request,
         Company $company,

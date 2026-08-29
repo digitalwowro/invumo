@@ -97,6 +97,7 @@ return [
         'sending_quota_exceeded' => 'The shared email sending limit was reached. Try again later.',
         'sender_access_unavailable' => 'The sender no longer has permission to submit this email.',
         'payment_received_no_longer_eligible' => 'The referenced Payment changed before this email could be submitted.',
+        'recurring_delivery_no_longer_eligible' => 'The recurring Invoice no longer qualifies for automatic delivery. Review and send it manually.',
         'generic' => 'The email could not be delivered.',
     ],
     'feedback' => [

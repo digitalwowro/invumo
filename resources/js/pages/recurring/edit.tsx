@@ -4,6 +4,7 @@ import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
+import { RecurringAutomaticEmailForm } from '@/features/recurring/components/recurring-automatic-email-form';
 import { RecurringTemplateDeleteDialog } from '@/features/recurring/components/recurring-template-delete-dialog';
 import { RecurringTemplateDraftEditor } from '@/features/recurring/components/recurring-template-draft-editor';
 import { RecurringTemplateExecution } from '@/features/recurring/components/recurring-template-execution';
@@ -25,6 +26,7 @@ type Props = RecurringSourceProps &
         limits: RecurringTemplateLimits;
         updateUrl: string;
         scheduleUpdateUrl: string;
+        automaticEmailUpdateUrl: string;
         transitionUrls: Record<
             'activate' | 'pause' | 'resume' | 'complete',
             string
@@ -113,6 +115,13 @@ export default function EditRecurringTemplate(props: Props) {
                         updateUrl={props.scheduleUpdateUrl}
                         canManage={props.canManageSchedule}
                         labels={props.translations.schedule}
+                    />
+                    <RecurringAutomaticEmailForm
+                        key={`automation:${props.template.editVersion}`}
+                        template={props.template}
+                        updateUrl={props.automaticEmailUpdateUrl}
+                        canManage={props.canManageAutomation}
+                        labels={props.translations.automation}
                     />
                     <RecurringTemplateExecution
                         execution={props.template.execution}

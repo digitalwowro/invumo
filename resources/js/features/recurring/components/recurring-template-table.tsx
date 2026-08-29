@@ -90,6 +90,29 @@ export function RecurringTemplateTable(props: Props) {
                 ),
         },
         {
+            key: 'automation',
+            label: labels.columns.automation,
+            kind: 'status',
+            render: (template) => (
+                <StatusBadge
+                    status={
+                        template.currencyReviewRequired
+                            ? 'paused'
+                            : template.automaticEmailEnabled
+                              ? 'active'
+                              : 'suppressed'
+                    }
+                    label={
+                        template.currencyReviewRequired
+                            ? labels.automation.review_required
+                            : template.automaticEmailEnabled
+                              ? labels.automation.enabled
+                              : labels.automation.disabled
+                    }
+                />
+            ),
+        },
+        {
             key: 'updated',
             label: labels.columns.next_run,
             kind: 'data',
@@ -113,7 +136,10 @@ export function RecurringTemplateTable(props: Props) {
             ),
         },
     ];
-    const filtered = props.filters.q !== '' || props.filters.sort !== 'recent';
+    const filtered =
+        props.filters.q !== '' ||
+        props.filters.sort !== 'recent' ||
+        props.filters.outcome !== 'all';
     const state = props.page.items.length
         ? 'ready'
         : filtered

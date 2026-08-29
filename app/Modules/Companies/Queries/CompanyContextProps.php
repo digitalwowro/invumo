@@ -7,6 +7,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Policies\CompanyAuthorization;
+use App\Modules\Recurring\Queries\RecurringAutomationStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,7 @@ final readonly class CompanyContextProps
     public function __construct(
         private AccessibleCompanies $companies,
         private CompanyAuthorization $authorization,
+        private RecurringAutomationStatus $automationStatus,
     ) {}
 
     /** @return array<string, mixed> */
@@ -35,6 +37,8 @@ final readonly class CompanyContextProps
             'abilities' => $currentMembership === null
                 ? $this->deniedAbilities()
                 : $this->authorization->bagFor($currentMembership->role),
+            'automation' => $currentMembership === null
+                ? null : $this->automationStatus->for($user, $currentMembership->company),
             'landingUrl' => route('home', absolute: false),
             'indexUrl' => route('companies.index', absolute: false),
             'createUrl' => route('companies.create', absolute: false),
@@ -48,6 +52,7 @@ final readonly class CompanyContextProps
             'current' => null,
             'available' => [],
             'abilities' => $this->deniedAbilities(),
+            'automation' => null,
             'landingUrl' => route('home', absolute: false),
             'indexUrl' => null,
             'createUrl' => null,

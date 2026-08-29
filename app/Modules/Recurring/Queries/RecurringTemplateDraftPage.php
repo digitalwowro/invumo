@@ -83,9 +83,10 @@ final readonly class RecurringTemplateDraftPage
         $occurrence = RecurringOccurrence::query()
             ->where('recurring_template_id', $template->id)
             ->orderByDesc('logical_ordinal')->first();
-        $canManageAutomation = $this->abilities->allows(
-            $actor, $company, CompanyAbility::ManageRecurringAutomation,
-        );
+        $canManageAutomation = $template->state !== RecurringTemplateState::Completed
+            && $this->abilities->allows(
+                $actor, $company, CompanyAbility::ManageRecurringAutomation,
+            );
 
         return [
             'template' => [
@@ -117,6 +118,12 @@ final readonly class RecurringTemplateDraftPage
                     'lastInvoiceUrl' => $occurrence === null
                         ? null : route('invoices.edit', [$company, $occurrence->invoice_id], false),
                 ],
+                'automation' => [
+                    'automaticEmailEnabled' => $template->automatic_email_enabled,
+                    'lastConfirmedCurrency' => $template->last_confirmed_delivery_currency,
+                    'currencyReviewRequired' => $template->currency_review_required,
+                    'currencyReviewCurrency' => $template->currency_review_currency,
+                ],
                 'customer' => $customer,
                 'currencyCode' => $inheritance['inheritance']['currencyCode'],
                 'currencyPrecision' => $inheritance['inheritance']['currencyPrecision'],
@@ -147,6 +154,9 @@ final readonly class RecurringTemplateDraftPage
             ],
             'updateUrl' => route('recurring.update', [$company, $template], false),
             'scheduleUpdateUrl' => route('recurring.schedule.update', [$company, $template], false),
+            'automaticEmailUpdateUrl' => route(
+                'recurring.automatic-email.update', [$company, $template], false,
+            ),
             'transitionUrls' => [
                 'activate' => route('recurring.transition', [$company, $template, 'activate'], false),
                 'pause' => route('recurring.transition', [$company, $template, 'pause'], false),

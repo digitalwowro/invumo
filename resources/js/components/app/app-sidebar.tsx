@@ -83,8 +83,16 @@ export function AppSidebar({
     ) {
         mainNavItems.push({
             title: t('navigation.recurring'),
-            href: companyContext.current.recurringUrl,
+            href: companyContext.automation?.failedRecurringCount
+                ? companyContext.automation.failedRecurringUrl
+                : companyContext.current.recurringUrl,
             icon: Repeat2,
+            badge: companyContext.automation?.failedRecurringCount,
+            badgeLabel: companyContext.automation?.failedRecurringCount
+                ? t('accessibility.recurring_attention', {
+                      count: companyContext.automation.failedRecurringCount,
+                  })
+                : undefined,
         });
     }
 

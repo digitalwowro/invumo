@@ -18,12 +18,13 @@ use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\PublicDocumentLink;
-use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
+use App\Modules\Delivery\Queries\ProviderSubmissionEligibility;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Recurring\Queries\RecurringAutomaticDeliveryEligibility;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Str;
 use LogicException;
@@ -33,7 +34,8 @@ final readonly class RetryDocumentDelivery
     public function __construct(
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
-        private PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
+        private RecurringAutomaticDeliveryEligibility $recurringEligibility,
+        private ProviderSubmissionEligibility $submissionEligibility,
         private RecordAuditEvent $audit,
     ) {}
 
@@ -55,6 +57,7 @@ final readonly class RetryDocumentDelivery
             $delivery = EmailDelivery::query()
                 ->whereKey($deliveryId)->where('document_id', $documentId)->firstOrFail();
             $this->authorizer->authorize($actor, $company, $delivery->document_kind->manageAbility());
+            $recurringSource = $this->recurringEligibility->lockForDelivery($delivery);
             $document = Document::query()->whereKey($delivery->document_id)->lockForUpdate()->firstOrFail();
             $documentState = match ($delivery->document_kind) {
                 DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
@@ -90,8 +93,16 @@ final readonly class RetryDocumentDelivery
 
             EmailDeliveryAttempt::query()
                 ->where('delivery_id', $delivery->id)->orderBy('id')->lockForUpdate()->get();
+            $eligibilityFailure = $this->submissionEligibility->failure(
+                $delivery,
+                $document,
+                $documentState instanceof Invoice ? $documentState : null,
+                $transactions,
+                $recurringSource,
+            );
 
             if (! $delivery->dispatch_state->canRetryManually()
+                || $delivery->event_type === EmailTemplateEvent::PaymentReminder
                 || $delivery->document_edit_version !== $document->edit_version
                 || $deliveries->contains(fn (EmailDelivery $candidate): bool => $candidate->id !== $delivery->id
                     && in_array($candidate->dispatch_state, [
@@ -99,12 +110,7 @@ final readonly class RetryDocumentDelivery
                         EmailDeliveryState::Retrying,
                     ], true))
                 || $delivery->redacted_at !== null
-                || ($delivery->event_type === EmailTemplateEvent::PaymentReceived
-                    && ! $this->paymentReceivedEligibility->allows(
-                        $delivery,
-                        $documentState instanceof Invoice ? $documentState : null,
-                        $transactions,
-                    ))
+                || $eligibilityFailure !== null
                 || ! $deliverySetting->public_access_enabled
                 || ! $publicLink instanceof PublicDocumentLink
                 || $publicLink->revoked_at !== null

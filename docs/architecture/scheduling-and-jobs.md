@@ -107,7 +107,7 @@ For an eligible occurrence:
 10. Queue PDF generation and, only when automatic email remains eligible, email after commit.
 11. Calculate the next local occurrence from the recurrence rule.
 
-Batch 10D implements steps 1–7, 9, and 11. It processes no more than ten due ordinals oldest-first in one worker pass. Successful occurrence, issued Invoice, reminder materialization, template cursor/count, dispatch completion, and privacy-safe audit commit together. A permanent business failure rolls the transaction back completely and stores only bounded operational metadata on the dispatch/template; Owner/Admin may retry the same dispatch identity after correcting the source data. Batch 10E owns the automatic-delivery and currency-latch steps.
+Batch 10D implements steps 1–7, 9, and 11. One worker pass uses the bounded `invumo.recurring.max_catch_up_occurrences` setting, which defaults to ten and is hard-capped at 100. Successful occurrence, issued Invoice, reminder materialization, template cursor/count, dispatch completion, and privacy-safe audit commit together. A permanent business failure rolls the transaction back completely and stores only bounded operational metadata on the dispatch/template; it does not advance the ordinal. The template remains Active but stalled until Owner/Admin corrects the source and retries the same dispatch identity. Batch 10E owns the automatic-delivery and currency-latch steps.
 
 An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
 
@@ -121,7 +121,7 @@ Service downtime and an intentional template pause are different:
 
 - After service downtime, process every occurrence that became due while the template remained Active.
 - Process missed occurrences oldest first.
-- Process at most ten occurrences for one template in one scheduler pass, then continue in later passes until caught up.
+- Process at most the configured bounded number of occurrences for one template in one scheduler pass, default ten and hard maximum 100, then continue in later passes until caught up.
 - Preserve each scheduled local issue date and due-date calculation.
 - Apply the template's automatic-email setting to each recovered occurrence.
 - Stable occurrence keys and uniqueness constraints prevent duplicates across recovery runs.
@@ -158,7 +158,9 @@ Make one initial attempt. Retry transient database, network, and provider failur
 
 If the final retry fails, mark the execution failed, expose it in the operational UI, log/alert it, and allow an authorized manual retry using the same idempotency key.
 
-Permanent validation/configuration failures do not retry indefinitely. Examples include no valid primary recipient, an inactive or invalid template, an invalid placeholder/template, a revoked public link that automation is forbidden to recreate, or business data that no longer satisfies the operation. Record a visible reason and require corrective action.
+Permanent generation failures do not retry indefinitely. Examples include an inactive or invalid template or business data that no longer satisfies Invoice generation. Record a visible reason and require corrective action. Delivery-only failures such as unavailable recipients, disabled public access, or a currency-review latch do not roll back the generated Issued Invoice; they record an allowlisted issue-only suppression reason and leave it available for manual delivery.
+
+An Active template whose current occurrence is permanently failed remains deliberately stopped rather than skipping an Invoice. Owner/Admin see a Company-wide attention badge in primary navigation; it links to a recurring-list filter containing only failed Active templates. Members may still see row outcomes where otherwise authorized but do not receive the Company-wide operations aggregate or retry authority.
 
 ## Observability
 

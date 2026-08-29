@@ -22,12 +22,16 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property int $attempt_count
  * @property RecurringRunOutcome $outcome
  * @property string $invoice_id
+ * @property bool $automatic_email_requested
+ * @property bool $currency_inherited
+ * @property string|null $automatic_delivery_suppression_reason
  */
 #[Fillable([
     'recurring_template_id', 'job_dispatch_id', 'occurrence_key', 'logical_ordinal',
     'scheduled_local_date', 'scheduled_local_time', 'schedule_timezone',
     'scheduled_at', 'started_at', 'completed_at', 'attempt_count', 'outcome',
-    'invoice_id',
+    'invoice_id', 'currency_inherited', 'automatic_email_requested',
+    'automatic_delivery_suppression_reason',
 ])]
 final class RecurringOccurrence extends TenantOwnedModel
 {
@@ -42,6 +46,8 @@ final class RecurringOccurrence extends TenantOwnedModel
             'completed_at' => 'immutable_datetime',
             'attempt_count' => 'integer',
             'outcome' => RecurringRunOutcome::class,
+            'automatic_email_requested' => 'boolean',
+            'currency_inherited' => 'boolean',
         ];
     }
 }

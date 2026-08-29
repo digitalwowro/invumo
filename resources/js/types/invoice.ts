@@ -197,6 +197,10 @@ export type InvoiceTranslations = {
     >;
     transactions: InvoiceTransactionTranslations;
     reminders: InvoiceReminderTranslations;
+    recurring: Record<
+        'review_title' | 'review_description' | 'open_template',
+        string
+    >;
     feedback: Record<string, string>;
     errors: Record<string, string>;
 };

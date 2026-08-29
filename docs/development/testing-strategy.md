@@ -27,6 +27,8 @@ Every feature batch has a named seam-review responsibility in addition to its lo
 
 At phase closeout, compare the complete phase diff with the prior successful phase-gate SHA. Review schema references, state/constraint additions, and new operation entry points against their earlier consumers. Record the impacted boundaries and focused evidence, or an explicit finding that none were introduced, in the tracker before dispatching the manual phase gate. The full suite confirms tests; it does not replace this semantic seam review.
 
+For recurring automation, the review specifically follows generation into ordinary Invoice issue/reminder/deletion behavior and automatic email into ordinary public-link, composition, sender, quota, retry, provider-attempt, and completion behavior. The same eligibility Query must drive retry presentation and the locked pre-provider decision; a passing generation test alone is insufficient.
+
 Typical commands are:
 
 ```bash

@@ -22,6 +22,12 @@ final class DocumentDeliverySenderEligibility
             return true;
         }
 
+        if ($delivery->recurring_automatic
+            && $delivery->event_type === EmailTemplateEvent::InvoiceSent
+            && $delivery->initiated_by_user_id === null) {
+            return true;
+        }
+
         $initiator = $delivery->initiated_by_user_id === null
             ? null : User::query()->whereKey($delivery->initiated_by_user_id)->first();
 

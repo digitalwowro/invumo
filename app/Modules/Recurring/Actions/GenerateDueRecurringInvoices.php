@@ -7,6 +7,7 @@ use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
+use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Actions\LockCompanyReminderRules;
 use App\Modules\Delivery\Data\JobDispatchStatus;
 use App\Modules\Delivery\Models\JobDispatch;
@@ -17,19 +18,19 @@ use App\Modules\Recurring\Data\RecurringRunOutcome;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Models\RecurringOccurrence;
 use App\Modules\Recurring\Models\RecurringTemplate;
+use App\Modules\Recurring\Support\RecurringExecutionLimits;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 final readonly class GenerateDueRecurringInvoices
 {
-    private const MAX_CATCH_UP = 10;
-
     public function __construct(
         private TenantContext $tenantContext,
         private LockDocumentConfiguration $configuration,
         private LockCompanyReminderRules $reminderRules,
         private ResolveRecurringInvoiceData $invoiceData,
         private CreateScheduledInvoice $createInvoice,
+        private PrepareRecurringAutomaticDelivery $automaticDelivery,
         private RecurringScheduleFromTemplate $schedule,
         private RecurringScheduleCalculator $calculator,
         private SyncRecurringDispatch $syncDispatch,
@@ -48,7 +49,7 @@ final readonly class GenerateDueRecurringInvoices
     {
         $generated = 0;
 
-        for ($index = 0; $index < self::MAX_CATCH_UP; $index++) {
+        for ($index = 0; $index < RecurringExecutionLimits::maxCatchUpOccurrences(); $index++) {
             $step = DB::connection(config('database.tenant_connection'))->transaction(
                 fn (): RecurringGenerationStep => $this->generateOne(
                     $dispatchId,
@@ -135,7 +136,7 @@ final readonly class GenerateDueRecurringInvoices
         );
         $invoice = $this->createInvoice->handle($data, $configuration);
         $completed = CarbonImmutable::now('UTC');
-        RecurringOccurrence::query()->create([
+        $occurrence = RecurringOccurrence::query()->create([
             'recurring_template_id' => $template->id,
             'job_dispatch_id' => $dispatch->id,
             'occurrence_key' => 'ordinal:'.$template->next_logical_ordinal,
@@ -149,7 +150,16 @@ final readonly class GenerateDueRecurringInvoices
             'attempt_count' => $attempt,
             'outcome' => RecurringRunOutcome::Succeeded,
             'invoice_id' => $invoice->id,
+            'currency_inherited' => $data->currencyInherited,
         ]);
+        $company = Company::query()->whereKey($template->company_id)->firstOrFail();
+        $this->automaticDelivery->handle(
+            $company,
+            $template,
+            $occurrence,
+            $invoice,
+            $data->currencyInherited,
+        );
         $this->completeDispatch($dispatch, $attempt, $started, $completed);
         $this->advance($template, $started, $completed);
         $this->recordGenerated($template, $invoice->id, $dispatch->idempotency_key);

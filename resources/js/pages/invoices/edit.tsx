@@ -52,6 +52,10 @@ type Props = {
     publicLink: PublicDocumentLink;
     directDelivery: DocumentDelivery;
     reminders: InvoiceReminder;
+    recurringAutomation: {
+        currencyReviewRequired: boolean;
+        templateUrl: string | null;
+    };
     deletion: { url: string | null; highRisk: boolean };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
@@ -85,6 +89,7 @@ export default function EditInvoice({
     publicLink,
     directDelivery,
     reminders,
+    recurringAutomation,
     deletion,
     indexUrl,
     status,
@@ -140,6 +145,25 @@ export default function EditInvoice({
                         }
                     />
                     {status && <SystemMessage title={status} tone="money" />}
+                    {recurringAutomation.currencyReviewRequired && (
+                        <SystemMessage
+                            title={translations.recurring.review_title}
+                            description={
+                                translations.recurring.review_description
+                            }
+                            tone="warning"
+                            action={
+                                recurringAutomation.templateUrl ? (
+                                    <ActionLink
+                                        href={recurringAutomation.templateUrl}
+                                        variant="secondary"
+                                    >
+                                        {translations.recurring.open_template}
+                                    </ActionLink>
+                                ) : undefined
+                            }
+                        />
+                    )}
                     <SystemMessage
                         title={
                             invoice.currencyCode === null

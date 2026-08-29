@@ -25,6 +25,9 @@ Route::delete('companies/{company}/recurring/{template}', [RecurringTemplateCont
 Route::patch('companies/{company}/recurring/{template}/schedule', [RecurringTemplateLifecycleController::class, 'schedule'])
     ->middleware('throttle:30,1')
     ->name('recurring.schedule.update');
+Route::patch('companies/{company}/recurring/{template}/automatic-email', [RecurringTemplateLifecycleController::class, 'automaticEmail'])
+    ->middleware('throttle:20,1')
+    ->name('recurring.automatic-email.update');
 Route::post('companies/{company}/recurring/{template}/duplicate', [RecurringTemplateLifecycleController::class, 'duplicate'])
     ->middleware('throttle:20,1')
     ->name('recurring.duplicate');

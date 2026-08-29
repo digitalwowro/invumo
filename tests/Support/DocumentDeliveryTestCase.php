@@ -16,9 +16,8 @@ use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
+use App\Modules\Delivery\Queries\ProviderSubmissionEligibility;
 use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
-use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
-use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
 use App\Modules\Documents\Models\Document;
@@ -30,6 +29,7 @@ use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Recurring\Queries\RecurringAutomaticDeliveryEligibility;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Str;
@@ -59,9 +59,9 @@ abstract class DocumentDeliveryTestCase extends PublicDocumentTestCase
                 app(PrepareDocumentDeliveryArtifact::class),
                 app(CompleteDocumentDeliveryAttempt::class),
                 app(DocumentDeliveryQuota::class),
-                app(ReminderDeliveryEligibility::class),
-                app(PaymentReceivedDeliveryEligibility::class),
                 app(DocumentDeliverySenderEligibility::class),
+                app(RecurringAutomaticDeliveryEligibility::class),
+                app(ProviderSubmissionEligibility::class),
             ),
         );
     }

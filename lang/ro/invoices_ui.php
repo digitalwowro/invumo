@@ -104,6 +104,11 @@ return [
         'edit' => 'Editează factura',
         'back' => 'Înapoi la facturi',
     ],
+    'recurring' => [
+        'review_title' => 'Moneda s-a schimbat — este necesară verificarea',
+        'review_description' => 'E-mailul automat este suspendat pentru această factură recurentă. Verifică moneda și trimite factura manual pentru a confirma noua referință de livrare.',
+        'open_template' => 'Deschide șablonul recurent',
+    ],
     'issue' => [
         'trigger' => 'Emite factura',
         'title' => 'Emiți această factură?',

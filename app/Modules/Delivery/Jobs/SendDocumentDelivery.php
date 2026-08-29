@@ -16,7 +16,6 @@ use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Data\EmailDeliveryAttemptState;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Data\EmailRecipientData;
-use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\PreparedProviderAttempt;
 use App\Modules\Delivery\Data\ProviderDelivery;
 use App\Modules\Delivery\Exceptions\RetryableProviderRejection;
@@ -25,9 +24,8 @@ use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Queries\ProviderSubmissionEligibility;
 use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
-use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
-use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
@@ -37,6 +35,7 @@ use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Recurring\Queries\RecurringAutomaticDeliveryEligibility;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Str;
@@ -66,9 +65,9 @@ final class SendDocumentDelivery extends TenantJob
         PrepareDocumentDeliveryArtifact $artifact,
         CompleteDocumentDeliveryAttempt $complete,
         DocumentDeliveryQuota $quota,
-        ReminderDeliveryEligibility $reminderEligibility,
-        PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
         DocumentDeliverySenderEligibility $senderEligibility,
+        RecurringAutomaticDeliveryEligibility $recurringEligibility,
+        ProviderSubmissionEligibility $submissionEligibility,
     ): void {
         if (! $artifact->handle(
             $this->identity->companyId,
@@ -83,9 +82,9 @@ final class SendDocumentDelivery extends TenantJob
             $this->identity->companyId,
             fn (): ?PreparedProviderAttempt => $this->prepare(
                 $execution, $filesystems, $brandTheme, $html, $complete, $quota,
-                $reminderEligibility,
-                $paymentReceivedEligibility,
                 $senderEligibility,
+                $recurringEligibility,
+                $submissionEligibility,
             ),
         );
 
@@ -126,9 +125,9 @@ final class SendDocumentDelivery extends TenantJob
         DocumentEmailHtml $html,
         CompleteDocumentDeliveryAttempt $completion,
         DocumentDeliveryQuota $quota,
-        ReminderDeliveryEligibility $reminderEligibility,
-        PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
         DocumentDeliverySenderEligibility $senderEligibility,
+        RecurringAutomaticDeliveryEligibility $recurringEligibility,
+        ProviderSubmissionEligibility $submissionEligibility,
     ): ?PreparedProviderAttempt {
         $unlocked = EmailDelivery::query()->whereKey($this->deliveryId)->first();
 
@@ -139,6 +138,7 @@ final class SendDocumentDelivery extends TenantJob
         }
 
         CompanySetting::query()->lockForUpdate()->firstOrFail();
+        $recurringSource = $recurringEligibility->lockForDelivery($unlocked);
         $document = Document::query()->whereKey($unlocked->document_id)->lockForUpdate()->firstOrFail();
         $invoice = match ($document->kind) {
             DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
@@ -179,21 +179,13 @@ final class SendDocumentDelivery extends TenantJob
             return null;
         }
 
-        $eligibilityFailure = match ($delivery->event_type) {
-            EmailTemplateEvent::PaymentReminder => $reminderEligibility->allows(
-                $delivery, $document, $invoice instanceof Invoice ? $invoice : null, $transactions,
-            ) ? null : [
-                'category' => 'reminder_no_longer_eligible',
-                'summary' => 'The Invoice no longer qualified for this reminder.',
-            ],
-            EmailTemplateEvent::PaymentReceived => $paymentReceivedEligibility->allows(
-                $delivery, $invoice instanceof Invoice ? $invoice : null, $transactions,
-            ) ? null : [
-                'category' => 'payment_received_no_longer_eligible',
-                'summary' => 'The referenced Payment no longer qualified for this message.',
-            ],
-            default => null,
-        };
+        $eligibilityFailure = $submissionEligibility->failure(
+            $delivery,
+            $document,
+            $invoice instanceof Invoice ? $invoice : null,
+            $transactions,
+            $recurringSource,
+        );
 
         if ($eligibilityFailure !== null) {
             $completion->rejectBeforeSubmission(

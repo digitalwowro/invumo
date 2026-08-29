@@ -86,9 +86,10 @@ final class RecurringOccurrenceGenerationTest extends TestCase
         }
     }
 
-    public function test_downtime_catch_up_is_oldest_first_and_bounded_to_ten(): void
+    public function test_downtime_catch_up_is_oldest_first_and_uses_the_configured_bound(): void
     {
         CarbonImmutable::setTestNow('2026-08-20 10:00:00 UTC');
+        config()->set('invumo.recurring.max_catch_up_occurrences', 3);
         $company = null;
 
         try {
@@ -97,27 +98,28 @@ final class RecurringOccurrenceGenerationTest extends TestCase
             );
             $generate = app(GenerateDueRecurringInvoices::class);
 
-            $this->assertSame(10, $generate->handle($company->id, $dispatch->id, 1));
+            $this->assertSame(3, $generate->handle($company->id, $dispatch->id, 1));
             $nextDispatch = $this->tenant($company, function () use ($template): JobDispatch {
                 $template->refresh();
-                $this->assertSame(10, $template->successful_occurrence_count);
-                $this->assertSame('2026-08-11', $template->next_occurrence_date?->toDateString());
-                $this->assertSame(range(0, 9), RecurringOccurrence::query()
+                $this->assertSame(3, $template->successful_occurrence_count);
+                $this->assertSame('2026-08-04', $template->next_occurrence_date?->toDateString());
+                $this->assertSame(range(0, 2), RecurringOccurrence::query()
                     ->orderBy('logical_ordinal')->pluck('logical_ordinal')->all());
 
                 return JobDispatch::query()
-                    ->where('idempotency_key', SyncRecurringDispatch::key($template->id, 10))
+                    ->where('idempotency_key', SyncRecurringDispatch::key($template->id, 3))
                     ->sole();
             });
-            $this->assertSame(10, $generate->handle($company->id, $nextDispatch->id, 1));
+            $this->assertSame(3, $generate->handle($company->id, $nextDispatch->id, 1));
             $this->tenant($company, function () use ($template): void {
                 $template->refresh();
-                $this->assertSame(20, $template->successful_occurrence_count);
-                $this->assertSame('2026-08-21', $template->next_occurrence_date?->toDateString());
-                $this->assertSame(20, Document::query()->count());
+                $this->assertSame(6, $template->successful_occurrence_count);
+                $this->assertSame('2026-08-07', $template->next_occurrence_date?->toDateString());
+                $this->assertSame(6, Document::query()->count());
             });
         } finally {
             $company?->delete();
+            config()->set('invumo.recurring.max_catch_up_occurrences', 10);
             CarbonImmutable::setTestNow();
         }
     }

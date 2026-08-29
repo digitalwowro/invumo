@@ -30,6 +30,7 @@ use App\Modules\Documents\Models\DocumentTaxDefault;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
+use App\Modules\Recurring\Queries\RecurringInvoiceAutomationState;
 use App\Modules\Transactions\Queries\InvoiceTransactionsForInvoice;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Date;
@@ -48,6 +49,7 @@ final readonly class InvoiceDraftPage
         private DocumentPublicLinkState $publicLinkState,
         private DocumentDeliveryPage $deliveryPage,
         private InvoiceReminderPage $reminderPage,
+        private RecurringInvoiceAutomationState $recurringAutomation,
     ) {}
 
     /** @return array<string, mixed> */
@@ -220,6 +222,7 @@ final readonly class InvoiceDraftPage
                 DocumentKind::Invoice,
             ),
             'reminders' => $this->reminderPage->for($company, $actor, $document),
+            'recurringAutomation' => $this->recurringAutomation->for($company, $document),
             'deletion' => [
                 'url' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices)
                     ? route('invoices.destroy', [$company, $document], false)

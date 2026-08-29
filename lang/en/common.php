@@ -44,6 +44,7 @@ return [
         'navigation_description' => 'Company navigation and account controls.',
         'open_navigation' => 'Open navigation',
         'close_navigation' => 'Close navigation',
+        'recurring_attention' => ':count recurring templates need attention',
     ],
     'pagination' => [
         'showing' => 'Showing :from–:to of :total',

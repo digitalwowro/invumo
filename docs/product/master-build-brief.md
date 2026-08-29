@@ -747,6 +747,8 @@ Calculate recurrences from company-local calendar rules at the company's automat
 
 After service downtime, recover every occurrence that became due while the template remained Active, oldest first and in bounded batches, preserving the scheduled local issue date. Intentional pause time is not backfilled without explicit confirmation. Transient failures use the approved bounded retry schedule; permanent configuration failures stop visibly. See [Scheduling, Recurrence, Reminders, and Downtime](../architecture/scheduling-and-jobs.md).
 
+A permanent occurrence failure deliberately leaves the template Active at the failed ordinal so no billed period is skipped. Owner/Admin receive a Company-wide recurring-attention count in primary navigation and can open a dedicated failed-template filter before using the existing same-occurrence retry action; routine manual inspection is not the only detection path.
+
 ## 21. Localization
 
 Both the application UI and generated documents support multiple languages.

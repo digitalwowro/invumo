@@ -8,6 +8,7 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Data\CompanyEmailTemplateData;
 use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\OutwardDocument;
+use App\Modules\Delivery\Data\RenderedEmailTemplate;
 use App\Modules\Delivery\Rules\EmailTemplatePlaceholders;
 use App\Modules\Delivery\Support\OutwardDocumentFormatter;
 use App\Modules\Documents\Data\DocumentKind;
@@ -73,9 +74,33 @@ final readonly class DocumentDeliveryComposer
         ];
     }
 
+    public function automatedInvoice(
+        Company $company,
+        Document $document,
+        string $publicUrl,
+    ): RenderedEmailTemplate {
+        $outward = $this->representation->publicInvoice($company, $document);
+        /** @var CompanyEmailTemplateData $template */
+        $template = $this->templates
+            ->for(EmailTemplateEvent::InvoiceSent, $outward->language)['template'];
+
+        return $this->placeholders->render(
+            $template,
+            $this->values($document, $outward, DocumentKind::Invoice, $publicUrl),
+            (string) trans(
+                'document_emails.preview.unavailable',
+                locale: $outward->language,
+            ),
+        );
+    }
+
     /** @return array<string, string> */
-    private function values(Document $document, OutwardDocument $outward, DocumentKind $kind): array
-    {
+    private function values(
+        Document $document,
+        OutwardDocument $outward,
+        DocumentKind $kind,
+        string $publicUrl = self::PENDING_PUBLIC_URL,
+    ): array {
         $values = [
             'company_name' => $outward->company['displayName'],
             'customer_name' => $outward->customer['displayName'] ?? (string) trans(
@@ -84,7 +109,7 @@ final readonly class DocumentDeliveryComposer
             ),
             'document_number' => $outward->number,
             'document_total' => $outward->total,
-            'public_url' => self::PENDING_PUBLIC_URL,
+            'public_url' => $publicUrl,
             'valid_until' => $outward->validUntil ?? '',
             'due_date' => $outward->dueDate ?? '',
             'outstanding_amount' => $outward->total,

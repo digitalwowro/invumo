@@ -44,6 +44,7 @@ export type CommonTranslations = {
         navigation_description: string;
         open_navigation: string;
         close_navigation: string;
+        recurring_attention: string;
     };
     pagination: {
         showing: string;

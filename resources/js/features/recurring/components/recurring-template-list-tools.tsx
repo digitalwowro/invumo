@@ -33,6 +33,9 @@ export function RecurringTemplateListTools({
                 {
                     ...(values.q ? { q: values.q } : {}),
                     sort: values.sort,
+                    ...(values.outcome === 'failed'
+                        ? { outcome: values.outcome }
+                        : {}),
                     per_page: values.perPage,
                 },
                 {
@@ -49,7 +52,7 @@ export function RecurringTemplateListTools({
 
     return (
         <div className="space-y-3">
-            <Grid columns={3} gap="md">
+            <Grid columns={4} gap="md">
                 <TextField
                     label={labels.search_label}
                     input={{
@@ -68,6 +71,21 @@ export function RecurringTemplateListTools({
                             className="size-4 text-foreground-muted"
                         />
                     }
+                />
+                <SelectField
+                    name="outcome"
+                    label={labels.outcome_filter_label}
+                    value={values.outcome}
+                    onValueChange={(outcome) =>
+                        setValues((current) => ({
+                            ...current,
+                            outcome:
+                                outcome as RecurringTemplateFilters['outcome'],
+                        }))
+                    }
+                    options={Object.entries(labels.outcome_filter_options).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
                 />
                 <SelectField
                     name="sort"

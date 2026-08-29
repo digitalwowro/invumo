@@ -21,4 +21,7 @@ return [
         'platform_recipients_per_hour' => (int) env('DOCUMENT_DELIVERY_PLATFORM_RECIPIENTS_PER_HOUR', 1000),
         'platform_recipients_per_day' => (int) env('DOCUMENT_DELIVERY_PLATFORM_RECIPIENTS_PER_DAY', 5000),
     ],
+    'recurring' => [
+        'max_catch_up_occurrences' => 10,
+    ],
 ];

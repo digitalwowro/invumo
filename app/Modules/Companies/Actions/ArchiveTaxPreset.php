@@ -66,6 +66,8 @@ final readonly class ArchiveTaxPreset
             ->orderBy('id')
             ->lockForUpdate()
             ->get(['id']);
+        // Recurring rows retain self-contained tax snapshots. These locks close the
+        // source-selection race without turning optional provenance into a live dependency.
         RecurringTemplateCustomerValue::query()
             ->where('tax_preset_id', $locked->id)
             ->orderBy('id')->lockForUpdate()->get(['id']);

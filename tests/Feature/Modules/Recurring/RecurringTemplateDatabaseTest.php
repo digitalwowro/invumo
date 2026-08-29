@@ -141,7 +141,7 @@ final class RecurringTemplateDatabaseTest extends TestCase
 
             try {
                 $connection->transaction(fn () => $template->update(['state' => 'ACTIVE']));
-                $this->fail('Batch 10A must not persist later lifecycle states.');
+                $this->fail('An Active template requires complete scheduling runtime state.');
             } catch (QueryException $exception) {
                 $this->assertSame('23514', $exception->errorInfo[0]);
             }
@@ -183,6 +183,29 @@ final class RecurringTemplateDatabaseTest extends TestCase
                 ]);
             });
             $this->fail('Reminder rows require override mode.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23514', $exception->errorInfo[0]);
+        }
+    }
+
+    public function test_recurring_templates_must_be_inserted_as_drafts(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->company($owner);
+        $customer = $this->tenant($company, fn (): Customer => Customer::query()->create([
+            'type' => CustomerType::Company,
+            'legal_name' => 'Lifecycle Customer SRL',
+        ]));
+
+        try {
+            $this->tenant($company, fn (): RecurringTemplate => RecurringTemplate::query()->create([
+                'client_creation_key' => (string) Str::uuid7(),
+                'internal_name' => 'Invalid completed insert',
+                'customer_id' => $customer->id,
+                'state' => 'COMPLETED',
+                'completed_at' => now(),
+            ]));
+            $this->fail('A recurring template must begin as a Draft.');
         } catch (QueryException $exception) {
             $this->assertSame('23514', $exception->errorInfo[0]);
         }

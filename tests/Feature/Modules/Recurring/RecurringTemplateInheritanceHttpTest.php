@@ -71,10 +71,16 @@ final class RecurringTemplateInheritanceHttpTest extends TestCase
         app(ArchiveBankAccount::class)->handle($company, $owner, $bank->id);
         app(ArchiveCustomerContact::class)->handle($company, $owner, $customer->id, $contact->id);
 
-        $this->tenant($company, function (): void {
-            $this->assertNotNull(RecurringTemplateCustomerValue::query()->sole()->tax_preset_id);
-            $this->assertSame('Template bank', RecurringTemplateDefault::query()->sole()->bank_label);
-            $this->assertSame('billing@example.com', RecurringTemplateDeliveryRecipient::query()->sole()->email);
+        $this->tenant($company, function () use ($tax, $bank, $contact): void {
+            $values = RecurringTemplateCustomerValue::query()->sole();
+            $defaults = RecurringTemplateDefault::query()->sole();
+            $recipient = RecurringTemplateDeliveryRecipient::query()->sole();
+            $this->assertSame($tax->id, $values->tax_preset_id);
+            $this->assertSame('TVA', $values->tax_name);
+            $this->assertSame($bank->id, $defaults->bank_account_id);
+            $this->assertSame('Template bank', $defaults->bank_label);
+            $this->assertSame($contact->id, $recipient->contact_id);
+            $this->assertSame('billing@example.com', $recipient->email);
         });
     }
 

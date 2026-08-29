@@ -135,7 +135,7 @@ return new class extends Migration
     private function installConsistencyTriggers(): void
     {
         DB::unprepared(<<<'SQL'
-            CREATE FUNCTION invumo_recurring_recipients_valid()
+            CREATE OR REPLACE FUNCTION invumo_recurring_recipients_valid()
             RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, public AS $function$
             DECLARE target_company uuid := COALESCE(NEW.company_id, OLD.company_id);
             DECLARE target_template uuid := COALESCE(NEW.recurring_template_id, OLD.recurring_template_id);
@@ -157,7 +157,7 @@ return new class extends Migration
                 AFTER INSERT OR UPDATE ON recurring_template_customer_values
                 DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION invumo_recurring_recipients_valid();
 
-            CREATE FUNCTION invumo_recurring_reminders_valid()
+            CREATE OR REPLACE FUNCTION invumo_recurring_reminders_valid()
             RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, public AS $function$
             DECLARE target_company uuid := COALESCE(NEW.company_id, OLD.company_id);
             DECLARE target_template uuid := COALESCE(NEW.recurring_template_id, OLD.recurring_template_id);

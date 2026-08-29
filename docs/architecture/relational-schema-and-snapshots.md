@@ -581,7 +581,7 @@ The dispatcher is a `NOLOGIN`, `NOBYPASSRLS` PostgreSQL role with schema usage, 
 
 The Customer foreign key is restrictive. A Completed template remains immutable/terminal and is duplicated into a new Draft to continue.
 
-Batch 10A persists the side-effect-free Draft subset only: UUIDv7 identity, Company-scoped idempotent creation key, bounded internal name, required restrictive Customer reference, optional bounded Customer reference / PO number, `DRAFT` state, edit version, timestamps, literal-search support, and recent/name cursor access paths. Scheduling, inheritance/override intent, occurrences, and automation state arrive only with their consuming batches.
+Batch 10A persists the side-effect-free Draft subset: UUIDv7 identity, Company-scoped idempotent creation key, bounded internal name, required restrictive Customer reference, optional bounded Customer reference / PO number, `DRAFT` state, edit version, timestamps, literal-search support, and recent/name cursor access paths. Batch 10B adds typed inheritance and override intent. Batch 10C adds the guarded Draft/Active/Paused/Completed lifecycle, terminal immutability and duplication, recurrence specification, logical cursor, Company-local schedule context, resolved next UTC run, and lifecycle timestamps. Occurrences and automated execution state arrive only with their consuming batches.
 
 ### `recurring_template_customer_values`
 

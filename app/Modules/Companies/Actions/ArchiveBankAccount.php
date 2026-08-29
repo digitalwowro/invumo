@@ -53,6 +53,8 @@ final readonly class ArchiveBankAccount
             throw BankAccountException::archived();
         }
 
+        // A recurring bank override is a self-contained snapshot. Lock it for stable
+        // source mutation ordering, but allow the source account to be archived.
         RecurringTemplateDefault::query()
             ->where('bank_account_id', $locked->id)
             ->orderBy('id')->lockForUpdate()->get(['id']);

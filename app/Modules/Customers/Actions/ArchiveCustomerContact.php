@@ -70,6 +70,8 @@ final readonly class ArchiveCustomerContact
             throw CustomerContactException::recipientDependency();
         }
 
+        // A recurring recipient keeps its copied name/email after Contact archival.
+        // Locking prevents a concurrent save from crossing that snapshot boundary.
         RecurringTemplateDeliveryRecipient::query()
             ->where('contact_id', $contact->id)
             ->orderBy('id')->lockForUpdate()->get(['id']);

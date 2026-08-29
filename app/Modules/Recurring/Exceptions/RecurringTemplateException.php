@@ -31,6 +31,41 @@ final class RecurringTemplateException extends DomainException
         return new self('not_draft');
     }
 
+    public static function confirmationRequired(): self
+    {
+        return new self('confirmation_required');
+    }
+
+    public static function completed(): self
+    {
+        return new self('completed');
+    }
+
+    public static function scheduleIncomplete(): self
+    {
+        return new self('schedule_incomplete');
+    }
+
+    public static function scheduleExhausted(): self
+    {
+        return new self('schedule_exhausted');
+    }
+
+    public static function transitionUnavailable(): self
+    {
+        return new self('transition_unavailable');
+    }
+
+    public static function activationIncomplete(): self
+    {
+        return new self('activation_incomplete');
+    }
+
+    public static function notCompleted(): self
+    {
+        return new self('not_completed');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

@@ -69,7 +69,7 @@ final readonly class RecurringTemplateListPage
             ->select([
                 'recurring_templates.id', 'recurring_templates.internal_name',
                 'recurring_templates.customer_reference', 'recurring_templates.state',
-                'recurring_templates.updated_at',
+                'recurring_templates.next_run_at', 'recurring_templates.updated_at',
             ])
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
     }
@@ -106,6 +106,8 @@ final readonly class RecurringTemplateListPage
             'customerName' => (string) $row->customer_name,
             'customerReference' => $row->customer_reference,
             'state' => $state->value,
+            'nextRunAt' => $row->next_run_at === null
+                ? null : CarbonImmutable::parse((string) $row->next_run_at)->toISOString(),
             'updatedAt' => CarbonImmutable::parse((string) $row->updated_at)->toISOString(),
             'editUrl' => route('recurring.edit', [$company, $row->id], false),
             'deleteUrl' => route('recurring.destroy', [$company, $row->id], false),

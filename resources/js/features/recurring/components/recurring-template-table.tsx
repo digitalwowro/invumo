@@ -73,13 +73,16 @@ export function RecurringTemplateTable(props: Props) {
         },
         {
             key: 'updated',
-            label: labels.columns.updated,
+            label: labels.columns.next_run,
             kind: 'data',
             render: (template) => (
                 <SecondaryText>
-                    {new Intl.DateTimeFormat(i18n.locale, {
-                        dateStyle: 'medium',
-                    }).format(new Date(template.updatedAt))}
+                    {template.nextRunAt === null
+                        ? labels.not_available
+                        : new Intl.DateTimeFormat(i18n.locale, {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                          }).format(new Date(template.nextRunAt))}
                 </SecondaryText>
             ),
         },

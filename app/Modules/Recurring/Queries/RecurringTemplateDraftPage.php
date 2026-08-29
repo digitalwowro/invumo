@@ -70,10 +70,6 @@ final readonly class RecurringTemplateDraftPage
         $this->authorize($company, $actor);
         $template = RecurringTemplate::query()->whereKey($templateId)->firstOrFail();
 
-        if ($template->state !== RecurringTemplateState::Draft) {
-            throw new AuthorizationException;
-        }
-
         $resolvedCustomer = $this->customerOptions->resolved(
             $company, $actor, $template->customer_id,
         );
@@ -91,6 +87,19 @@ final readonly class RecurringTemplateDraftPage
                 'customerReference' => $template->customer_reference,
                 'state' => $template->state->value,
                 'editVersion' => $template->edit_version,
+                'schedule' => [
+                    'recurrenceKind' => $template->recurrence_kind?->value,
+                    'customIntervalCount' => $template->custom_interval_count,
+                    'customIntervalUnit' => $template->custom_interval_unit?->value,
+                    'startDate' => $template->start_date?->toDateString(),
+                    'endDate' => $template->end_date?->toDateString(),
+                    'maximumOccurrenceCount' => $template->maximum_occurrence_count,
+                    'nextOccurrenceDate' => $template->next_occurrence_date?->toDateString(),
+                    'scheduleTimezone' => $template->schedule_timezone,
+                    'scheduleLocalTime' => $template->schedule_local_time === null
+                        ? null : substr($template->schedule_local_time, 0, 5),
+                    'nextRunAt' => $template->next_run_at?->toISOString(),
+                ],
                 'customer' => $customer,
                 'currencyCode' => $inheritance['inheritance']['currencyCode'],
                 'currencyPrecision' => $inheritance['inheritance']['currencyPrecision'],
@@ -120,11 +129,34 @@ final readonly class RecurringTemplateDraftPage
                 ])->values()->all(),
             ],
             'updateUrl' => route('recurring.update', [$company, $template], false),
+            'scheduleUpdateUrl' => route('recurring.schedule.update', [$company, $template], false),
+            'transitionUrls' => [
+                'activate' => route('recurring.transition', [$company, $template, 'activate'], false),
+                'pause' => route('recurring.transition', [$company, $template, 'pause'], false),
+                'resume' => route('recurring.transition', [$company, $template, 'resume'], false),
+                'complete' => route('recurring.transition', [$company, $template, 'complete'], false),
+            ],
+            'duplicateUrl' => route('recurring.duplicate', [$company, $template], false),
+            'duplicateCreationKey' => (string) Str::uuid7(),
             'deleteUrl' => route('recurring.destroy', [$company, $template], false),
             'indexUrl' => route('recurring.index', $company, false),
             'canDelete' => $this->abilities->allows(
                 $actor, $company, CompanyAbility::DeleteRecurringTemplates,
+            ) && $template->state === RecurringTemplateState::Draft,
+            'canEditDraft' => $template->state === RecurringTemplateState::Draft,
+            'canManageSchedule' => match ($template->state) {
+                RecurringTemplateState::Draft => $this->abilities->allows(
+                    $actor, $company, CompanyAbility::ManageRecurringDrafts,
+                ),
+                RecurringTemplateState::Active, RecurringTemplateState::Paused => $this->abilities->allows(
+                    $actor, $company, CompanyAbility::ManageRecurringAutomation,
+                ),
+                RecurringTemplateState::Completed => false,
+            },
+            'canManageAutomation' => $this->abilities->allows(
+                $actor, $company, CompanyAbility::ManageRecurringAutomation,
             ),
+            'canDuplicate' => $template->state === RecurringTemplateState::Completed,
             ...$inheritance,
             'sourceUrls' => $this->sourceUrls($company),
             'inlineCustomerStoreUrl' => route(

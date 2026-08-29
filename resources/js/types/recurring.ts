@@ -12,12 +12,30 @@ import type {
 export type RecurringTemplateState =
     'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 
+export type RecurrenceKind =
+    'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM';
+export type RecurringIntervalUnit = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
+
+export type RecurringSchedule = {
+    recurrenceKind: RecurrenceKind | null;
+    customIntervalCount: number | null;
+    customIntervalUnit: RecurringIntervalUnit | null;
+    startDate: string | null;
+    endDate: string | null;
+    maximumOccurrenceCount: number | null;
+    nextOccurrenceDate: string | null;
+    scheduleTimezone: string | null;
+    scheduleLocalTime: string | null;
+    nextRunAt: string | null;
+};
+
 export type RecurringTemplateRow = {
     id: string;
     internalName: string;
     customerName: string;
     customerReference: string | null;
     state: RecurringTemplateState;
+    nextRunAt: string | null;
     updatedAt: string;
     editUrl: string;
     deleteUrl: string;
@@ -42,6 +60,7 @@ export type RecurringTemplateDraft = {
     customerReference: string | null;
     state: RecurringTemplateState;
     editVersion: number;
+    schedule: RecurringSchedule;
     customer: DocumentCustomerSelection;
     currencyCode: string | null;
     currencyPrecision: number | null;
@@ -147,6 +166,7 @@ export type RecurringTranslations = {
             | 'customer'
             | 'reference'
             | 'state'
+            | 'next_run'
             | 'updated'
             | 'actions'
             | 'open',
@@ -172,7 +192,44 @@ export type RecurringTranslations = {
         internal_name_description: string;
         customer_reference: string;
         customer_reference_description: string;
+        content_locked: string;
         inheritance: RecurringInheritanceTranslations;
+    };
+    schedule: {
+        title: string;
+        description: string;
+        recurrence_kind: string;
+        custom_interval_count: string;
+        custom_interval_unit: string;
+        start_date: string;
+        end_date: string;
+        maximum_occurrence_count: string;
+        save: string;
+        active_confirmation: string;
+        next_run_title: string;
+        next_run_empty: string;
+        kinds: Record<RecurrenceKind, string>;
+        units: Record<RecurringIntervalUnit, string>;
+    };
+    lifecycle: {
+        activate: string;
+        pause: string;
+        resume: string;
+        complete: string;
+        duplicate: string;
+        cancel: string;
+        title: Record<
+            'activate' | 'pause' | 'resume' | 'complete' | 'duplicate',
+            string
+        >;
+        description: Record<
+            'activate' | 'pause' | 'resume' | 'complete' | 'duplicate',
+            string
+        >;
+        confirm: Record<
+            'activate' | 'pause' | 'resume' | 'complete' | 'duplicate',
+            string
+        >;
     };
     deletion: {
         delete: string;

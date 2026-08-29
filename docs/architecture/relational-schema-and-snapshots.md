@@ -572,7 +572,7 @@ The dispatcher is a `NOLOGIN`, `NOBYPASSRLS` PostgreSQL role with schema usage, 
 - optional customer reference / PO number
 - recurrence kind, positive custom interval/count/unit where applicable
 - start date, optional inclusive end date, optional positive maximum occurrence count
-- original calendar anchor and next logical ordinal/date
+- original calendar anchor, next logical ordinal/date, and successful-occurrence count
 - automatic-email flag
 - last confirmed delivery currency, currency-review-latch fields, and optional confirming delivery reference
 - current scheduling timezone/local time/next UTC run index
@@ -580,6 +580,8 @@ The dispatcher is a `NOLOGIN`, `NOBYPASSRLS` PostgreSQL role with schema usage, 
 - edit version and run/outcome metadata
 
 The Customer foreign key is restrictive. A Completed template remains immutable/terminal and is duplicated into a new Draft to continue.
+
+Batch 10A persists the side-effect-free Draft subset only: UUIDv7 identity, Company-scoped idempotent creation key, bounded internal name, required restrictive Customer reference, optional bounded Customer reference / PO number, `DRAFT` state, edit version, timestamps, literal-search support, and recent/name cursor access paths. Scheduling, inheritance/override intent, occurrences, and automation state arrive only with their consuming batches.
 
 ### `recurring_template_customer_values`
 
@@ -613,6 +615,8 @@ Lines mirror the editable input/snapshot fields of document lines and retain opt
 
 Product/Tax source edits never rewrite the template line. A generated Invoice copies resolved values into ordinary `document_lines` and recalculates using that occurrence's resolved currency precision without FX conversion.
 
+Batch 10A stores the editable input snapshot subset with optional restrictive Product provenance, the shared exact-decimal envelopes, and a deferrable Company/template/position uniqueness constraint. Complete 1-based rewrites cover insertion, deletion, and reordering in one Draft-update transaction; Product archival remains snapshot-safe, while permanent Product deletion is blocked until the provenance reference is removed.
+
 ### `recurring_occurrences`
 
 - `id`, `company_id`, template reference
@@ -623,6 +627,8 @@ Product/Tax source edits never rewrite the template line. A generated Invoice co
 - unique `(company_id, recurring_template_id, occurrence_key)`
 
 Occurrence creation, Invoice creation/numbering, issue, reminder materialization, and the next template cursor update share one short transaction. PDF and eligible email work is queued after commit. Retries reuse the existing occurrence/Invoice.
+
+The generated-Invoice foreign key cascades from deliberate Invoice deletion to the owning occurrence, and the deletion boundary removes its pending occurrence-dispatch state. This is cleanup of the deleted effect, not permission to rewind scheduling: the template's next logical ordinal, cursor, and successful-occurrence count remain advanced. A stale job targets the missing occurrence identifier and exits without recreating it. Cancellation does not delete either row. Consequently idempotency protects every live occurrence while later distinct scheduled occurrences remain unaffected by deletion or cancellation.
 
 ## 13. Audit history and idempotency
 
@@ -734,7 +740,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 9E this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, immutable Quote public-decision identity, direct/provider-event delivery persistence, Invoice-owned reminder rules/instances, and the payload-free dispatcher outbox under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Recurring persistence remains coupled to its later owning workflow.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 10A this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, immutable Quote public-decision identity, direct/provider-event delivery persistence, Invoice-owned reminder rules/instances, the payload-free dispatcher outbox, and the side-effect-free recurring Draft/line aggregate under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Later recurring persistence remains coupled to each consuming workflow.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

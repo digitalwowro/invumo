@@ -2,13 +2,8 @@
 
 namespace App\Modules\Documents\Actions;
 
-use App\Foundation\Money\DecimalRules;
 use App\Foundation\Money\DocumentCalculator;
 use App\Foundation\Money\LineAmounts;
-use App\Foundation\Money\LineCalculationInput;
-use App\Foundation\Money\LineCalculator;
-use App\Foundation\Money\PeriodUnit;
-use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentLineData;
 use App\Modules\Documents\Data\DocumentLineFailure;
 use App\Modules\Documents\Data\DocumentLinePersistence;
@@ -16,12 +11,11 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 final readonly class PersistDocumentLines
 {
     public function __construct(
-        private LineCalculator $lineCalculator,
+        private PrepareDocumentLine $prepareLine,
         private DocumentCalculator $documentCalculator,
     ) {}
 
@@ -53,7 +47,13 @@ final readonly class PersistDocumentLines
                 throw DocumentLineFailure::setInvalid();
             }
 
-            [$attributes, $calculation] = $this->attributes($data, $document->currency_precision);
+            $prepared = $this->prepareLine->handle($data, $document->currency_precision);
+            $calculation = $prepared->calculation;
+            $attributes = [
+                ...$prepared->attributes,
+                'tax_preset_id' => $data->taxPresetId,
+                ...$this->nullableAmounts($calculation),
+            ];
             $line->fill(['document_id' => $document->id, 'position' => $index + 1, ...$attributes]);
             $line->save();
             $retainedIds[] = $line->id;
@@ -80,48 +80,6 @@ final readonly class PersistDocumentLines
         );
     }
 
-    /** @return array{array<string, mixed>, LineAmounts|null} */
-    private function attributes(DocumentLineData $data, ?int $precision): array
-    {
-        try {
-            $data->itemPrice === null || DecimalRules::moneySource($data->itemPrice);
-            $data->quantity === null || DecimalRules::quantity($data->quantity);
-            $data->periodQuantity === null || DecimalRules::quantity($data->periodQuantity);
-            DecimalRules::percentage($data->discountPercentage, true);
-            DecimalRules::percentage($data->taxPercentage);
-
-            if (($data->periodUnit === PeriodUnit::None && $data->periodQuantity !== null)
-                || ! $this->validText($data->description, DocumentFieldLimits::DESCRIPTION, false)
-                || ! $this->validText($data->unit, DocumentFieldLimits::UNIT)
-                || ! $this->validText($data->taxName, DocumentFieldLimits::TAX_NAME)) {
-                throw new InvalidArgumentException;
-            }
-        } catch (InvalidArgumentException) {
-            throw DocumentLineFailure::valueInvalid();
-        }
-
-        $complete = $precision !== null && $data->itemPrice !== null && $data->quantity !== null
-            && ($data->periodUnit === PeriodUnit::None || $data->periodQuantity !== null);
-        $calculation = $complete ? $this->lineCalculator->calculate(new LineCalculationInput(
-            unitPrice: (string) $data->itemPrice,
-            quantity: (string) $data->quantity,
-            periodUnit: $data->periodUnit,
-            periodQuantity: $data->periodQuantity,
-            discountPercentage: $data->discountPercentage,
-            taxPercentage: $data->taxPercentage,
-            currencyPrecision: $precision,
-        )) : null;
-
-        return [[
-            'product_service_id' => $data->productServiceId, 'description' => $data->description,
-            'item_price' => $data->itemPrice, 'quantity' => $data->quantity, 'unit' => $data->unit,
-            'period_unit' => $data->periodUnit, 'period_quantity' => $data->periodQuantity,
-            'discount_percentage' => $data->discountPercentage, 'tax_name' => $data->taxName,
-            'tax_percentage' => $data->taxPercentage, 'tax_preset_id' => $data->taxPresetId,
-            ...$this->nullableAmounts($calculation),
-        ], $calculation];
-    }
-
     /** @return array<string, string|null> */
     private function nullableAmounts(?LineAmounts $amounts): array
     {
@@ -129,11 +87,5 @@ final readonly class PersistDocumentLines
             'items_subtotal' => null, 'items_total' => null, 'discount_amount' => null,
             'grand_subtotal' => null, 'tax_amount' => null, 'final_line_total' => null,
         ];
-    }
-
-    private function validText(?string $value, int $maximum, bool $trimmed = true): bool
-    {
-        return $value === null || (mb_strlen($value) >= 1 && mb_strlen($value) <= $maximum
-            && (! $trimmed || trim($value) === $value));
     }
 }

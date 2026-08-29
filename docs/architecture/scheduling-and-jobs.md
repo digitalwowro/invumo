@@ -91,7 +91,7 @@ Create the occurrence and its generated invoice in one transaction. Dispatch PDF
 
 ## Recurring invoice calculation
 
-The recurrence rule stores a start date, interval, optional end date, optional maximum count, and occurrence cursor. Each occurrence key is stable and derived from the template plus its logical occurrence identity, not from the queue job ID.
+The recurrence rule stores a start date, interval, optional end date, optional maximum count, a successful-occurrence count, and an occurrence cursor. The count advances only when the occurrence and Invoice commit, is not derived from retained occurrence-row count, and is never decremented by later Invoice deletion. Each occurrence key is stable and derived from the template plus its logical occurrence identity, not from the queue job ID.
 
 For an eligible occurrence:
 
@@ -108,6 +108,8 @@ For an eligible occurrence:
 11. Calculate the next local occurrence from the recurrence rule.
 
 An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
+
+An authorized permanent deletion of an eligible generated Invoice removes that Invoice and its occurrence plus any pending occurrence-dispatch state in the same transaction. It does not rewind the template cursor, logical ordinal, or successful-occurrence count. Queue work addresses the persisted occurrence identity; if that row has been deliberately deleted, stale work exits without reconstructing the historical occurrence key. The next distinct eligible occurrence generates normally. Cancelling a generated Invoice preserves its occurrence and has no effect on later scheduled occurrences.
 
 A provider-accepted manual send of a reviewed currency-change Invoice clears the template's review latch and stores that Invoice currency as the new confirmed delivery baseline. Clearing is recorded only after provider acceptance, does not retroactively send other issue-only occurrences, and is idempotent under request retries. Jobs recheck the latch immediately before provider delivery so an overlapping run cannot bypass it.
 

@@ -171,6 +171,10 @@ A Member may therefore reach a valid Invoice state where cancellation still requ
 | Retry a failed occurrence or automation action                       | Guarded | Guarded | No     | Same idempotency identity; eligibility rechecked                                      |
 | Manually send an already-generated Invoice                           | Yes     | Yes     | Yes    | Uses normal Invoice send permission; provider acceptance may clear the currency latch |
 
+Generated Invoices use the ordinary Invoice cancellation and permanent-deletion permissions and guards. Deleting one also deletes its occurrence without rewinding the template schedule or recreating that period; cancelling one retains the occurrence. Neither action prevents later distinct scheduled occurrences.
+
+Batch 10A resolves the Draft slice through `view_recurring_templates`, `manage_recurring_drafts`, and `delete_recurring_templates`. `manage_recurring_automation` remains a distinct Owner/Admin-only ability for the later activation, scheduling, and execution batches; Draft access never implies unattended-automation authority.
+
 ## 11. Email, reminders, public access, and operational history
 
 | Action                                                 | Owner   | Admin   | Member | Notes                                                                      |

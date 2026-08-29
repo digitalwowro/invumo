@@ -5,6 +5,7 @@ import {
     HandCoins,
     LayoutGrid,
     ReceiptText,
+    Repeat2,
     Settings,
     Users,
 } from 'lucide-react';
@@ -73,6 +74,17 @@ export function AppSidebar({
             title: t('navigation.customers'),
             href: companyContext.current.customersUrl,
             icon: Users,
+        });
+    }
+
+    if (
+        companyContext.current &&
+        companyContext.abilities.view_recurring_templates
+    ) {
+        mainNavItems.push({
+            title: t('navigation.recurring'),
+            href: companyContext.current.recurringUrl,
+            icon: Repeat2,
         });
     }
 

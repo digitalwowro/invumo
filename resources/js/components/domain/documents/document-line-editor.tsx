@@ -8,7 +8,7 @@ import { DocumentLineCard } from '@/components/domain/documents/document-line-ca
 import { Button } from '@/components/ui/button';
 import type { LineAmounts } from '@/lib/money/line-calculation';
 import type {
-    DocumentEditorLimits,
+    DocumentLineLimits,
     DocumentEditorTranslations,
     DocumentLineDraft,
     DocumentTaxDefault,
@@ -18,7 +18,7 @@ type Props = {
     lines: DocumentLineDraft[];
     calculated: Array<LineAmounts | null>;
     taxDefault: DocumentTaxDefault | null;
-    limits: DocumentEditorLimits;
+    limits: DocumentLineLimits;
     labels: DocumentEditorTranslations;
     errors: Record<string, string>;
     onChange: (

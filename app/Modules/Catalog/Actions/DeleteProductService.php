@@ -34,7 +34,7 @@ final readonly class DeleteProductService
                     ->transaction(fn () => $this->delete($company, $actor, $productId)),
             );
         } catch (QueryException $exception) {
-            if (($exception->errorInfo[0] ?? null) === '23503') {
+            if (in_array($exception->errorInfo[0] ?? null, ['23001', '23503'], true)) {
                 throw ProductServiceException::dependencies();
             }
 

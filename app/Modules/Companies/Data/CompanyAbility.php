@@ -23,6 +23,9 @@ enum CompanyAbility: string
     case ViewTransactions = 'view_transactions';
     case ManageNumberCounters = 'manage_number_counters';
     case ManageAdjustments = 'manage_adjustments';
+    case ViewRecurringTemplates = 'view_recurring_templates';
+    case ManageRecurringDrafts = 'manage_recurring_drafts';
+    case DeleteRecurringTemplates = 'delete_recurring_templates';
     case ManageRecurringAutomation = 'manage_recurring_automation';
     case ViewOperations = 'view_operations';
     case ViewAudit = 'view_audit';

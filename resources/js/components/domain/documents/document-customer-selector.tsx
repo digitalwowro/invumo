@@ -23,6 +23,7 @@ type Props = {
     companyDefaultsUrl: string;
     labels: DocumentEditorTranslations;
     canCreate: boolean;
+    allowCompanyDefaults?: boolean;
     onOpenChange: (open: boolean) => void;
     onCreate: () => void;
     onSelect: (selection: DocumentCustomerSelection) => void;
@@ -195,15 +196,19 @@ export function DocumentCustomerSelector(props: Props) {
                                     {props.labels.create_customer}
                                 </Button>
                             )}
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() =>
-                                    void loadPreview(props.companyDefaultsUrl)
-                                }
-                            >
-                                {props.labels.clear_customer}
-                            </Button>
+                            {props.allowCompanyDefaults !== false && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() =>
+                                        void loadPreview(
+                                            props.companyDefaultsUrl,
+                                        )
+                                    }
+                                >
+                                    {props.labels.clear_customer}
+                                </Button>
+                            )}
                         </>
                     ) : (
                         <>

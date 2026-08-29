@@ -739,6 +739,8 @@ Each template has an automatic-email setting. Scheduled invoices are created and
 
 If automatic email fails after invoice creation, retry delivery against the same generated invoice; never create a replacement invoice for the same occurrence.
 
+Permanently deleting an eligible generated Invoice uses the ordinary guarded Invoice-deletion workflow and also removes its linked occurrence and pending occurrence-dispatch state. Deletion never rewinds the template cursor, logical ordinal, or successful-occurrence count, and stale work for the removed occurrence exits without recreating it. Later distinct occurrences continue normally within the template's schedule, end date, and maximum count. Cancelling a generated Invoice retains both the Invoice and occurrence and does not stop later scheduled occurrences.
+
 Use the approved PostgreSQL-backed Laravel queue with one supervised PHP worker and the Laravel scheduler invoked every minute by cron; do not add an external message broker. Each occurrence has a stable idempotency key and a database uniqueness constraint so retries or overlaps create at most one invoice. Record scheduled local/UTC time, actual execution, attempts, outcome, next run, and generated invoice.
 
 Calculate recurrences from company-local calendar rules at the company's automation time, then resolve them through its IANA timezone into UTC. Never advance monthly/quarterly/yearly schedules by adding fixed UTC durations. A nonexistent spring-forward local time shifts forward by the DST gap; an ambiguous fall-back time uses its first occurrence and executes once.

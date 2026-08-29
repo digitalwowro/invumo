@@ -1,0 +1,193 @@
+import { Link, router, usePage } from '@inertiajs/react';
+import type { KeyboardEvent, MouseEvent } from 'react';
+import { Cluster } from '@/components/app/layout';
+import { OperationalTable } from '@/components/app/operational-table';
+import type {
+    OperationalColumn,
+    OperationalTableStateCopy,
+} from '@/components/app/operational-table';
+import {
+    BodyStrong,
+    SecondaryText,
+    TableValue,
+} from '@/components/app/typography';
+import { StatusBadge } from '@/components/domain/status-badge';
+import { Button } from '@/components/ui/button';
+import { RecurringTemplateDeleteDialog } from '@/features/recurring/components/recurring-template-delete-dialog';
+import { RecurringTemplateListTools } from '@/features/recurring/components/recurring-template-list-tools';
+import type {
+    RecurringTemplateCursorPage,
+    RecurringTemplateFilters,
+    RecurringTemplateRow,
+    RecurringTranslations,
+} from '@/types/recurring';
+import type { Status } from '@/types/status';
+
+type Props = {
+    page: RecurringTemplateCursorPage;
+    filters: RecurringTemplateFilters;
+    indexUrl: string;
+    labels: RecurringTranslations;
+};
+
+export function RecurringTemplateTable(props: Props) {
+    const { i18n } = usePage().props;
+    const labels = props.labels.index;
+    const columns: OperationalColumn<RecurringTemplateRow>[] = [
+        {
+            key: 'template',
+            label: labels.columns.template,
+            kind: 'identity',
+            render: (template) => (
+                <BodyStrong>{template.internalName}</BodyStrong>
+            ),
+        },
+        {
+            key: 'customer',
+            label: labels.columns.customer,
+            kind: 'text',
+            render: (template) => (
+                <TableValue>{template.customerName}</TableValue>
+            ),
+        },
+        {
+            key: 'reference',
+            label: labels.columns.reference,
+            kind: 'data',
+            render: (template) => (
+                <TableValue>
+                    {template.customerReference ?? labels.not_available}
+                </TableValue>
+            ),
+        },
+        {
+            key: 'state',
+            label: labels.columns.state,
+            kind: 'status',
+            render: (template) => (
+                <StatusBadge
+                    status={template.state.toLowerCase() as Status}
+                    label={labels.states[template.state]}
+                />
+            ),
+        },
+        {
+            key: 'updated',
+            label: labels.columns.updated,
+            kind: 'data',
+            render: (template) => (
+                <SecondaryText>
+                    {new Intl.DateTimeFormat(i18n.locale, {
+                        dateStyle: 'medium',
+                    }).format(new Date(template.updatedAt))}
+                </SecondaryText>
+            ),
+        },
+        {
+            key: 'actions',
+            label: labels.columns.actions,
+            kind: 'actions',
+            render: (template) => (
+                <TemplateActions template={template} labels={props.labels} />
+            ),
+        },
+    ];
+    const filtered = props.filters.q !== '' || props.filters.sort !== 'recent';
+    const state = props.page.items.length
+        ? 'ready'
+        : filtered
+          ? 'no-results'
+          : 'empty';
+    const stateCopy: OperationalTableStateCopy = {
+        loading: labels.loading,
+        emptyTitle: labels.empty_title,
+        emptyDescription: labels.empty_description,
+        noResultsTitle: labels.no_results_title,
+        noResultsDescription: labels.no_results_description,
+        errorTitle: labels.error_title,
+        errorDescription: labels.error_description,
+    };
+
+    return (
+        <OperationalTable
+            ariaLabel={labels.title}
+            columns={columns}
+            rows={props.page.items}
+            rowKey={(template) => template.id}
+            rowLabel={(template) => template.internalName}
+            onRowActivate={(template) => router.visit(template.editUrl)}
+            state={state}
+            stateCopy={stateCopy}
+            toolbar={
+                <RecurringTemplateListTools
+                    action={props.indexUrl}
+                    filters={props.filters}
+                    labels={labels}
+                />
+            }
+            footer={<Pagination page={props.page} labels={labels} />}
+        />
+    );
+}
+
+function TemplateActions({
+    template,
+    labels,
+}: {
+    template: RecurringTemplateRow;
+    labels: RecurringTranslations;
+}) {
+    const stop = (event: MouseEvent<HTMLDivElement>) => event.stopPropagation();
+    const stopKeyboard = (event: KeyboardEvent<HTMLDivElement>) =>
+        event.stopPropagation();
+
+    return (
+        <div onClick={stop} onKeyDown={stopKeyboard}>
+            <Cluster gap="sm">
+                <Button asChild variant="secondary">
+                    <Link href={template.editUrl}>
+                        {labels.index.columns.open}
+                    </Link>
+                </Button>
+                {template.canDelete && (
+                    <RecurringTemplateDeleteDialog
+                        url={template.deleteUrl}
+                        labels={labels.deletion}
+                    />
+                )}
+            </Cluster>
+        </div>
+    );
+}
+
+function Pagination({
+    page,
+    labels,
+}: {
+    page: RecurringTemplateCursorPage;
+    labels: RecurringTranslations['index'];
+}) {
+    return (
+        <nav
+            aria-label={`${labels.previous} / ${labels.next}`}
+            className="flex justify-end gap-2"
+        >
+            <PageLink href={page.previousUrl} label={labels.previous} />
+            <PageLink href={page.nextUrl} label={labels.next} />
+        </nav>
+    );
+}
+
+function PageLink({ href, label }: { href: string | null; label: string }) {
+    return href ? (
+        <Button asChild variant="secondary">
+            <Link href={href} preserveScroll>
+                {label}
+            </Link>
+        </Button>
+    ) : (
+        <Button disabled variant="secondary">
+            {label}
+        </Button>
+    );
+}

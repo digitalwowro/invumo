@@ -26,6 +26,7 @@ type Props = {
     customerForm: DocumentCustomerFormOptions;
     catalogForm: DocumentCatalogFormOptions;
     abilities: { createCustomer: boolean; createProduct: boolean };
+    allowCompanyDefaults?: boolean;
     labels: DocumentEditorTranslations;
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
@@ -48,6 +49,7 @@ export function DocumentSourceDialogs(props: Props) {
                 companyDefaultsUrl={props.sourceUrls.companyCustomerDefaults}
                 labels={props.labels}
                 canCreate={props.abilities.createCustomer}
+                allowCompanyDefaults={props.allowCompanyDefaults}
                 onOpenChange={props.onCustomerOpenChange}
                 onCreate={() => {
                     props.onCustomerOpenChange(false);

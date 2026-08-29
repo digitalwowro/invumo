@@ -34,7 +34,7 @@ final readonly class DeleteCustomer
                     ->transaction(fn () => $this->delete($company, $actor, $customerId)),
             );
         } catch (QueryException $exception) {
-            if (($exception->errorInfo[0] ?? null) === '23503') {
+            if (in_array($exception->errorInfo[0] ?? null, ['23001', '23503'], true)) {
                 throw CustomerException::dependencies();
             }
 

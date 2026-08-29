@@ -87,6 +87,18 @@ function openCompanyNumbering(User $owner, Company $company, bool $mobile = fals
         ->navigate(route('company-number-series.edit', $company, false));
 }
 
+function openCompanyReminders(User $owner, Company $company, bool $mobile = false): mixed
+{
+    $page = visit('/login')->on();
+    $page = $mobile ? $page->iPhone15() : $page->desktop();
+
+    return $page
+        ->type('Email address', $owner->email)
+        ->type('Password', 'password')
+        ->click('Log in')
+        ->navigate(route('company-reminder-rules.index', $company, false));
+}
+
 it('renders configured Company defaults accessibly on desktop', function () {
     [$owner, $company] = configuredCompanyForBrowser();
 
@@ -233,6 +245,22 @@ it('keeps Romanian numbering usable on a narrow viewport', function () {
         ->assertSee('Numerotarea documentelor')
         ->assertSee('Modelul numărului ofertei')
         ->assertSee('Modelul numărului facturii')
+        ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
+it('saves Romanian reminder defaults without narrow viewport overflow', function () {
+    [$owner, $company] = configuredCompanyForBrowser('ro');
+
+    openCompanyReminders($owner, $company, mobile: true)
+        ->assertSee('Notificări de plată')
+        ->assertSee('Nu este configurată nicio notificare automată.')
+        ->click('Adaugă notificare')
+        ->type('Zile față de scadență', '3')
+        ->click('Salvează regulile')
+        ->assertSee('Regulile de notificare au fost salvate.')
+        ->assertValue('Zile față de scadență', '3')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

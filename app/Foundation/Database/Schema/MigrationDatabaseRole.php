@@ -9,6 +9,8 @@ final class MigrationDatabaseRole
 {
     public const RUNTIME = 'invumo_runtime';
 
+    public const DISPATCHER = 'invumo_dispatcher';
+
     /**
      * Production-like migrations must never succeed with an incomplete grant
      * outcome. Local and test databases may deliberately omit split roles.

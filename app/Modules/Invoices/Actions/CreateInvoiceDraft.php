@@ -12,6 +12,8 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Delivery\Actions\CopyCompanyReminderRules;
+use App\Modules\Delivery\Actions\LockCompanyReminderRules;
 use App\Modules\Documents\Actions\InitializeDocumentDefaults;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
@@ -34,6 +36,8 @@ final readonly class CreateInvoiceDraft
         private AllocatesDocumentNumbers $numbers,
         private LockDocumentConfiguration $lockConfiguration,
         private InitializeDocumentDefaults $initializeDefaults,
+        private LockCompanyReminderRules $lockReminderRules,
+        private CopyCompanyReminderRules $copyReminderRules,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -62,6 +66,7 @@ final readonly class CreateInvoiceDraft
         }
 
         $configuration = $this->lockConfiguration->handle();
+        $reminderRules = $this->lockReminderRules->handle();
         $settings = $configuration->settings;
         $currency = $configuration->currencies
             ->where('active', true)
@@ -114,6 +119,7 @@ final readonly class CreateInvoiceDraft
                     $settings->default_payment_term_days,
                 ),
         ]);
+        $this->copyReminderRules->handle($document->id, $reminderRules);
 
         $this->initializeDefaults->handle(
             $document,

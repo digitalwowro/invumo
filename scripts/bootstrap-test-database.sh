@@ -19,6 +19,15 @@ runuser -u postgres -- psql \
     --no-psqlrc \
     --set=ON_ERROR_STOP=1 \
     --dbname=postgres <<'SQL'
+SELECT 'CREATE ROLE invumo_dispatcher NOLOGIN'
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_dispatcher') \gexec
+
+ALTER ROLE invumo_dispatcher WITH
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+
+GRANT invumo_dispatcher TO invumo_runtime
+    WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
+
 SELECT 'CREATE DATABASE invumo_test OWNER invumo_schema ENCODING ''UTF8'' TEMPLATE template0'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'invumo_test') \gexec
 

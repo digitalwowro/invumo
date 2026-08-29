@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $company_id
  * @property string|null $document_id
  * @property string|null $public_document_link_id
+ * @property string|null $reminder_instance_id
  * @property DocumentKind $document_kind
  * @property EmailTemplateEvent $event_type
  * @property string $delivery_key
@@ -48,7 +49,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $attempts_count
  */
 #[Fillable([
-    'document_id', 'public_document_link_id', 'document_kind', 'event_type', 'delivery_key', 'document_edit_version', 'language_code',
+    'document_id', 'public_document_link_id', 'reminder_instance_id', 'document_kind', 'event_type', 'delivery_key', 'document_edit_version', 'language_code',
     'subject', 'body', 'button_label', 'signature', 'button_url', 'attachment_mode',
     'artifact_id', 'provider_name', 'dispatch_state', 'provider_message_identifier',
     'failure_category', 'failure_summary', 'accepted_at', 'failed_at', 'redacted_at',

@@ -16,6 +16,8 @@ use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
+use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
+use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
 use App\Modules\Documents\Models\Document;
@@ -55,6 +57,8 @@ abstract class DocumentDeliveryTestCase extends PublicDocumentTestCase
                 app(PrepareDocumentDeliveryArtifact::class),
                 app(CompleteDocumentDeliveryAttempt::class),
                 app(DocumentDeliveryQuota::class),
+                app(ReminderDeliveryEligibility::class),
+                app(DocumentDeliverySenderEligibility::class),
             ),
         );
     }

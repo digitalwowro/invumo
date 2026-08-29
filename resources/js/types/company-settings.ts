@@ -4,12 +4,14 @@ import type { CompanyDocumentDefaultsTranslations } from '@/types/company-docume
 import type { CompanyEmailTemplateTranslations } from '@/types/company-email-template';
 import type { CompanyNumberSeriesTranslations } from '@/types/company-number-series';
 import type { CompanyTaxPresetTranslations } from '@/types/company-tax';
+import type { CompanyReminderTranslations } from '@/types/reminder';
 
 export type CompanySettingsNavigationItem = {
     key:
         | 'profile'
         | 'documents'
         | 'email_templates'
+        | 'reminders'
         | 'numbering'
         | 'taxes'
         | 'bank_accounts'
@@ -50,6 +52,7 @@ export type CompanySettingsTranslations = {
     };
     documents: CompanyDocumentDefaultsTranslations;
     email_templates: CompanyEmailTemplateTranslations;
+    reminders: CompanyReminderTranslations;
     numbering: CompanyNumberSeriesTranslations;
     taxes: CompanyTaxPresetTranslations;
     bank_accounts: CompanyBankAccountTranslations;

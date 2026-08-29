@@ -11,6 +11,8 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
@@ -30,6 +32,7 @@ final readonly class ReopenInvoice
         private InvoiceIssuability $issuability,
         private RecordAuditEvent $recordAuditEvent,
         private LockDocumentDeliveryHistory $deliveryHistory,
+        private InvoiceReminderSchedule $reminders,
     ) {}
 
     public function handle(
@@ -64,9 +67,10 @@ final readonly class ReopenInvoice
             throw InvoiceLifecycleException::reasonInvalid();
         }
 
+        $settings = CompanySetting::query()->lockForUpdate()->firstOrFail();
         $context = $this->lockAggregate->handle($documentId);
 
-        if ($this->deliveryHistory->hasPending($context->document->id)) {
+        if ($this->deliveryHistory->hasPendingDirect($context->document->id)) {
             throw InvoiceLifecycleException::deliveryPending();
         }
 
@@ -93,6 +97,7 @@ final readonly class ReopenInvoice
             'edit_version' => $context->document->edit_version + 1,
             'content_version' => $context->document->content_version + 1,
         ]);
+        $this->reminders->resume($context->document, $context->invoice, $settings);
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,

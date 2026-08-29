@@ -12,6 +12,7 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Actions\DeleteDocumentPublicLinks;
+use App\Modules\Delivery\Actions\DeleteInvoiceReminders;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Delivery\Actions\RedactDocumentDeliveries;
 use App\Modules\Delivery\Queries\DocumentPublicLinkHistory;
@@ -37,6 +38,7 @@ final readonly class DeleteInvoice
         private DeleteDocumentPublicLinks $deletePublicLinks,
         private LockDocumentDeliveryHistory $deliveryHistory,
         private RedactDocumentDeliveries $redactDeliveries,
+        private DeleteInvoiceReminders $reminders,
     ) {}
 
     public function handle(
@@ -131,6 +133,7 @@ final readonly class DeleteInvoice
         ]);
         $this->redactDeliveries->handle($company->id, $context->document->id);
         $this->deletePublicLinks->handle($context->document->id);
+        $this->reminders->handle($context->document->id);
         $context->document->delete();
 
         return true;

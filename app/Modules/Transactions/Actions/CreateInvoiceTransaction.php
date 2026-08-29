@@ -11,6 +11,8 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Transactions\Data\InvoiceLedger;
@@ -29,6 +31,7 @@ final readonly class CreateInvoiceTransaction
         private ValidateInvoiceTransactionMutation $validate,
         private RecordAuditEvent $recordAuditEvent,
         private LockDocumentDeliveryHistory $deliveryHistory,
+        private InvoiceReminderSchedule $reminders,
     ) {}
 
     public function handle(
@@ -58,6 +61,7 @@ final readonly class CreateInvoiceTransaction
         if ($data->kind === InvoiceTransactionKind::Adjustment) {
             $this->authorizer->authorize($actor, $company, CompanyAbility::ManageAdjustments);
         }
+        $settings = CompanySetting::query()->lockForUpdate()->firstOrFail();
         $context = $this->lockAggregate->handle($invoiceId);
 
         $existing = $context->transactions->firstWhere('creation_key', $data->mutationKey);
@@ -66,7 +70,7 @@ final readonly class CreateInvoiceTransaction
             return $existing;
         }
 
-        if ($this->deliveryHistory->hasPending($context->document->id)) {
+        if ($this->deliveryHistory->hasPendingDirect($context->document->id)) {
             throw InvoiceTransactionException::deliveryPending();
         }
 
@@ -106,6 +110,7 @@ final readonly class CreateInvoiceTransaction
             reason: $data->adjustmentReason,
             after: $this->auditPayload($transaction),
         ));
+        $this->reminders->reconcileLedger($context->document, $context->invoice, $settings);
 
         return $transaction->refresh();
     }

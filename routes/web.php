@@ -18,6 +18,7 @@ use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
 use App\Modules\Customers\Http\Controllers\CustomerDeliveryController;
 use App\Modules\Delivery\Http\Controllers\CompanyEmailTemplateController;
+use App\Modules\Delivery\Http\Controllers\CompanyReminderRuleController;
 use App\Modules\Delivery\Http\Controllers\ZeptoMailWebhookController;
 use App\Modules\Documents\Http\Controllers\DocumentNumberCounterController;
 use App\Modules\Platform\Http\Controllers\AccountPlanController;
@@ -204,6 +205,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('companies/{company}/settings/email-templates/{event}/{language}', [CompanyEmailTemplateController::class, 'destroy'])
                 ->middleware('throttle:20,1')
                 ->name('company-email-templates.destroy');
+            Route::get('companies/{company}/settings/reminders', [CompanyReminderRuleController::class, 'index'])
+                ->name('company-reminder-rules.index');
+            Route::put('companies/{company}/settings/reminders', [CompanyReminderRuleController::class, 'update'])
+                ->middleware('throttle:20,1')
+                ->name('company-reminder-rules.update');
             Route::get('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'edit'])
                 ->name('company-number-series.edit');
             Route::patch('companies/{company}/settings/numbering', [CompanyNumberSeriesController::class, 'update'])

@@ -41,6 +41,10 @@ final readonly class CompanySettingsNavigation
                 'href' => route('company-email-templates.index', $company, false),
             ];
             $items[] = [
+                'key' => 'reminders',
+                'href' => route('company-reminder-rules.index', $company, false),
+            ];
+            $items[] = [
                 'key' => 'numbering',
                 'href' => route('company-number-series.edit', $company, false),
             ];

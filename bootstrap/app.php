@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureAuthenticatedUserIsActive;
 use App\Http\Middleware\EnterCompanyContext;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetApplicationLocale;
+use App\Modules\Delivery\Console\DispatchDueJobs;
 use App\Modules\Delivery\Http\Middleware\CapturePublicDocumentToken;
 use App\Modules\Platform\Http\Middleware\EnsurePlatformOperator;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withCommands([DispatchDueJobs::class])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',

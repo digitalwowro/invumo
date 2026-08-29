@@ -19,6 +19,7 @@ use App\Modules\Customers\Queries\CustomerDocumentOptions;
 use App\Modules\Customers\Queries\CustomerFormOptions;
 use App\Modules\Delivery\Queries\DocumentDeliveryPage;
 use App\Modules\Delivery\Queries\DocumentPublicLinkState;
+use App\Modules\Delivery\Queries\InvoiceReminderPage;
 use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
@@ -46,6 +47,7 @@ final readonly class InvoiceDraftPage
         private InvoiceLifecycleActionsForInvoice $lifecycleActions,
         private DocumentPublicLinkState $publicLinkState,
         private DocumentDeliveryPage $deliveryPage,
+        private InvoiceReminderPage $reminderPage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -217,6 +219,7 @@ final readonly class InvoiceDraftPage
                 $document->id,
                 DocumentKind::Invoice,
             ),
+            'reminders' => $this->reminderPage->for($company, $actor, $document),
             'deletion' => [
                 'url' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices)
                     ? route('invoices.destroy', [$company, $document], false)

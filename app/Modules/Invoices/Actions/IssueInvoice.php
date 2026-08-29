@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ final readonly class IssueInvoice
     private function issue(Company $company, User $actor, string $documentId, int $editVersion): Document
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
+        CompanySetting::query()->lockForUpdate()->firstOrFail();
         $document = Document::query()
             ->whereKey($documentId)
             ->where('kind', DocumentKind::Invoice)

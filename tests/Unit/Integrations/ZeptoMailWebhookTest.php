@@ -13,6 +13,8 @@ final class ZeptoMailWebhookTest extends TestCase
 {
     private const SECRET = 'test-webhook-secret-at-least-32-bytes';
 
+    private const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -27,6 +29,7 @@ final class ZeptoMailWebhookTest extends TestCase
         $event = app(ZeptoMailWebhook::class)->parse(
             'data='.urlencode($data),
             self::SECRET,
+            self::FORM_CONTENT_TYPE,
             $receivedAt,
         );
 
@@ -40,23 +43,26 @@ final class ZeptoMailWebhookTest extends TestCase
     }
 
     #[DataProvider('invalidRequests')]
-    public function test_it_rejects_invalid_encoding(string $body): void
+    public function test_it_rejects_invalid_encoding(string $body, string $contentType): void
     {
         $this->expectException(ProviderWebhookRequestException::class);
 
         app(ZeptoMailWebhook::class)->parse(
             $body,
             self::SECRET,
+            $contentType,
             CarbonImmutable::parse('2026-08-28T12:00:00Z'),
         );
     }
 
-    /** @return iterable<string, array{string}> */
+    /** @return iterable<string, array{string, string}> */
     public static function invalidRequests(): iterable
     {
-        yield 'malformed percent encoding' => ['data=%ZZ'];
-        yield 'extra form field' => ['data=%7B%7D&extra=true'];
-        yield 'invalid JSON' => ['data=%7B'];
+        yield 'malformed percent encoding' => ['data=%ZZ', self::FORM_CONTENT_TYPE];
+        yield 'extra form field' => ['data=%7B%7D&extra=true', self::FORM_CONTENT_TYPE];
+        yield 'invalid form JSON' => ['data=%7B', self::FORM_CONTENT_TYPE];
+        yield 'invalid direct JSON' => ['{', 'application/json'];
+        yield 'unsupported media type' => ['{}', 'text/plain'];
     }
 
     #[DataProvider('invalidAuthenticationKeys')]
@@ -67,6 +73,7 @@ final class ZeptoMailWebhookTest extends TestCase
         app(ZeptoMailWebhook::class)->parse(
             'data='.urlencode($this->payload('delivered')),
             $key,
+            self::FORM_CONTENT_TYPE,
             CarbonImmutable::parse('2026-08-28T12:00:00Z'),
         );
     }
@@ -85,8 +92,9 @@ final class ZeptoMailWebhookTest extends TestCase
         $data = $this->payload('provider_future_event');
 
         $this->assertNull(app(ZeptoMailWebhook::class)->parse(
-            'data='.urlencode($data),
+            $data,
             self::SECRET,
+            'application/json; charset=UTF-8',
             $receivedAt,
         ));
     }
@@ -96,6 +104,7 @@ final class ZeptoMailWebhookTest extends TestCase
         $this->assertNull(app(ZeptoMailWebhook::class)->parse(
             '',
             self::SECRET,
+            null,
             CarbonImmutable::parse('2026-08-28T12:00:00Z'),
         ));
     }
@@ -109,8 +118,9 @@ final class ZeptoMailWebhookTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->assertNull(app(ZeptoMailWebhook::class)->parse(
-            'data='.urlencode($data),
+            $data,
             self::SECRET,
+            'application/json',
             CarbonImmutable::parse('2026-08-28T12:00:00Z'),
         ));
     }

@@ -9,10 +9,13 @@ use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Delivery\Data\EmailDeliveryAttemptState;
 use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\PreparedProviderAttempt;
 use App\Modules\Delivery\Data\ProviderDeliveryResult;
+use App\Modules\Delivery\Data\ReminderInstanceStatus;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
+use App\Modules\Delivery\Models\ReminderInstance;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Invoices\Models\Invoice;
@@ -62,6 +65,7 @@ final readonly class CompleteDocumentDeliveryAttempt
             'accepted_at' => $state === EmailDeliveryState::Accepted ? now() : null,
             'failed_at' => in_array($state, [EmailDeliveryState::Rejected, EmailDeliveryState::Unknown], true) ? now() : null,
         ]);
+        $this->completeReminder($delivery, $state, $result->failureCategory);
 
         if ($state === EmailDeliveryState::Accepted) {
             $this->markQuoteSent($document);
@@ -86,7 +90,66 @@ final readonly class CompleteDocumentDeliveryAttempt
             'failure_summary' => $failureSummary,
             'failed_at' => now(),
         ]);
+        $this->completeReminder($delivery, EmailDeliveryState::Rejected, $failureCategory);
         $this->auditOutcome($delivery, EmailDeliveryState::Rejected, $auditReference);
+    }
+
+    public function markInterrupted(
+        EmailDelivery $delivery,
+        EmailDeliveryAttempt $attempt,
+    ): void {
+        $attempt->update([
+            'state' => EmailDeliveryAttemptState::Unknown,
+            'failure_category' => 'interrupted_submission',
+            'failure_summary' => 'The provider submission was interrupted and its outcome is unknown.',
+            'completed_at' => now(),
+        ]);
+        $delivery->update([
+            'dispatch_state' => EmailDeliveryState::Unknown,
+            'failure_category' => 'interrupted_submission',
+            'failure_summary' => 'A previous provider submission was interrupted and its outcome is unknown.',
+            'failed_at' => now(),
+        ]);
+        $this->completeReminder(
+            $delivery,
+            EmailDeliveryState::Unknown,
+            'interrupted_submission',
+        );
+        $this->auditOutcome($delivery, EmailDeliveryState::Unknown, $attempt->id);
+    }
+
+    private function completeReminder(
+        EmailDelivery $delivery,
+        EmailDeliveryState $state,
+        ?string $failureCategory = null,
+    ): void {
+        if ($delivery->event_type !== EmailTemplateEvent::PaymentReminder
+            || $state === EmailDeliveryState::Retrying) {
+            return;
+        }
+
+        $instance = $delivery->reminder_instance_id === null
+            ? null
+            : ReminderInstance::query()
+                ->whereKey($delivery->reminder_instance_id)->lockForUpdate()->first();
+
+        if (! $instance instanceof ReminderInstance) {
+            return;
+        }
+
+        $suppressed = $failureCategory === 'reminder_no_longer_eligible';
+        $instance->update([
+            'status' => match (true) {
+                $state === EmailDeliveryState::Accepted => ReminderInstanceStatus::Sent,
+                $suppressed => ReminderInstanceStatus::Suppressed,
+                default => ReminderInstanceStatus::Failed,
+            },
+            'failure_category' => $state === EmailDeliveryState::Accepted ? null : $failureCategory,
+            'failure_summary' => $state === EmailDeliveryState::Accepted
+                ? null : ($delivery->failure_summary ?? 'Reminder delivery failed.'),
+            'sent_at' => $state === EmailDeliveryState::Accepted ? now() : null,
+            'completed_at' => now(),
+        ]);
     }
 
     private function markQuoteSent(Document $document): void

@@ -5,6 +5,7 @@ namespace Tests\Unit\Modules\Delivery;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Tests\TestCase;
 
 final class DocumentDeliveryQuotaTest extends TestCase
@@ -44,5 +45,20 @@ final class DocumentDeliveryQuotaTest extends TestCase
             'invumo.document_delivery.company_recipients_per_day' => 10,
         ]);
         $this->assertTrue($quota->consume('company-two', 'shared-account', 9));
+    }
+
+    public function test_lock_contention_is_retryable_instead_of_reporting_quota_exhaustion(): void
+    {
+        $store = new ArrayStore;
+        $lock = $store->lock('document-delivery:quota-reservation', 70);
+        $this->assertTrue($lock->acquire());
+
+        try {
+            $this->expectException(LockTimeoutException::class);
+            (new DocumentDeliveryQuota(new Repository($store), 0))
+                ->consume('company-one', 'account-one', 1);
+        } finally {
+            $lock->release();
+        }
     }
 }

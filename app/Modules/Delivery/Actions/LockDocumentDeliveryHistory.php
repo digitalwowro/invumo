@@ -3,6 +3,7 @@
 namespace App\Modules\Delivery\Actions;
 
 use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,6 +24,20 @@ final class LockDocumentDeliveryHistory
     {
         return EmailDelivery::query()
             ->where('document_id', $documentId)
+            ->whereIn('dispatch_state', [
+                EmailDeliveryState::Queued,
+                EmailDeliveryState::Retrying,
+            ])
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->first() instanceof EmailDelivery;
+    }
+
+    public function hasPendingDirect(string $documentId): bool
+    {
+        return EmailDelivery::query()
+            ->where('document_id', $documentId)
+            ->where('event_type', '!=', EmailTemplateEvent::PaymentReminder)
             ->whereIn('dispatch_state', [
                 EmailDeliveryState::Queued,
                 EmailDeliveryState::Retrying,

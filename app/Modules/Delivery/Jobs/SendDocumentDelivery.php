@@ -6,9 +6,7 @@ use App\Foundation\Jobs\JobIdentity;
 use App\Foundation\Jobs\TenantJob;
 use App\Foundation\Jobs\TenantJobExecution;
 use App\Foundation\Tenancy\TenantContext;
-use App\Models\User;
 use App\Modules\Companies\Models\Company;
-use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\ResolveOutwardBrandTheme;
 use App\Modules\Delivery\Actions\CompleteDocumentDeliveryAttempt;
@@ -18,6 +16,7 @@ use App\Modules\Delivery\Contracts\SendsProviderEmail;
 use App\Modules\Delivery\Data\EmailDeliveryAttemptState;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Data\EmailRecipientData;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\PreparedProviderAttempt;
 use App\Modules\Delivery\Data\ProviderDelivery;
 use App\Modules\Delivery\Exceptions\RetryableProviderRejection;
@@ -26,6 +25,8 @@ use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
+use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
@@ -35,6 +36,7 @@ use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Str;
 use Throwable;
@@ -66,6 +68,8 @@ final class SendDocumentDelivery extends TenantJob
         PrepareDocumentDeliveryArtifact $artifact,
         CompleteDocumentDeliveryAttempt $complete,
         DocumentDeliveryQuota $quota,
+        ReminderDeliveryEligibility $reminderEligibility,
+        DocumentDeliverySenderEligibility $senderEligibility,
     ): void {
         if (! $artifact->handle(
             $this->identity->companyId,
@@ -80,6 +84,8 @@ final class SendDocumentDelivery extends TenantJob
             $this->identity->companyId,
             fn (): ?PreparedProviderAttempt => $this->prepare(
                 $execution, $filesystems, $brandTheme, $html, $complete, $quota,
+                $reminderEligibility,
+                $senderEligibility,
             ),
         );
 
@@ -120,6 +126,8 @@ final class SendDocumentDelivery extends TenantJob
         DocumentEmailHtml $html,
         CompleteDocumentDeliveryAttempt $completion,
         DocumentDeliveryQuota $quota,
+        ReminderDeliveryEligibility $reminderEligibility,
+        DocumentDeliverySenderEligibility $senderEligibility,
     ): ?PreparedProviderAttempt {
         $unlocked = EmailDelivery::query()->whereKey($this->deliveryId)->first();
 
@@ -131,10 +139,14 @@ final class SendDocumentDelivery extends TenantJob
 
         CompanySetting::query()->lockForUpdate()->firstOrFail();
         $document = Document::query()->whereKey($unlocked->document_id)->lockForUpdate()->firstOrFail();
-        match ($document->kind) {
+        $invoice = match ($document->kind) {
             DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
             DocumentKind::Invoice => Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
         };
+        $transactions = $document->kind === DocumentKind::Invoice
+            ? InvoiceTransaction::query()
+                ->where('invoice_id', $document->id)->orderBy('id')->lockForUpdate()->get()
+            : collect();
         $deliverySetting = DocumentDeliverySetting::query()
             ->where('document_id', $document->id)->lockForUpdate()->firstOrFail();
         $publicLink = PublicDocumentLink::query()
@@ -154,19 +166,9 @@ final class SendDocumentDelivery extends TenantJob
 
         $companyRecord = Company::query()->whereKey($this->identity->companyId)->firstOrFail();
         $account = $companyRecord->owningAccount()->firstOrFail();
-        $initiator = $delivery->initiated_by_user_id === null
-            ? null : User::query()->whereKey($delivery->initiated_by_user_id)->first();
-        $initiatorIsMember = $initiator instanceof User
-            && CompanyMembership::query()
-                ->where('company_id', $companyRecord->id)
-                ->where('user_id', $initiator->id)
-                ->exists();
+        $systemReminder = $delivery->event_type === EmailTemplateEvent::PaymentReminder;
 
-        if ($companyRecord->archived_at !== null
-            || $account->suspended_at !== null
-            || ! $initiator instanceof User
-            || ! $initiatorIsMember
-            || $initiator->suspended_at !== null) {
+        if (! $senderEligibility->allows($companyRecord, $account, $delivery)) {
             $completion->rejectBeforeSubmission(
                 $delivery,
                 $this->dispatchCycle,
@@ -174,6 +176,23 @@ final class SendDocumentDelivery extends TenantJob
                 'The initiating Company, Account, or User cannot submit provider email.',
             );
             $execution->skip('sender_access_unavailable');
+
+            return null;
+        }
+
+        if ($systemReminder && ! $reminderEligibility->allows(
+            $delivery,
+            $document,
+            $invoice instanceof Invoice ? $invoice : null,
+            $transactions,
+        )) {
+            $completion->rejectBeforeSubmission(
+                $delivery,
+                $this->dispatchCycle,
+                'reminder_no_longer_eligible',
+                'The Invoice no longer qualified for this reminder.',
+            );
+            $execution->skip('reminder_no_longer_eligible');
 
             return null;
         }
@@ -200,18 +219,7 @@ final class SendDocumentDelivery extends TenantJob
             ->first();
 
         if ($pending instanceof EmailDeliveryAttempt) {
-            $pending->update([
-                'state' => EmailDeliveryAttemptState::Unknown,
-                'failure_category' => 'interrupted_submission',
-                'failure_summary' => 'The provider submission was interrupted and its outcome is unknown.',
-                'completed_at' => now(),
-            ]);
-            $delivery->update([
-                'dispatch_state' => EmailDeliveryState::Unknown,
-                'failure_category' => 'interrupted_submission',
-                'failure_summary' => 'A previous provider submission was interrupted and its outcome is unknown.',
-                'failed_at' => now(),
-            ]);
+            $completion->markInterrupted($delivery, $pending);
             $execution->skip('ambiguous_previous_attempt');
 
             return null;

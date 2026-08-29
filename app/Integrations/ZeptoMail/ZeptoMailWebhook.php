@@ -16,6 +16,7 @@ final readonly class ZeptoMailWebhook implements ParsesProviderWebhook
     public function parse(
         string $rawBody,
         ?string $authenticationKey,
+        ?string $contentType,
         CarbonImmutable $receivedAt,
     ): ?ProviderWebhookEvent {
         $this->authenticate($authenticationKey);
@@ -24,7 +25,7 @@ final readonly class ZeptoMailWebhook implements ParsesProviderWebhook
             return null;
         }
 
-        $data = $this->data($rawBody);
+        $data = $this->data($rawBody, $contentType);
 
         try {
             $payload = json_decode($data, true, 16, JSON_THROW_ON_ERROR);
@@ -39,9 +40,19 @@ final readonly class ZeptoMailWebhook implements ParsesProviderWebhook
         return $this->event($payload, $receivedAt);
     }
 
-    private function data(string $rawBody): string
+    private function data(string $rawBody, ?string $contentType): string
     {
-        if ($rawBody === '' || strlen($rawBody) > self::MAX_BODY_BYTES
+        if ($rawBody === '' || strlen($rawBody) > self::MAX_BODY_BYTES) {
+            throw ProviderWebhookRequestException::malformed();
+        }
+
+        $normalized = strtolower(trim(explode(';', (string) $contentType)[0]));
+
+        if ($normalized === 'application/json') {
+            return $rawBody;
+        }
+
+        if ($normalized !== 'application/x-www-form-urlencoded'
             || preg_match('/^data=([^&]*)$/s', $rawBody, $matches) !== 1
             || preg_match('/%(?![0-9A-Fa-f]{2})/', $matches[1]) === 1) {
             throw ProviderWebhookRequestException::malformed();

@@ -12,6 +12,7 @@ interface ParsesProviderWebhook
     public function parse(
         string $rawBody,
         ?string $authenticationKey,
+        ?string $contentType,
         CarbonImmutable $receivedAt,
     ): ?ProviderWebhookEvent;
 }

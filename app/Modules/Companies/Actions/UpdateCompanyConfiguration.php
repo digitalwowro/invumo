@@ -17,6 +17,7 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use App\Modules\Delivery\Actions\RecalculateCompanyPendingReminders;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -32,6 +33,7 @@ final readonly class UpdateCompanyConfiguration
         private TenantContext $tenantContext,
         private CompanyActionAuthorizer $authorizer,
         private RecordAuditEvent $recordAuditEvent,
+        private RecalculateCompanyPendingReminders $recalculateReminders,
     ) {}
 
     public function handle(
@@ -67,6 +69,8 @@ final readonly class UpdateCompanyConfiguration
         }
 
         $this->confirmScheduleChange($before, $after, $data->scheduleChangeConfirmed);
+        $scheduleChanged = $before['timezone'] !== $after['timezone']
+            || $before['automation_local_time'] !== $after['automation_local_time'];
         $this->assertCurrencyPrecisionChangeCompatible($currencies, $data);
         $changedFields = array_keys($changedAfter);
 
@@ -76,6 +80,10 @@ final readonly class UpdateCompanyConfiguration
 
         $settings->update($this->settingsValues($data));
         $this->persistDefaultCurrency($currencies, $data);
+
+        if ($scheduleChanged) {
+            $this->recalculateReminders->handle($settings);
+        }
 
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,

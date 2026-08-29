@@ -4,6 +4,7 @@ use App\Modules\Catalog\Http\Controllers\InlineProductServiceController;
 use App\Modules\Customers\Http\Controllers\InlineCustomerController;
 use App\Modules\Delivery\Http\Controllers\DocumentDeliveryController;
 use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
+use App\Modules\Delivery\Http\Controllers\InvoiceReminderController;
 use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
 use App\Modules\Invoices\Http\Controllers\InvoiceLifecycleController;
@@ -38,6 +39,12 @@ Route::post('companies/{company}/invoices/{invoice}/cancel', [InvoiceLifecycleCo
 Route::post('companies/{company}/invoices/{invoice}/reopen', [InvoiceLifecycleController::class, 'reopen'])
     ->middleware('throttle:20,1')
     ->name('invoices.reopen');
+Route::put('companies/{company}/invoices/{invoice}/reminders', [InvoiceReminderController::class, 'update'])
+    ->middleware('throttle:20,1')
+    ->name('invoices.reminders.update');
+Route::post('companies/{company}/invoices/{invoice}/reminders/{reminder}/retry', [InvoiceReminderController::class, 'retry'])
+    ->middleware('throttle:10,1')
+    ->name('invoices.reminders.retry');
 Route::post('companies/{company}/invoices/{invoice}/transactions', [InvoiceTransactionController::class, 'store'])
     ->middleware('throttle:30,1')
     ->name('invoice-transactions.store');

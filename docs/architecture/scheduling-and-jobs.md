@@ -1,7 +1,7 @@
 # Scheduling, Recurrence, Reminders, and Downtime
 
 Status: Approved architecture decision  
-Last updated: 2026-08-24
+Last updated: 2026-08-28
 
 This specification defines how company-local recurring invoices and reminders map to UTC execution, survive daylight-saving transitions and service downtime, and remain idempotent under retries or overlapping workers.
 
@@ -29,7 +29,7 @@ Phase 1 provides the worker-side contract reused by later scheduling features:
 
 Company-invitation delivery is the initial proof workflow: its encrypted job is queued atomically with invitation creation/resend, reloads and validates the token under forced RLS, closes the database transaction, and then submits mail. A rotated, accepted, revoked, or expired invitation is deliberately skipped.
 
-The `job_dispatches` table and narrow cross-Company dispatcher privilege remain feature-owned by the later recurrence/reminder slice. They are not part of the Phase 1 worker foundation.
+Batch 9E owns the first `job_dispatches` implementation. The table contains only Company ID, opaque target ID, job type, due time, idempotency key, and claim state. A dedicated `NOLOGIN`, `NOBYPASSRLS` dispatcher role receives schema usage, `SELECT` on that table, and column-level `UPDATE` only for claim state and timestamps. Its membership in `invumo_runtime` has no admin or inheritance option and permits explicit `SET ROLE` only, so ordinary web/job queries keep Company-scoped RLS while the scheduler can claim cross-Company payload-free rows without gaining authority to rewrite dispatch identity or tenant ownership.
 
 ## Canonical time model
 
@@ -79,7 +79,7 @@ Changing a company's timezone or automation time requires confirmation, is audit
 
 A minimal scheduling-dispatch record contains company ID, opaque target ID, job type, due UTC timestamp, idempotency key, and processing status; it contains no customer or financial payload.
 
-The scheduler claims due dispatch records in small batches using a transaction and `FOR UPDATE SKIP LOCKED`, inserts the corresponding database-queue jobs, marks the dispatches queued, and commits those changes together before workers perform slow work. Each queued job uses the shared tenant-job contract and enters only its declared Company's short tenant RLS context before reading business data.
+The scheduler claims at most 50 due dispatch records in stable due-time/UUID order using one transaction and `FOR UPDATE SKIP LOCKED`, inserts the corresponding database-queue jobs, marks the dispatches queued with a claim identity, and commits those changes together before workers perform slow work. A two-minute scheduler-overlap lease reduces redundant local invocations without making correctness depend on the lease; stale locks clear quickly and database claiming remains safe across hosts. The restricted role is reset before queue insertion. Each queued job uses the shared tenant-job contract and enters only its declared Company's short tenant RLS context before reading business data. A scheduler rollback removes both the claim and queue insertion; a completed or terminally failed worker closes the claim state.
 
 Business effects use database uniqueness constraints in addition to queue uniqueness:
 
@@ -127,7 +127,7 @@ Pausing prevents future occurrences from becoming eligible. Resuming starts with
 
 ## Reminder execution and downtime
 
-Invoice issue materializes reminder instances using the invoice's stored due date, applicable snapshotted rules, company timezone, and automation-local time.
+Owner/Admin manage ordered Company defaults; every new Invoice copies those rules into its own editable snapshot, and every Company role allowed to manage the Invoice may override that snapshot. Invoice issue materializes enabled reminder instances using the Invoice's stored due date, snapshotted rules, Company timezone, and automation-local time. Zero-total Invoices materialize no reminder work.
 
 Immediately before sending, recheck lifecycle, outstanding balance, due date, recipient, public-link state, and whether a later attempt already succeeded.
 
@@ -137,6 +137,9 @@ Immediately before sending, recheck lifecycle, outstanding balance, due date, re
 - A delayed after-due reminder may send while the invoice remains overdue and outstanding.
 - If multiple after-due reminders accumulated during downtime, send only the newest eligible instance and mark the older due instances `Superseded` so recovery cannot flood the customer.
 - Changing the due date recalculates only pending reminder instances; sent/suppressed historical records remain unchanged.
+- Changing Company timezone or automation time recalculates only unfinished instances while retaining every terminal row's original local/UTC context.
+- Cancellation and full payment suppress unfinished reminders inside the same lifecycle/ledger transaction. Reopening never replays sent work: past before-due work becomes stale and at most the newest eligible after-due rule receives one recovery instance at the next Company automation time.
+- Reminder delivery may replace a naturally expired public-link generation but cannot re-enable explicitly disabled public access.
 - Every send records the scheduled time, actual attempt time, resolved recipients, outcome, and delivery record.
 
 ## Retry policy

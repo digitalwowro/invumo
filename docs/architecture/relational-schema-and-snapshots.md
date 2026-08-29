@@ -492,7 +492,7 @@ The authenticated current PDF remains a fresh read-only projection, so a normal 
 ### `email_deliveries`
 
 - `id`, `company_id`
-- event type and nullable document, transaction, reminder, or recurring-occurrence references as applicable
+- event type and nullable document, reminder-instance, transaction, or recurring-occurrence references as applicable
 - delivery idempotency key, unique within the Company
 - exact public-link generation and document edit version used for the send
 - resolved language, subject, body, button label, signature, and attachment mode
@@ -538,7 +538,7 @@ Permanent document deletion is blocked while provider submission is in flight. O
 
 ### `document_reminder_rules`
 
-Invoice-owned rule snapshots containing source rule ID where available, before/after relation, day offset, enabled state, display order, and selected email-template behavior. Draft overrides can be edited. Issue materializes reminder instances from these rows.
+Invoice-owned rule snapshots contain a source rule ID where available, before/after relation, day offset, enabled state, and display order. Draft and permitted Issued/Cancelled overrides can add, remove, reorder, enable, disable, or retime rules. Reminder delivery resolves the `PAYMENT_REMINDER` Company/system template in the Invoice's current document language; authored template content is not copied into the scheduling rule. Issue materializes reminder instances from these rows.
 
 ### `reminder_instances`
 
@@ -546,16 +546,19 @@ Invoice-owned rule snapshots containing source rule ID where available, before/a
 - stable reminder occurrence key
 - scheduled local date/time, timezone, and resolved UTC timestamp
 - status: `PENDING`, `CLAIMED`, `SENT`, `SKIPPED`, `SUPERSEDED`, `SUPPRESSED`, or `FAILED`
-- attempts, actual timestamps, outcome/failure data, and optional delivery reference
+- attempts, actual timestamps, and outcome/failure data; immutable reminder deliveries reference this occurrence
 - unique `(company_id, invoice_id, occurrence_key)`
 
 Pending operational indexes begin with `company_id`, then status and scheduled UTC time. Sent/failed/suppressed history is retained until the parent Invoice's authorized permanent deletion.
+Removing or replacing an Invoice rule nulls only the historical instance's optional rule reference; the instance retains its snapshotted timing and outcome. A warned manual retry keeps the occurrence and dispatcher identity but creates a fresh immutable delivery so current eligibility, recipients, content, and a naturally renewed secure link are resolved without rewriting prior delivery attempts.
 
 ### `job_dispatches`
 
 Minimal control-plane dispatcher/outbox row containing Company, opaque target ID, job type, due UTC time, idempotency key, status, claim metadata, and no Customer/financial payload. Business actions insert immediate dispatch rows in the same transaction as their persisted effect; scheduled work uses a future due time. The dispatcher role can claim due rows but cannot read tenant business tables.
 
 Forced RLS gives ordinary runtime inserts a current-Company `WITH CHECK` policy and gives only the narrow dispatcher role a cross-Company claim/update policy over this payload-free table. The global dispatcher uses `FOR UPDATE SKIP LOCKED` to place claimed work on Laravel's database queue. The business job establishes Company RLS context and loads the target normally. A committed dispatch row can therefore be recovered if the application stops before queueing it, while duplicate claims/effects remain protected by stable idempotency keys. Dispatch rows are not a duplicate source of business truth.
+
+The dispatcher is a `NOLOGIN`, `NOBYPASSRLS` PostgreSQL role with schema usage, `SELECT` on `job_dispatches`, and column-level `UPDATE` only for status, claim token, claim time, and update time. It cannot reassign Company, target, job type, due time, or idempotency identity. Its grant to `invumo_runtime` uses `ADMIN FALSE, INHERIT FALSE, SET TRUE`; the ordinary runtime cannot delegate or inherit cross-Company visibility and the claimant must explicitly execute `SET LOCAL ROLE` inside its transaction. Reminder dispatch rows are inserted with their reminder instance and use one Company-scoped idempotency key per logical occurrence.
 
 ## 12. Recurring templates and occurrences
 
@@ -729,7 +732,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 8C this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, and immutable Quote public-decision identity under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Delivery artifacts/events, reminder persistence, recurring persistence, and the dispatcher-specific outbox grant remain coupled to their later owning workflows.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 9E this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, immutable Quote public-decision identity, direct/provider-event delivery persistence, Invoice-owned reminder rules/instances, and the payload-free dispatcher outbox under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Recurring persistence remains coupled to its later owning workflow.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 

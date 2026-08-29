@@ -50,6 +50,9 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_schema') \gexec
 SELECT 'CREATE ROLE invumo_runtime LOGIN'
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_runtime') \gexec
 
+SELECT 'CREATE ROLE invumo_dispatcher NOLOGIN'
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'invumo_dispatcher') \gexec
+
 ALTER ROLE invumo_schema WITH
     LOGIN PASSWORD '${schema_password}'
     NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
@@ -57,6 +60,12 @@ ALTER ROLE invumo_schema WITH
 ALTER ROLE invumo_runtime WITH
     LOGIN PASSWORD '${runtime_password}'
     NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+
+ALTER ROLE invumo_dispatcher WITH
+    NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+
+GRANT invumo_dispatcher TO invumo_runtime
+    WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
 
 SELECT 'CREATE DATABASE invumo OWNER invumo_schema ENCODING ''UTF8'' TEMPLATE template0'
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'invumo') \gexec

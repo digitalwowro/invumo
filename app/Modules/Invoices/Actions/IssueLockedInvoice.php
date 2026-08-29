@@ -7,6 +7,8 @@ use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
+use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Invoices\Data\InvoiceIssueFailure;
@@ -19,6 +21,7 @@ final readonly class IssueLockedInvoice
 {
     public function __construct(
         private InvoiceIssuability $issuability,
+        private InvoiceReminderSchedule $reminders,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -46,6 +49,11 @@ final readonly class IssueLockedInvoice
             'edit_version' => $document->edit_version + 1,
             'content_version' => $document->content_version + 1,
         ]);
+        $this->reminders->materialize(
+            $document,
+            $invoice,
+            CompanySetting::query()->firstOrFail(),
+        );
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,

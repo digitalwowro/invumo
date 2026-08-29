@@ -1,8 +1,8 @@
 import { Cluster } from '@/components/app/layout';
 import { resolveInvoiceDisplayStatuses } from '@/components/domain/invoice-status-presentation';
+import type { InvoicePresentationStatus } from '@/components/domain/invoice-status-presentation';
 import { StatusBadge } from '@/components/domain/status-badge';
 import type { InvoiceLifecycle, InvoicePaymentState } from '@/types/invoice';
-import type { Status } from '@/types/status';
 
 type Props = {
     lifecycle: InvoiceLifecycle;
@@ -11,23 +11,14 @@ type Props = {
     labels: Record<string, string>;
 };
 
-const labelKeys: Record<Status, string> = {
-    active: 'ACTIVE',
-    archived: 'ARCHIVED',
+const labelKeys: Record<InvoicePresentationStatus, string> = {
     cancelled: 'CANCELLED',
     draft: 'DRAFT',
     issued: 'ISSUED',
-    sent: 'SENT',
-    accepted: 'ACCEPTED',
-    rejected: 'REJECTED',
-    expired: 'EXPIRED',
     unpaid: 'UNPAID',
     partial: 'PARTIALLY_PAID',
     paid: 'PAID',
     overdue: 'OVERDUE',
-    paused: 'PAUSED',
-    completed: 'COMPLETED',
-    failed: 'FAILED',
 };
 
 export function InvoiceStatusBadges(props: Props) {

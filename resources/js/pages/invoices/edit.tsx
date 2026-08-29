@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Download, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { ActionLink } from '@/components/app/action-link';
@@ -10,6 +10,7 @@ import { SystemMessage } from '@/components/app/system-message';
 import { PublicDocumentLinkPanel } from '@/components/domain/documents/public-document-link-panel';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
 import { DocumentDeliveryPanel } from '@/features/delivery/components/document-delivery-panel';
+import { InvoiceReminderPanel } from '@/features/delivery/components/invoice-reminder-panel';
 import { InvoiceDeleteDialog } from '@/features/invoices/components/invoice-delete-dialog';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
 import { InvoiceTransactionsPanel } from '@/features/invoices/components/invoice-transactions-panel';
@@ -37,6 +38,7 @@ import type {
     PublicDocumentLink,
     PublicDocumentTranslations,
 } from '@/types/public-document';
+import type { InvoiceReminder } from '@/types/reminder';
 
 type Props = {
     invoice: InvoiceDraft;
@@ -49,6 +51,7 @@ type Props = {
     pdfUrl: string;
     publicLink: PublicDocumentLink;
     directDelivery: DocumentDelivery;
+    reminders: InvoiceReminder;
     deletion: { url: string | null; highRisk: boolean };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
@@ -81,6 +84,7 @@ export default function EditInvoice({
     pdfUrl,
     publicLink,
     directDelivery,
+    reminders,
     deletion,
     indexUrl,
     status,
@@ -92,6 +96,7 @@ export default function EditInvoice({
     ...sourceProps
 }: Props) {
     const [invoiceDirty, setInvoiceDirty] = useState(false);
+    const { i18n } = usePage().props;
 
     return (
         <>
@@ -155,6 +160,14 @@ export default function EditInvoice({
                         delivery={directDelivery}
                         labels={deliveryTranslations}
                         documentDirty={invoiceDirty}
+                    />
+                    <InvoiceReminderPanel
+                        reminders={reminders}
+                        editVersion={invoice.editVersion}
+                        locale={directDelivery.locale}
+                        timezone={directDelivery.timezone}
+                        closeLabel={i18n.common.accessibility.close_navigation}
+                        labels={translations.reminders}
                     />
                     <InvoiceDraftEditor
                         key={invoice.editVersion}

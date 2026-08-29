@@ -101,19 +101,21 @@ final class ZeptoMailWebhookHttpTest extends DocumentDeliveryTestCase
         $this->assertDatabaseCount('email_provider_events', 0);
     }
 
-    public function test_authenticated_empty_provider_verification_probes_are_reachable(): void
+    public function test_empty_provider_verification_probes_are_reachable_without_weakening_post_authentication(): void
     {
         $server = ['HTTP_X_INVUMO_WEBHOOK_KEY' => self::SECRET];
 
-        $this->call('GET', route('webhooks.zeptomail'), [], [], [], $server)
+        $this->call('GET', route('webhooks.zeptomail'))
             ->assertOk()->assertJson(['accepted' => true]);
+        $this->call('HEAD', route('webhooks.zeptomail'))->assertOk();
         $this->call('POST', route('webhooks.zeptomail'), [], [], [], $server)
             ->assertOk()->assertJson(['accepted' => true]);
-        $this->call('GET', route('webhooks.zeptomail'))
-            ->assertUnauthorized();
+        $this->call('POST', route('webhooks.zeptomail'))->assertUnauthorized();
+        $this->call('GET', route('webhooks.zeptomail'), [], [], [], [], 'unexpected')
+            ->assertBadRequest()->assertJson(['accepted' => false]);
     }
 
-    public function test_legacy_or_malformed_requests_cannot_bypass_the_static_header_boundary(): void
+    public function test_json_events_are_supported_and_malformed_requests_cannot_bypass_the_static_header_boundary(): void
     {
         $payload = $this->payload(
             '0198f45d-9e53-7b65-a631-7d98f6065f63',
@@ -129,6 +131,11 @@ final class ZeptoMailWebhookHttpTest extends DocumentDeliveryTestCase
 
         $this->call('POST', route('webhooks.zeptomail'), [], [], [], [
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_INVUMO_WEBHOOK_KEY' => self::SECRET,
+        ], $payload)->assertAccepted();
+
+        $this->call('POST', route('webhooks.zeptomail'), [], [], [], [
+            'CONTENT_TYPE' => 'text/plain',
             'HTTP_X_INVUMO_WEBHOOK_KEY' => self::SECRET,
         ], $payload)->assertBadRequest();
 

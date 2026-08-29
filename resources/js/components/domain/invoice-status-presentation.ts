@@ -1,7 +1,7 @@
-import type { Status } from '@/types/status';
-
 type InvoiceLifecycle = 'draft' | 'issued' | 'cancelled';
 type InvoicePaymentState = 'unpaid' | 'partial' | 'paid';
+type InvoicePresentationStatus =
+    InvoiceLifecycle | InvoicePaymentState | 'overdue';
 
 type InvoiceStatusFacts = {
     lifecycle: InvoiceLifecycle;
@@ -13,7 +13,7 @@ export function resolveInvoiceDisplayStatuses({
     lifecycle,
     payment,
     overdue,
-}: InvoiceStatusFacts): Status[] {
+}: InvoiceStatusFacts): InvoicePresentationStatus[] {
     if (lifecycle === 'draft' || lifecycle === 'cancelled') {
         return [lifecycle];
     }
@@ -29,4 +29,9 @@ export function resolveInvoiceDisplayStatuses({
     return overdue ? ['overdue'] : ['issued'];
 }
 
-export type { InvoiceLifecycle, InvoicePaymentState, InvoiceStatusFacts };
+export type {
+    InvoiceLifecycle,
+    InvoicePaymentState,
+    InvoicePresentationStatus,
+    InvoiceStatusFacts,
+};

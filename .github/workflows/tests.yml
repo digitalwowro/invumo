@@ -95,6 +95,8 @@ jobs:
           PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 <<'SQL'
           CREATE ROLE invumo_schema LOGIN PASSWORD 'invumo_schema_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
           CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE invumo_dispatcher NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          GRANT invumo_dispatcher TO invumo_runtime WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
           ALTER DATABASE invumo_test OWNER TO invumo_schema;
           REVOKE ALL ON DATABASE invumo_test FROM PUBLIC;
           GRANT CONNECT ON DATABASE invumo_test TO invumo_schema, invumo_runtime;

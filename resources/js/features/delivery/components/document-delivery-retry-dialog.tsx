@@ -12,11 +12,18 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import type { DocumentDeliveryTranslations } from '@/types/document-delivery';
+
+type RetryLabels = {
+    retry: string;
+    retry_title: string;
+    retry_warning: string;
+    retry_confirm: string;
+    retry_cancel: string;
+};
 
 type Props = {
     url: string;
-    labels: DocumentDeliveryTranslations['history'];
+    labels: RetryLabels;
     closeLabel: string;
 };
 

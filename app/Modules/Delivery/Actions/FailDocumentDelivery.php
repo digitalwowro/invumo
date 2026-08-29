@@ -9,8 +9,11 @@ use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
+use App\Modules\Delivery\Data\ReminderInstanceStatus;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
+use App\Modules\Delivery\Models\ReminderInstance;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Invoices\Models\Invoice;
@@ -80,6 +83,17 @@ final readonly class FailDocumentDelivery
                     : 'The delivery worker could not complete this email.',
                 'failed_at' => now(),
             ]);
+            if ($delivery->event_type === EmailTemplateEvent::PaymentReminder) {
+                ReminderInstance::query()
+                    ->whereKey($delivery->reminder_instance_id)
+                    ->whereIn('status', [ReminderInstanceStatus::Pending, ReminderInstanceStatus::Claimed])
+                    ->update([
+                        'status' => ReminderInstanceStatus::Failed,
+                        'failure_category' => $delivery->failure_category,
+                        'failure_summary' => $delivery->failure_summary,
+                        'completed_at' => now(),
+                    ]);
+            }
             $this->audit->handle(new AuditEventData(
                 actorType: AuditActorType::System,
                 action: 'company.document.delivery.completed',

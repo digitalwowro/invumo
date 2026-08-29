@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Data\EmailTemplateFieldLimits;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
@@ -31,6 +32,8 @@ final readonly class DocumentDeliveryPage
             ->with(['recipients', 'providerEvents'])
             ->withCount('attempts')
             ->where('document_id', $documentId)
+            ->where('event_type', $kind === DocumentKind::Quote
+                ? EmailTemplateEvent::QuoteSent : EmailTemplateEvent::InvoiceSent)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->limit(20)

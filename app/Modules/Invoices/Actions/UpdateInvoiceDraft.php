@@ -15,6 +15,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
+use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Documents\Actions\ApplyDocumentCustomer;
 use App\Modules\Documents\Actions\ApplyDocumentDraftSources;
@@ -48,6 +49,7 @@ final readonly class UpdateInvoiceDraft
         private InvoiceIssuability $issuability,
         private RecordAuditEvent $recordAuditEvent,
         private LockDocumentDeliveryHistory $deliveryHistory,
+        private InvoiceReminderSchedule $reminders,
     ) {}
 
     public function handle(Company $company, User $actor, string $documentId, InvoiceDraftData $data): Document
@@ -77,16 +79,16 @@ final readonly class UpdateInvoiceDraft
             throw InvoiceDraftException::stale();
         }
 
-        if ($this->deliveryHistory->hasPending($document->id)) {
-            throw InvoiceDraftException::deliveryPending();
-        }
-
         $invoice = Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
         $transactions = InvoiceTransaction::query()
             ->where('invoice_id', $document->id)
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
+
+        if ($this->deliveryHistory->hasPendingDirect($document->id)) {
+            throw InvoiceDraftException::deliveryPending();
+        }
         $this->assertValidDetails($data);
 
         if ($transactions->isNotEmpty() && $document->currency_code !== $data->currencyCode) {
@@ -161,6 +163,12 @@ final readonly class UpdateInvoiceDraft
                 document_invoice_due_date_integrity_trigger
             IMMEDIATE
             SQL);
+
+        if ($invoice->lifecycle !== InvoiceLifecycle::Draft) {
+            in_array('due_date', $changedFields, true)
+                ? $this->reminders->recalculatePending($document, $invoice, $configuration->settings)
+                : $this->reminders->reconcileLedger($document, $invoice, $configuration->settings);
+        }
 
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,

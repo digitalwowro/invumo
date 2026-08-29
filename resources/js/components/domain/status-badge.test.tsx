@@ -23,6 +23,11 @@ const expectedStatuses: Status[] = [
     'draft',
     'cancelled',
     'archived',
+    'pending',
+    'claimed',
+    'skipped',
+    'superseded',
+    'suppressed',
 ];
 
 describe('StatusBadge', () => {

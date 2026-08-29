@@ -12,6 +12,7 @@ import type {
     DocumentTaxDefault,
 } from '@/types/document';
 import type { InvoiceTransactionTranslations } from '@/types/invoice-transaction';
+import type { InvoiceReminderTranslations } from '@/types/reminder';
 
 export type InvoiceCustomerSelection = DocumentCustomerSelection;
 export type InvoiceProductDefaults = DocumentProductDefaults;
@@ -195,6 +196,7 @@ export type InvoiceTranslations = {
         string
     >;
     transactions: InvoiceTransactionTranslations;
+    reminders: InvoiceReminderTranslations;
     feedback: Record<string, string>;
     errors: Record<string, string>;
 };

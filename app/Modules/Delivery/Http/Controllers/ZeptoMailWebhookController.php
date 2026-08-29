@@ -18,16 +18,16 @@ final class ZeptoMailWebhookController extends Controller
         ResolveProviderDeliveryAttempt $resolve,
     ): JsonResponse {
         $rawBody = $request->getContent();
-        $contentType = strtolower(trim(explode(';', (string) $request->header('content-type'))[0]));
 
-        if ($rawBody !== '' && $contentType !== 'application/x-www-form-urlencoded') {
-            return response()->json(['accepted' => false], 400);
+        if (in_array($request->method(), ['GET', 'HEAD'], true)) {
+            return response()->json(['accepted' => $rawBody === ''], $rawBody === '' ? 200 : 400);
         }
 
         try {
             $event = $webhook->parse(
                 $rawBody,
                 $request->header(ParsesProviderWebhook::AUTHENTICATION_HEADER),
+                $request->header('content-type'),
                 CarbonImmutable::now('UTC'),
             );
         } catch (ProviderWebhookRequestException $exception) {

@@ -45,7 +45,7 @@ final class CompanyNumberSeriesHttpTest extends TestCase
                 ->where('numberSeriesLimits.maximumPadding', 12)
                 ->where('resetPolicyOptions.0.value', 'NEVER')
                 ->where('resetPolicyOptions.0.label', 'Never reset')
-                ->where('companySettingsNavigation.3.key', 'numbering'));
+                ->where('companySettingsNavigation.4.key', 'numbering'));
 
         $owner->update(['language_code' => 'ro']);
 

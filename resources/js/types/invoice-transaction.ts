@@ -1,5 +1,7 @@
 export type InvoiceTransactionKind = 'PAYMENT' | 'REFUND' | 'ADJUSTMENT';
 export type InvoiceAdjustmentDirection = 'INCREASE_PAID' | 'DECREASE_PAID';
+export type PaymentReceiptState =
+    'QUEUED' | 'RETRYING' | 'ACCEPTED' | 'REJECTED' | 'UNKNOWN';
 
 export type InvoiceTransactionRow = {
     id: string;
@@ -15,6 +17,12 @@ export type InvoiceTransactionRow = {
     editVersion: number;
     updateUrl: string | null;
     deleteUrl: string | null;
+    receipt: {
+        sendUrl: string | null;
+        count: number;
+        latestState: PaymentReceiptState | null;
+        mayHaveBeenSent: boolean;
+    } | null;
 };
 
 export type InvoiceTransactions = {
@@ -44,6 +52,16 @@ export type InvoiceTransactionTranslations = {
     cancelled_notice: string;
     unsaved_notice: string;
     balance_notice: string;
+    receipt: {
+        send: string;
+        send_again: string;
+        title: string;
+        description: string;
+        warning: string;
+        confirm: string;
+        status: string;
+        statuses: Record<PaymentReceiptState, string>;
+    };
     summary: Record<
         'invoice_total' | 'net_paid' | 'outstanding' | 'refundable_cash',
         string

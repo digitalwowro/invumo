@@ -12,14 +12,15 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Data\EmailRecipientData;
 use App\Modules\Delivery\Data\EmailTemplateEvent;
-use App\Modules\Delivery\Data\EmailTemplateFieldLimits;
 use App\Modules\Delivery\Data\LockedPublicDocumentAccess;
+use App\Modules\Delivery\Data\RenderedEmailTemplate;
 use App\Modules\Delivery\Data\SendDocumentData;
 use App\Modules\Delivery\Exceptions\DocumentDeliveryException;
 use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Queries\CurrentDocumentRepresentation;
+use App\Modules\Delivery\Rules\ValidateResolvedEmailContent;
 use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Delivery\Support\PublicDocumentUrl;
 use App\Modules\Documents\Data\DocumentKind;
@@ -40,6 +41,7 @@ final readonly class SendDocument
         private PublicDocumentUrl $publicUrl,
         private IssueLockedInvoice $issueInvoice,
         private CurrentDocumentRepresentation $representation,
+        private ValidateResolvedEmailContent $validateContent,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -117,7 +119,13 @@ final readonly class SendDocument
         $buttonLabel = $this->resolveUrl($data->buttonLabel, $url);
         $signature = $data->signature === null
             ? null : $this->resolveUrl($data->signature, $url);
-        $this->assertResolvedContent($subject, $body, $buttonLabel, $signature);
+        $this->validateContent->handle(new RenderedEmailTemplate(
+            $subject,
+            $body,
+            $buttonLabel,
+            $signature,
+            $url,
+        ));
         $delivery = EmailDelivery::query()->create([
             'document_id' => $documentId,
             'public_document_link_id' => $link->id,
@@ -199,24 +207,6 @@ final readonly class SendDocument
     private function resolveUrl(string $content, string $url): string
     {
         return str_replace('{{public_url}}', $url, $content);
-    }
-
-    private function assertResolvedContent(
-        string $subject,
-        string $body,
-        string $buttonLabel,
-        ?string $signature,
-    ): void {
-        foreach ([
-            'subject' => [$subject, EmailTemplateFieldLimits::SUBJECT],
-            'body' => [$body, EmailTemplateFieldLimits::BODY],
-            'button_label' => [$buttonLabel, EmailTemplateFieldLimits::BUTTON_LABEL],
-            'signature' => [$signature, EmailTemplateFieldLimits::SIGNATURE],
-        ] as $field => [$value, $limit]) {
-            if (is_string($value) && mb_strlen($value) > $limit) {
-                throw DocumentDeliveryException::resolvedContentTooLong($field);
-            }
-        }
     }
 
     private function audit(User $actor, EmailDelivery $delivery): void

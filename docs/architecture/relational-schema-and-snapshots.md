@@ -504,6 +504,8 @@ The authenticated current PDF remains a fresh read-only projection, so a normal 
 
 A partial unique index permits only one `QUEUED` or `RETRYING` logical delivery per document. A database trigger independently blocks edits to that document version while delivery is pending. The dispatch Action also takes the document lock and performs the same check so ordinary users receive a localized validation response rather than a constraint error.
 
+A `PAYMENT_RECEIVED` delivery is created only by the explicit receipt Action and initially carries one same-Company `invoice_transaction_id` referencing a Payment on the same Invoice. Insert and transaction-kind triggers independently enforce that relationship. The provider worker rechecks it under the standard configuration/Document/Invoice/UUID-ordered transaction locks. Later correction to a non-Payment kind or deletion clears only the nullable live reference through the Delivery-owned detachment Action; the foreign key remains a deletion fallback. Resolved content, recipients, attempts, provider events, and document-level history remain immutable, and no detached receipt may be retried.
+
 ### `email_delivery_recipients`
 
 - `id`, `company_id`, delivery reference

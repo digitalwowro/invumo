@@ -26,6 +26,7 @@ use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\EmailDeliveryRecipient;
 use App\Modules\Delivery\Models\PublicDocumentLink;
 use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
+use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
 use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryLimits;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
@@ -45,11 +46,8 @@ final class SendDocumentDelivery extends TenantJob
 {
     public readonly string $dispatchCycle;
 
-    public function __construct(
-        string $companyId,
-        public readonly string $deliveryId,
-        ?string $dispatchCycle = null,
-    ) {
+    public function __construct(string $companyId, public readonly string $deliveryId, ?string $dispatchCycle = null)
+    {
         $this->dispatchCycle = $dispatchCycle ?? $deliveryId;
         parent::__construct(new JobIdentity(
             companyId: $companyId,
@@ -69,6 +67,7 @@ final class SendDocumentDelivery extends TenantJob
         CompleteDocumentDeliveryAttempt $complete,
         DocumentDeliveryQuota $quota,
         ReminderDeliveryEligibility $reminderEligibility,
+        PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
         DocumentDeliverySenderEligibility $senderEligibility,
     ): void {
         if (! $artifact->handle(
@@ -85,6 +84,7 @@ final class SendDocumentDelivery extends TenantJob
             fn (): ?PreparedProviderAttempt => $this->prepare(
                 $execution, $filesystems, $brandTheme, $html, $complete, $quota,
                 $reminderEligibility,
+                $paymentReceivedEligibility,
                 $senderEligibility,
             ),
         );
@@ -127,6 +127,7 @@ final class SendDocumentDelivery extends TenantJob
         CompleteDocumentDeliveryAttempt $completion,
         DocumentDeliveryQuota $quota,
         ReminderDeliveryEligibility $reminderEligibility,
+        PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
         DocumentDeliverySenderEligibility $senderEligibility,
     ): ?PreparedProviderAttempt {
         $unlocked = EmailDelivery::query()->whereKey($this->deliveryId)->first();
@@ -166,8 +167,6 @@ final class SendDocumentDelivery extends TenantJob
 
         $companyRecord = Company::query()->whereKey($this->identity->companyId)->firstOrFail();
         $account = $companyRecord->owningAccount()->firstOrFail();
-        $systemReminder = $delivery->event_type === EmailTemplateEvent::PaymentReminder;
-
         if (! $senderEligibility->allows($companyRecord, $account, $delivery)) {
             $completion->rejectBeforeSubmission(
                 $delivery,
@@ -180,19 +179,30 @@ final class SendDocumentDelivery extends TenantJob
             return null;
         }
 
-        if ($systemReminder && ! $reminderEligibility->allows(
-            $delivery,
-            $document,
-            $invoice instanceof Invoice ? $invoice : null,
-            $transactions,
-        )) {
+        $eligibilityFailure = match ($delivery->event_type) {
+            EmailTemplateEvent::PaymentReminder => $reminderEligibility->allows(
+                $delivery, $document, $invoice instanceof Invoice ? $invoice : null, $transactions,
+            ) ? null : [
+                'category' => 'reminder_no_longer_eligible',
+                'summary' => 'The Invoice no longer qualified for this reminder.',
+            ],
+            EmailTemplateEvent::PaymentReceived => $paymentReceivedEligibility->allows(
+                $delivery, $invoice instanceof Invoice ? $invoice : null, $transactions,
+            ) ? null : [
+                'category' => 'payment_received_no_longer_eligible',
+                'summary' => 'The referenced Payment no longer qualified for this message.',
+            ],
+            default => null,
+        };
+
+        if ($eligibilityFailure !== null) {
             $completion->rejectBeforeSubmission(
                 $delivery,
                 $this->dispatchCycle,
-                'reminder_no_longer_eligible',
-                'The Invoice no longer qualified for this reminder.',
+                $eligibilityFailure['category'],
+                $eligibilityFailure['summary'],
             );
-            $execution->skip('reminder_no_longer_eligible');
+            $execution->skip($eligibilityFailure['category']);
 
             return null;
         }

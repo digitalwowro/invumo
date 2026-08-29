@@ -226,7 +226,7 @@ A positive adjustment changes balance but never refundable cash. A Refund can ma
 
 - Financial rows may be created, edited, or deleted only while the Invoice is `ISSUED`. Draft and Cancelled Invoices reject all financial mutations.
 - A transaction date may precede the Invoice issue date to support advance or backfilled records, but it cannot be later than the current Company-local date.
-- A previously sent payment-received email does not freeze the transaction. A later edit/delete remains possible after warning, full invariant validation, and audit; the delivered email remains an immutable historical artifact.
+- A previously sent payment-received email does not freeze the transaction. A later edit/delete remains possible after warning, full invariant validation, and audit; the delivered email remains an immutable document-level historical artifact. Changing the row away from Payment or deleting it clears only the delivery's nullable live transaction reference, never its resolved content, recipients, attempts, or provider events.
 
 ### Zero-total financial rows
 

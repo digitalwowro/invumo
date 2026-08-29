@@ -53,6 +53,7 @@ final class RedactDocumentDeliveries
             $delivery->update([
                 'document_id' => null,
                 'public_document_link_id' => null,
+                'invoice_transaction_id' => null,
                 'subject' => null,
                 'body' => null,
                 'button_label' => null,

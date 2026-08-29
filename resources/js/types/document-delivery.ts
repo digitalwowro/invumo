@@ -2,6 +2,8 @@ export type DeliveryRecipientRole = 'TO' | 'CC' | 'BCC';
 export type DeliveryAttachmentMode = 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
 export type DeliveryState =
     'QUEUED' | 'RETRYING' | 'ACCEPTED' | 'REJECTED' | 'UNKNOWN';
+export type DeliveryEventType =
+    'QUOTE_SENT' | 'INVOICE_SENT' | 'PAYMENT_RECEIVED';
 export type DeliveryProviderEventType =
     | 'DELIVERED'
     | 'SOFT_BOUNCED'
@@ -32,6 +34,7 @@ export type DeliveryComposer = {
 
 export type DeliveryHistoryItem = {
     id: string;
+    eventType: DeliveryEventType;
     state: DeliveryState;
     subject: string | null;
     attachmentMode: DeliveryAttachmentMode | null;
@@ -97,6 +100,7 @@ export type DocumentDeliveryTranslations = {
         attachment: string;
         provider_reported: string;
         provider_events: Record<DeliveryProviderEventType, string>;
+        events: Record<DeliveryEventType, string>;
         statuses: Record<DeliveryState, string>;
         retry: string;
         retry_title: string;

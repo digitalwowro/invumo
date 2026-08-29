@@ -8,6 +8,9 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
+use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Transactions\Data\InvoiceLedger;
 use App\Modules\Transactions\Data\InvoiceTransactionFieldLimits;
@@ -31,6 +34,18 @@ final readonly class InvoiceTransactionsForInvoice
         int $currencyPrecision,
     ): array {
         $transactions = $this->rows($invoiceId);
+        $receiptDeliveries = EmailDelivery::query()
+            ->where('document_id', $invoiceId)
+            ->where('event_type', EmailTemplateEvent::PaymentReceived)
+            ->whereIn('invoice_transaction_id', $transactions->pluck('id'))
+            ->orderByDesc('created_at')->orderByDesc('id')->get()
+            ->groupBy('invoice_transaction_id');
+        $deliveryPending = EmailDelivery::query()
+            ->where('document_id', $invoiceId)
+            ->whereIn('dispatch_state', [
+                EmailDeliveryState::Queued,
+                EmailDeliveryState::Retrying,
+            ])->exists();
         $ledger = InvoiceLedger::fromTransactions($transactions);
         $canManage = $this->abilities->allows($actor, $company, CompanyAbility::ManageInvoices);
         $canAdjust = $this->abilities->allows($actor, $company, CompanyAbility::ManageAdjustments);
@@ -46,25 +61,57 @@ final readonly class InvoiceTransactionsForInvoice
                 'outstanding' => $this->decimal($outstanding, $currencyPrecision),
                 'refundableCash' => $this->decimal($refundableCash, $currencyPrecision),
             ],
-            'items' => $transactions->map(fn (InvoiceTransaction $transaction): array => [
-                'id' => $transaction->id,
-                'kind' => $transaction->kind->value,
-                'adjustmentDirection' => $transaction->adjustment_direction?->value,
-                'amount' => $this->money($transaction->amount, $currencyPrecision),
-                'currencyCode' => $transaction->currency_code,
-                'transactionDate' => $transaction->transaction_date->toDateString(),
-                'paymentMethod' => $transaction->payment_method,
-                'reference' => $transaction->reference,
-                'notes' => $transaction->notes,
-                'adjustmentReason' => $transaction->adjustment_reason,
-                'editVersion' => $transaction->edit_version,
-                'updateUrl' => $mutable && $canManage && (
-                    $transaction->kind !== InvoiceTransactionKind::Adjustment || $canAdjust
-                ) ? route('invoice-transactions.update', [$company, $invoiceId, $transaction], false) : null,
-                'deleteUrl' => $mutable && $canManage && (
-                    $transaction->kind !== InvoiceTransactionKind::Adjustment || $canAdjust
-                ) ? route('invoice-transactions.destroy', [$company, $invoiceId, $transaction], false) : null,
-            ])->values()->all(),
+            'items' => $transactions->map(function (InvoiceTransaction $transaction) use (
+                $receiptDeliveries,
+                $mutable,
+                $canManage,
+                $canAdjust,
+                $deliveryPending,
+                $company,
+                $invoiceId,
+                $currencyPrecision,
+            ): array {
+                $receipts = $receiptDeliveries->get($transaction->id, collect());
+                $latest = $receipts->first();
+
+                return [
+                    'id' => $transaction->id,
+                    'kind' => $transaction->kind->value,
+                    'adjustmentDirection' => $transaction->adjustment_direction?->value,
+                    'amount' => $this->money($transaction->amount, $currencyPrecision),
+                    'currencyCode' => $transaction->currency_code,
+                    'transactionDate' => $transaction->transaction_date->toDateString(),
+                    'paymentMethod' => $transaction->payment_method,
+                    'reference' => $transaction->reference,
+                    'notes' => $transaction->notes,
+                    'adjustmentReason' => $transaction->adjustment_reason,
+                    'editVersion' => $transaction->edit_version,
+                    'updateUrl' => $mutable && $canManage && (
+                        $transaction->kind !== InvoiceTransactionKind::Adjustment || $canAdjust
+                    ) ? route('invoice-transactions.update', [$company, $invoiceId, $transaction], false) : null,
+                    'deleteUrl' => $mutable && $canManage && (
+                        $transaction->kind !== InvoiceTransactionKind::Adjustment || $canAdjust
+                    ) ? route('invoice-transactions.destroy', [$company, $invoiceId, $transaction], false) : null,
+                    'receipt' => $transaction->kind === InvoiceTransactionKind::Payment ? [
+                        'sendUrl' => $mutable && $canManage && ! $deliveryPending
+                            ? route(
+                                'invoice-transactions.payment-received.store',
+                                [$company, $invoiceId, $transaction],
+                                false,
+                            ) : null,
+                        'count' => $receipts->count(),
+                        'latestState' => $latest instanceof EmailDelivery
+                            ? $latest->dispatch_state->value : null,
+                        'mayHaveBeenSent' => $receipts->contains(
+                            fn (EmailDelivery $delivery): bool => in_array(
+                                $delivery->dispatch_state,
+                                [EmailDeliveryState::Accepted, EmailDeliveryState::Unknown],
+                                true,
+                            ),
+                        ),
+                    ] : null,
+                ];
+            })->values()->all(),
             'storeUrl' => $mutable && $canManage
                 ? route('invoice-transactions.store', [$company, $invoiceId], false)
                 : null,

@@ -46,6 +46,11 @@ return [
             'CLICKED' => 'Accesat',
             'FEEDBACK_LOOP' => 'Reclamație spam',
         ],
+        'events' => [
+            'QUOTE_SENT' => 'Email ofertă',
+            'INVOICE_SENT' => 'Email factură',
+            'PAYMENT_RECEIVED' => 'Plată înregistrată',
+        ],
         'statuses' => [
             'QUEUED' => 'În coadă',
             'RETRYING' => 'Se reîncearcă',
@@ -77,6 +82,9 @@ return [
         'resolved_content_too_long' => 'Scurtează acest conținut deoarece linkul securizat completat depășește lungimea permisă.',
         'delivery_pending' => 'Așteaptă finalizarea livrării emailului curent înainte de a trimite din nou acest document.',
         'recipient_limit_exceeded' => 'Reduce lista de destinatari înainte de a trimite acest email.',
+        'payment_received_unavailable' => 'Numai o Plată curentă a unei Facturi Emise poate primi acest email.',
+        'payment_received_confirmation_required' => 'Confirmă acest email opțional de înregistrare a plății.',
+        'payment_received_recipients_unavailable' => 'Adaugă cel puțin un destinatar valid în câmpul Către al Facturii înainte de trimitere.',
     ],
     'failures' => [
         'artifact_too_large' => 'PDF-ul generat a fost prea mare pentru a fi atașat.',
@@ -88,10 +96,12 @@ return [
         'public_link_unavailable' => 'Linkul public securizat a devenit indisponibil înainte de trimiterea emailului.',
         'sending_quota_exceeded' => 'Limita comună de trimitere a emailurilor a fost atinsă. Încearcă din nou mai târziu.',
         'sender_access_unavailable' => 'Expeditorul nu mai are permisiunea de a trimite acest email.',
+        'payment_received_no_longer_eligible' => 'Plata asociată s-a modificat înainte ca emailul să poată fi trimis.',
         'generic' => 'Emailul nu a putut fi livrat.',
     ],
     'feedback' => [
         'queued' => 'Emailul documentului a fost pus în coadă.',
         'retry_queued' => 'O nouă încercare de livrare a fost pusă în coadă.',
+        'payment_received_queued' => 'Emailul de înregistrare a plății a fost pus în coadă.',
     ],
 ];

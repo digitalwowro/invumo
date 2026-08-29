@@ -73,6 +73,11 @@ const labels: DocumentDeliveryTranslations = {
             CLICKED: 'Clicked',
             FEEDBACK_LOOP: 'Spam complaint',
         },
+        events: {
+            QUOTE_SENT: 'Quote email',
+            INVOICE_SENT: 'Invoice email',
+            PAYMENT_RECEIVED: 'Payment received',
+        },
         statuses: {
             QUEUED: 'Queued',
             RETRYING: 'Retrying',
@@ -145,6 +150,7 @@ describe('DocumentDeliveryPanel', () => {
                     history: [
                         {
                             id: 'delivery',
+                            eventType: 'QUOTE_SENT',
                             state: 'REJECTED',
                             subject: 'A very long immutable delivery subject',
                             attachmentMode: 'ATTACH_PDF',

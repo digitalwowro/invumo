@@ -46,6 +46,11 @@ return [
             'CLICKED' => 'Clicked',
             'FEEDBACK_LOOP' => 'Spam complaint',
         ],
+        'events' => [
+            'QUOTE_SENT' => 'Quote email',
+            'INVOICE_SENT' => 'Invoice email',
+            'PAYMENT_RECEIVED' => 'Payment received',
+        ],
         'statuses' => [
             'QUEUED' => 'Queued',
             'RETRYING' => 'Retrying',
@@ -77,6 +82,9 @@ return [
         'resolved_content_too_long' => 'Shorten this content because the resolved secure link makes it exceed the allowed length.',
         'delivery_pending' => 'Wait for the current email delivery to finish before sending this document again.',
         'recipient_limit_exceeded' => 'Reduce the recipient list before sending this email.',
+        'payment_received_unavailable' => 'Only a current Payment on an Issued Invoice can receive this email.',
+        'payment_received_confirmation_required' => 'Confirm this optional payment-received email.',
+        'payment_received_recipients_unavailable' => 'Add at least one valid To recipient to the Invoice before sending this email.',
     ],
     'failures' => [
         'artifact_too_large' => 'The generated PDF was too large to attach.',
@@ -88,10 +96,12 @@ return [
         'public_link_unavailable' => 'The secure public link became unavailable before the email was submitted.',
         'sending_quota_exceeded' => 'The shared email sending limit was reached. Try again later.',
         'sender_access_unavailable' => 'The sender no longer has permission to submit this email.',
+        'payment_received_no_longer_eligible' => 'The referenced Payment changed before this email could be submitted.',
         'generic' => 'The email could not be delivered.',
     ],
     'feedback' => [
         'queued' => 'Document email queued.',
         'retry_queued' => 'A new delivery attempt was queued.',
+        'payment_received_queued' => 'Payment-received email queued.',
     ],
 ];

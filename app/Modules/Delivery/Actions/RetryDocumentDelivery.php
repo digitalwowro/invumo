@@ -12,6 +12,7 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Data\EmailTemplateEvent;
 use App\Modules\Delivery\Exceptions\DocumentDeliveryException;
 use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
@@ -22,6 +23,8 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Transactions\Data\InvoiceTransactionKind;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Str;
 use LogicException;
 
@@ -56,6 +59,10 @@ final readonly class RetryDocumentDelivery
                 DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
                 DocumentKind::Invoice => Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
             };
+            $transactions = $delivery->document_kind === DocumentKind::Invoice
+                ? InvoiceTransaction::query()
+                    ->where('invoice_id', $document->id)->orderBy('id')->lockForUpdate()->get()
+                : collect();
             $deliverySetting = DocumentDeliverySetting::query()
                 ->where('document_id', $document->id)->lockForUpdate()->firstOrFail();
             $publicLink = PublicDocumentLink::query()
@@ -91,6 +98,11 @@ final readonly class RetryDocumentDelivery
                         EmailDeliveryState::Retrying,
                     ], true))
                 || $delivery->redacted_at !== null
+                || ($delivery->event_type === EmailTemplateEvent::PaymentReceived
+                    && ! $transactions->contains(
+                        fn (InvoiceTransaction $transaction): bool => $transaction->id === $delivery->invoice_transaction_id
+                            && $transaction->kind === InvoiceTransactionKind::Payment,
+                    ))
                 || ! $deliverySetting->public_access_enabled
                 || ! $publicLink instanceof PublicDocumentLink
                 || $publicLink->revoked_at !== null

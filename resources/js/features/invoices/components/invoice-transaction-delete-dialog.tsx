@@ -57,13 +57,16 @@ export function InvoiceTransactionDeleteDialog(props: {
                 })
             }
         >
-            {generalError ? (
-                <SystemMessage title={generalError} tone="error" />
-            ) : (
-                <span className="sr-only">
-                    {props.labels.delete_description}
-                </span>
+            {props.transaction.receipt?.mayHaveBeenSent && (
+                <SystemMessage
+                    title={props.labels.receipt.warning}
+                    tone="warning"
+                />
             )}
+            {generalError && (
+                <SystemMessage title={generalError} tone="error" />
+            )}
+            <span className="sr-only">{props.labels.delete_description}</span>
         </FormDialog>
     );
 }

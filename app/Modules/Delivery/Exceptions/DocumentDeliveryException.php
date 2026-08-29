@@ -66,6 +66,21 @@ final class DocumentDeliveryException extends RuntimeException
         return new self('lifecycle_unavailable');
     }
 
+    public static function paymentReceivedUnavailable(): self
+    {
+        return new self('payment_received_unavailable');
+    }
+
+    public static function paymentReceivedConfirmationRequired(): self
+    {
+        return new self('payment_received_confirmation_required');
+    }
+
+    public static function paymentReceivedRecipientsUnavailable(): self
+    {
+        return new self('payment_received_recipients_unavailable');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

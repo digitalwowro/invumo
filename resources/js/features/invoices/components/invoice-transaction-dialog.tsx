@@ -133,6 +133,12 @@ export function InvoiceTransactionDialog(props: Props) {
                             tone="error"
                         />
                     )}
+                    {props.transaction?.receipt?.mayHaveBeenSent && (
+                        <SystemMessage
+                            title={props.labels.receipt.warning}
+                            tone="warning"
+                        />
+                    )}
                     <FieldGroup>
                         {editing && (
                             <SelectField

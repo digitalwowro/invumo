@@ -46,6 +46,9 @@ export function DocumentDeliveryHistory({
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="quiet">
+                                {labels.history.events[item.eventType]}
+                            </Badge>
+                            <Badge variant="quiet">
                                 {labels.history.statuses[item.state]}
                             </Badge>
                             {item.attachmentMode === 'ATTACH_PDF' && (

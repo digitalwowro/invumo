@@ -212,6 +212,22 @@ return [
         'cancelled_notice' => 'Tranzacțiile sunt păstrate ca istoric protejat la modificare cât timp această Factură este Anulată.',
         'unsaved_notice' => 'Salvează modificările curente ale Facturii înainte de a-i modifica tranzacțiile.',
         'balance_notice' => 'Soldul curent al Facturii nu permite această tranzacție.',
+        'receipt' => [
+            'send' => 'Trimite confirmarea',
+            'send_again' => 'Trimite din nou confirmarea',
+            'title' => 'Trimiți un email de confirmare a plății?',
+            'description' => 'Această acțiune explicită folosește Plata salvată, soldul curent al Facturii, destinatarii rezolvați, șablonul Companiei și linkul securizat. Înregistrarea unei Plăți nu trimite niciodată automat emailul.',
+            'warning' => 'Este posibil ca un email de confirmare a plății să fi fost deja livrat. Retrimiterea sau modificarea ulterioară a acestei Plăți nu schimbă emailul anterior.',
+            'confirm' => 'Pune confirmarea în coadă',
+            'status' => 'Confirmare',
+            'statuses' => [
+                'QUEUED' => 'În coadă',
+                'RETRYING' => 'Se reîncearcă',
+                'ACCEPTED' => 'Acceptat de furnizor',
+                'REJECTED' => 'Eșuat',
+                'UNKNOWN' => 'Rezultat necunoscut',
+            ],
+        ],
         'summary' => [
             'invoice_total' => 'Total factură',
             'net_paid' => 'Plătit net',

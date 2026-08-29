@@ -28,12 +28,14 @@ final readonly class DocumentDeliveryPage
     public function for(Company $company, User $actor, string $documentId, DocumentKind $kind): array
     {
         $canSend = $this->abilities->allows($actor, $company, $kind->manageAbility());
+        $events = $kind === DocumentKind::Quote
+            ? [EmailTemplateEvent::QuoteSent]
+            : [EmailTemplateEvent::InvoiceSent, EmailTemplateEvent::PaymentReceived];
         $deliveries = EmailDelivery::query()
             ->with(['recipients', 'providerEvents'])
             ->withCount('attempts')
             ->where('document_id', $documentId)
-            ->where('event_type', $kind === DocumentKind::Quote
-                ? EmailTemplateEvent::QuoteSent : EmailTemplateEvent::InvoiceSent)
+            ->whereIn('event_type', $events)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->limit(20)
@@ -54,6 +56,7 @@ final readonly class DocumentDeliveryPage
             'composer' => $canSend ? $this->composer->for($company, $actor, $documentId, $kind) : null,
             'history' => $deliveries->map(fn (EmailDelivery $delivery): array => [
                 'id' => $delivery->id,
+                'eventType' => $delivery->event_type->value,
                 'state' => $delivery->dispatch_state->value,
                 'subject' => $delivery->subject,
                 'attachmentMode' => $delivery->attachment_mode?->value,

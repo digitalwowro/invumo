@@ -13,6 +13,7 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\DetachPaymentReceivedDeliveries;
 use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
@@ -30,6 +31,7 @@ final readonly class DeleteInvoiceTransaction
         private LockInvoiceTransactionAggregate $lockAggregate,
         private RecordAuditEvent $recordAuditEvent,
         private LockDocumentDeliveryHistory $deliveryHistory,
+        private DetachPaymentReceivedDeliveries $detachReceipts,
         private InvoiceReminderSchedule $reminders,
     ) {}
 
@@ -80,7 +82,9 @@ final readonly class DeleteInvoiceTransaction
             return true;
         }
 
-        if ($this->deliveryHistory->hasPendingDirect($context->document->id)) {
+        $deliveries = $this->deliveryHistory->all($context->document->id);
+
+        if ($this->deliveryHistory->hasPendingDirectIn($deliveries)) {
             throw InvoiceTransactionException::deliveryPending();
         }
 
@@ -120,6 +124,7 @@ final readonly class DeleteInvoiceTransaction
             'changed_fields' => ['deleted'],
         ], ['kind', 'direction', 'currency_code', 'edit_version', 'changed_fields']);
         $reason = $transaction->adjustment_reason;
+        $this->detachReceipts->handle($deliveries, $transaction->id);
         $transaction->delete();
         $context->document->update([
             'edit_version' => $context->document->edit_version + 1,

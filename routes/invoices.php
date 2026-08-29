@@ -5,6 +5,7 @@ use App\Modules\Customers\Http\Controllers\InlineCustomerController;
 use App\Modules\Delivery\Http\Controllers\DocumentDeliveryController;
 use App\Modules\Delivery\Http\Controllers\DocumentPublicLinkController;
 use App\Modules\Delivery\Http\Controllers\InvoiceReminderController;
+use App\Modules\Delivery\Http\Controllers\PaymentReceivedDeliveryController;
 use App\Modules\Invoices\Http\Controllers\InvoiceController;
 use App\Modules\Invoices\Http\Controllers\InvoiceDraftController;
 use App\Modules\Invoices\Http\Controllers\InvoiceLifecycleController;
@@ -54,6 +55,11 @@ Route::patch('companies/{company}/invoices/{invoice}/transactions/{transaction}'
 Route::delete('companies/{company}/invoices/{invoice}/transactions/{transaction}', [InvoiceTransactionController::class, 'destroy'])
     ->middleware('throttle:20,1')
     ->name('invoice-transactions.destroy');
+Route::post(
+    'companies/{company}/invoices/{invoice}/transactions/{transaction}/payment-received',
+    PaymentReceivedDeliveryController::class,
+)->middleware('throttle:document-delivery')
+    ->name('invoice-transactions.payment-received.store');
 Route::get('companies/{company}/invoices/{invoice}/view', [InvoiceRepresentationController::class, 'show'])
     ->name('invoices.current.show');
 Route::get('companies/{company}/invoices/{invoice}/pdf', [InvoiceRepresentationController::class, 'pdf'])

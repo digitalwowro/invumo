@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { InvoiceTransactionDeleteDialog } from '@/features/invoices/components/invoice-transaction-delete-dialog';
 import { InvoiceTransactionDialog } from '@/features/invoices/components/invoice-transaction-dialog';
+import { PaymentReceivedDialog } from '@/features/invoices/components/payment-received-dialog';
 import type {
     InvoiceTransactionRow,
     InvoiceTransactions,
@@ -87,28 +88,52 @@ export function InvoiceTransactionTable(props: Props) {
             label: labels.columns.actions,
             kind: 'actions',
             render: (transaction) => (
-                <Cluster gap="sm">
-                    {transaction.updateUrl && (
-                        <InvoiceTransactionDialog
-                            url={transaction.updateUrl}
-                            transaction={transaction}
-                            labels={labels}
-                            today={transactions.today}
-                            limits={transactions.limits}
-                            canAdjust={transactions.abilities.adjust}
-                            disabled={props.disabled}
-                            disabledDescription={labels.unsaved_notice}
-                        />
+                <Stack gap="sm">
+                    {transaction.receipt?.latestState && (
+                        <Cluster gap="xs">
+                            <SecondaryText>
+                                {labels.receipt.status}
+                            </SecondaryText>
+                            <Badge variant="quiet">
+                                {
+                                    labels.receipt.statuses[
+                                        transaction.receipt.latestState
+                                    ]
+                                }
+                            </Badge>
+                        </Cluster>
                     )}
-                    {transaction.deleteUrl && (
-                        <InvoiceTransactionDeleteDialog
-                            transaction={transaction}
-                            labels={labels}
-                            disabled={props.disabled}
-                            disabledDescription={labels.unsaved_notice}
-                        />
-                    )}
-                </Cluster>
+                    <Cluster gap="sm">
+                        {transaction.receipt?.sendUrl && (
+                            <PaymentReceivedDialog
+                                transaction={transaction}
+                                labels={labels}
+                                disabled={props.disabled}
+                                disabledDescription={labels.unsaved_notice}
+                            />
+                        )}
+                        {transaction.updateUrl && (
+                            <InvoiceTransactionDialog
+                                url={transaction.updateUrl}
+                                transaction={transaction}
+                                labels={labels}
+                                today={transactions.today}
+                                limits={transactions.limits}
+                                canAdjust={transactions.abilities.adjust}
+                                disabled={props.disabled}
+                                disabledDescription={labels.unsaved_notice}
+                            />
+                        )}
+                        {transaction.deleteUrl && (
+                            <InvoiceTransactionDeleteDialog
+                                transaction={transaction}
+                                labels={labels}
+                                disabled={props.disabled}
+                                disabledDescription={labels.unsaved_notice}
+                            />
+                        )}
+                    </Cluster>
+                </Stack>
             ),
         },
     ];

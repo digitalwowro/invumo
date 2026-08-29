@@ -14,6 +14,7 @@ use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Delivery\Actions\DetachPaymentReceivedDeliveries;
 use App\Modules\Delivery\Actions\InvoiceReminderSchedule;
 use App\Modules\Delivery\Actions\LockDocumentDeliveryHistory;
 use App\Modules\Transactions\Data\InvoiceLedger;
@@ -32,6 +33,7 @@ final readonly class UpdateInvoiceTransaction
         private ValidateInvoiceTransactionMutation $validate,
         private RecordAuditEvent $recordAuditEvent,
         private LockDocumentDeliveryHistory $deliveryHistory,
+        private DetachPaymentReceivedDeliveries $detachReceipts,
         private InvoiceReminderSchedule $reminders,
     ) {}
 
@@ -71,7 +73,9 @@ final readonly class UpdateInvoiceTransaction
             return $transaction;
         }
 
-        if ($this->deliveryHistory->hasPendingDirect($context->document->id)) {
+        $deliveries = $this->deliveryHistory->all($context->document->id);
+
+        if ($this->deliveryHistory->hasPendingDirectIn($deliveries)) {
             throw InvoiceTransactionException::deliveryPending();
         }
 
@@ -91,6 +95,12 @@ final readonly class UpdateInvoiceTransaction
         );
         $changedFields = $this->changedFields($transaction, $data, (string) $amount);
         $before = $this->auditPayload($transaction, $changedFields);
+
+        if ($transaction->kind === InvoiceTransactionKind::Payment
+            && $data->kind !== InvoiceTransactionKind::Payment) {
+            $this->detachReceipts->handle($deliveries, $transaction->id);
+        }
+
         $transaction->update([
             'kind' => $data->kind,
             'adjustment_direction' => $data->adjustmentDirection,

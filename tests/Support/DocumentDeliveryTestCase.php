@@ -17,6 +17,7 @@ use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Rules\DocumentDeliverySenderEligibility;
+use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
 use App\Modules\Delivery\Rules\ReminderDeliveryEligibility;
 use App\Modules\Delivery\Support\DocumentDeliveryQuota;
 use App\Modules\Delivery\Support\DocumentEmailHtml;
@@ -29,6 +30,7 @@ use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
+use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Str;
 
@@ -58,6 +60,7 @@ abstract class DocumentDeliveryTestCase extends PublicDocumentTestCase
                 app(CompleteDocumentDeliveryAttempt::class),
                 app(DocumentDeliveryQuota::class),
                 app(ReminderDeliveryEligibility::class),
+                app(PaymentReceivedDeliveryEligibility::class),
                 app(DocumentDeliverySenderEligibility::class),
             ),
         );
@@ -78,6 +81,7 @@ abstract class DocumentDeliveryTestCase extends PublicDocumentTestCase
                         'failure_summary' => 'Test cleanup.',
                         'failed_at' => now(),
                     ]);
+                InvoiceTransaction::query()->delete();
                 Invoice::query()->where('lifecycle', '!=', InvoiceLifecycle::Draft)
                     ->update(['lifecycle' => InvoiceLifecycle::Draft]);
                 Quote::query()->where('lifecycle', '!=', QuoteLifecycle::Draft)

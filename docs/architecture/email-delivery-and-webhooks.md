@@ -35,6 +35,8 @@ Only one logical delivery may be queued or retrying for a document at a time. Do
 
 Automated reminder deliveries use the same immutable delivery/attempt/provider boundary but remain distinguishable as `PAYMENT_REMINDER`. A queued reminder does not freeze Invoice lifecycle, due-date, or transaction mutations: those root Actions must be able to suppress or recalculate it. The worker therefore rechecks the reminder instance, lifecycle, outstanding balance, schedule, recipient set, and public-link state immediately before provider submission. Direct sends remain mutation-blocking while queued. Reminder failures are visible on the Invoice and in the Owner/Admin Company reminder-operations view; manual retry preserves the reminder occurrence and dispatcher identities, creates a fresh immutable delivery from current recipients/content/link eligibility, requires a duplicate-delivery warning, and audits only machine-safe identifiers/category metadata. Earlier delivery and attempt rows remain unchanged.
 
+Payment-received delivery is a separate, explicit user action on one retained Payment. Recording, importing, or backfilling a Payment never queues email. The Action resolves the current Invoice recipients, `PAYMENT_RECEIVED` template, exact Payment amount/date, outstanding balance, public link, and PDF mode into a new immutable logical delivery, then reuses the same provider job and quotas. A queued/retrying receipt blocks direct transaction mutation like another direct send, and the worker rechecks that the Invoice is still Issued and the linked row is still a Payment immediately before provider submission. Accepted or `UNKNOWN` history produces a correction warning but does not freeze the financial row. Editing a Payment into another kind or deleting it explicitly detaches the nullable live transaction reference inside the transaction-owning Action; PostgreSQL independently rejects a referenced non-Payment. The resolved receipt content, recipients, attempts, and document-level history remain unchanged, and a detached receipt cannot be retried.
+
 Direct composition remains editable, including one-off recipient addresses, but it is not an unbounded mail relay. One logical delivery accepts at most ten case-insensitively unique recipients. A shared named HTTP limiter bounds user and Account submission bursts, while the provider-neutral worker boundary atomically consumes weighted recipient budgets for the Company, owning Account, and shared provider identity immediately before creating a provider attempt. Initial sends, manual retries, automatic retries, and non-HTTP callers therefore converge on the same provider-submission guard. The six counters are read together and persisted in one bounded cache write while a lock whose lifetime exceeds the worker timeout is held. Genuine exhaustion returns a terminal quota outcome; lock contention or persistence failure raises into the approved queue retry path and never records false exhaustion. The worker also rechecks Company archive, Account suspension, and initiating-User suspension before any provider call. Quota excess and lost sender authority fail visibly without contacting ZeptoMail. Production readiness rejects absent, non-positive, or overly permissive quota configuration.
 
 ## 3. Provider identity and duplicate control
@@ -127,6 +129,7 @@ The normalized event row contains only provider name/event identifier, event typ
 
 - Owner/Admin manage Company email templates, reminder defaults, and Company-wide failure operations.
 - Owner/Admin/Member may compose and send a Quote or Invoice when they hold the corresponding document ability.
+- Owner/Admin/Member may explicitly send or resend a payment-received message for an Issued Invoice Payment when they hold the Invoice management ability; no role may enable implicit sending on Payment creation.
 - Owner/Admin/Member may view document-local delivery history.
 - Owner/Admin may retry automated reminder failures; direct-send retries follow the document send permission.
 - Jobs and webhooks are narrow system actors and never inherit a Company role.
@@ -146,6 +149,7 @@ Phase 9 implementation must prove:
 - click/open tracking is displayed as provider-reported and webhook privacy fields are discarded;
 - forced RLS and Laravel authorization independently isolate every delivery, recipient, artifact, reminder, and event row;
 - document deletion performs the approved delivery-content erasure while retaining only non-sensitive operational facts;
+- Payment creation/backfill has no email side effect, while explicit receipt sends are idempotent, revalidated before provider submission, and remain immutable when the Payment is later corrected or deleted;
 - tests never call ZeptoMail or send real email; and
 - the complete EN/RO responsive send, history, failure, and retry workflows pass the repository quality gate.
 

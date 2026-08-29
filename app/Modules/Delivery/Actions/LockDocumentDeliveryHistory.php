@@ -35,16 +35,17 @@ final class LockDocumentDeliveryHistory
 
     public function hasPendingDirect(string $documentId): bool
     {
-        return EmailDelivery::query()
-            ->where('document_id', $documentId)
-            ->where('event_type', '!=', EmailTemplateEvent::PaymentReminder)
-            ->whereIn('dispatch_state', [
+        return $this->hasPendingDirectIn($this->all($documentId));
+    }
+
+    /** @param Collection<int, EmailDelivery> $deliveries */
+    public function hasPendingDirectIn(Collection $deliveries): bool
+    {
+        return $deliveries->contains(fn (EmailDelivery $delivery): bool => $delivery->event_type !== EmailTemplateEvent::PaymentReminder
+            && in_array($delivery->dispatch_state, [
                 EmailDeliveryState::Queued,
                 EmailDeliveryState::Retrying,
-            ])
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->first() instanceof EmailDelivery;
+            ], true));
     }
 
     /** @param Collection<int, EmailDelivery> $deliveries */

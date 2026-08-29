@@ -212,6 +212,22 @@ return [
         'cancelled_notice' => 'Transactions are retained as read-only history while this Invoice is Cancelled.',
         'unsaved_notice' => 'Save the current Invoice changes before changing its transactions.',
         'balance_notice' => 'The current Invoice balance does not allow this transaction.',
+        'receipt' => [
+            'send' => 'Send receipt',
+            'send_again' => 'Send receipt again',
+            'title' => 'Send a payment-received email?',
+            'description' => 'This explicit action uses the saved Payment, current Invoice balance, resolved recipients, Company template, and secure link. Recording a Payment never sends it automatically.',
+            'warning' => 'A payment-received email may already have been delivered. Sending again or later changing this Payment does not alter the earlier email.',
+            'confirm' => 'Queue receipt email',
+            'status' => 'Receipt',
+            'statuses' => [
+                'QUEUED' => 'Queued',
+                'RETRYING' => 'Retrying',
+                'ACCEPTED' => 'Accepted by provider',
+                'REJECTED' => 'Failed',
+                'UNKNOWN' => 'Outcome unknown',
+            ],
+        ],
         'summary' => [
             'invoice_total' => 'Invoice total',
             'net_paid' => 'Net paid',

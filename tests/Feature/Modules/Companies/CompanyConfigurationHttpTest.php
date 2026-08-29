@@ -53,6 +53,7 @@ final class CompanyConfigurationHttpTest extends TestCase
                 ->where('companySettingsNavigation.6.key', 'bank_accounts')
                 ->where('companySettingsNavigation.7.key', 'appearance')
                 ->where('companySettingsNavigation.8.key', 'members')
+                ->where('companySettingsNavigation.9.key', 'audit')
                 ->where('currencyOptions', fn (mixed $options) => collect($options)
                     ->contains('value', 'RON'))
                 ->where('timezoneOptions', fn (mixed $options) => collect($options)

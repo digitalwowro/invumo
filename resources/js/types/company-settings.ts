@@ -1,4 +1,5 @@
 import type { CompanyAppearanceTranslations } from '@/types/company-appearance';
+import type { CompanyAuditTranslations } from '@/types/company-audit';
 import type { CompanyBankAccountTranslations } from '@/types/company-bank-account';
 import type { CompanyDocumentDefaultsTranslations } from '@/types/company-document-defaults';
 import type { CompanyEmailTemplateTranslations } from '@/types/company-email-template';
@@ -16,7 +17,8 @@ export type CompanySettingsNavigationItem = {
         | 'taxes'
         | 'bank_accounts'
         | 'appearance'
-        | 'members';
+        | 'members'
+        | 'audit';
     href: string;
 };
 
@@ -57,4 +59,5 @@ export type CompanySettingsTranslations = {
     taxes: CompanyTaxPresetTranslations;
     bank_accounts: CompanyBankAccountTranslations;
     appearance: CompanyAppearanceTranslations;
+    audit: CompanyAuditTranslations;
 };

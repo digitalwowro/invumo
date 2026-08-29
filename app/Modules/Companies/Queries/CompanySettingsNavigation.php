@@ -69,6 +69,13 @@ final readonly class CompanySettingsNavigation
             ];
         }
 
+        if ($this->authorization->allows($membership->role, CompanyAbility::ViewAudit)) {
+            $items[] = [
+                'key' => 'audit',
+                'href' => route('company-audit.index', $company, false),
+            ];
+        }
+
         if ($items === []) {
             throw new AuthorizationException;
         }

@@ -114,6 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             require __DIR__.'/quotes.php';
             require __DIR__.'/invoices.php';
             require __DIR__.'/recurring.php';
+            require __DIR__.'/audit.php';
 
             Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
                 ->name('catalog.index');

@@ -653,6 +653,8 @@ The generated-Invoice foreign key is restrictive so ordinary cascades cannot sil
 - occurred timestamp, request/correlation/idempotency reference, and required reason where applicable
 - understandable, redacted before/after `jsonb`
 
+Reverse-chronological Company history uses `(company_id, occurred_at, id)`. Bounded actor and target filters use matching `(company_id, actor_type/target_type, occurred_at, id)` indexes, while literal substring search over action, target, UUID, safe actor reference, and reason uses the approved `pg_trgm` expression index. The authorized UI does not select or transport correlation or idempotency references, User email, or any field outside the event's already-approved payload.
+
 When an idempotency reference is present, a partial unique constraint over Company, action, and that reference makes the retained audit/action event the retry anchor, including after the affected business row has been deleted.
 
 Audit `jsonb` is intentional because event shapes differ. Every action constructs its before/after values through an explicit action-specific field allowlist; it must never copy a request, model, exception context, or provider response wholesale. The action that supplies the payload owns the semantic safety of every selected value and must test its exact permitted fields. It excludes secrets, plaintext public tokens, raw provider payloads, credentials, and unnecessary recipient/customer data.

@@ -3,7 +3,8 @@
 namespace App\Modules\Recurring\Actions;
 
 use App\Modules\Documents\Actions\PrepareDocumentLine;
-use App\Modules\Documents\Data\DocumentLineData;
+use App\Modules\Recurring\Data\RecurringLineTaxMode;
+use App\Modules\Recurring\Data\RecurringTemplateLineData;
 use App\Modules\Recurring\Exceptions\RecurringTemplateException;
 use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,16 +16,16 @@ final readonly class PersistRecurringTemplateLines
 
     /**
      * @param  Collection<int, RecurringTemplateLine>  $persisted
-     * @param  list<DocumentLineData>  $submitted
+     * @param  list<RecurringTemplateLineData>  $submitted
      */
     public function handle(
         string $templateId,
         Collection $persisted,
         array $submitted,
-        ?int $precision,
+        ?int $previewPrecision,
     ): int {
         $submittedIds = array_values(array_filter(array_map(
-            fn (DocumentLineData $line): ?string => $line->id,
+            fn (RecurringTemplateLineData $line): ?string => $line->line->id,
             $submitted,
         )));
 
@@ -40,7 +41,8 @@ final readonly class PersistRecurringTemplateLines
         $retained = [];
         $complete = 0;
 
-        foreach ($submitted as $index => $data) {
+        foreach ($submitted as $index => $submittedLine) {
+            $data = $submittedLine->line;
             $line = $data->id === null
                 ? new RecurringTemplateLine
                 : $persisted->firstWhere('id', $data->id);
@@ -49,11 +51,25 @@ final readonly class PersistRecurringTemplateLines
                 throw RecurringTemplateException::lineSetInvalid();
             }
 
-            $prepared = $this->prepareLine->handle($data, $precision);
+            $prepared = $this->prepareLine->handle($data, $previewPrecision);
+            $tax = $submittedLine->taxMode === RecurringLineTaxMode::Explicit
+                ? [
+                    'tax_mode' => $submittedLine->taxMode,
+                    'tax_preset_id' => $data->taxPresetId,
+                    'tax_name' => $prepared->attributes['tax_name'],
+                    'tax_percentage' => $prepared->attributes['tax_percentage'],
+                ]
+                : [
+                    'tax_mode' => $submittedLine->taxMode,
+                    'tax_preset_id' => null,
+                    'tax_name' => null,
+                    'tax_percentage' => '0',
+                ];
             $line->fill([
                 'recurring_template_id' => $templateId,
                 'position' => $index + 1,
                 ...$prepared->attributes,
+                ...$tax,
             ])->save();
             $retained[] = $line->id;
             $complete += $prepared->calculation === null ? 0 : 1;

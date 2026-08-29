@@ -15,6 +15,8 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
+use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Support\Facades\DB;
 
 final readonly class ArchiveTaxPreset
@@ -64,6 +66,12 @@ final readonly class ArchiveTaxPreset
             ->orderBy('id')
             ->lockForUpdate()
             ->get(['id']);
+        RecurringTemplateCustomerValue::query()
+            ->where('tax_preset_id', $locked->id)
+            ->orderBy('id')->lockForUpdate()->get(['id']);
+        RecurringTemplateLine::query()
+            ->where('tax_preset_id', $locked->id)
+            ->orderBy('id')->lockForUpdate()->get(['id']);
 
         if ($dependentCustomers->isNotEmpty() || $dependentProducts->isNotEmpty()) {
             throw TaxPresetException::defaultDependency();

@@ -18,6 +18,7 @@ use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
 use App\Modules\Delivery\Actions\RecalculateCompanyPendingReminders;
+use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -115,6 +116,11 @@ final readonly class UpdateCompanyConfiguration
             ->orderBy('id')
             ->lockForUpdate()
             ->get(['id', 'unit_price']);
+        RecurringTemplateCustomerValue::query()
+            ->where('currency_id', $currency->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
 
         foreach ($products as $product) {
             try {

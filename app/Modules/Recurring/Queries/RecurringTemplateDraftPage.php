@@ -12,6 +12,7 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Queries\CustomerDocumentOptions;
 use App\Modules\Customers\Queries\CustomerFormOptions;
 use App\Modules\Documents\Data\DocumentFieldLimits;
+use App\Modules\Recurring\Data\RecurringLineTaxMode;
 use App\Modules\Recurring\Data\RecurringTemplateFieldLimits;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Models\RecurringTemplate;
@@ -27,6 +28,7 @@ final readonly class RecurringTemplateDraftPage
         private CustomerFormOptions $customerForm,
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
+        private RecurringTemplateInheritancePage $inheritancePage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -72,7 +74,11 @@ final readonly class RecurringTemplateDraftPage
             throw new AuthorizationException;
         }
 
-        $customer = $this->customerOptions->preview($company, $actor, $template->customer_id);
+        $resolvedCustomer = $this->customerOptions->resolved(
+            $company, $actor, $template->customer_id,
+        );
+        $customer = $resolvedCustomer->preview();
+        $inheritance = $this->inheritancePage->for($template, $resolvedCustomer);
         $lines = RecurringTemplateLine::query()
             ->where('recurring_template_id', $template->id)
             ->orderBy('position')
@@ -86,8 +92,8 @@ final readonly class RecurringTemplateDraftPage
                 'state' => $template->state->value,
                 'editVersion' => $template->edit_version,
                 'customer' => $customer,
-                'currencyCode' => $customer['currencyCode'],
-                'currencyPrecision' => $customer['currencyPrecision'],
+                'currencyCode' => $inheritance['inheritance']['currencyCode'],
+                'currencyPrecision' => $inheritance['inheritance']['currencyPrecision'],
                 'lines' => $lines->map(fn (RecurringTemplateLine $line): array => [
                     'id' => $line->id,
                     'productServiceId' => $line->product_service_id,
@@ -98,9 +104,18 @@ final readonly class RecurringTemplateDraftPage
                     'periodUnit' => $line->period_unit->value,
                     'periodQuantity' => $line->period_quantity,
                     'discountPercentage' => $line->discount_percentage,
-                    'taxName' => $line->tax_name,
-                    'taxPercentage' => $line->tax_percentage,
-                    'taxPresetId' => null,
+                    'taxName' => match ($line->tax_mode) {
+                        RecurringLineTaxMode::InheritCustomer => $customer['taxDefault']['name'] ?? null,
+                        RecurringLineTaxMode::None => null,
+                        RecurringLineTaxMode::Explicit => $line->tax_name,
+                    },
+                    'taxPercentage' => match ($line->tax_mode) {
+                        RecurringLineTaxMode::InheritCustomer => $customer['taxDefault']['percentage'] ?? '0',
+                        RecurringLineTaxMode::None => '0',
+                        RecurringLineTaxMode::Explicit => $line->tax_percentage,
+                    },
+                    'taxPresetId' => $line->tax_preset_id,
+                    'taxMode' => $line->tax_mode->value,
                     'finalLineTotal' => null,
                 ])->values()->all(),
             ],
@@ -110,6 +125,7 @@ final readonly class RecurringTemplateDraftPage
             'canDelete' => $this->abilities->allows(
                 $actor, $company, CompanyAbility::DeleteRecurringTemplates,
             ),
+            ...$inheritance,
             'sourceUrls' => $this->sourceUrls($company),
             'inlineCustomerStoreUrl' => route(
                 'recurring.inline-customers.store', $company, false,
@@ -123,7 +139,8 @@ final readonly class RecurringTemplateDraftPage
             'inlineCreatedProduct' => $inlineProductId === null
                 ? null
                 : $this->catalogDefaults->for(
-                    $company, $actor, $inlineProductId, $customer['currencyCode'],
+                    $company, $actor, $inlineProductId,
+                    $inheritance['inheritance']['currencyCode'],
                 ),
             'sourceAbilities' => [
                 'createCustomer' => $this->abilities->allows(
@@ -141,6 +158,9 @@ final readonly class RecurringTemplateDraftPage
                 'description' => DocumentFieldLimits::DESCRIPTION,
                 'unit' => DocumentFieldLimits::UNIT,
                 'taxName' => DocumentFieldLimits::TAX_NAME,
+                'termsAndConditions' => DocumentContentLimits::TERMS_AND_CONDITIONS_CHARACTERS,
+                'notes' => DocumentContentLimits::NOTES_CHARACTERS,
+                'maxDayOffset' => DocumentContentLimits::MAX_CALENDAR_DAY_OFFSET,
             ],
         ];
     }

@@ -65,7 +65,8 @@ final class RecurringTemplateHttpTest extends TestCase
             'customer_id' => $customer->id,
             'customer_confirmation_token' => $token,
             'customer_reference' => 'PO-PRIVATE',
-            'lines' => [$this->line('Private consulting', '100', '2', '10', 'TVA', '19')],
+            'lines' => [$this->line('Private consulting', '100.12345678', '2', '10', 'TVA', '19')],
+            'inheritance' => $this->inheritance(),
         ])->assertRedirect()->assertSessionHas('status');
 
         $this->tenant($company, function (): void {
@@ -73,7 +74,7 @@ final class RecurringTemplateHttpTest extends TestCase
             $line = RecurringTemplateLine::query()->sole();
             $this->assertSame(2, $template->edit_version);
             $this->assertSame('Monthly support plan', $template->internal_name);
-            $this->assertSame('100.00000000', $line->item_price);
+            $this->assertSame('100.12345678', $line->item_price);
             $this->assertSame('2.000000', $line->quantity);
 
             $audit = AuditEvent::query()
@@ -175,6 +176,37 @@ final class RecurringTemplateHttpTest extends TestCase
             'discount_percentage' => $discount,
             'tax_name' => $taxName,
             'tax_percentage' => $tax,
+            'tax_mode' => 'EXPLICIT',
+            'tax_preset_id' => null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function inheritance(): array
+    {
+        return [
+            'identity_mode' => 'INHERIT',
+            'identity' => [],
+            'recipients_mode' => 'INHERIT',
+            'recipients' => [],
+            'currency_mode' => 'INHERIT',
+            'currency_code' => 'RON',
+            'language_mode' => 'INHERIT',
+            'document_language' => 'en',
+            'payment_term_mode' => 'INHERIT',
+            'payment_term_days' => null,
+            'tax_mode' => 'INHERIT',
+            'tax_preset_id' => null,
+            'delivery_mode' => 'INHERIT',
+            'email_attachment_mode' => 'SECURE_LINK_ONLY',
+            'terms_mode' => 'INHERIT',
+            'terms_and_conditions' => null,
+            'notes_mode' => 'INHERIT',
+            'notes' => null,
+            'bank_mode' => 'INHERIT',
+            'bank_account_id' => null,
+            'reminder_mode' => 'INHERIT_COMPANY',
+            'reminder_rules' => [],
         ];
     }
 

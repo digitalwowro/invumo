@@ -20,7 +20,9 @@ import {
     applyRecurringProduct,
     blankRecurringLine,
     recurringTemplateFormData,
+    recurringTemplatePayload,
 } from '@/features/recurring/components/recurring-template-form-data';
+import { RecurringTemplateOverrideSections } from '@/features/recurring/components/recurring-template-override-sections';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
@@ -31,22 +33,26 @@ import type {
 } from '@/types/document';
 import type {
     RecurringSourceProps,
+    RecurringInheritanceProps,
     RecurringTemplateDraft,
     RecurringTemplateLimits,
     RecurringTranslations,
 } from '@/types/recurring';
 
-type Props = RecurringSourceProps & {
-    template: RecurringTemplateDraft;
-    limits: RecurringTemplateLimits;
-    updateUrl: string;
-    labels: RecurringTranslations['editor'];
-    customerLabels: CustomerTranslations;
-    catalogLabels: CatalogTranslations;
-};
+type Props = RecurringSourceProps &
+    RecurringInheritanceProps & {
+        template: RecurringTemplateDraft;
+        limits: RecurringTemplateLimits;
+        updateUrl: string;
+        labels: RecurringTranslations['editor'];
+        customerLabels: CustomerTranslations;
+        catalogLabels: CatalogTranslations;
+    };
 
 export function RecurringTemplateDraftEditor(props: Props) {
-    const form = useForm(recurringTemplateFormData(props.template));
+    const form = useForm(
+        recurringTemplateFormData(props.template, props.inheritance),
+    );
     const [customer, setCustomer] = useState(props.template.customer);
     const [precision, setPrecision] = useState(
         props.template.currencyPrecision,
@@ -78,9 +84,10 @@ export function RecurringTemplateDraftEditor(props: Props) {
     };
 
     const applyCustomer = (selection: DocumentCustomerSelection) => {
+        const next = applyRecurringCustomer(form.data, selection);
         setCustomer(selection);
-        setPrecision(selection.currencyPrecision);
-        form.setData((current) => applyRecurringCustomer(current, selection));
+        setPrecision(next.inheritance.currencyPrecision);
+        form.setData(next);
     };
 
     const applyProduct = (index: number, product: DocumentProductDefaults) => {
@@ -91,35 +98,21 @@ export function RecurringTemplateDraftEditor(props: Props) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.transform((data) => ({
-            edit_version: data.editVersion,
-            internal_name: data.internalName,
-            customer_id: data.customerId,
-            customer_confirmation_token: data.customerConfirmationToken,
-            customer_reference: data.customerReference || null,
-            lines: data.lines.map((line) => ({
-                id: line.id,
-                product_service_id: line.productServiceId,
-                description: line.description,
-                item_price: line.itemPrice,
-                quantity: line.quantity,
-                unit: line.unit,
-                period_unit: line.periodUnit,
-                period_quantity: line.periodQuantity,
-                discount_percentage: line.discountPercentage,
-                tax_name: line.taxName,
-                tax_percentage: line.taxPercentage,
-            })),
-        }));
+        form.transform(recurringTemplatePayload);
         form.patch(props.updateUrl, {
             preserveScroll: true,
             onSuccess: (page) => {
                 const updated = page.props.template as RecurringTemplateDraft;
-                const next = recurringTemplateFormData(updated);
+                const updatedInheritance = page.props
+                    .inheritance as RecurringInheritanceProps['inheritance'];
+                const next = recurringTemplateFormData(
+                    updated,
+                    updatedInheritance,
+                );
                 form.setData(next);
                 form.setDefaults(next);
                 setCustomer(updated.customer);
-                setPrecision(updated.currencyPrecision);
+                setPrecision(updatedInheritance.currencyPrecision);
             },
         });
     };
@@ -192,6 +185,15 @@ export function RecurringTemplateDraftEditor(props: Props) {
                         customer={customer}
                         labels={props.labels}
                         onSelect={() => setCustomerSelector(true)}
+                    />
+                    <RecurringTemplateOverrideSections
+                        {...props}
+                        value={form.data.inheritance}
+                        errors={errors}
+                        onChange={(inheritance) => {
+                            form.setData('inheritance', inheritance);
+                            setPrecision(inheritance.currencyPrecision);
+                        }}
                     />
                     {precision === null && (
                         <SystemMessage

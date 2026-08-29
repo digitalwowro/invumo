@@ -159,7 +159,7 @@ final class ResolveDocumentCustomer
     /**
      * @param  Collection<int, CustomerDeliveryRecipient>  $recipients
      * @param  Collection<int, CustomerContact>  $contacts
-     * @return list<array{role: string, name: string|null, email: string}>
+     * @return list<array{role: string, contact_id: string|null, name: string|null, email: string}>
      */
     private function recipientSnapshots(Collection $recipients, Collection $contacts): array
     {
@@ -177,6 +177,7 @@ final class ResolveDocumentCustomer
 
             return [
                 'role' => $recipient->role->value,
+                'contact_id' => $recipient->contact_id,
                 'name' => $contact->name ?? $recipient->explicit_name,
                 'email' => $email,
             ];

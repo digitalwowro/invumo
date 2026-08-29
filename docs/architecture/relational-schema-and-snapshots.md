@@ -591,7 +591,9 @@ This typed one-to-one row mirrors the Customer-derived identity, address, regist
 - field present with a value: use that explicit value;
 - nullable field present with null: explicitly clear it.
 
-Typed columns preserve validation and querying. A constraint trigger rejects unknown field names and invalid explicit values. Delivery recipient lists are treated as one logical field and use the child rows below.
+Typed columns preserve validation and querying. Database `CHECK` constraints reject unknown field names and invalid explicit values. Delivery recipient lists are treated as one logical field and use the child rows below.
+
+An explicit currency stores same-Company source provenance plus a fixed ISO code and `0..8` precision snapshot. Later Company precision changes do not rewrite that snapshot. An inherited currency stores no currency row or precision and resolves the current Customer/Company value for preview and each future occurrence.
 
 ### `recurring_template_delivery_recipients`
 
@@ -614,6 +616,10 @@ Lines mirror the editable input/snapshot fields of document lines and retain opt
 - `NONE`: apply no tax.
 
 Product/Tax source edits never rewrite the template line. A generated Invoice copies resolved values into ordinary `document_lines` and recalculates using that occurrence's resolved currency precision without FX conversion.
+
+The stored `item_price` remains a currency-neutral `numeric(30,8)` source input; template persistence never rounds it to the current preview currency. Therefore Company precision changes do not enumerate, reject, or rewrite recurring lines. The generated Invoice is the quantized financial snapshot: inherited mode uses the occurrence's current resolved precision, while explicit currency mode uses the template's fixed code/precision snapshot.
+
+Tax, bank, and recipient-contact provenance is optional explanatory linkage around self-contained snapshots. Archiving a referenced source does not invalidate or rewrite the template snapshot; selecting a different unavailable source is rejected, and Contact deletion clears only nullable provenance. Source mutations still lock affected recurring rows in stable UUID order so concurrent saves cannot silently cross the chosen snapshot boundary.
 
 Batch 10A stores the editable input snapshot subset with optional restrictive Product provenance, the shared exact-decimal envelopes, and a deferrable Company/template/position uniqueness constraint. Complete 1-based rewrites cover insertion, deletion, and reordering in one Draft-update transaction; Product archival remains snapshot-safe, while permanent Product deletion is blocked until the provenance reference is removed.
 

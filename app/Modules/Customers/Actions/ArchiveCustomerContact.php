@@ -15,6 +15,7 @@ use App\Modules\Customers\Exceptions\CustomerContactException;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Models\CustomerContact;
 use App\Modules\Customers\Models\CustomerDeliveryRecipient;
+use App\Modules\Recurring\Models\RecurringTemplateDeliveryRecipient;
 use Illuminate\Support\Facades\DB;
 
 final readonly class ArchiveCustomerContact
@@ -68,6 +69,10 @@ final readonly class ArchiveCustomerContact
         if ($recipients->contains('contact_id', $contact->id)) {
             throw CustomerContactException::recipientDependency();
         }
+
+        RecurringTemplateDeliveryRecipient::query()
+            ->where('contact_id', $contact->id)
+            ->orderBy('id')->lockForUpdate()->get(['id']);
 
         $before = [
             'archived' => false,

@@ -4,6 +4,7 @@ namespace App\Modules\Recurring\Models;
 
 use App\Foundation\Database\TenantOwnedModel;
 use App\Foundation\Money\PeriodUnit;
+use App\Modules\Recurring\Data\RecurringLineTaxMode;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 /**
@@ -21,11 +22,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string $discount_percentage
  * @property string|null $tax_name
  * @property string $tax_percentage
+ * @property RecurringLineTaxMode $tax_mode
+ * @property string|null $tax_preset_id
  */
 #[Fillable([
     'recurring_template_id', 'position', 'product_service_id', 'description',
     'item_price', 'quantity', 'unit', 'period_unit', 'period_quantity',
-    'discount_percentage', 'tax_name', 'tax_percentage',
+    'discount_percentage', 'tax_name', 'tax_percentage', 'tax_mode',
+    'tax_preset_id',
 ])]
 class RecurringTemplateLine extends TenantOwnedModel
 {
@@ -35,6 +39,7 @@ class RecurringTemplateLine extends TenantOwnedModel
         return [
             'position' => 'integer',
             'period_unit' => PeriodUnit::class,
+            'tax_mode' => RecurringLineTaxMode::class,
         ];
     }
 }

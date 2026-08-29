@@ -12,6 +12,7 @@ use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Data\UpdateRecurringTemplateData;
@@ -30,6 +31,7 @@ final readonly class UpdateRecurringTemplateDraft
         private ResolveLockedRecurringCustomer $customer,
         private LockRecurringTemplateProducts $products,
         private PersistRecurringTemplateLines $persistLines,
+        private PersistRecurringTemplateInheritance $persistInheritance,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -79,12 +81,19 @@ final readonly class UpdateRecurringTemplateDraft
             ->lockForUpdate()
             ->get();
         $this->assertAvailableProducts($data, $products, $persisted);
+        $this->assertAvailableTaxPresets($data, $configuration->taxPresets, $persisted);
         $changedFields = $this->changedFields($template, $data, $persisted->count());
         $complete = $this->persistLines->handle(
             $template->id,
             $persisted,
             $data->lines,
             $customer->currencyPrecision,
+        );
+        $this->persistInheritance->handle(
+            $template->id,
+            $data->inheritance,
+            $customer,
+            $configuration,
         );
         $template->update([
             'internal_name' => $data->internalName,
@@ -119,11 +128,14 @@ final readonly class UpdateRecurringTemplateDraft
         Collection $persisted,
     ): void {
         foreach ($data->lines as $line) {
-            $product = $line->productServiceId === null ? null : $products->get($line->productServiceId);
-            $stored = $line->id === null ? null : $persisted->firstWhere('id', $line->id);
+            $documentLine = $line->line;
+            $product = $documentLine->productServiceId === null
+                ? null : $products->get($documentLine->productServiceId);
+            $stored = $documentLine->id === null
+                ? null : $persisted->firstWhere('id', $documentLine->id);
 
             if ($product?->archived_at !== null
-                && $stored?->product_service_id !== $line->productServiceId) {
+                && $stored?->product_service_id !== $documentLine->productServiceId) {
                 throw RecurringTemplateException::sourceUnavailable();
             }
         }
@@ -142,6 +154,7 @@ final readonly class UpdateRecurringTemplateDraft
             'customer_id' => $template->customer_id !== $data->customerId,
             'customer_reference' => $template->customer_reference !== $data->customerReference,
             'lines' => $lineCount !== count($data->lines) || count($data->lines) > 0,
+            'inheritance' => true,
         ] as $field => $isChanged) {
             if ($isChanged) {
                 $changed[] = $field;
@@ -149,5 +162,31 @@ final readonly class UpdateRecurringTemplateDraft
         }
 
         return $changed;
+    }
+
+    /**
+     * @param  Collection<int, TaxPreset>  $presets
+     * @param  Collection<int, RecurringTemplateLine>  $persisted
+     */
+    private function assertAvailableTaxPresets(
+        UpdateRecurringTemplateData $data,
+        Collection $presets,
+        Collection $persisted,
+    ): void {
+        foreach ($data->lines as $submitted) {
+            $line = $submitted->line;
+
+            if ($line->taxPresetId === null) {
+                continue;
+            }
+
+            $preset = $presets->firstWhere('id', $line->taxPresetId);
+            $stored = $line->id === null ? null : $persisted->firstWhere('id', $line->id);
+
+            if (! $preset instanceof TaxPreset
+                || ($preset->archived_at !== null && $stored?->tax_preset_id !== $preset->id)) {
+                throw RecurringTemplateException::sourceUnavailable();
+            }
+        }
     }
 }

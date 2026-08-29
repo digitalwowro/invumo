@@ -54,6 +54,7 @@ export function DocumentLineEditor({
                     limits={limits}
                     labels={labels}
                     errors={errors}
+                    inheritedTax={taxDefault}
                     sourceAction={
                         <Button
                             type="button"

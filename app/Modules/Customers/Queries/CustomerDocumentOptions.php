@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
+use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Models\Customer;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -52,9 +53,17 @@ final readonly class CustomerDocumentOptions
     /** @return array<string, mixed> */
     public function preview(Company $company, User $actor, ?string $customerId): array
     {
+        return $this->resolved($company, $actor, $customerId)->preview();
+    }
+
+    public function resolved(
+        Company $company,
+        User $actor,
+        ?string $customerId,
+    ): ResolvedDocumentCustomer {
         $this->authorize($company, $actor);
 
-        return $this->resolver->for($customerId)->preview();
+        return $this->resolver->for($customerId);
     }
 
     private function authorize(Company $company, User $actor): void

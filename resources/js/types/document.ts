@@ -21,6 +21,7 @@ export type DocumentLineDraft = {
     taxName: string;
     taxPercentage: string;
     taxPresetId: string | null;
+    taxMode?: 'INHERIT_CUSTOMER' | 'EXPLICIT' | 'NONE';
     priceStatus?: 'COPIED' | 'ENTER_MANUALLY' | 'CURRENCY_MISMATCH' | null;
     finalLineTotal: string | null;
 };
@@ -40,6 +41,7 @@ export type DocumentLineLabels = {
     incomplete: string;
     fields: Record<string, string>;
     periods: Record<DocumentPeriodUnit, string>;
+    tax_modes?: Record<'INHERIT_CUSTOMER' | 'EXPLICIT' | 'NONE', string>;
 };
 
 export type DocumentTaxDefault = {
@@ -58,6 +60,13 @@ export type DocumentCustomerSelection = {
     taxDefault: DocumentTaxDefault | null;
     emailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
     recipientCount: number;
+    snapshot?: Record<string, string | null> | null;
+    recipients?: Array<{
+        role: 'TO' | 'CC' | 'BCC';
+        contactId: string | null;
+        name: string | null;
+        email: string;
+    }>;
     confirmationToken: string | null;
 };
 

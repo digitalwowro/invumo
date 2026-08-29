@@ -13,6 +13,7 @@ use App\Modules\Companies\Exceptions\BankAccountException;
 use App\Modules\Companies\Models\BankAccount;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use App\Modules\Recurring\Models\RecurringTemplateDefault;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -51,6 +52,10 @@ final readonly class ArchiveBankAccount
         if ($locked->archived_at !== null) {
             throw BankAccountException::archived();
         }
+
+        RecurringTemplateDefault::query()
+            ->where('bank_account_id', $locked->id)
+            ->orderBy('id')->lockForUpdate()->get(['id']);
 
         $wasDefault = $locked->is_default;
         $locked->update(['is_default' => false, 'archived_at' => now()]);

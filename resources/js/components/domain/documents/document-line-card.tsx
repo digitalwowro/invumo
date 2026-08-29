@@ -10,6 +10,7 @@ import type {
     DocumentLineLabels,
     DocumentLineLimits,
     DocumentPeriodUnit,
+    DocumentTaxDefault,
 } from '@/types/document';
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
     errors: Record<string, string>;
     sourceAction?: ReactNode;
     sourceNotice?: ReactNode;
+    inheritedTax?: DocumentTaxDefault | null;
     onChange: (line: DocumentLineDraft) => void;
     onMove: (direction: -1 | 1) => void;
     onRemove: () => void;
@@ -78,6 +80,36 @@ export function DocumentLineCard(props: Props) {
                 </div>
             </div>
             {props.sourceNotice}
+            {props.line.taxMode && props.labels.tax_modes && (
+                <SelectField
+                    name={`tax-mode-${props.line.key}`}
+                    label={props.labels.fields.tax_mode}
+                    error={error('tax_mode')}
+                    value={props.line.taxMode}
+                    options={Object.entries(props.labels.tax_modes).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
+                    onValueChange={(value) =>
+                        props.onChange({
+                            ...props.line,
+                            taxMode: value as DocumentLineDraft['taxMode'],
+                            taxPresetId: null,
+                            taxName:
+                                value === 'INHERIT_CUSTOMER'
+                                    ? (props.inheritedTax?.name ?? '')
+                                    : value === 'NONE'
+                                      ? ''
+                                      : props.line.taxName,
+                            taxPercentage:
+                                value === 'INHERIT_CUSTOMER'
+                                    ? (props.inheritedTax?.percentage ?? '0')
+                                    : value === 'NONE'
+                                      ? '0'
+                                      : props.line.taxPercentage,
+                        })
+                    }
+                />
+            )}
             <TextareaField
                 label={props.labels.fields.description}
                 error={error('description')}
@@ -163,6 +195,9 @@ export function DocumentLineCard(props: Props) {
                     error={error('tax_name')}
                     input={{
                         value: props.line.taxName,
+                        disabled:
+                            props.line.taxMode !== undefined &&
+                            props.line.taxMode !== 'EXPLICIT',
                         maxLength: props.limits.taxName,
                         onChange: (event) =>
                             field('taxName', event.target.value),
@@ -174,6 +209,9 @@ export function DocumentLineCard(props: Props) {
                     input={{
                         inputMode: 'decimal',
                         value: props.line.taxPercentage,
+                        disabled:
+                            props.line.taxMode !== undefined &&
+                            props.line.taxMode !== 'EXPLICIT',
                         onChange: (event) =>
                             field('taxPercentage', event.target.value),
                     }}

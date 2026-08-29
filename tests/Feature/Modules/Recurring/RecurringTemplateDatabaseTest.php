@@ -17,7 +17,11 @@ use App\Modules\Customers\Models\Customer;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Recurring\Models\RecurringTemplate;
+use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
+use App\Modules\Recurring\Models\RecurringTemplateDefault;
+use App\Modules\Recurring\Models\RecurringTemplateDeliveryRecipient;
 use App\Modules\Recurring\Models\RecurringTemplateLine;
+use App\Modules\Recurring\Models\RecurringTemplateReminderRule;
 use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -37,7 +41,11 @@ final class RecurringTemplateDatabaseTest extends TestCase
         $companyB = $this->company($ownerB);
         [$customerB, $templateB] = $this->records($companyB);
 
-        foreach (['recurring_templates', 'recurring_template_lines'] as $table) {
+        foreach ([
+            'recurring_templates', 'recurring_template_lines',
+            'recurring_template_customer_values', 'recurring_template_defaults',
+            'recurring_template_delivery_recipients', 'recurring_template_reminder_rules',
+        ] as $table) {
             $rls = DB::connection('pgsql_schema')->selectOne(<<<SQL
                 SELECT relrowsecurity, relforcerowsecurity
                 FROM pg_class WHERE oid = 'public.{$table}'::regclass
@@ -138,6 +146,46 @@ final class RecurringTemplateDatabaseTest extends TestCase
                 $this->assertSame('23514', $exception->errorInfo[0]);
             }
         });
+    }
+
+    public function test_override_child_rows_require_their_explicit_parent_modes(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->company($owner);
+        [, $template] = $this->records($company);
+
+        try {
+            $this->tenant($company, function () use ($template): void {
+                RecurringTemplateCustomerValue::query()->create([
+                    'recurring_template_id' => $template->id,
+                    'explicit_fields' => [],
+                ]);
+                RecurringTemplateDeliveryRecipient::query()->create([
+                    'recurring_template_id' => $template->id,
+                    'role' => 'TO', 'email' => 'test@example.com', 'display_order' => 1,
+                ]);
+            });
+            $this->fail('Recipient rows require explicit recipient mode.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23514', $exception->errorInfo[0]);
+        }
+
+        try {
+            $this->tenant($company, function () use ($template): void {
+                RecurringTemplateDefault::query()->create([
+                    'recurring_template_id' => $template->id,
+                    'reminder_mode' => 'INHERIT_COMPANY',
+                ]);
+                RecurringTemplateReminderRule::query()->create([
+                    'recurring_template_id' => $template->id,
+                    'relation' => 'AFTER_DUE', 'day_offset' => 1,
+                    'enabled' => true, 'display_order' => 1,
+                ]);
+            });
+            $this->fail('Reminder rows require override mode.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23514', $exception->errorInfo[0]);
+        }
     }
 
     /** @return array{Customer, RecurringTemplate} */

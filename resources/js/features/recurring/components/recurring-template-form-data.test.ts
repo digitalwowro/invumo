@@ -6,7 +6,10 @@ import {
     recurringTemplateFormData,
 } from '@/features/recurring/components/recurring-template-form-data';
 import type { DocumentCustomerSelection } from '@/types/document';
-import type { RecurringTemplateDraft } from '@/types/recurring';
+import type {
+    RecurringInheritance,
+    RecurringTemplateDraft,
+} from '@/types/recurring';
 
 const customer: DocumentCustomerSelection = {
     customerId: 'customer-1',
@@ -18,7 +21,42 @@ const customer: DocumentCustomerSelection = {
     taxDefault: { id: 'tax-1', name: 'TVA', percentage: '19' },
     emailAttachmentMode: 'SECURE_LINK_ONLY',
     recipientCount: 1,
+    snapshot: { type: 'COMPANY', legal_name: 'Customer SRL' },
+    recipients: [
+        {
+            role: 'TO',
+            contactId: null,
+            name: 'Billing',
+            email: 'billing@example.com',
+        },
+    ],
     confirmationToken: 'a'.repeat(64),
+};
+
+const inheritance: RecurringInheritance = {
+    identityMode: 'INHERIT',
+    identity: customer.snapshot ?? {},
+    recipientsMode: 'INHERIT',
+    recipients: [],
+    currencyMode: 'INHERIT',
+    currencyCode: 'RON',
+    currencyPrecision: 2,
+    languageMode: 'INHERIT',
+    documentLanguage: 'ro',
+    paymentTermMode: 'INHERIT',
+    paymentTermDays: 30,
+    taxMode: 'INHERIT',
+    taxPresetId: 'tax-1',
+    deliveryMode: 'INHERIT',
+    emailAttachmentMode: 'SECURE_LINK_ONLY',
+    termsMode: 'INHERIT',
+    termsAndConditions: '',
+    notesMode: 'INHERIT',
+    notes: '',
+    bankMode: 'INHERIT',
+    bankAccountId: null,
+    reminderMode: 'INHERIT_COMPANY',
+    reminderRules: [],
 };
 
 const template: RecurringTemplateDraft = {
@@ -35,7 +73,7 @@ const template: RecurringTemplateDraft = {
 
 describe('Recurring-template Draft form data', () => {
     it('retains the required Customer version token and identifiers', () => {
-        expect(recurringTemplateFormData(template)).toMatchObject({
+        expect(recurringTemplateFormData(template, inheritance)).toMatchObject({
             editVersion: 3,
             internalName: 'Monthly support',
             customerId: 'customer-1',
@@ -44,7 +82,7 @@ describe('Recurring-template Draft form data', () => {
         });
     });
 
-    it('copies fixed line inputs without tax-source provenance', () => {
+    it('copies fixed line inputs with explicit tax provenance', () => {
         const [applied] = applyRecurringProduct(
             [blankRecurringLine(customer.taxDefault)],
             0,
@@ -71,7 +109,8 @@ describe('Recurring-template Draft form data', () => {
             itemPrice: '100',
             taxName: 'Reduced TVA',
             taxPercentage: '9',
-            taxPresetId: null,
+            taxPresetId: 'tax-2',
+            taxMode: 'EXPLICIT',
         });
     });
 
@@ -79,7 +118,10 @@ describe('Recurring-template Draft form data', () => {
         const next = { ...customer, customerId: 'customer-2' };
 
         expect(
-            applyRecurringCustomer(recurringTemplateFormData(template), next),
+            applyRecurringCustomer(
+                recurringTemplateFormData(template, inheritance),
+                next,
+            ),
         ).toMatchObject({
             internalName: 'Monthly support',
             customerId: 'customer-2',

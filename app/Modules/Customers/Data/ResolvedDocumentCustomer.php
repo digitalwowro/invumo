@@ -9,7 +9,7 @@ final readonly class ResolvedDocumentCustomer
     /**
      * @param  array<string, string|null>|null  $snapshot
      * @param  array{id: string, name: string, percentage: string}|null  $taxDefault
-     * @param  list<array{role: string, name: string|null, email: string}>  $recipients
+     * @param  list<array{role: string, contact_id: string|null, name: string|null, email: string}>  $recipients
      */
     public function __construct(
         public ?string $customerId,
@@ -42,6 +42,13 @@ final readonly class ResolvedDocumentCustomer
             ],
             'emailAttachmentMode' => $this->emailAttachmentMode->value,
             'recipientCount' => count($this->recipients),
+            'snapshot' => $this->snapshot,
+            'recipients' => array_map(fn (array $recipient): array => [
+                'role' => $recipient['role'],
+                'contactId' => $recipient['contact_id'],
+                'name' => $recipient['name'],
+                'email' => $recipient['email'],
+            ], $this->recipients),
             'confirmationToken' => $this->confirmationToken,
         ];
     }

@@ -137,6 +137,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Resolve product/service defaults into a line when the entry is selected.
 - Later source changes never propagate silently to an existing ordinary quote or invoice.
 - A recurring template stores inheritance-versus-override intent for every Customer-derived field. At generation, explicit template/line overrides remain fixed; inherited identity, address, registration, contacts, recipients, CC/BCC, delivery, currency, language, payment terms, and default tax resolve from the current Customer, then Company fallback. Already-generated invoices never change.
+- Recurring line price and quantity inputs stay at the shared exact source envelopes and are not rewritten when inherited currency or Company precision changes. Save-time currency precision is preview-only. Each occurrence recalculates from those inputs using either the current inherited precision or the template's fixed explicit currency/precision snapshot; no FX conversion or silent re-quantization occurs.
 - Changing the selected customer requires confirmation of the resulting identity/default/recipient changes and must not silently replace lines or unrelated manual edits.
 - Reapplying current defaults is an explicit user action with a clear preview of what will change.
 
@@ -341,6 +342,7 @@ Render the applied tax name and percentage together on customer-visible document
 - Currency may be overridden per quote or invoice.
 - Currency decimal precision is user-configurable per currency from 0 through 8.
 - Every quote and invoice snapshots its resolved currency precision, and Quote conversion preserves it. A recurring template stores an explicit currency/precision override or inheritance intent. Inherited currency uses the current Customer currency and configured precision at generation; an explicit template override remains fixed. Generated Invoices never change afterward.
+- Changing a Company currency precision does not reject or rewrite recurring line inputs. It changes later inherited previews/occurrences; an explicit recurring currency retains the code and precision snapshotted when selected.
 - The company selects ISO-code or symbol display style independently from currency precision.
 - Display style does not change the stored currency code or value.
 - There is no FX conversion or exchange-rate service.

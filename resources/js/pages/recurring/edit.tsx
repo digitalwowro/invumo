@@ -10,23 +10,25 @@ import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
     RecurringSourceProps,
+    RecurringInheritanceProps,
     RecurringTemplateDraft,
     RecurringTemplateLimits,
     RecurringTranslations,
 } from '@/types/recurring';
 
-type Props = RecurringSourceProps & {
-    template: RecurringTemplateDraft;
-    limits: RecurringTemplateLimits;
-    updateUrl: string;
-    deleteUrl: string;
-    indexUrl: string;
-    canDelete: boolean;
-    status?: string;
-    translations: RecurringTranslations;
-    customerTranslations: CustomerTranslations;
-    catalogTranslations: CatalogTranslations;
-};
+type Props = RecurringSourceProps &
+    RecurringInheritanceProps & {
+        template: RecurringTemplateDraft;
+        limits: RecurringTemplateLimits;
+        updateUrl: string;
+        deleteUrl: string;
+        indexUrl: string;
+        canDelete: boolean;
+        status?: string;
+        translations: RecurringTranslations;
+        customerTranslations: CustomerTranslations;
+        catalogTranslations: CatalogTranslations;
+    };
 
 export default function EditRecurringTemplate(props: Props) {
     return (

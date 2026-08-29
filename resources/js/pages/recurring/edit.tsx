@@ -6,6 +6,7 @@ import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { RecurringTemplateDeleteDialog } from '@/features/recurring/components/recurring-template-delete-dialog';
 import { RecurringTemplateDraftEditor } from '@/features/recurring/components/recurring-template-draft-editor';
+import { RecurringTemplateExecution } from '@/features/recurring/components/recurring-template-execution';
 import { RecurringTemplateLifecycleActions } from '@/features/recurring/components/recurring-template-lifecycle-actions';
 import { RecurringTemplateScheduleForm } from '@/features/recurring/components/recurring-template-schedule-form';
 import type { CatalogTranslations } from '@/types/catalog';
@@ -15,8 +16,8 @@ import type {
     RecurringInheritanceProps,
     RecurringTemplateDraft,
     RecurringTemplateLimits,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = RecurringSourceProps &
     RecurringInheritanceProps & {
@@ -29,6 +30,7 @@ type Props = RecurringSourceProps &
             string
         >;
         duplicateUrl: string;
+        retryUrl: string;
         duplicateCreationKey: string;
         deleteUrl: string;
         indexUrl: string;
@@ -37,6 +39,7 @@ type Props = RecurringSourceProps &
         canManageSchedule: boolean;
         canManageAutomation: boolean;
         canDuplicate: boolean;
+        canRetry: boolean;
         status?: string;
         translations: RecurringTranslations;
         customerTranslations: CustomerTranslations;
@@ -77,6 +80,7 @@ export default function EditRecurringTemplate(props: Props) {
                                     editVersion={props.template.editVersion}
                                     urls={props.transitionUrls}
                                     duplicateUrl={props.duplicateUrl}
+                                    retryUrl={props.retryUrl}
                                     duplicateCreationKey={
                                         props.duplicateCreationKey
                                     }
@@ -84,6 +88,7 @@ export default function EditRecurringTemplate(props: Props) {
                                         props.canManageAutomation
                                     }
                                     canDuplicate={props.canDuplicate}
+                                    canRetry={props.canRetry}
                                     labels={props.translations.lifecycle}
                                     closeLabel={
                                         i18n.common.accessibility
@@ -108,6 +113,10 @@ export default function EditRecurringTemplate(props: Props) {
                         updateUrl={props.scheduleUpdateUrl}
                         canManage={props.canManageSchedule}
                         labels={props.translations.schedule}
+                    />
+                    <RecurringTemplateExecution
+                        execution={props.template.execution}
+                        labels={props.translations}
                     />
                     {props.canEditDraft ? (
                         <RecurringTemplateDraftEditor

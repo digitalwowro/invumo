@@ -5,8 +5,10 @@ namespace Tests\Feature\Modules\Delivery;
 use App\Foundation\Tenancy\TenantContext;
 use App\Modules\Delivery\Actions\ClaimDueJobDispatches;
 use App\Modules\Delivery\Data\JobDispatchStatus;
+use App\Modules\Delivery\Jobs\GenerateRecurringInvoices;
 use App\Modules\Delivery\Jobs\SendInvoiceReminder;
 use App\Modules\Delivery\Models\JobDispatch;
+use App\Modules\Recurring\Actions\SyncRecurringDispatch;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -85,6 +87,26 @@ final class JobDispatchClaimTest extends DocumentDeliveryTestCase
         $this->assertFalse($membership->admin_option);
         $this->assertFalse($membership->inherit_option);
         $this->assertTrue($membership->set_option);
+    }
+
+    public function test_recurring_occurrence_dispatch_queues_the_recurring_worker(): void
+    {
+        [, $company] = $this->company();
+        $dispatch = app(TenantContext::class)
+            ->runAsSystem($company->id, fn () => JobDispatch::query()->create([
+                'target_id' => (string) Str::uuid7(),
+                'job_type' => SyncRecurringDispatch::JOB_TYPE,
+                'due_at' => now()->subMinute(),
+                'idempotency_key' => 'recurring-test:'.Str::uuid7(),
+                'status' => JobDispatchStatus::Pending,
+            ]));
+        Queue::fake();
+
+        $this->assertSame(1, app(ClaimDueJobDispatches::class)->handle());
+        Queue::assertPushed(
+            GenerateRecurringInvoices::class,
+            fn (GenerateRecurringInvoices $job): bool => $job->dispatchId === $dispatch->id,
+        );
     }
 
     private function dispatch(string $companyId): JobDispatch

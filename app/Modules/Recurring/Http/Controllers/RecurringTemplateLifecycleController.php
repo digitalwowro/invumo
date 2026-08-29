@@ -5,6 +5,7 @@ namespace App\Modules\Recurring\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Recurring\Actions\DuplicateCompletedRecurringTemplate;
+use App\Modules\Recurring\Actions\RetryRecurringGeneration;
 use App\Modules\Recurring\Actions\TransitionRecurringTemplate;
 use App\Modules\Recurring\Actions\UpdateRecurringTemplateSchedule;
 use App\Modules\Recurring\Data\RecurringTemplateTransition;
@@ -68,6 +69,23 @@ final class RecurringTemplateLifecycleController extends Controller
         }
 
         return redirect()->route('recurring.edit', [$company, $copy]);
+    }
+
+    public function retry(
+        RecurringTransitionRequest $request,
+        Company $company,
+        string $template,
+        RetryRecurringGeneration $retry,
+    ): RedirectResponse {
+        try {
+            $retry->handle(
+                $company, $request->user(), $template, $request->editVersion(),
+            );
+        } catch (RecurringTemplateException $exception) {
+            $this->validationError($exception, 'retry');
+        }
+
+        return back()->with('status', __('recurring_ui.feedback.retry_requested'));
     }
 
     private function validationError(RecurringTemplateException $exception, string $field): never

@@ -36,8 +36,8 @@ import type {
     RecurringInheritanceProps,
     RecurringTemplateDraft,
     RecurringTemplateLimits,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = RecurringSourceProps &
     RecurringInheritanceProps & {

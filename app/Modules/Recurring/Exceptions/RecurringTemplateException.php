@@ -66,6 +66,11 @@ final class RecurringTemplateException extends DomainException
         return new self('not_completed');
     }
 
+    public static function retryUnavailable(): self
+    {
+        return new self('retry_unavailable');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

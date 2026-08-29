@@ -5,10 +5,8 @@ import { TextField } from '@/components/app/form-field';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
 import { Button } from '@/components/ui/button';
-import type {
-    RecurringTemplateFilters,
-    RecurringTranslations,
-} from '@/types/recurring';
+import type { RecurringTemplateFilters } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 export function RecurringTemplateListTools({
     action,

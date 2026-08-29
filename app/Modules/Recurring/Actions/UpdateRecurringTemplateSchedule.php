@@ -26,6 +26,7 @@ final readonly class UpdateRecurringTemplateSchedule
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
         private RecurringScheduleCalculator $calculator,
+        private SyncRecurringDispatch $syncDispatch,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -96,6 +97,7 @@ final readonly class UpdateRecurringTemplateSchedule
         }
 
         $template->update($values);
+        $this->syncDispatch->handle($template);
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,

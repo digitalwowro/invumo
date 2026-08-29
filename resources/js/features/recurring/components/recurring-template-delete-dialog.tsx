@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { ConfirmationDialog } from '@/components/app/responsive-dialog';
-import type { RecurringTranslations } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 export function RecurringTemplateDeleteDialog({
     url,

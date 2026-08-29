@@ -5,10 +5,8 @@ import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
 import type { CustomerTranslations } from '@/types/customer';
 import type { DocumentCustomerFormOptions } from '@/types/document';
-import type {
-    RecurringInheritance,
-    RecurringInheritanceTranslations,
-} from '@/types/recurring';
+import type { RecurringInheritance } from '@/types/recurring';
+import type { RecurringInheritanceTranslations } from '@/types/recurring-translations';
 
 type Props = {
     value: RecurringInheritance;

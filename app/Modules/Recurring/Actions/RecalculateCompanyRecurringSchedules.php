@@ -12,6 +12,7 @@ final readonly class RecalculateCompanyRecurringSchedules
     public function __construct(
         private RecurringScheduleFromTemplate $schedule,
         private RecurringScheduleCalculator $calculator,
+        private SyncRecurringDispatch $syncDispatch,
     ) {}
 
     public function handle(CompanySetting $settings): void
@@ -40,6 +41,7 @@ final readonly class RecalculateCompanyRecurringSchedules
                 'schedule_local_time' => $localTime,
                 'next_run_at' => $next->runAt,
             ]);
+            $this->syncDispatch->handle($template);
         }
     }
 }

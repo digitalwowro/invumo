@@ -13,6 +13,7 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Customers\Data\ResolvedDocumentCustomer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
+use App\Modules\Documents\Actions\DocumentLineCompleteness;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Data\LockedDocumentConfiguration;
 use App\Modules\Recurring\Data\RecurringTemplateState;
@@ -35,6 +36,8 @@ final readonly class TransitionRecurringTemplate
         private ResolveDocumentCustomer $customers,
         private RecurringScheduleFromTemplate $schedule,
         private RecurringScheduleCalculator $calculator,
+        private DocumentLineCompleteness $lineCompleteness,
+        private SyncRecurringDispatch $syncDispatch,
         private RecordAuditEvent $recordAuditEvent,
     ) {}
 
@@ -100,6 +103,7 @@ final readonly class TransitionRecurringTemplate
             RecurringTemplateTransition::Complete => $this->complete($template, $now),
         };
         $template->update($values + ['edit_version' => $template->edit_version + 1]);
+        $this->syncDispatch->handle($template);
         $this->recordAuditEvent->handle(new AuditEventData(
             actorType: AuditActorType::User,
             actorUserId: $actor->id,
@@ -132,7 +136,12 @@ final readonly class TransitionRecurringTemplate
 
         if ($lines->isEmpty() || $lines->contains(
             fn (RecurringTemplateLine $line): bool => $line->description === null
-                || $line->item_price === null || $line->quantity === null,
+                || ! $this->lineCompleteness->acceptsInputs(
+                    $line->item_price,
+                    $line->quantity,
+                    $line->period_unit,
+                    $line->period_quantity,
+                ),
         )) {
             throw RecurringTemplateException::activationIncomplete();
         }

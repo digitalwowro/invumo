@@ -5,9 +5,9 @@ import { SelectField } from '@/components/app/select-field';
 import type {
     RecurringInheritance,
     RecurringInheritanceProps,
-    RecurringInheritanceTranslations,
     RecurringValueMode,
 } from '@/types/recurring';
+import type { RecurringInheritanceTranslations } from '@/types/recurring-translations';
 
 const NONE = '__NONE__';
 

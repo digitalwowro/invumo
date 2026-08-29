@@ -27,6 +27,34 @@ final readonly class IssueLockedInvoice
 
     public function handle(Document $document, User $actor, int $editVersion): Document
     {
+        return $this->issue(
+            $document,
+            $editVersion,
+            AuditActorType::User,
+            $actor->id,
+        );
+    }
+
+    public function handleScheduled(
+        Document $document,
+        int $editVersion,
+        string $idempotencyReference,
+    ): Document {
+        return $this->issue(
+            $document,
+            $editVersion,
+            AuditActorType::ScheduledJob,
+            idempotencyReference: $idempotencyReference,
+        );
+    }
+
+    private function issue(
+        Document $document,
+        int $editVersion,
+        AuditActorType $actorType,
+        ?string $actorUserId = null,
+        ?string $idempotencyReference = null,
+    ): Document {
         $invoice = Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail();
 
         if ($invoice->lifecycle === InvoiceLifecycle::Issued) {
@@ -55,11 +83,14 @@ final readonly class IssueLockedInvoice
             CompanySetting::query()->firstOrFail(),
         );
         $this->recordAuditEvent->handle(new AuditEventData(
-            actorType: AuditActorType::User,
-            actorUserId: $actor->id,
+            actorType: $actorType,
+            actorUserId: $actorUserId,
+            actorReference: $actorType === AuditActorType::ScheduledJob
+                ? 'recurring_automation' : null,
             action: 'company.invoice.issued',
             targetType: 'Invoice',
             targetId: $document->id,
+            idempotencyReference: $idempotencyReference,
             before: AuditPayload::fromAllowedFields([
                 'lifecycle' => InvoiceLifecycle::Draft->value,
             ], ['lifecycle']),

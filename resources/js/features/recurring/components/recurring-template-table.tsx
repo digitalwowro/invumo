@@ -19,8 +19,8 @@ import type {
     RecurringTemplateCursorPage,
     RecurringTemplateFilters,
     RecurringTemplateRow,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 import type { Status } from '@/types/status';
 
 type Props = {
@@ -70,6 +70,24 @@ export function RecurringTemplateTable(props: Props) {
                     label={labels.states[template.state]}
                 />
             ),
+        },
+        {
+            key: 'outcome',
+            label: labels.columns.outcome,
+            kind: 'status',
+            render: (template) =>
+                template.lastRunOutcome === null ? (
+                    <SecondaryText>{labels.not_available}</SecondaryText>
+                ) : (
+                    <StatusBadge
+                        status={
+                            template.lastRunOutcome === 'SUCCEEDED'
+                                ? 'completed'
+                                : (template.lastRunOutcome.toLowerCase() as Status)
+                        }
+                        label={labels.outcomes[template.lastRunOutcome]}
+                    />
+                ),
         },
         {
             key: 'updated',
@@ -152,6 +170,13 @@ function TemplateActions({
                         {labels.index.columns.open}
                     </Link>
                 </Button>
+                {template.lastInvoiceUrl && (
+                    <Button asChild variant="secondary">
+                        <Link href={template.lastInvoiceUrl}>
+                            {labels.index.columns.open_invoice}
+                        </Link>
+                    </Button>
+                )}
                 {template.canDelete && (
                     <RecurringTemplateDeleteDialog
                         url={template.deleteUrl}

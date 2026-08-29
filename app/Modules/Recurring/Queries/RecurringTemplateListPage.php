@@ -8,6 +8,7 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Http\Requests\RecurringTemplateListRequest;
+use App\Modules\Recurring\Models\RecurringOccurrence;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Query\Builder;
@@ -42,11 +43,23 @@ final readonly class RecurringTemplateListPage
             $company,
             CompanyAbility::DeleteRecurringTemplates,
         );
+        $occurrences = RecurringOccurrence::query()
+            ->whereIn('recurring_template_id', array_column($page->items(), 'id'))
+            ->orderBy('recurring_template_id')
+            ->orderByDesc('logical_ordinal')
+            ->get()
+            ->unique('recurring_template_id')
+            ->keyBy('recurring_template_id');
 
         return [
             'templates' => [
                 'items' => array_map(
-                    fn (stdClass $row): array => $this->row($company, $row, $canDelete),
+                    fn (stdClass $row): array => $this->row(
+                        $company,
+                        $row,
+                        $canDelete,
+                        $occurrences->get((string) $row->id),
+                    ),
                     $page->items(),
                 ),
                 'previousUrl' => $page->previousPageUrl(),
@@ -70,6 +83,7 @@ final readonly class RecurringTemplateListPage
                 'recurring_templates.id', 'recurring_templates.internal_name',
                 'recurring_templates.customer_reference', 'recurring_templates.state',
                 'recurring_templates.next_run_at', 'recurring_templates.updated_at',
+                'recurring_templates.last_run_outcome',
             ])
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
     }
@@ -96,8 +110,12 @@ final readonly class RecurringTemplateListPage
     }
 
     /** @return array<string, mixed> */
-    private function row(Company $company, stdClass $row, bool $canDelete): array
-    {
+    private function row(
+        Company $company,
+        stdClass $row,
+        bool $canDelete,
+        ?RecurringOccurrence $occurrence,
+    ): array {
         $state = RecurringTemplateState::from((string) $row->state);
 
         return [
@@ -108,6 +126,9 @@ final readonly class RecurringTemplateListPage
             'state' => $state->value,
             'nextRunAt' => $row->next_run_at === null
                 ? null : CarbonImmutable::parse((string) $row->next_run_at)->toISOString(),
+            'lastRunOutcome' => $row->last_run_outcome,
+            'lastInvoiceUrl' => $occurrence === null
+                ? null : route('invoices.edit', [$company, $occurrence->invoice_id], false),
             'updatedAt' => CarbonImmutable::parse((string) $row->updated_at)->toISOString(),
             'editUrl' => route('recurring.edit', [$company, $row->id], false),
             'deleteUrl' => route('recurring.destroy', [$company, $row->id], false),

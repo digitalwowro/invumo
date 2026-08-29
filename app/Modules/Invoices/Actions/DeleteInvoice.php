@@ -15,6 +15,7 @@ use App\Modules\Invoices\Data\InvoiceDeletionData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Exceptions\InvoiceDeletionException;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
+use App\Modules\Recurring\Actions\DeleteGeneratedInvoiceOccurrence;
 use App\Modules\Transactions\Actions\LockInvoiceTransactionAggregate;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ final readonly class DeleteInvoice
         private LockInvoiceTransactionAggregate $lockAggregate,
         private DeletesDocumentResources $resources,
         private DeleteInvoiceReminders $reminders,
+        private DeleteGeneratedInvoiceOccurrence $recurringOccurrence,
         private FinalizeDocumentDeletion $finalizeDeletion,
     ) {}
 
@@ -98,6 +100,7 @@ final readonly class DeleteInvoice
         }
 
         $this->reminders->handle($context->document->id);
+        $this->recurringOccurrence->handle($actor, $context->document->id);
         $this->finalizeDeletion->handle(
             $company->id,
             $actor,

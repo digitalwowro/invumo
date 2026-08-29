@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { interpolate } from '@/lib/translations';
 import type {
     RecurringInheritance,
-    RecurringInheritanceTranslations,
     RecurringReminderMode,
     RecurringReminderRule,
 } from '@/types/recurring';
+import type { RecurringInheritanceTranslations } from '@/types/recurring-translations';
 
 type Props = {
     value: RecurringInheritance;

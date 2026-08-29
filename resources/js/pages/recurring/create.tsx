@@ -20,7 +20,7 @@ import type {
     DocumentCustomerSelection,
     DocumentSourceUrls,
 } from '@/types/document';
-import type { RecurringTranslations } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = {
     storeUrl: string;

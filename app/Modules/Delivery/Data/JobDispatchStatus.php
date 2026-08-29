@@ -8,4 +8,5 @@ enum JobDispatchStatus: string
     case Queued = 'QUEUED';
     case Completed = 'COMPLETED';
     case Cancelled = 'CANCELLED';
+    case Failed = 'FAILED';
 }

@@ -10,8 +10,8 @@ import type {
     RecurrenceKind,
     RecurringIntervalUnit,
     RecurringTemplateDraft,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = {
     template: RecurringTemplateDraft;

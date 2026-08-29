@@ -28,6 +28,9 @@ Route::patch('companies/{company}/recurring/{template}/schedule', [RecurringTemp
 Route::post('companies/{company}/recurring/{template}/duplicate', [RecurringTemplateLifecycleController::class, 'duplicate'])
     ->middleware('throttle:20,1')
     ->name('recurring.duplicate');
+Route::post('companies/{company}/recurring/{template}/retry', [RecurringTemplateLifecycleController::class, 'retry'])
+    ->middleware('throttle:10,1')
+    ->name('recurring.retry');
 Route::post('companies/{company}/recurring/{template}/{transition}', [RecurringTemplateLifecycleController::class, 'transition'])
     ->whereIn('transition', ['activate', 'pause', 'resume', 'complete'])
     ->middleware('throttle:20,1')

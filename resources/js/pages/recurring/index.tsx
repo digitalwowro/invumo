@@ -9,8 +9,8 @@ import { RecurringTemplateTable } from '@/features/recurring/components/recurrin
 import type {
     RecurringTemplateCursorPage,
     RecurringTemplateFilters,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = {
     templates: RecurringTemplateCursorPage;

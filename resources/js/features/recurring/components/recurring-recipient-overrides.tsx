@@ -10,9 +10,9 @@ import { interpolate } from '@/lib/translations';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
     RecurringInheritance,
-    RecurringInheritanceTranslations,
     RecurringRecipient,
 } from '@/types/recurring';
+import type { RecurringInheritanceTranslations } from '@/types/recurring-translations';
 
 type Props = {
     value: RecurringInheritance;

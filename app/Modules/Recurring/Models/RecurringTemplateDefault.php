@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property RecurringValueMode|null $bank_mode
  * @property string|null $bank_account_id
  * @property string|null $bank_label
+ * @property string|null $bank_name
+ * @property string|null $bank_account_holder
+ * @property string|null $bank_account_number
+ * @property string|null $bank_swift_bic
+ * @property string|null $bank_currency_code
+ * @property array<string, string>|null $bank_local_routing_details
  * @property RecurringReminderMode|null $reminder_mode
  */
 #[Fillable([

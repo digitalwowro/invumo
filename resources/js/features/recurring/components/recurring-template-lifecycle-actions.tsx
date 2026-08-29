@@ -1,10 +1,8 @@
 import { router } from '@inertiajs/react';
 import { Cluster } from '@/components/app/layout';
 import { ConfirmationDialog } from '@/components/app/responsive-dialog';
-import type {
-    RecurringTemplateState,
-    RecurringTranslations,
-} from '@/types/recurring';
+import type { RecurringTemplateState } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Transition = 'activate' | 'pause' | 'resume' | 'complete';
 
@@ -13,9 +11,11 @@ type Props = {
     editVersion: number;
     urls: Record<Transition, string>;
     duplicateUrl: string;
+    retryUrl: string;
     duplicateCreationKey: string;
     canManageAutomation: boolean;
     canDuplicate: boolean;
+    canRetry: boolean;
     labels: RecurringTranslations['lifecycle'];
     closeLabel: string;
 };
@@ -56,6 +56,23 @@ export function RecurringTemplateLifecycleActions(props: Props) {
                     onConfirm={() =>
                         router.post(props.duplicateUrl, {
                             creation_key: props.duplicateCreationKey,
+                        })
+                    }
+                />
+            )}
+            {props.canRetry && (
+                <ConfirmationDialog
+                    triggerLabel={props.labels.retry}
+                    title={props.labels.title.retry}
+                    description={props.labels.description.retry}
+                    confirmLabel={props.labels.confirm.retry}
+                    cancelLabel={props.labels.cancel}
+                    closeLabel={props.closeLabel}
+                    tone="default"
+                    onConfirm={() =>
+                        router.post(props.retryUrl, {
+                            edit_version: props.editVersion,
+                            confirmed: true,
                         })
                     }
                 />

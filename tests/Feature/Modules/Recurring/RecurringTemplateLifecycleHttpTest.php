@@ -64,6 +64,19 @@ final class RecurringTemplateLifecycleHttpTest extends TestCase
                     'edit_version' => 2, 'confirmed' => true,
                 ])->assertRedirect()->assertSessionHasErrors('transition');
             $this->tenant($company, fn (): bool => $incompleteLine->delete());
+            $incompletePeriodLine = $this->tenant(
+                $company,
+                fn (): RecurringTemplateLine => RecurringTemplateLine::query()->create([
+                    'recurring_template_id' => $template->id, 'position' => 2,
+                    'description' => 'Annual service', 'item_price' => '100', 'quantity' => '1',
+                    'period_unit' => 'YEAR', 'period_quantity' => null,
+                    'discount_percentage' => '0', 'tax_percentage' => '0',
+                ]),
+            );
+            $this->post(route('recurring.transition', [$company, $template, 'activate']), [
+                'edit_version' => 2, 'confirmed' => true,
+            ])->assertRedirect()->assertSessionHasErrors('transition');
+            $this->tenant($company, fn (): bool => $incompletePeriodLine->delete());
             $this->post(route('recurring.transition', [$company, $template, 'activate']), [
                 'edit_version' => 2, 'confirmed' => true,
             ])->assertRedirect()->assertSessionDoesntHaveErrors();

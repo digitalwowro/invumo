@@ -5,6 +5,7 @@ namespace App\Modules\Recurring\Models;
 use App\Foundation\Database\TenantOwnedModel;
 use App\Modules\Recurring\Data\RecurrenceKind;
 use App\Modules\Recurring\Data\RecurringIntervalUnit;
+use App\Modules\Recurring\Data\RecurringRunOutcome;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -30,6 +31,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $schedule_local_time
  * @property CarbonImmutable|null $next_run_at
  * @property int $successful_occurrence_count
+ * @property CarbonImmutable|null $last_run_started_at
+ * @property CarbonImmutable|null $last_run_completed_at
+ * @property RecurringRunOutcome|null $last_run_outcome
+ * @property string|null $last_failure_category
  * @property int $edit_version
  */
 #[Fillable([
@@ -39,7 +44,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'next_logical_ordinal',
     'next_occurrence_date', 'schedule_timezone', 'schedule_local_time', 'next_run_at',
     'successful_occurrence_count', 'activated_at', 'paused_at', 'resumed_at',
-    'completed_at', 'edit_version',
+    'completed_at', 'last_run_started_at', 'last_run_completed_at',
+    'last_run_outcome', 'last_failure_category', 'edit_version',
 ])]
 class RecurringTemplate extends TenantOwnedModel
 {
@@ -63,6 +69,9 @@ class RecurringTemplate extends TenantOwnedModel
             'paused_at' => 'immutable_datetime',
             'resumed_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
+            'last_run_started_at' => 'immutable_datetime',
+            'last_run_completed_at' => 'immutable_datetime',
+            'last_run_outcome' => RecurringRunOutcome::class,
             'edit_version' => 'integer',
         ];
     }

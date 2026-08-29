@@ -14,7 +14,10 @@ use InvalidArgumentException;
 
 final readonly class PrepareDocumentLine
 {
-    public function __construct(private LineCalculator $calculator) {}
+    public function __construct(
+        private LineCalculator $calculator,
+        private DocumentLineCompleteness $completeness,
+    ) {}
 
     public function handle(DocumentLineData $data, ?int $precision): PreparedDocumentLine
     {
@@ -35,8 +38,13 @@ final readonly class PrepareDocumentLine
             throw DocumentLineFailure::valueInvalid();
         }
 
-        $complete = $precision !== null && $data->itemPrice !== null && $data->quantity !== null
-            && ($data->periodUnit === PeriodUnit::None || $data->periodQuantity !== null);
+        $complete = $this->completeness->accepts(
+            $precision,
+            $data->itemPrice,
+            $data->quantity,
+            $data->periodUnit,
+            $data->periodQuantity,
+        );
         $calculation = $complete ? $this->calculator->calculate(new LineCalculationInput(
             unitPrice: $data->itemPrice,
             quantity: $data->quantity,

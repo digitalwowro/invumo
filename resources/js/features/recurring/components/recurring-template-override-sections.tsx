@@ -8,8 +8,8 @@ import type {
     RecurringInheritance,
     RecurringInheritanceProps,
     RecurringTemplateLimits,
-    RecurringTranslations,
 } from '@/types/recurring';
+import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = RecurringInheritanceProps & {
     value: RecurringInheritance;

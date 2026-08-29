@@ -45,6 +45,7 @@ final class RecurringTemplateDatabaseTest extends TestCase
             'recurring_templates', 'recurring_template_lines',
             'recurring_template_customer_values', 'recurring_template_defaults',
             'recurring_template_delivery_recipients', 'recurring_template_reminder_rules',
+            'recurring_occurrences',
         ] as $table) {
             $rls = DB::connection('pgsql_schema')->selectOne(<<<SQL
                 SELECT relrowsecurity, relforcerowsecurity

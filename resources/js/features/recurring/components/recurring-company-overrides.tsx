@@ -6,9 +6,9 @@ import { RecurringReminderOverrides } from '@/features/recurring/components/recu
 import type {
     RecurringInheritance,
     RecurringInheritanceProps,
-    RecurringInheritanceTranslations,
     RecurringValueMode,
 } from '@/types/recurring';
+import type { RecurringInheritanceTranslations } from '@/types/recurring-translations';
 
 const NONE = '__NONE__';
 

@@ -1,7 +1,7 @@
 # Scheduling, Recurrence, Reminders, and Downtime
 
 Status: Approved architecture decision  
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
 This specification defines how company-local recurring invoices and reminders map to UTC execution, survive daylight-saving transitions and service downtime, and remain idempotent under retries or overlapping workers.
 
@@ -95,8 +95,8 @@ The recurrence rule stores a start date, interval, optional end date, optional m
 
 For an eligible occurrence:
 
-1. Lock or atomically create its occurrence record.
-2. Recheck that the template is Active and the occurrence remains within its end/count limits.
+1. Lock the Company configuration, template, and stable payload-free dispatch identity in the approved order.
+2. Recheck that the template is Active, the dispatch matches its current logical ordinal, and the occurrence remains within its end/count limits.
 3. Resolve every inherited Customer field from the current Customer, then Company fallback, while retaining explicit template/line overrides.
 4. Create exactly one invoice using the normal invoice-number allocator and snapshot those resolved values.
 5. Use the scheduled company-local occurrence date as the invoice issue date.
@@ -106,6 +106,8 @@ For an eligible occurrence:
 9. Record the generated invoice on the occurrence.
 10. Queue PDF generation and, only when automatic email remains eligible, email after commit.
 11. Calculate the next local occurrence from the recurrence rule.
+
+Batch 10D implements steps 1–7, 9, and 11. It processes no more than ten due ordinals oldest-first in one worker pass. Successful occurrence, issued Invoice, reminder materialization, template cursor/count, dispatch completion, and privacy-safe audit commit together. A permanent business failure rolls the transaction back completely and stores only bounded operational metadata on the dispatch/template; Owner/Admin may retry the same dispatch identity after correcting the source data. Batch 10E owns the automatic-delivery and currency-latch steps.
 
 An email failure retries delivery against the same invoice. It never creates another invoice for that occurrence.
 

@@ -2,7 +2,9 @@
 
 namespace App\Modules\Delivery\Actions;
 
+use App\Modules\Delivery\Jobs\GenerateRecurringInvoices;
 use App\Modules\Delivery\Jobs\SendInvoiceReminder;
+use App\Modules\Recurring\Actions\SyncRecurringDispatch;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -43,6 +45,11 @@ final readonly class ClaimDueJobDispatches
         foreach ($rows as $row) {
             if ($row->job_type === 'INVOICE_REMINDER') {
                 SendInvoiceReminder::dispatch($row->company_id, $row->target_id)
+                    ->onConnection('database')->onQueue('default');
+            }
+
+            if ($row->job_type === SyncRecurringDispatch::JOB_TYPE) {
+                GenerateRecurringInvoices::dispatch($row->company_id, $row->id)
                     ->onConnection('database')->onQueue('default');
             }
         }

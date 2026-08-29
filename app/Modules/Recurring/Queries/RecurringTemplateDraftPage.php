@@ -15,6 +15,7 @@ use App\Modules\Documents\Data\DocumentFieldLimits;
 use App\Modules\Recurring\Data\RecurringLineTaxMode;
 use App\Modules\Recurring\Data\RecurringTemplateFieldLimits;
 use App\Modules\Recurring\Data\RecurringTemplateState;
+use App\Modules\Recurring\Models\RecurringOccurrence;
 use App\Modules\Recurring\Models\RecurringTemplate;
 use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -79,6 +80,12 @@ final readonly class RecurringTemplateDraftPage
             ->where('recurring_template_id', $template->id)
             ->orderBy('position')
             ->get();
+        $occurrence = RecurringOccurrence::query()
+            ->where('recurring_template_id', $template->id)
+            ->orderByDesc('logical_ordinal')->first();
+        $canManageAutomation = $this->abilities->allows(
+            $actor, $company, CompanyAbility::ManageRecurringAutomation,
+        );
 
         return [
             'template' => [
@@ -99,6 +106,16 @@ final readonly class RecurringTemplateDraftPage
                     'scheduleLocalTime' => $template->schedule_local_time === null
                         ? null : substr($template->schedule_local_time, 0, 5),
                     'nextRunAt' => $template->next_run_at?->toISOString(),
+                ],
+                'execution' => [
+                    'successfulOccurrenceCount' => $template->successful_occurrence_count,
+                    'lastRunOutcome' => $template->last_run_outcome?->value,
+                    'lastRunStartedAt' => $template->last_run_started_at?->toISOString(),
+                    'lastRunCompletedAt' => $template->last_run_completed_at?->toISOString(),
+                    'lastFailure' => $template->last_failure_category === null
+                        ? null : __("recurring_ui.failures.{$template->last_failure_category}"),
+                    'lastInvoiceUrl' => $occurrence === null
+                        ? null : route('invoices.edit', [$company, $occurrence->invoice_id], false),
                 ],
                 'customer' => $customer,
                 'currencyCode' => $inheritance['inheritance']['currencyCode'],
@@ -137,6 +154,7 @@ final readonly class RecurringTemplateDraftPage
                 'complete' => route('recurring.transition', [$company, $template, 'complete'], false),
             ],
             'duplicateUrl' => route('recurring.duplicate', [$company, $template], false),
+            'retryUrl' => route('recurring.retry', [$company, $template], false),
             'duplicateCreationKey' => (string) Str::uuid7(),
             'deleteUrl' => route('recurring.destroy', [$company, $template], false),
             'indexUrl' => route('recurring.index', $company, false),
@@ -153,9 +171,8 @@ final readonly class RecurringTemplateDraftPage
                 ),
                 RecurringTemplateState::Completed => false,
             },
-            'canManageAutomation' => $this->abilities->allows(
-                $actor, $company, CompanyAbility::ManageRecurringAutomation,
-            ),
+            'canManageAutomation' => $canManageAutomation,
+            'canRetry' => $canManageAutomation && $template->last_run_outcome?->value === 'FAILED',
             'canDuplicate' => $template->state === RecurringTemplateState::Completed,
             ...$inheritance,
             'sourceUrls' => $this->sourceUrls($company),

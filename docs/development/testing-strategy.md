@@ -29,7 +29,7 @@ vendor/bin/pest tests/Browser/ChangedJourneyTest.php --stop-on-failure
 
 ## Batch closeout
 
-An approved implementation batch closes after proportionate focused verification. The established backup-first production migration, production verification, durable-memory, commit, and push boundary remains unchanged.
+An approved implementation batch closes after proportionate focused verification, durable-memory updates, and commits and pushes for both repositories. Do not create a production backup or apply production migrations at batch closeout.
 
 Pushing a batch does not run GitHub Actions. Do not wait for or poll a GitHub run after an ordinary batch commit.
 
@@ -41,7 +41,15 @@ After the final batch and phase acceptance review:
 2. push the phase-closing commits and durable memory;
 3. manually dispatch `.github/workflows/tests.yml` with the phase number;
 4. require the consolidated `Phase quality gate` job to pass;
-5. inspect failure artifacts, fix only the demonstrated problem, and rerun the phase gate when necessary.
+5. inspect failure artifacts, fix only the demonstrated problem, and rerun the phase gate when necessary;
+6. record the successful run's exact commit SHA as the immutable release input;
+7. quiesce HTTP business writes and scheduler dispatch, allow current HTTP/scheduler/queue work to drain for at most 120 seconds without a force-kill, and stop the worker only after it is idle;
+8. create and verify one fresh production SQL backup under `/home/invumo/backups`;
+9. stage the exact verified revision, rebuild its production caches, apply all pending phase migrations once, and restart the application/worker against that same revision;
+10. run smoke checks against the restarted application and freshly rebuilt production configuration; and
+11. resume traffic, scheduling, and queue processing only after every check passes.
+
+A failed gate or backup blocks production migration. A drain timeout or inability to prove that work settled leaves the application quiesced for manual investigation; do not force-kill an in-flight provider job. If migration, restart, cache rebuild, or smoke verification fails after migration begins, remain quiesced. Do not automatically restore the backup, activate the previous revision against the changed schema, or resume traffic. Forward repair, a proven schema-compatible code reversion, and database restoration are separate explicit authorization paths.
 
 The full local gate is not duplicated before the GitHub phase gate unless GitHub is unavailable or the change affects CI/test infrastructure itself and local reproduction is necessary.
 
@@ -56,6 +64,8 @@ The manually dispatched workflow runs independent jobs concurrently:
 
 Each shard is isolated at the runner and database level. Do not parallelize test processes against one shared PostgreSQL database: schema-refreshing, privilege, concurrency, and forced-RLS tests require isolation. Every substantive job has a bounded timeout, and browser comparison artifacts are retained on failure.
 
+Shard membership may change as files are added or renamed. Isolation comes from each shard's independent runner and database, not from a pinned file assignment. Give a test a dedicated job only when its demonstrated isolation requirement exceeds that boundary.
+
 ## Performance work
 
 The current PHP cost is dominated by migration-backed tests; 85 test files deliberately use `DatabaseMigrations` because committed cross-connection behavior, deferred constraints, RLS roles, and schema tests cannot be assumed safe under one shared transaction. External sharding reduces phase-gate wall time without weakening that isolation.
@@ -64,4 +74,4 @@ Any later switch to migrate-once/truncate or transaction-based isolation require
 
 ## Evidence
 
-Tracker evidence names the focused tests used for each task or batch. Only a phase acceptance gate records the full manually dispatched GitHub run. Historical full-gate evidence remains valid; this policy changes future execution frequency, not prior verification.
+Tracker evidence names the focused tests used for each task or batch. Only a phase acceptance gate records the full manually dispatched GitHub run. The first run of the reworked workflow may expose workflow-infrastructure defects; those defects are fixed and the gate rerun before any production migration. Historical full-gate evidence remains valid; this policy changes future execution frequency, not prior verification.

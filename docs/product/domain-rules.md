@@ -539,7 +539,7 @@ Recurring template
 
 - Keep the Company dashboard operational and bounded; do not add analytics or reporting.
 - An unpaid Invoice is an Issued Invoice with a positive outstanding balance, including a Partially Paid Invoice.
-- Paid this month is the gross value of Payment rows dated within the current Company-local calendar month. Refunds and Adjustments do not reduce or increase this metric.
+- Paid this month is the gross value of Payment rows dated within the current Company-local calendar month whose Invoice remains Issued. Refunds and Adjustments do not reduce or increase this metric, and Cancelled Invoices are excluded from every operational dashboard metric.
 - Outstanding and overdue values derive from the authoritative Invoice total and complete transaction ledger.
 - Monetary values are grouped by currency. Never add unlike currencies or imply an FX conversion.
 - Recent Invoices are a bounded Company-scoped list and use the same authoritative lifecycle, payment, and overdue derivation as the Invoice workspace.

@@ -122,15 +122,20 @@ final readonly class CompanyDashboardPage
     {
         return DB::connection(config('database.tenant_connection'))
             ->table('invoice_transactions')
+            ->join('invoices', function ($join): void {
+                $join->on('invoices.company_id', '=', 'invoice_transactions.company_id')
+                    ->on('invoices.document_id', '=', 'invoice_transactions.invoice_id');
+            })
             ->where('kind', 'PAYMENT')
+            ->where('invoices.lifecycle', 'ISSUED')
             ->whereBetween('transaction_date', [
                 $localDate->startOfMonth()->toDateString(),
                 $localDate->endOfMonth()->toDateString(),
             ])
-            ->groupBy('currency_code')
-            ->select('currency_code')
-            ->selectRaw('MAX(currency_precision) AS currency_precision')
-            ->selectRaw('SUM(amount) AS paid_this_month');
+            ->groupBy('invoice_transactions.currency_code')
+            ->select('invoice_transactions.currency_code')
+            ->selectRaw('MAX(invoice_transactions.currency_precision) AS currency_precision')
+            ->selectRaw('SUM(invoice_transactions.amount) AS paid_this_month');
     }
 
     /** @return list<array<string, mixed>> */

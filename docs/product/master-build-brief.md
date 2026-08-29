@@ -933,7 +933,7 @@ Dashboard calculations must respect company and currency boundaries. Do not add 
 
 When a company has multiple document currencies, show operational totals grouped by currency rather than a misleading combined total.
 
-For v1 dashboard semantics, an unpaid Invoice is an Issued Invoice with a positive outstanding balance, including a Partially Paid Invoice. Paid this month is the gross value of Payment rows whose transaction date falls in the current Company-local calendar month; Refunds and Adjustments are excluded. Outstanding and overdue amounts use the authoritative Invoice ledger and remain grouped by currency.
+For v1 dashboard semantics, an unpaid Invoice is an Issued Invoice with a positive outstanding balance, including a Partially Paid Invoice. Paid this month is the gross value of Payment rows whose transaction date falls in the current Company-local calendar month and whose Invoice remains Issued; Refunds and Adjustments are excluded. Cancelled Invoices are excluded from every operational metric. Outstanding and overdue amounts use the authoritative Invoice ledger and remain grouped by currency.
 
 ## 27. Audit history
 

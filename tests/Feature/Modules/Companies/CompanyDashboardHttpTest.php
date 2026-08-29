@@ -17,8 +17,10 @@ use App\Modules\Documents\Models\DocumentCustomerSnapshot;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use App\Modules\Invoices\Actions\CancelInvoice;
 use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Actions\IssueInvoice;
+use App\Modules\Invoices\Data\CancelInvoiceData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Transactions\Models\InvoiceTransaction;
@@ -45,6 +47,8 @@ final class CompanyDashboardHttpTest extends TestCase
         Company::query()->pluck('id')->each(fn (string $companyId) => app(TenantContext::class)
             ->runAsSystem($companyId, function (): void {
                 DB::connection(config('database.tenant_connection'))->transaction(function (): void {
+                    Invoice::query()->where('lifecycle', InvoiceLifecycle::Cancelled)
+                        ->update(['lifecycle' => InvoiceLifecycle::Issued]);
                     DB::statement('SET CONSTRAINTS invoice_transaction_ledger_trigger DEFERRED');
                     InvoiceTransaction::query()->delete();
                     Invoice::query()->where('lifecycle', InvoiceLifecycle::Issued)
@@ -65,10 +69,18 @@ final class CompanyDashboardHttpTest extends TestCase
 
         $ron = $this->issuedInvoice($company, $owner, 'RON Customer', '100', 'RON', '2026-08-20');
         $eur = $this->issuedInvoice($company, $owner, 'EUR Customer', '50', 'EUR', '2026-09-20');
+        $cancelled = $this->issuedInvoice($company, $owner, 'Cancelled Customer', '20', 'RON', '2026-08-20');
         $this->transaction($company, $ron, 'PAYMENT', '40', '2026-08-10');
         $this->transaction($company, $ron, 'PAYMENT', '10', '2026-07-31');
         $this->transaction($company, $ron, 'REFUND', '10', '2026-08-15');
         $this->transaction($company, $eur, 'PAYMENT', '50', '2026-08-20');
+        $this->transaction($company, $cancelled, 'PAYMENT', '20', '2026-08-05');
+        $this->transaction($company, $cancelled, 'REFUND', '20', '2026-08-06');
+        app(CancelInvoice::class)->handle($company, $owner, $cancelled->id, new CancelInvoiceData(
+            editVersion: $cancelled->edit_version,
+            reason: 'Cancelled after a complete refund.',
+            confirmed: true,
+        ));
 
         for ($index = 1; $index <= 4; $index++) {
             app(CreateInvoiceDraft::class)->handle($company, $owner, (string) Str::uuid7());
@@ -178,9 +190,8 @@ final class CompanyDashboardHttpTest extends TestCase
                 'final_line_total' => $total,
             ]);
         });
-        app(IssueInvoice::class)->handle($company, $owner, $document->id, 1);
 
-        return $document;
+        return app(IssueInvoice::class)->handle($company, $owner, $document->id, 1);
     }
 
     private function transaction(

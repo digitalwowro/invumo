@@ -8,6 +8,8 @@ use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
+use App\Modules\Delivery\Data\EmailDeliveryState;
+use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
@@ -27,6 +29,17 @@ afterEach(function (): void {
             $companyId,
             function (): void {
                 DB::connection(config('database.tenant_connection'))->transaction(function (): void {
+                    EmailDelivery::query()
+                        ->whereIn('dispatch_state', [
+                            EmailDeliveryState::Queued,
+                            EmailDeliveryState::Retrying,
+                        ])
+                        ->update([
+                            'dispatch_state' => EmailDeliveryState::Rejected,
+                            'failure_category' => 'test_cleanup',
+                            'failure_summary' => 'Browser test cleanup.',
+                            'failed_at' => now(),
+                        ]);
                     Invoice::query()->where('lifecycle', InvoiceLifecycle::Cancelled)
                         ->update(['lifecycle' => InvoiceLifecycle::Issued]);
                     DB::statement('SET CONSTRAINTS invoice_transaction_ledger_trigger DEFERRED');
@@ -64,6 +77,7 @@ function companyForInvoiceBrowser(string $language = 'en'): array
         Customer::query()->create([
             'type' => 'COMPANY',
             'legal_name' => 'Browser Invoice Customer SRL',
+            'email' => 'invoice-customer@example.com',
             'document_language' => $language,
         ]);
     });
@@ -120,6 +134,12 @@ it('creates calculates and renders an Invoice Draft without viewport overflow', 
         ->assertSee('Transaction recorded.')
         ->assertSee('Partially paid')
         ->assertSee('138.00 RON')
+        ->click('Send receipt')
+        ->assertSee('Send a payment-received email?')
+        ->assertSee('Recording a Payment never sends it automatically.')
+        ->click('Queue receipt email')
+        ->assertSee('Payment-received email queued.')
+        ->assertSee('Queued')
         ->wait(0.2)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()

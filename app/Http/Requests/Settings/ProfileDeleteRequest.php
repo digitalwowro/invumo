@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Concerns\PasswordValidationRules;
+use App\Modules\Identity\Data\DeleteUserData;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -19,6 +20,12 @@ class ProfileDeleteRequest extends FormRequest
     {
         return [
             'password' => $this->currentPasswordRules(),
+            'deletion_state' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/'],
         ];
+    }
+
+    public function deletion(): DeleteUserData
+    {
+        return new DeleteUserData((string) $this->validated('deletion_state'));
     }
 }

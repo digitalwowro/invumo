@@ -7,6 +7,6 @@ final readonly class LockedDocumentDeletionResources
     public function __construct(
         public int $publicLinkCount,
         public int $deliveryCount,
-        public bool $submissionInFlight,
+        public int $submissionInFlightCount,
     ) {}
 }

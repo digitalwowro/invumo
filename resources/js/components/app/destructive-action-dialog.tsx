@@ -63,7 +63,11 @@ export function DestructiveActionDialog(props: Props) {
     return (
         <Dialog open={props.open} onOpenChange={props.onOpenChange}>
             <DialogTrigger asChild>
-                <Button type="button" variant="destructive">
+                <Button
+                    type="button"
+                    variant="destructive"
+                    data-testid="destructive-action-trigger"
+                >
                     {props.triggerLabel}
                 </Button>
             </DialogTrigger>

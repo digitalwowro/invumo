@@ -13,7 +13,8 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Data\JobDispatchStatus;
 use App\Modules\Delivery\Models\JobDispatch;
-use App\Modules\Recurring\Data\RecurringTemplateState;
+use App\Modules\Recurring\Data\RecurringTemplateDeletionData;
+use App\Modules\Recurring\Data\RecurringTemplateDeletionState;
 use App\Modules\Recurring\Exceptions\RecurringTemplateException;
 use App\Modules\Recurring\Models\RecurringOccurrence;
 use App\Modules\Recurring\Models\RecurringTemplate;
@@ -32,17 +33,14 @@ final readonly class DeleteRecurringTemplate
         Company $company,
         User $actor,
         string $templateId,
-        bool $confirmed,
-        bool $confirmedHighRisk,
+        RecurringTemplateDeletionData $data,
     ): void {
         try {
             $this->tenantContext->runForMember(
                 $actor,
                 $company->id,
                 fn () => DB::connection(config('database.tenant_connection'))->transaction(
-                    fn () => $this->delete(
-                        $company, $actor, $templateId, $confirmed, $confirmedHighRisk,
-                    ),
+                    fn () => $this->delete($company, $actor, $templateId, $data),
                     3,
                 ),
             );
@@ -59,26 +57,36 @@ final readonly class DeleteRecurringTemplate
         Company $company,
         User $actor,
         string $templateId,
-        bool $confirmed,
-        bool $confirmedHighRisk,
+        RecurringTemplateDeletionData $data,
     ): void {
         $this->authorizer->authorize($actor, $company, CompanyAbility::DeleteRecurringTemplates);
         $template = RecurringTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
-        $occurrence = RecurringOccurrence::query()
+        $occurrenceCount = count(RecurringOccurrence::query()
             ->where('recurring_template_id', $template->id)
-            ->orderBy('id')->lockForUpdate()->first(['id']);
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id'])
+            ->all());
+        $state = new RecurringTemplateDeletionState(
+            $template->state,
+            $occurrenceCount,
+        );
 
-        if ($occurrence !== null) {
+        if (! hash_equals($state->version(), $data->stateVersion)) {
+            throw RecurringTemplateException::deletionStateChanged();
+        }
+
+        if ($state->blocked()) {
             throw RecurringTemplateException::dependency();
         }
 
-        if (! $confirmed) {
+        if (! $data->confirmed) {
             throw RecurringTemplateException::confirmationRequired();
         }
 
-        $highRisk = $template->state !== RecurringTemplateState::Draft;
+        $highRisk = $state->highRisk();
 
-        if ($highRisk && ! $confirmedHighRisk) {
+        if ($highRisk && ! $data->confirmedHighRisk) {
             throw RecurringTemplateException::highRiskConfirmationRequired();
         }
 

@@ -41,8 +41,7 @@ final class RecurringTemplateController extends Controller
                 $company,
                 $request->user(),
                 $template,
-                $request->boolean('confirmed'),
-                $request->boolean('confirmed_high_risk'),
+                $request->deletion(),
             );
         } catch (RecurringTemplateException $exception) {
             throw ValidationException::withMessages([

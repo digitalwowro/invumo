@@ -2,7 +2,7 @@
 
 Status: Approved
 Approved: 2026-08-22
-Last updated: 2026-08-27
+Last updated: 2026-08-30
 
 This document assigns every v1 Company action to the Owner, Admin, and Member roles. It translates the approved [master build brief](../product/master-build-brief.md), [domain rules](../product/domain-rules.md), [financial/document state contract](document-and-financial-state.md), [numbering contract](numbering-and-concurrency.md), [scheduling contract](scheduling-and-jobs.md), and [tenant-isolation contract](tenant-isolation.md) into one authorization contract for Laravel Policies, application actions, queue jobs, tests, and React UI visibility.
 
@@ -63,11 +63,12 @@ This matrix is independent of the Company-role tables below.
 | Action                                                         | Owner   | Admin   | Member | Notes                                                                                                                  |
 | -------------------------------------------------------------- | ------- | ------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
 | Edit own profile, application language, password, and sessions | Self    | Self    | Self   | Not delegated through a Company role                                                                                   |
+| Permanently erase own User and personal Account                | Self    | Self    | Self   | Current password and state recheck; blocked by owned Companies or Platform Owner authority; removes other memberships and invitation identity |
 | Switch among Companies where the User has active membership    | Yes     | Yes     | Yes    | The destination membership controls the new context                                                                    |
 | View active Company identity and member directory              | Yes     | Yes     | Yes    | Does not expose secrets or Account controls                                                                            |
 | View the owning Account's plan and entitlements                | Yes     | No      | No     | Exclusive among Company roles; Platform Owner lifecycle administration follows the separate matrix                     |
 | Transfer Company ownership                                     | Guarded | No      | No     | Existing Admin/Member only; validate destination Account/Plan, reauthenticate, confirm former-Owner outcome, and audit |
-| Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, highest-friction confirmation, dependency ordering, and audit required                               |
+| Permanently delete/erase the Company                           | Guarded | No      | No     | Reauthentication, exact name plus acknowledgement, stale-state/provider checks, ordered cleanup, and minimal proof     |
 | Invite a User as Admin or Member                               | Yes     | Yes     | No     | Expires 7 days after issue/resend; revocable and single-use; cannot invite Owner                                       |
 | Resend or revoke a pending invitation                          | Yes     | Yes     | No     | Audit significant actions                                                                                              |
 | Change another non-Owner membership between Admin and Member   | Guarded | Guarded | No     | Confirmation and audit; Admin cannot affect Owner or change its own role through this action                           |

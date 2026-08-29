@@ -2,6 +2,7 @@
 
 namespace App\Modules\Recurring\Queries;
 
+use App\Modules\Recurring\Data\RecurringTemplateDeletionState;
 use App\Modules\Recurring\Data\RecurringTemplateState;
 use App\Modules\Recurring\Models\RecurringOccurrence;
 use RuntimeException;
@@ -10,7 +11,7 @@ final class RecurringTemplateDeletionPreview
 {
     /**
      * @param  array<string, RecurringTemplateState>  $templates
-     * @return array<string, array{highRisk: bool, guard: array{blocked: bool, description: string|null}}>
+     * @return array<string, array{highRisk: bool, stateVersion: string, guard: array{blocked: bool, description: string|null}}>
      */
     public function forTemplates(array $templates): array
     {
@@ -23,11 +24,13 @@ final class RecurringTemplateDeletionPreview
 
         foreach ($templates as $id => $state) {
             $occurrences = (int) ($counts[$id] ?? 0);
+            $deletion = new RecurringTemplateDeletionState($state, $occurrences);
             $result[$id] = [
-                'highRisk' => $state !== RecurringTemplateState::Draft,
+                'highRisk' => $deletion->highRisk(),
+                'stateVersion' => $deletion->version(),
                 'guard' => [
-                    'blocked' => $occurrences > 0,
-                    'description' => $occurrences > 0
+                    'blocked' => $deletion->blocked(),
+                    'description' => $deletion->blocked()
                         ? $this->description([
                             'occurrences' => $occurrences,
                         ])

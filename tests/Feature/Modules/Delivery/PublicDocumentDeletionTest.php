@@ -27,10 +27,12 @@ final class PublicDocumentDeletionTest extends PublicDocumentTestCase
         $this->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true,
             'confirmed_high_risk' => false,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertSessionHasErrors('quote');
         $this->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true,
             'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertRedirect(route('quotes.index', $company));
 
         $this->get(route('public-quotes.show', $token))->assertNotFound();
@@ -59,6 +61,7 @@ final class PublicDocumentDeletionTest extends PublicDocumentTestCase
             'confirmed' => true,
             'confirmed_high_risk' => true,
             'confirmation_number' => $invoice->rendered_number,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertRedirect(route('invoices.index', $company));
 
         $this->get(route('public-invoices.show', $token))->assertNotFound();

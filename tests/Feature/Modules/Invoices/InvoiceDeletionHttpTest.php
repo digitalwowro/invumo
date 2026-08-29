@@ -32,11 +32,12 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class InvoiceDeletionHttpTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     protected function setUp(): void
     {
@@ -74,19 +75,23 @@ final class InvoiceDeletionHttpTest extends TestCase
 
         $this->actingAs($owner)->delete(route('invoices.destroy', [$company, $draft]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->invoiceDeletionState($company, $draft),
         ])->assertRedirect(route('invoices.index', $company));
         $this->actingAs($admin)->delete(route('invoices.destroy', [$company, $issued]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->invoiceDeletionState($company, $issued),
         ])->assertSessionHasErrors('invoice');
         $this->delete(route('invoices.destroy', [$company, $issued]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
             'confirmation_number' => 'wrong-number',
+            'deletion_state' => $this->invoiceDeletionState($company, $issued),
         ])->assertSessionHasErrors('confirmation_number');
 
         foreach ([$issued, $cancelled] as $invoice) {
             $this->delete(route('invoices.destroy', [$company, $invoice]), [
                 'confirmed' => true, 'confirmed_high_risk' => true,
                 'confirmation_number' => $invoice->rendered_number,
+                'deletion_state' => $this->invoiceDeletionState($company, $invoice),
             ])->assertRedirect(route('invoices.index', $company));
         }
 
@@ -122,12 +127,14 @@ final class InvoiceDeletionHttpTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->where('deletion.url', null));
         $this->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertForbidden();
 
         [$other, $otherOwner] = $this->company();
         $foreign = app(CreateInvoiceDraft::class)->handle($other, $otherOwner, (string) Str::uuid7());
         $this->actingAs($owner)->delete(route('invoices.destroy', [$company, $foreign]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => str_repeat('0', 64),
         ])->assertNotFound();
         $this->tenant($company, fn () => $this->assertNull(Document::query()->find($foreign->id)));
     }
@@ -155,6 +162,7 @@ final class InvoiceDeletionHttpTest extends TestCase
         $this->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
             'confirmation_number' => $invoice->rendered_number,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertSessionHasErrors('invoice');
 
         try {
@@ -181,6 +189,7 @@ final class InvoiceDeletionHttpTest extends TestCase
 
         $this->actingAs($owner)->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertSessionHasErrors('invoice');
         $this->tenant($company, function () use ($quote, $invoice): void {
             $this->assertNotNull(Document::query()->find($quote->id));
@@ -195,6 +204,7 @@ final class InvoiceDeletionHttpTest extends TestCase
         ])->assertRedirect()->assertSessionDoesntHaveErrors();
         $this->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertRedirect(route('invoices.index', $company));
 
         $this->tenant($company, function () use ($quote, $invoice): void {

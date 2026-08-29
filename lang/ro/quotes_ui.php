@@ -242,6 +242,7 @@ return [
         'lifecycle_reason_invalid' => 'Introdu un motiv de cel mult 500 de caractere.',
         'delete_confirmation_required' => 'Confirmă ștergerea definitivă.',
         'delete_high_risk_confirmation_required' => 'Confirmă ștergerea definitivă a acestei oferte vizibile clientului.',
+        'delete_state_changed' => 'Condițiile de ștergere a Ofertei s-au modificat. Reîncarcă pagina și verifică cerințele actuale de confirmare.',
         'delete_delivery_in_progress' => 'Așteaptă finalizarea trimiterii active prin email înainte de a șterge această Ofertă.',
         'delete_invoice_dependency' => 'Elimină asocierea tuturor facturilor derivate înainte de a șterge definitiv oferta.',
         'conversion_rejected' => 'O ofertă respinsă nu poate crea o factură. Corectează-i mai întâi starea.',

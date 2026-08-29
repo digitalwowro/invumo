@@ -21,6 +21,7 @@ type Props = {
     closeLabel: string;
     warningTitle: string;
     guard: DependencyGuard;
+    generalError?: string;
     onConfirm: () => void;
     tone?: 'default' | 'destructive';
 };
@@ -34,6 +35,7 @@ export function GuardedActionDialog({
     closeLabel,
     warningTitle,
     guard,
+    generalError,
     onConfirm,
     tone = 'destructive',
 }: Props) {
@@ -60,6 +62,9 @@ export function GuardedActionDialog({
                         tone="warning"
                     />
                 )}
+                {generalError && (
+                    <SystemMessage title={generalError} tone="error" />
+                )}
                 <DialogFooter>
                     <DialogClose asChild>
                         <Button type="button" variant="secondary">
@@ -71,15 +76,13 @@ export function GuardedActionDialog({
                             {confirmLabel}
                         </Button>
                     ) : (
-                        <DialogClose asChild>
-                            <Button
-                                type="button"
-                                variant={confirmVariant}
-                                onClick={onConfirm}
-                            >
-                                {confirmLabel}
-                            </Button>
-                        </DialogClose>
+                        <Button
+                            type="button"
+                            variant={confirmVariant}
+                            onClick={onConfirm}
+                        >
+                            {confirmLabel}
+                        </Button>
                     )}
                 </DialogFooter>
             </DialogContent>

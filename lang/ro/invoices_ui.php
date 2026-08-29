@@ -327,6 +327,7 @@ return [
         'delete_confirmation_required' => 'Confirmă ștergerea definitivă a Facturii.',
         'delete_high_risk_confirmation_required' => 'Confirmă înțelegerea ștergerii definitive a acestei Facturi emise.',
         'delete_number_confirmation_invalid' => 'Introdu numărul exact al Facturii.',
+        'delete_state_changed' => 'Condițiile de ștergere a Facturii s-au modificat. Reîncarcă pagina și verifică cerințele actuale de confirmare.',
         'delete_transaction_dependency' => 'Șterge toate Plățile, Rambursările și Ajustările înainte de a șterge definitiv această Factură.',
         'delete_quote_dependency' => 'Această Factură este legată de o Ofertă. Numai o Ciornă poate fi mai întâi deconectată prin fluxul protejat al Ofertei; legătura unei Facturi Emise sau Anulate este permanentă.',
         'delete_delivery_in_progress' => 'Așteaptă finalizarea trimiterii active prin email înainte de a șterge această Factură.',

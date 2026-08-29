@@ -17,6 +17,8 @@ use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Recurring\Actions\GenerateDueRecurringInvoices;
 use App\Modules\Recurring\Actions\SyncRecurringDispatch;
+use App\Modules\Recurring\Actions\TransitionRecurringTemplate;
+use App\Modules\Recurring\Data\RecurringTemplateTransition;
 use App\Modules\Recurring\Models\RecurringOccurrence;
 use App\Modules\Recurring\Models\RecurringTemplate;
 use App\Modules\Recurring\Models\RecurringTemplateLine;
@@ -26,11 +28,12 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class RecurringTemplateDeletionHttpTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     protected function tearDown(): void
     {
@@ -50,6 +53,7 @@ final class RecurringTemplateDeletionHttpTest extends TestCase
                 ->where('deletion.guard.blocked', false));
         $this->delete(route('recurring.destroy', [$company, $template]), [
             'confirmed' => true,
+            'deletion_state' => $this->recurringDeletionState($company, $template),
         ])->assertSessionHasErrors('template');
 
         app(GenerateDueRecurringInvoices::class)->handle($company->id, $dispatch->id, 1);
@@ -61,6 +65,7 @@ final class RecurringTemplateDeletionHttpTest extends TestCase
                 ->where('deletion.guard.description', 'Generated Invoice occurrences still retained: 1.'));
         $this->delete(route('recurring.destroy', [$company, $template]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
+            'deletion_state' => $this->recurringDeletionState($company, $template),
         ])->assertSessionHasErrors('template');
 
         try {
@@ -75,9 +80,11 @@ final class RecurringTemplateDeletionHttpTest extends TestCase
             'confirmed' => true,
             'confirmed_high_risk' => true,
             'confirmation_number' => $invoice->rendered_number,
+            'deletion_state' => $this->invoiceDeletionState($company, $invoice),
         ])->assertRedirect();
         $this->delete(route('recurring.destroy', [$company, $template]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
+            'deletion_state' => $this->recurringDeletionState($company, $template),
         ])->assertRedirect(route('recurring.index', $company));
 
         $this->tenant($company, function () use ($template): void {
@@ -91,6 +98,28 @@ final class RecurringTemplateDeletionHttpTest extends TestCase
             ], $audit->before);
             $this->assertSame(['deleted' => true], $audit->after);
         });
+    }
+
+    public function test_state_change_rejects_stale_recurring_deletion_confirmation(): void
+    {
+        [$owner, $company, $template] = $this->scheduled();
+        $state = $this->recurringDeletionState($company, $template);
+        app(TransitionRecurringTemplate::class)->handle(
+            $company,
+            $owner,
+            $template->id,
+            RecurringTemplateTransition::Pause,
+            $this->tenant($company, fn (): int => RecurringTemplate::query()
+                ->findOrFail($template->id)->edit_version),
+            true,
+        );
+        $this->actingAs($owner)->delete(route('recurring.destroy', [$company, $template]), [
+            'confirmed' => true,
+            'confirmed_high_risk' => false,
+            'deletion_state' => $state,
+        ])->assertSessionHasErrors('template');
+
+        $this->assertNotSame($state, $this->recurringDeletionState($company, $template));
     }
 
     /** @return array{User, Company, RecurringTemplate, JobDispatch} */

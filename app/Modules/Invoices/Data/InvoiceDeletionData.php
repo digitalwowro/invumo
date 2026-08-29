@@ -8,5 +8,6 @@ final readonly class InvoiceDeletionData
         public bool $confirmed,
         public bool $confirmedHighRisk,
         public ?string $confirmationNumber,
+        public string $stateVersion,
     ) {}
 }

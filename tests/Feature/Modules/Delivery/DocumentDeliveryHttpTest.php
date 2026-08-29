@@ -273,6 +273,7 @@ final class DocumentDeliveryHttpTest extends DocumentDeliveryTestCase
         $this->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true,
             'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertSessionHasErrors([
             'quote' => 'Wait for the active email submission to finish before deleting this Quote.',
         ]);

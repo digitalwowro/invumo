@@ -6,12 +6,19 @@ import type { QuoteTranslations } from '@/types/quote';
 type Props = {
     url: string;
     highRisk: boolean;
+    stateVersion: string;
     guard: DependencyGuard;
     labels: QuoteTranslations['deletion'];
 };
 
-export function QuoteDeleteDialog({ url, highRisk, guard, labels }: Props) {
-    const { i18n } = usePage().props;
+export function QuoteDeleteDialog({
+    url,
+    highRisk,
+    stateVersion,
+    guard,
+    labels,
+}: Props) {
+    const { i18n, errors } = usePage<{ errors: { quote?: string } }>().props;
 
     return (
         <GuardedActionDialog
@@ -25,12 +32,14 @@ export function QuoteDeleteDialog({ url, highRisk, guard, labels }: Props) {
             closeLabel={i18n.common.accessibility.close_navigation}
             warningTitle={labels.dependency_title}
             guard={guard}
+            generalError={errors.quote}
             tone="destructive"
             onConfirm={() =>
                 router.delete(url, {
                     data: {
                         confirmed: true,
                         confirmed_high_risk: highRisk,
+                        deletion_state: stateVersion,
                     },
                 })
             }

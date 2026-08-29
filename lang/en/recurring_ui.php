@@ -316,6 +316,7 @@ return [
         'reminder_duplicate' => 'Each reminder timing may appear only once.',
         'confirmation_required' => 'Confirm this automation change.',
         'high_risk_confirmation_required' => 'Confirm permanent deletion of this non-Draft recurring template.',
+        'deletion_state_changed' => 'The recurring-template deletion conditions changed. Reload the page and review the current confirmation requirements.',
         'dependency' => 'Delete every generated Invoice before permanently deleting this recurring template.',
         'completed' => 'A completed recurring template cannot be changed.',
         'schedule_incomplete' => 'Complete the schedule and Company timezone settings first.',

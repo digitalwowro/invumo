@@ -37,6 +37,19 @@ return [
             'deleteDialogDescription' => 'Contul și datele sale vor fi șterse definitiv. Introdu parola pentru confirmare.',
             'deleteConfirm' => 'Șterge contul',
             'closeDialog' => 'Închide fereastra',
+            'erasureBlockedTitle' => 'Ștergerea contului este blocată',
+            'erasureFailedTitle' => 'Ștergerea contului nu a putut continua',
+            'membershipRemovalTitle' => 'Accesul la companii va fi eliminat',
+            'membershipRemovalDescription' => 'Ștergerea acestui cont elimină :memberships apartenențe la companii. Înregistrările companiilor și istoricul de audit rămân.',
+            'erasureGuards' => [
+                'owned_companies' => 'Transferă sau șterge definitiv cele :companies companii deținute de contul tău înainte de a-l șterge.',
+                'platform_operator' => 'Revocă accesul de Proprietar al platformei înainte de a șterge acest cont.',
+            ],
+            'erasureErrors' => [
+                'state_changed' => 'Relațiile contului s-au schimbat după încărcarea paginii. Verifică starea actuală și încearcă din nou.',
+                'owned_companies' => 'Transferă sau șterge definitiv fiecare companie deținută de contul tău înainte de a-l șterge.',
+                'platform_operator' => 'Revocă accesul de Proprietar al platformei înainte de a șterge acest cont.',
+            ],
         ],
         'security' => [
             'headTitle' => 'Setările de securitate',

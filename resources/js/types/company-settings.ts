@@ -18,7 +18,8 @@ export type CompanySettingsNavigationItem = {
         | 'bank_accounts'
         | 'appearance'
         | 'members'
-        | 'audit';
+        | 'audit'
+        | 'data_lifecycle';
     href: string;
 };
 
@@ -60,4 +61,24 @@ export type CompanySettingsTranslations = {
     bank_accounts: CompanyBankAccountTranslations;
     appearance: CompanyAppearanceTranslations;
     audit: CompanyAuditTranslations;
+    data_lifecycle: CompanyDataLifecycleTranslations;
+};
+
+export type CompanyDataLifecycleTranslations = {
+    head_title: string;
+    title: string;
+    description: string;
+    warning_title: string;
+    warning_description: string;
+    trigger: string;
+    dialog_title: string;
+    dialog_description: string;
+    confirm: string;
+    name_label: string;
+    name_description: string;
+    acknowledgment: string;
+    dependency_title: string;
+    dependency_description: string;
+    feedback: { erased: string };
+    errors: Record<string, string>;
 };

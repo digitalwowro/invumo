@@ -27,11 +27,12 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class QuoteInvoiceConversionHttpTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     protected function setUp(): void
     {
@@ -157,6 +158,7 @@ final class QuoteInvoiceConversionHttpTest extends TestCase
         ])->assertForbidden();
         $this->actingAs($owner)->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertSessionHasErrors('quote');
 
         $this->post($url, ['reason' => 'Independent billing', 'confirmed' => true])

@@ -17,6 +17,7 @@ use App\Modules\Companies\Models\CompanyInvitation;
 use App\Modules\Companies\Models\CompanyMembership;
 use App\Modules\Companies\Notifications\CompanyInvitationNotifier;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use App\Modules\Companies\Support\CompanyInvitationIdentityLock;
 use App\Modules\Companies\Support\CompanyInvitationToken;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ final readonly class InviteCompanyMember
         private TenantContext $tenantContext,
         private RecordAuditEvent $recordAuditEvent,
         private CompanyInvitationNotifier $notifier,
+        private CompanyInvitationIdentityLock $identityLock,
     ) {}
 
     public function handle(Company $company, User $actor, string $email, CompanyRole $role): IssuedCompanyInvitation
@@ -45,6 +47,7 @@ final readonly class InviteCompanyMember
             return DB::connection(config('database.tenant_connection'))
                 ->transaction(function () use ($company, $actor, $email, $normalizedEmail, $role, $token) {
                     $this->authorizer->authorize($actor, $company, CompanyAbility::ManageMembers);
+                    $this->identityLock->acquire($normalizedEmail);
                     $this->ensureNotMember($company, $normalizedEmail);
                     $this->replaceExpiredInvitation($company, $normalizedEmail);
 

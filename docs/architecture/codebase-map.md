@@ -2,7 +2,7 @@
 
 Status: Approved implementation contract
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 This is the living map of Invumo's code ownership and dependency boundaries. It explains where new code belongs without duplicating the product specification or the development tracker.
 
@@ -37,8 +37,8 @@ The approved module catalog is:
 
 | Module         | Owns                                                                                                                    |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `Identity`     | Account-level identity and entitlement behavior beyond Fortify's framework authentication entry points                  |
-| `Companies`    | Companies, memberships, invitations, ownership, company switching, configuration, private assets, and dashboard composition |
+| `Identity`     | Account-level identity, entitlement, and coupled User/personal-Account erasure beyond Fortify's authentication entry points |
+| `Companies`    | Companies, memberships, invitations, ownership, configuration, private assets, dashboard composition, and Company/access erasure |
 | `Customers`    | Customers, contacts, delivery recipients, defaults, and customer search                                                 |
 | `Catalog`      | Products and services, catalog defaults, search, and archive behavior                                                   |
 | `Documents`    | Shared document lines, snapshots, numbering, calculation orchestration, and common document behavior                    |
@@ -47,7 +47,7 @@ The approved module catalog is:
 | `Transactions` | Payments, refunds, adjustments, receipts, cash bounds, transaction correction history, and the shared Invoice ledger aggregate |
 | `Recurring`    | Recurring templates, occurrence generation, schedule resolution, and automation controls                                |
 | `Delivery`     | Public document access, PDF composition, email/reminder workflows, delivery history, and provider-event normalization   |
-| `Audit`        | Append-only audit events and authorized operational/audit queries                                                       |
+| `Audit`        | Append-only tenant audit, privacy-minimal non-tenant erasure proofs, and authorized operational/audit queries          |
 | `Platform`     | Operator authorization, control-plane administration, Account lifecycle/suspension, full User impersonation, and audit  |
 
 This catalog describes ownership, not deployment. A cross-cutting workflow still runs inside one database transaction and one application. Split or merge a module only through an approved architecture change backed by actual code pressure.

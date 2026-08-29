@@ -242,6 +242,7 @@ return [
         'lifecycle_reason_invalid' => 'Enter a reason of up to 500 characters.',
         'delete_confirmation_required' => 'Confirm permanent deletion.',
         'delete_high_risk_confirmation_required' => 'Confirm permanent deletion of this customer-visible Quote.',
+        'delete_state_changed' => 'The Quote deletion conditions changed. Reload the page and review the current confirmation requirements.',
         'delete_delivery_in_progress' => 'Wait for the active email submission to finish before deleting this Quote.',
         'delete_invoice_dependency' => 'Unlink every derived Invoice before permanently deleting this Quote.',
         'conversion_rejected' => 'A Rejected Quote cannot create an Invoice. Correct its status first.',

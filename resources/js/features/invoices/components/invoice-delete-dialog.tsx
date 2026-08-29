@@ -8,6 +8,7 @@ type Props = {
     url: string;
     number: string;
     highRisk: boolean;
+    stateVersion: string;
     guard: DependencyGuard;
     labels: InvoiceTranslations['deletion'];
 };
@@ -16,6 +17,7 @@ export function InvoiceDeleteDialog({
     url,
     number,
     highRisk,
+    stateVersion,
     guard,
     labels,
 }: Props) {
@@ -25,6 +27,7 @@ export function InvoiceDeleteDialog({
         confirmed: true,
         confirmed_high_risk: false,
         confirmation_number: '',
+        deletion_state: stateVersion,
     });
     const errors = form.errors as typeof form.errors & { invoice?: string };
 
@@ -37,6 +40,10 @@ export function InvoiceDeleteDialog({
     };
 
     const destroy = () => {
+        form.transform((data) => ({
+            ...data,
+            deletion_state: stateVersion,
+        }));
         form.delete(url, {
             preserveScroll: true,
             onSuccess: () => setDialogOpen(false),

@@ -36,7 +36,11 @@ type Props = RecurringSourceProps &
         retryUrl: string;
         duplicateCreationKey: string;
         deleteUrl: string;
-        deletion: { highRisk: boolean; guard: DependencyGuard };
+        deletion: {
+            highRisk: boolean;
+            stateVersion: string;
+            guard: DependencyGuard;
+        };
         indexUrl: string;
         canDelete: boolean;
         canEditDraft: boolean;
@@ -103,6 +107,9 @@ export default function EditRecurringTemplate(props: Props) {
                                     <RecurringTemplateDeleteDialog
                                         url={props.deleteUrl}
                                         highRisk={props.deletion.highRisk}
+                                        stateVersion={
+                                            props.deletion.stateVersion
+                                        }
                                         guard={props.deletion.guard}
                                         labels={props.translations.deletion}
                                     />

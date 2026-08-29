@@ -327,6 +327,7 @@ return [
         'delete_confirmation_required' => 'Confirm permanent Invoice deletion.',
         'delete_high_risk_confirmation_required' => 'Acknowledge permanent deletion of this issued Invoice.',
         'delete_number_confirmation_invalid' => 'Enter the exact Invoice number.',
+        'delete_state_changed' => 'The Invoice deletion conditions changed. Reload the page and review the current confirmation requirements.',
         'delete_transaction_dependency' => 'Delete every Payment, Refund, and Adjustment before permanently deleting this Invoice.',
         'delete_quote_dependency' => 'This Invoice is linked to a Quote. Only a Draft can first be unlinked through the guarded Quote workflow; an Issued or Cancelled link is permanent.',
         'delete_delivery_in_progress' => 'Wait for the active email submission to finish before deleting this Invoice.',

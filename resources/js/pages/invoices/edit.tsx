@@ -60,6 +60,7 @@ type Props = {
     deletion: {
         url: string | null;
         highRisk: boolean;
+        stateVersion: string;
         guard: DependencyGuard;
     };
     indexUrl: string;
@@ -143,6 +144,7 @@ export default function EditInvoice({
                                         url={deletion.url}
                                         number={invoice.number}
                                         highRisk={deletion.highRisk}
+                                        stateVersion={deletion.stateVersion}
                                         guard={deletion.guard}
                                         labels={translations.deletion}
                                     />

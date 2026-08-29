@@ -3,6 +3,7 @@
 namespace App\Modules\Invoices\Queries;
 
 use App\Modules\Delivery\Queries\DocumentDeletionExposure;
+use App\Modules\Invoices\Data\InvoiceDeletionState;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use App\Modules\Transactions\Models\InvoiceTransaction;
@@ -12,21 +13,27 @@ final readonly class InvoiceDeletionPreview
 {
     public function __construct(private DocumentDeletionExposure $exposure) {}
 
-    /** @return array{highRisk: bool, guard: array{blocked: bool, description: string|null}} */
+    /** @return array{highRisk: bool, stateVersion: string, guard: array{blocked: bool, description: string|null}} */
     public function for(string $documentId, InvoiceLifecycle $lifecycle): array
     {
         $transactions = InvoiceTransaction::query()->where('invoice_id', $documentId)->count();
         $quotes = QuoteInvoiceLink::query()->where('invoice_id', $documentId)->count();
         $exposure = $this->exposure->forDocuments([$documentId])[$documentId];
-        $blocked = $transactions + $quotes + $exposure->submissionInFlightCount > 0;
+        $state = new InvoiceDeletionState(
+            $lifecycle,
+            $transactions,
+            $quotes,
+            $exposure->publicLinkCount,
+            $exposure->deliveryCount,
+            $exposure->submissionInFlightCount,
+        );
 
         return [
-            'highRisk' => $lifecycle !== InvoiceLifecycle::Draft
-                || $exposure->publicLinkCount > 0
-                || $exposure->deliveryCount > 0,
+            'highRisk' => $state->highRisk(),
+            'stateVersion' => $state->version(),
             'guard' => [
-                'blocked' => $blocked,
-                'description' => $blocked ? $this->description([
+                'blocked' => $state->blocked(),
+                'description' => $state->blocked() ? $this->description([
                     'transactions' => $transactions,
                     'quotes' => $quotes,
                     'submissions' => $exposure->submissionInFlightCount,

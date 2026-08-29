@@ -128,6 +128,7 @@ type DestructiveFormDialogProps = {
     onDismiss?: () => void;
     triggerTestId?: string;
     confirmTestId?: string;
+    triggerDisabled?: boolean;
 };
 
 export function DestructiveFormDialog({
@@ -143,6 +144,7 @@ export function DestructiveFormDialog({
     onDismiss,
     triggerTestId,
     confirmTestId,
+    triggerDisabled = false,
 }: DestructiveFormDialogProps) {
     return (
         <Dialog
@@ -157,6 +159,7 @@ export function DestructiveFormDialog({
                     type="button"
                     variant="destructive"
                     data-testid={triggerTestId}
+                    disabled={triggerDisabled}
                 >
                     {triggerLabel}
                 </Button>

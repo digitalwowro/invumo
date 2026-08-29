@@ -19,6 +19,7 @@ final class DeleteInvoiceRequest extends FormRequest
             'confirmed' => ['required', 'accepted'],
             'confirmed_high_risk' => ['required', 'boolean'],
             'confirmation_number' => ['nullable', 'string', 'max:131'],
+            'deletion_state' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 
@@ -28,6 +29,7 @@ final class DeleteInvoiceRequest extends FormRequest
             confirmed: (bool) $this->validated('confirmed'),
             confirmedHighRisk: (bool) $this->validated('confirmed_high_risk'),
             confirmationNumber: $this->validated('confirmation_number'),
+            stateVersion: (string) $this->validated('deletion_state'),
         );
     }
 

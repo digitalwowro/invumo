@@ -6,6 +6,11 @@ use DomainException;
 
 final class QuoteDeletionException extends DomainException
 {
+    public static function stale(): self
+    {
+        return new self('delete_state_changed');
+    }
+
     public static function confirmationRequired(): self
     {
         return new self('delete_confirmation_required');

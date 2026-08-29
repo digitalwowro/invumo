@@ -13,7 +13,7 @@ use App\Modules\Documents\Contracts\DeletesDocumentResources;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Quotes\Data\QuoteDeletionData;
-use App\Modules\Quotes\Data\QuoteLifecycle;
+use App\Modules\Quotes\Data\QuoteDeletionState;
 use App\Modules\Quotes\Exceptions\QuoteDeletionException;
 use App\Modules\Quotes\Models\Quote;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
@@ -63,12 +63,24 @@ final readonly class DeleteQuote
         $resources = $this->resources->lock($document->id);
         $publicDecisions = QuotePublicDecision::query()
             ->where('quote_id', $document->id)->orderBy('id')->lockForUpdate()->get();
+        $state = new QuoteDeletionState(
+            $quote->lifecycle,
+            $links->count(),
+            $publicDecisions->count(),
+            $resources->publicLinkCount,
+            $resources->deliveryCount,
+            $resources->submissionInFlightCount,
+        );
 
-        if ($links->isNotEmpty()) {
+        if (! hash_equals($state->version(), $data->stateVersion)) {
+            throw QuoteDeletionException::stale();
+        }
+
+        if ($state->invoiceCount > 0) {
             throw QuoteDeletionException::invoiceDependency();
         }
 
-        if ($resources->submissionInFlight) {
+        if ($resources->submissionInFlightCount > 0) {
             throw QuoteDeletionException::deliveryInProgress();
         }
 
@@ -76,10 +88,7 @@ final readonly class DeleteQuote
             throw QuoteDeletionException::confirmationRequired();
         }
 
-        $highRisk = $quote->lifecycle !== QuoteLifecycle::Draft
-            || $resources->publicLinkCount > 0
-            || $publicDecisions->isNotEmpty()
-            || $resources->deliveryCount > 0;
+        $highRisk = $state->highRisk();
 
         if ($highRisk && ! $data->confirmedHighRisk) {
             throw QuoteDeletionException::highRiskConfirmationRequired();

@@ -9,17 +9,24 @@ import TextLink from '@/components/app/text-link';
 import DeleteUser from '@/features/account/components/delete-user';
 import { send } from '@/routes/verification';
 import type { Auth, SettingsUiTranslations } from '@/types';
+import type { DependencyGuard } from '@/types/dependency-guard';
 
 type Props = {
     mustVerifyEmail: boolean;
     status?: string;
     translations: SettingsUiTranslations;
+    erasure: {
+        stateVersion: string;
+        membershipCount: number;
+        guard: DependencyGuard;
+    };
 };
 
 export default function Profile({
     mustVerifyEmail,
     status,
     translations,
+    erasure,
 }: Props) {
     const { auth } = usePage<{ auth: Auth }>().props;
     const { page, shared } = translations;
@@ -97,6 +104,7 @@ export default function Profile({
                 <DeleteUser
                     translations={translations}
                     formId="delete-account-form"
+                    erasure={erasure}
                 />
             </Stack>
         </>

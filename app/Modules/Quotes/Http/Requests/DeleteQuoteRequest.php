@@ -18,6 +18,7 @@ final class DeleteQuoteRequest extends FormRequest
         return [
             'confirmed' => ['required', 'accepted'],
             'confirmed_high_risk' => ['required', 'boolean'],
+            'deletion_state' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 
@@ -26,6 +27,7 @@ final class DeleteQuoteRequest extends FormRequest
         return new QuoteDeletionData(
             confirmed: (bool) $this->validated('confirmed'),
             confirmedHighRisk: (bool) $this->validated('confirmed_high_risk'),
+            stateVersion: (string) $this->validated('deletion_state'),
         );
     }
 

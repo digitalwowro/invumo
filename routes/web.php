@@ -4,6 +4,7 @@ use App\Modules\Catalog\Http\Controllers\ProductServiceController;
 use App\Modules\Companies\Http\Controllers\CompanyAppearanceController;
 use App\Modules\Companies\Http\Controllers\CompanyController;
 use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
+use App\Modules\Companies\Http\Controllers\CompanyDataLifecycleController;
 use App\Modules\Companies\Http\Controllers\CompanyDocumentDefaultsController;
 use App\Modules\Companies\Http\Controllers\CompanyInvitationController;
 use App\Modules\Companies\Http\Controllers\CompanyLandingController;
@@ -229,6 +230,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('company-appearance.logo');
             Route::get('companies/{company}/settings/members', [CompanyMemberController::class, 'index'])
                 ->name('company-members.index');
+            Route::get('companies/{company}/settings/data-lifecycle', [CompanyDataLifecycleController::class, 'show'])
+                ->name('company-data-lifecycle.show');
+            Route::delete('companies/{company}/settings/data-lifecycle', [CompanyDataLifecycleController::class, 'destroy'])
+                ->middleware([RequirePassword::class, 'throttle:3,1'])
+                ->name('company-data-lifecycle.destroy');
             Route::delete('companies/{company}/settings/members/current', [CompanyMemberController::class, 'leave'])
                 ->middleware('throttle:10,1')
                 ->name('company-members.leave');

@@ -59,17 +59,18 @@ final class LockDocumentDeliveryHistory
     }
 
     /** @param Collection<int, EmailDelivery> $deliveries */
-    public function hasSubmissionInFlight(Collection $deliveries): bool
+    public function countSubmissionsInFlight(Collection $deliveries): int
     {
         if ($deliveries->isEmpty()) {
-            return false;
+            return 0;
         }
 
-        return EmailDeliveryAttempt::query()
+        return count(EmailDeliveryAttempt::query()
             ->whereIn('delivery_id', $deliveries->pluck('id'))
             ->where('state', 'PENDING')
             ->orderBy('id')
             ->lockForUpdate()
-            ->first() instanceof EmailDeliveryAttempt;
+            ->get(['id'])
+            ->all());
     }
 }

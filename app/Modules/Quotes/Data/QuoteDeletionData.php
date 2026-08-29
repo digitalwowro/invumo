@@ -7,5 +7,6 @@ final readonly class QuoteDeletionData
     public function __construct(
         public bool $confirmed,
         public bool $confirmedHighRisk,
+        public string $stateVersion,
     ) {}
 }

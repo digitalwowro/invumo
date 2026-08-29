@@ -23,11 +23,12 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class QuoteOperationalHttpTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     protected function setUp(): void
     {
@@ -37,6 +38,10 @@ final class QuoteOperationalHttpTest extends TestCase
 
     protected function tearDown(): void
     {
+        Company::query()->pluck('id')->each(fn (string $companyId) => app(TenantContext::class)
+            ->runAsSystem($companyId, fn () => Quote::query()->update([
+                'lifecycle' => QuoteLifecycle::Draft,
+            ])));
         Date::setTestNow();
         parent::tearDown();
     }
@@ -159,15 +164,19 @@ final class QuoteOperationalHttpTest extends TestCase
 
         $this->delete($deleteUrl, [
             'confirmed' => true, 'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertForbidden();
         $this->actingAs($owner)->delete($deleteUrl, [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertSessionHasErrors('quote');
         $this->delete($deleteUrl, [
             'confirmed' => true, 'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertRedirect(route('quotes.index', $company));
         $this->actingAs($admin)->delete(route('quotes.destroy', [$company, $adminQuote]), [
             'confirmed' => true, 'confirmed_high_risk' => false,
+            'deletion_state' => $this->quoteDeletionState($company, $adminQuote),
         ])->assertRedirect(route('quotes.index', $company));
 
         $this->tenant($company, function () use ($quote): void {
@@ -201,6 +210,25 @@ final class QuoteOperationalHttpTest extends TestCase
             'lifecycle' => 'SENT', 'reason' => 'Cross tenant', 'confirmed' => true,
         ])->assertNotFound();
         $this->get(route('quotes.index', $companyB))->assertNotFound();
+    }
+
+    public function test_lifecycle_change_rejects_stale_quote_deletion_state(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->company($owner);
+        $quote = $this->quote($company, $owner);
+        $state = $this->quoteDeletionState($company, $quote);
+        $this->tenant($company, fn () => Quote::query()->whereKey($quote->id)
+            ->update(['lifecycle' => QuoteLifecycle::Sent]));
+
+        $this->actingAs($owner)->delete(route('quotes.destroy', [$company, $quote]), [
+            'confirmed' => true,
+            'confirmed_high_risk' => false,
+            'deletion_state' => $state,
+        ])->assertSessionHasErrors('quote');
+
+        $this->assertNotSame($state, $this->quoteDeletionState($company, $quote));
+        $this->tenant($company, fn () => $this->assertNotNull(Document::query()->find($quote->id)));
     }
 
     /** @param array<string, mixed> $overrides @return array<string, mixed> */

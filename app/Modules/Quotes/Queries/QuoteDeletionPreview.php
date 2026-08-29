@@ -3,6 +3,7 @@
 namespace App\Modules\Quotes\Queries;
 
 use App\Modules\Delivery\Queries\DocumentDeletionExposure;
+use App\Modules\Quotes\Data\QuoteDeletionState;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use App\Modules\Quotes\Models\QuotePublicDecision;
@@ -14,7 +15,7 @@ final readonly class QuoteDeletionPreview
 
     /**
      * @param  array<string, QuoteLifecycle>  $documents
-     * @return array<string, array{highRisk: bool, guard: array{blocked: bool, description: string|null}}>
+     * @return array<string, array{highRisk: bool, stateVersion: string, guard: array{blocked: bool, description: string|null}}>
      */
     public function forDocuments(array $documents): array
     {
@@ -35,15 +36,20 @@ final readonly class QuoteDeletionPreview
         foreach ($documents as $id => $lifecycle) {
             $invoiceCount = $links[$id] ?? 0;
             $submissionCount = $exposure[$id]->submissionInFlightCount ?? 0;
-            $blocked = $invoiceCount + $submissionCount > 0;
+            $state = new QuoteDeletionState(
+                $lifecycle,
+                $invoiceCount,
+                (int) ($decisions[$id] ?? 0),
+                $exposure[$id]->publicLinkCount,
+                $exposure[$id]->deliveryCount,
+                $exposure[$id]->submissionInFlightCount,
+            );
             $result[$id] = [
-                'highRisk' => $lifecycle !== QuoteLifecycle::Draft
-                    || ($exposure[$id]->publicLinkCount ?? 0) > 0
-                    || ($decisions[$id] ?? 0) > 0
-                    || ($exposure[$id]->deliveryCount ?? 0) > 0,
+                'highRisk' => $state->highRisk(),
+                'stateVersion' => $state->version(),
                 'guard' => [
-                    'blocked' => $blocked,
-                    'description' => $blocked ? $this->description([
+                    'blocked' => $state->blocked(),
+                    'description' => $state->blocked() ? $this->description([
                         'invoices' => $invoiceCount,
                         'submissions' => $submissionCount,
                     ]) : null,

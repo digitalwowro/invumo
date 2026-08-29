@@ -23,10 +23,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\Support\PublicDocumentTestCase;
 
 final class PublicQuoteDecisionDatabaseTest extends PublicDocumentTestCase
 {
+    use InteractsWithDeletionPreviews;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -125,7 +128,11 @@ final class PublicQuoteDecisionDatabaseTest extends PublicDocumentTestCase
             $company,
             $owner,
             $quote->id,
-            new QuoteDeletionData(confirmed: true, confirmedHighRisk: true),
+            new QuoteDeletionData(
+                confirmed: true,
+                confirmedHighRisk: true,
+                stateVersion: $this->quoteDeletionState($company, $quote),
+            ),
         );
 
         $this->tenant($company, function (): void {

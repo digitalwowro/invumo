@@ -6,15 +6,17 @@ import type { RecurringTranslations } from '@/types/recurring-translations';
 export function RecurringTemplateDeleteDialog({
     url,
     highRisk,
+    stateVersion,
     guard,
     labels,
 }: {
     url: string;
     highRisk: boolean;
+    stateVersion: string;
     guard: DependencyGuard;
     labels: RecurringTranslations['deletion'];
 }) {
-    const { i18n } = usePage().props;
+    const { i18n, errors } = usePage<{ errors: { template?: string } }>().props;
 
     return (
         <GuardedActionDialog
@@ -28,12 +30,14 @@ export function RecurringTemplateDeleteDialog({
             closeLabel={i18n.common.accessibility.close_navigation}
             warningTitle={labels.dependency_title}
             guard={guard}
+            generalError={errors.template}
             tone="destructive"
             onConfirm={() =>
                 router.delete(url, {
                     data: {
                         confirmed: true,
                         confirmed_high_risk: highRisk,
+                        deletion_state: stateVersion,
                     },
                 })
             }

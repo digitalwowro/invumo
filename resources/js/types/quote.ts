@@ -109,6 +109,7 @@ export type QuoteRow = {
     deleteUrl: string;
     deletion: {
         highRisk: boolean;
+        stateVersion: string;
         guard: DependencyGuard;
     };
     canDelete: boolean;

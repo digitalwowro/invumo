@@ -189,6 +189,7 @@ final class DocumentDeliveryDatabaseTest extends DocumentDeliveryTestCase
         $this->actingAs($owner)->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true,
             'confirmed_high_risk' => true,
+            'deletion_state' => $this->quoteDeletionState($company, $quote),
         ])->assertRedirect()->assertSessionHas('status');
 
         $this->tenant($company, function (): void {

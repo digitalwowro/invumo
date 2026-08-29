@@ -62,6 +62,7 @@ final class SendCompanyInvitation extends TenantJob
             || $invitation->revoked_at !== null
             || $invitation->accepted_at !== null
             || ! $invitation->expires_at->isFuture()
+            || $invitation->invited_email === null
             || ! hash_equals(
                 $invitation->token_hash,
                 CompanyInvitationToken::hash($this->plainTextToken),

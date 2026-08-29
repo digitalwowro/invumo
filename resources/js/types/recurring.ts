@@ -45,7 +45,11 @@ export type RecurringTemplateRow = {
     editUrl: string;
     deleteUrl: string;
     canDelete: boolean;
-    deletion: { highRisk: boolean; guard: DependencyGuard };
+    deletion: {
+        highRisk: boolean;
+        stateVersion: string;
+        guard: DependencyGuard;
+    };
 };
 
 export type RecurringTemplateCursorPage = {

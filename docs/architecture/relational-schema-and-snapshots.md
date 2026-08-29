@@ -2,7 +2,7 @@
 
 Status: Approved architecture decision  
 Approved: 2026-08-22  
-Last updated: 2026-08-27
+Last updated: 2026-08-30
 
 This document defines the approved v1 PostgreSQL relational model, migration strategy, same-Company constraints, deletion behavior, and snapshot boundaries. It translates the approved product brief and architecture contracts into a schema that can be implemented without inventing domain behavior during migrations.
 
@@ -110,13 +110,15 @@ A deferred constraint trigger validates at transaction commit that each Company 
 ### `company_invitations`
 
 - `id`, `company_id`
-- original and normalized invited email
+- nullable original and normalized invited email plus a nullable identity-erasure timestamp
 - role limited to `ADMIN` or `MEMBER`
 - unique hashed token; plaintext is never stored
 - `expires_at`, set to exactly 7 days after the latest issue/resend, plus `revoked_at`, `accepted_at`, and `accepted_by_user_id`
 - inviter User and timestamps
 
 Acceptance locks the invitation, rechecks email/company/expiry/revocation, creates one membership, records the accepting User, and consumes the invitation in one transaction. A resend rotates the token and restarts the full 7-day lifetime so the previous link stops working. Ordinary invitations cannot create Owner membership.
+
+Pending invitations retain their address only while they can still be accepted. User/Account erasure deletes pending invitations and irreversibly replaces both email fields with `NULL` on accepted or revoked invitations while preserving their non-sensitive governance event. A database check and one-way trigger reject partial redaction, redaction of a still-open invitation, or restoration of erased identity.
 
 The encrypted invitation-email queue row and its database uniqueness lock are inserted inside the same transaction as invitation creation or resend, using the same restricted PostgreSQL connection. They become available to workers only when the business mutation commits and disappear with it on rollback. Because the acceptance credential must appear in the email but plaintext tokens are never persisted as invitation data, the token-bearing job payload is encrypted. Immediately before mail delivery the job enters the declared Company's forced-RLS context, reloads the invitation, and suppresses delivery if the token was rotated, accepted, revoked, or expired. It closes that short transaction before contacting the mail provider.
 
@@ -692,6 +694,8 @@ Stable idempotency keys are persisted on the aggregate/event that owns the effec
 
 List/detail Queries expose localized dependency warnings so a user can resolve references before confirming a destructive action. Those counts are advisory: every owning root Action repeats the dependency check under stable UUID-ordered locks, and same-Company restrictive foreign keys plus forced RLS independently reject a concurrent or cross-Company bypass. Restoring an archived tax preset or bank account never silently makes it the Company default.
 
+Quote, Invoice, and recurring-template deletion previews also return an opaque state version derived from every lifecycle, dependency, exposure, and confirmation-risk input used by the Action. The request must return that version. After acquiring the authoritative locks, the Action recomputes and compares it before interpreting confirmation fields; a changed public link, delivery, transaction, occurrence, or lifecycle produces a localized stale-state response so the refreshed page can present the correct friction.
+
 ### Authorized document deletion
 
 - The action first locks the document and rechecks its Quote/Invoice guard.
@@ -702,13 +706,13 @@ List/detail Queries expose localized dependency warnings so a user can resolve r
 
 ### Whole-Company erasure
 
-The Owner-only workflow prevents new writes, stops/claims no pending jobs, revokes links, removes provider/file assets and tenant rows in dependency order, then removes memberships and the Company selector row. It emits only the minimum non-tenant operational proof required to diagnose completion. A Company deletion must not be implemented as an unreviewed controller-level cascade.
+The Owner-only, recently reauthenticated workflow requires an exact workspace-name entry, a separate permanent-action acknowledgement, and an opaque state version. Under the Company context it locks delivery attempts, artifacts, dispatcher rows, and Company assets in stable order; cancels unclaimed domain dispatches; and blocks while a provider submission has an unknown in-flight outcome. The same transaction inserts a privacy-minimal non-tenant erasure proof and deletes the Company so tenant rows and memberships follow their approved owned-child cascades. An encrypted after-commit job removes the captured private files with bounded retry. A Company deletion must not be implemented as an unreviewed controller-level cascade.
 
 Exact off-system provider deletion and backup-expiry behavior belongs to the production operations/data-retention gate, but the live relational model must be fully erasable.
 
 ### User and Account erasure
 
-A User who still owns an Account cannot be deleted until every owned Company is transferred or erased and the Account is eligible for deletion. Removing a non-owning collaborator deletes their memberships and pending invitations but leaves business and audit history; retained audit events clear the direct User foreign key and keep only the approved non-sensitive actor label/identifier. These operations are explicit workflows, not broad cascades from an ordinary profile action.
+User and personal Account erasure is one coupled v1 workflow. It requires the current password and an opaque relationship-state version, and is blocked while the User owns any Company or remains a Platform Owner. It deletes non-owner memberships and pending invitations, irreversibly redacts email identity from accepted/revoked invitations, revokes sessions/reset credentials, then deletes the Account and User. Business rows and append-only Company/Platform audit remain; their nullable User foreign keys clear through database constraints while approved non-sensitive actor labels and target history survive. A privacy-minimal non-tenant erasure event retains only action, subject UUID, and occurrence time; its actor FK clears when the self-erasing User is removed. These operations are explicit workflows, not broad cascades from an ordinary profile action.
 
 ## 15. Index, lock, migration, and verification plan
 
@@ -756,7 +760,7 @@ No network, PDF rendering, file upload, provider request, or user wait occurs wh
 7. recurring templates, override/snapshot rows, occurrences, and dispatcher/outbox records.
 8. deferred cross-table triggers, remaining foreign keys/indexes, and final privilege verification. Each tenant table's RLS policies and least-privilege grants ship with the table change that they protect rather than as an optional later hardening pass.
 
-Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 10D this includes the shared document base, Quote and independent/Quote-derived Invoice Draft/Issued/Cancelled subtypes, numbering/history, lines, current snapshots, database-enforced Invoice issuability, active Quote-to-Invoice provenance, the exact Invoice transaction ledger, transaction-backed cancellation/reopening, guarded permanent Invoice deletion, the Company-wide transaction-date cursor index, hashed/encrypted public-link generations with transaction-local RLS bootstrap, immutable Quote public-decision identity, direct/provider-event delivery persistence, Invoice-owned reminder rules/instances, the payload-free dispatcher outbox, and the recurring Draft/inheritance/schedule/occurrence execution aggregate under the reusable tenant-table contract. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary. Automatic recurring delivery persistence remains coupled to Batch 10E.
+Migration steps are implemented incrementally with their owning vertical slices rather than as empty future schema. Through Batch 11F this includes the shared document base, Quote and independent/Quote-derived Invoice subtypes, numbering/history, lines and snapshots, the exact transaction ledger, public access/decisions, delivery/reminders, recurring execution, Company audit indexes, recurring tax-source deletion protection, one-way closed-invitation identity redaction, and privacy-minimal non-tenant erasure proofs. Batch 7C required no new schema because the existing restrictive transaction and provenance foreign keys plus retained number/audit tables already supply its database guard and history boundary.
 
 For safe deployed changes, prefer expand/backfill/verify/constrain/contract migrations. Create large indexes concurrently outside an enclosing transaction when production data size makes blocking material. Never combine an irreversible data rewrite with an untested application release.
 
@@ -774,7 +778,7 @@ For safe deployed changes, prefer expand/backfill/verify/constrain/contract migr
 - Source edits/archives cannot change existing ordinary document/template line snapshots.
 - Recurring inherited and explicit fields resolve correctly into immutable generated Invoice snapshots.
 - Numbering, financial, Quote conversion, reminder, recurring, and public-decision concurrency tests from the approved architecture documents pass against PostgreSQL using the restricted runtime role.
-- Dependency guards prevent forbidden deletes, while approved document and whole-Company erasure removes all live sensitive rows and leaves only the approved minimal tombstone.
+- Dependency guards and deletion-state versions prevent forbidden or stale-confirmation deletes, while approved document, User/Account, and whole-Company erasure remove live sensitive rows and leave only their approved minimal proofs.
 - Every searchable/list route uses a supporting index and stable UUID tie-breaker under representative query-plan tests.
 
 ## 16. Approval record

@@ -21,11 +21,12 @@ use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class RecurringTemplateHttpTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     public function test_member_creates_idempotent_draft_and_saves_authoritative_lines(): void
     {
@@ -87,7 +88,10 @@ final class RecurringTemplateHttpTest extends TestCase
             $this->assertSame(1, $audit->after['complete_line_count']);
         });
 
-        $this->delete(route('recurring.destroy', [$company, $template]), ['confirmed' => true])
+        $this->delete(route('recurring.destroy', [$company, $template]), [
+            'confirmed' => true,
+            'deletion_state' => $this->recurringDeletionState($company, $template),
+        ])
             ->assertForbidden();
     }
 
@@ -138,7 +142,10 @@ final class RecurringTemplateHttpTest extends TestCase
         $this->actingAs($admin);
 
         $this->get(route('recurring.edit', [$other, $template]))->assertNotFound();
-        $this->delete(route('recurring.destroy', [$company, $template]), ['confirmed' => true])
+        $this->delete(route('recurring.destroy', [$company, $template]), [
+            'confirmed' => true,
+            'deletion_state' => $this->recurringDeletionState($company, $template),
+        ])
             ->assertRedirect(route('recurring.index', $company));
         $this->tenant($company, fn () => $this->assertSame(0, RecurringTemplate::query()->count()));
     }

@@ -34,11 +34,12 @@ use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 final class RecurringOccurrenceGenerationTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     public function test_due_occurrence_creates_and_issues_one_invoice_idempotently(): void
     {
@@ -140,7 +141,12 @@ final class RecurringOccurrenceGenerationTest extends TestCase
                 $company,
                 $owner,
                 $document->id,
-                new InvoiceDeletionData(true, true, $document->rendered_number),
+                new InvoiceDeletionData(
+                    true,
+                    true,
+                    $document->rendered_number,
+                    $this->invoiceDeletionState($company, $document),
+                ),
             );
             $nextDispatch = $this->tenant($company, function () use ($template, $dispatch): JobDispatch {
                 $template->refresh();

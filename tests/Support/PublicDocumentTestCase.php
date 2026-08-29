@@ -17,11 +17,12 @@ use App\Modules\Quotes\Actions\CreateQuoteDraft;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
+use Tests\Concerns\InteractsWithDeletionPreviews;
 use Tests\TestCase;
 
 abstract class PublicDocumentTestCase extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, InteractsWithDeletionPreviews;
 
     /** @return array{User, Company} */
     protected function company(string $name = 'Public Documents SRL'): array

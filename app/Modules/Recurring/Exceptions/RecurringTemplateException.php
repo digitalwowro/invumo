@@ -46,6 +46,11 @@ final class RecurringTemplateException extends DomainException
         return new self('dependency');
     }
 
+    public static function deletionStateChanged(): self
+    {
+        return new self('deletion_state_changed');
+    }
+
     public static function completed(): self
     {
         return new self('completed');

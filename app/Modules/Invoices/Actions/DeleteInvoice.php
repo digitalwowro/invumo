@@ -12,7 +12,7 @@ use App\Modules\Delivery\Actions\DeleteInvoiceReminders;
 use App\Modules\Documents\Actions\FinalizeDocumentDeletion;
 use App\Modules\Documents\Contracts\DeletesDocumentResources;
 use App\Modules\Invoices\Data\InvoiceDeletionData;
-use App\Modules\Invoices\Data\InvoiceLifecycle;
+use App\Modules\Invoices\Data\InvoiceDeletionState;
 use App\Modules\Invoices\Exceptions\InvoiceDeletionException;
 use App\Modules\Quotes\Models\QuoteInvoiceLink;
 use App\Modules\Recurring\Actions\DeleteGeneratedInvoiceOccurrence;
@@ -73,16 +73,28 @@ final readonly class DeleteInvoice
             ->lockForUpdate()
             ->get();
         $resources = $this->resources->lock($documentId);
+        $state = new InvoiceDeletionState(
+            $context->invoice->lifecycle,
+            $context->transactions->count(),
+            $links->count(),
+            $resources->publicLinkCount,
+            $resources->deliveryCount,
+            $resources->submissionInFlightCount,
+        );
 
-        if ($context->transactions->isNotEmpty()) {
+        if (! hash_equals($state->version(), $data->stateVersion)) {
+            throw InvoiceDeletionException::stale();
+        }
+
+        if ($state->transactionCount > 0) {
             throw InvoiceDeletionException::transactionDependency();
         }
 
-        if ($links->isNotEmpty()) {
+        if ($state->quoteCount > 0) {
             throw InvoiceDeletionException::quoteDependency();
         }
 
-        if ($resources->submissionInFlight) {
+        if ($resources->submissionInFlightCount > 0) {
             throw InvoiceDeletionException::deliveryInProgress();
         }
 
@@ -90,9 +102,7 @@ final readonly class DeleteInvoice
             throw InvoiceDeletionException::confirmationRequired();
         }
 
-        $highRisk = $context->invoice->lifecycle !== InvoiceLifecycle::Draft
-            || $resources->publicLinkCount > 0
-            || $resources->deliveryCount > 0;
+        $highRisk = $state->highRisk();
 
         if ($highRisk && ! $data->confirmedHighRisk) {
             throw InvoiceDeletionException::highRiskConfirmationRequired();

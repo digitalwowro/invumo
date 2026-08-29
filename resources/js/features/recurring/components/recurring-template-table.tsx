@@ -207,6 +207,7 @@ function TemplateActions({
                     <RecurringTemplateDeleteDialog
                         url={template.deleteUrl}
                         highRisk={template.deletion.highRisk}
+                        stateVersion={template.deletion.stateVersion}
                         guard={template.deletion.guard}
                         labels={labels.deletion}
                     />

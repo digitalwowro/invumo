@@ -23,7 +23,7 @@ final readonly class DeleteDocumentResources implements DeletesDocumentResources
         return new LockedDocumentDeletionResources(
             publicLinkCount: $publicLinks->count(),
             deliveryCount: $deliveries->count(),
-            submissionInFlight: $this->deliveryHistory->hasSubmissionInFlight($deliveries),
+            submissionInFlightCount: $this->deliveryHistory->countSubmissionsInFlight($deliveries),
         );
     }
 

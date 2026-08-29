@@ -37,6 +37,19 @@ return [
             'deleteDialogDescription' => 'Your account and its data will be permanently deleted. Enter your password to confirm.',
             'deleteConfirm' => 'Delete account',
             'closeDialog' => 'Close dialog',
+            'erasureBlockedTitle' => 'Account deletion is blocked',
+            'erasureFailedTitle' => 'Account deletion could not continue',
+            'membershipRemovalTitle' => 'Company access will be removed',
+            'membershipRemovalDescription' => 'Deleting this account removes :memberships Company membership(s). Company records and audit history remain.',
+            'erasureGuards' => [
+                'owned_companies' => 'Transfer or erase the :companies Company/Companies owned by your Account before deleting it.',
+                'platform_operator' => 'Revoke Platform Owner access before deleting this account.',
+            ],
+            'erasureErrors' => [
+                'state_changed' => 'Your account relationships changed after this page loaded. Review the latest state and try again.',
+                'owned_companies' => 'Transfer or erase every Company owned by your Account before deleting it.',
+                'platform_operator' => 'Revoke Platform Owner access before deleting this account.',
+            ],
         ],
         'security' => [
             'headTitle' => 'Security settings',

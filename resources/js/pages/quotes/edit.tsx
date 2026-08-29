@@ -48,7 +48,12 @@ type Props = {
     conversionUrl: string;
     conversionKey: string;
     invoiceAllocation: QuoteInvoiceAllocation;
-    deletion: { url: string | null; highRisk: boolean; guard: DependencyGuard };
+    deletion: {
+        url: string | null;
+        highRisk: boolean;
+        stateVersion: string;
+        guard: DependencyGuard;
+    };
     representationUrl: string;
     pdfUrl: string;
     publicLink: PublicDocumentLink;
@@ -144,6 +149,7 @@ export default function EditQuote({
                                     <QuoteDeleteDialog
                                         url={deletion.url}
                                         highRisk={deletion.highRisk}
+                                        stateVersion={deletion.stateVersion}
                                         guard={deletion.guard}
                                         labels={translations.deletion}
                                     />

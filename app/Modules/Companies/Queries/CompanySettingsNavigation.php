@@ -76,6 +76,13 @@ final readonly class CompanySettingsNavigation
             ];
         }
 
+        if ($this->authorization->allows($membership->role, CompanyAbility::DeleteCompany)) {
+            $items[] = [
+                'key' => 'data_lifecycle',
+                'href' => route('company-data-lifecycle.show', $company, false),
+            ];
+        }
+
         if ($items === []) {
             throw new AuthorizationException;
         }

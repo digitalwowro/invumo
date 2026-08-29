@@ -178,6 +178,7 @@ function QuoteActions({
                     <QuoteDeleteDialog
                         url={quote.deleteUrl}
                         highRisk={quote.deletion.highRisk}
+                        stateVersion={quote.deletion.stateVersion}
                         guard={quote.deletion.guard}
                         labels={labels.deletion}
                     />

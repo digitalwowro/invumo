@@ -78,11 +78,13 @@ class ProfileUpdateTest extends TestCase
     public function test_user_can_delete_their_account()
     {
         $user = User::factory()->create();
+        $this->actingAs($user);
+        $state = $this->get(route('profile.edit'))->inertiaProps('erasure.stateVersion');
 
         $response = $this
-            ->actingAs($user)
             ->delete(route('profile.destroy'), [
                 'password' => 'password',
+                'deletion_state' => $state,
             ]);
 
         $response
@@ -96,12 +98,14 @@ class ProfileUpdateTest extends TestCase
     public function test_correct_password_must_be_provided_to_delete_account()
     {
         $user = User::factory()->create();
+        $this->actingAs($user);
+        $state = $this->get(route('profile.edit'))->inertiaProps('erasure.stateVersion');
 
         $response = $this
-            ->actingAs($user)
             ->from(route('profile.edit'))
             ->delete(route('profile.destroy'), [
                 'password' => 'wrong-password',
+                'deletion_state' => $state,
             ]);
 
         $response

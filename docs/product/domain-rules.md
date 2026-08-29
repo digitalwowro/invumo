@@ -1,7 +1,7 @@
 # Invumo Core Domain Rules
 
 Status: Approved product rules  
-Last updated: 2026-08-26
+Last updated: 2026-08-30
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
@@ -43,6 +43,13 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Platform Owner may manually assign an active seeded Plan and lifecycle state with confirmation, reason, row locking, and platform audit.
 - Plan expiry/past-due state never deletes data, silently changes plan, or automatically suspends access in v1; suspension is an explicit separate action.
 - Self-service checkout, automated billing/payment collection, renewal/dunning, provider webhooks, and a plan-builder interface are excluded.
+
+## User, Account, and Company erasure
+
+- User and personal Account erasure is one v1 workflow. It requires the current password and a current relationship-state token, removes non-owner Company memberships and pending invitations, redacts identity from closed invitations, and retains business/audit history with direct User foreign keys cleared.
+- A User cannot erase their identity while their Account owns a Company or while they hold Platform Owner authority. Transfer or erase owned Companies and revoke Platform authority first.
+- Only the Company Owner may erase a Company. Recent-password confirmation, the exact workspace name, a separate permanent-action acknowledgement, and a current Company-erasure state are required.
+- Company erasure blocks on an unknown in-flight provider submission, cancels unclaimed domain dispatches, deletes tenant rows atomically, and removes captured private files after commit. Only a privacy-minimal non-tenant completion proof survives.
 
 ## Platform Operations boundary
 

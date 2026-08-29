@@ -45,7 +45,7 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
             $this->receiptPayload($payment),
         )->assertRedirect();
 
-        $attributes = $this->tenant($company, function () use ($invoice): array {
+        $attributes = $this->tenant($company, function () use ($invoice, $payment): array {
             $delivery = EmailDelivery::query()->sole();
 
             return [
@@ -55,6 +55,7 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
                 'event_type' => EmailTemplateEvent::PaymentReceived,
                 'delivery_key' => (string) Str::uuid7(),
                 'document_edit_version' => $invoice->edit_version,
+                'invoice_transaction_edit_version' => $payment->edit_version,
                 'language_code' => 'en',
                 'subject' => 'Payment received',
                 'body' => 'Payment received.',
@@ -78,6 +79,12 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
                 'event_type' => EmailTemplateEvent::InvoiceSent,
                 'invoice_transaction_id' => $transactionId,
             ],
+            [
+                ...$attributes,
+                'delivery_key' => (string) Str::uuid7(),
+                'invoice_transaction_id' => $transactionId,
+                'invoice_transaction_edit_version' => $payment->edit_version + 1,
+            ],
         ] as $invalid) {
             try {
                 $this->tenant($company, function () use ($invalid): void {
@@ -87,6 +94,15 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
             } catch (QueryException $exception) {
                 $this->assertSame('23514', $exception->errorInfo[0] ?? null);
             }
+        }
+
+        try {
+            $this->tenant($company, fn () => EmailDelivery::query()->update([
+                'invoice_transaction_edit_version' => $payment->edit_version + 1,
+            ]));
+            $this->fail('An immutable payment-received version was rewritten.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23001', $exception->errorInfo[0] ?? null);
         }
     }
 
@@ -120,6 +136,7 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
         $this->tenant($company, function (): void {
             $delivery = EmailDelivery::query()->sole();
             $this->assertNull($delivery->invoice_transaction_id);
+            $this->assertSame(1, $delivery->invoice_transaction_edit_version);
             $this->assertNotNull($delivery->subject);
             $this->assertNotNull($delivery->body);
             $this->assertSame(EmailTemplateEvent::PaymentReceived, $delivery->event_type);
@@ -174,6 +191,7 @@ final class PaymentReceivedDeliveryDatabaseTest extends DocumentDeliveryTestCase
         $this->tenant($company, function (): void {
             $delivery = EmailDelivery::query()->sole();
             $this->assertNull($delivery->invoice_transaction_id);
+            $this->assertSame(1, $delivery->invoice_transaction_edit_version);
             $this->assertNotNull($delivery->subject);
             $this->assertSame(EmailTemplateEvent::PaymentReceived, $delivery->event_type);
             $this->assertSame('ADJUSTMENT', InvoiceTransaction::query()->sole()->kind->value);

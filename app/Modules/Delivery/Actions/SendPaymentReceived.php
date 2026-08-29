@@ -135,6 +135,7 @@ final readonly class SendPaymentReceived
             'document_id' => $document->id,
             'public_document_link_id' => $link->id,
             'invoice_transaction_id' => $payment->id,
+            'invoice_transaction_edit_version' => $payment->edit_version,
             'document_kind' => DocumentKind::Invoice,
             'event_type' => EmailTemplateEvent::PaymentReceived,
             'delivery_key' => $data->deliveryKey,

@@ -88,6 +88,7 @@ final class PaymentReceivedDeliveryHttpTest extends DocumentDeliveryTestCase
 
             $this->assertSame(EmailTemplateEvent::PaymentReceived, $delivery->event_type);
             $this->assertSame($payment->id, $delivery->invoice_transaction_id);
+            $this->assertSame($payment->edit_version, $delivery->invoice_transaction_edit_version);
             $this->assertSame(EmailDeliveryState::Queued, $delivery->dispatch_state);
             $this->assertStringContainsString('50,00 RON', (string) $delivery->body);
             $this->assertStringContainsString('29 aug. 2026', (string) $delivery->body);

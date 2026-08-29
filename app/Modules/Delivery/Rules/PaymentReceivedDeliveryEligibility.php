@@ -17,13 +17,15 @@ final class PaymentReceivedDeliveryEligibility
         iterable $transactions,
     ): bool {
         if ($delivery->invoice_transaction_id === null
+            || $delivery->invoice_transaction_edit_version === null
             || $invoice?->lifecycle !== InvoiceLifecycle::Issued) {
             return false;
         }
 
         foreach ($transactions as $transaction) {
             if ($transaction->id === $delivery->invoice_transaction_id) {
-                return $transaction->kind === InvoiceTransactionKind::Payment;
+                return $transaction->kind === InvoiceTransactionKind::Payment
+                    && $transaction->edit_version === $delivery->invoice_transaction_edit_version;
             }
         }
 

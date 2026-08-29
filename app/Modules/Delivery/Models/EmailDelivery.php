@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $public_document_link_id
  * @property string|null $reminder_instance_id
  * @property string|null $invoice_transaction_id
+ * @property int|null $invoice_transaction_edit_version
  * @property DocumentKind $document_kind
  * @property EmailTemplateEvent $event_type
  * @property string $delivery_key
@@ -51,6 +52,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Fillable([
     'document_id', 'public_document_link_id', 'reminder_instance_id', 'invoice_transaction_id',
+    'invoice_transaction_edit_version',
     'document_kind', 'event_type', 'delivery_key', 'document_edit_version', 'language_code',
     'subject', 'body', 'button_label', 'signature', 'button_url', 'attachment_mode',
     'artifact_id', 'provider_name', 'dispatch_state', 'provider_message_identifier',
@@ -86,6 +88,7 @@ final class EmailDelivery extends TenantOwnedModel
             'document_kind' => DocumentKind::class,
             'event_type' => EmailTemplateEvent::class,
             'document_edit_version' => 'integer',
+            'invoice_transaction_edit_version' => 'integer',
             'attachment_mode' => EmailAttachmentMode::class,
             'dispatch_state' => EmailDeliveryState::class,
             'accepted_at' => 'immutable_datetime',

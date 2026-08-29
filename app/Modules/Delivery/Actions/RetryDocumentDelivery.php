@@ -18,12 +18,12 @@ use App\Modules\Delivery\Jobs\SendDocumentDelivery;
 use App\Modules\Delivery\Models\EmailDelivery;
 use App\Modules\Delivery\Models\EmailDeliveryAttempt;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Delivery\Rules\PaymentReceivedDeliveryEligibility;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Models\Quote;
-use App\Modules\Transactions\Data\InvoiceTransactionKind;
 use App\Modules\Transactions\Models\InvoiceTransaction;
 use Illuminate\Support\Str;
 use LogicException;
@@ -33,6 +33,7 @@ final readonly class RetryDocumentDelivery
     public function __construct(
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
+        private PaymentReceivedDeliveryEligibility $paymentReceivedEligibility,
         private RecordAuditEvent $audit,
     ) {}
 
@@ -55,7 +56,7 @@ final readonly class RetryDocumentDelivery
                 ->whereKey($deliveryId)->where('document_id', $documentId)->firstOrFail();
             $this->authorizer->authorize($actor, $company, $delivery->document_kind->manageAbility());
             $document = Document::query()->whereKey($delivery->document_id)->lockForUpdate()->firstOrFail();
-            match ($delivery->document_kind) {
+            $documentState = match ($delivery->document_kind) {
                 DocumentKind::Quote => Quote::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
                 DocumentKind::Invoice => Invoice::query()->whereKey($document->id)->lockForUpdate()->firstOrFail(),
             };
@@ -99,9 +100,10 @@ final readonly class RetryDocumentDelivery
                     ], true))
                 || $delivery->redacted_at !== null
                 || ($delivery->event_type === EmailTemplateEvent::PaymentReceived
-                    && ! $transactions->contains(
-                        fn (InvoiceTransaction $transaction): bool => $transaction->id === $delivery->invoice_transaction_id
-                            && $transaction->kind === InvoiceTransactionKind::Payment,
+                    && ! $this->paymentReceivedEligibility->allows(
+                        $delivery,
+                        $documentState instanceof Invoice ? $documentState : null,
+                        $transactions,
                     ))
                 || ! $deliverySetting->public_access_enabled
                 || ! $publicLink instanceof PublicDocumentLink

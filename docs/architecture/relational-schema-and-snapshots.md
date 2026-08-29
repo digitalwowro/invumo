@@ -492,7 +492,7 @@ The authenticated current PDF remains a fresh read-only projection, so a normal 
 ### `email_deliveries`
 
 - `id`, `company_id`
-- event type and nullable document, reminder-instance, transaction, or recurring-occurrence references as applicable
+- event type and nullable document, reminder-instance, transaction, or recurring-occurrence references as applicable; a payment receipt also retains the immutable transaction edit version used to resolve its content
 - delivery idempotency key, unique within the Company
 - exact public-link generation and document edit version used for the send
 - resolved language, subject, body, button label, signature, and attachment mode
@@ -504,7 +504,7 @@ The authenticated current PDF remains a fresh read-only projection, so a normal 
 
 A partial unique index permits only one `QUEUED` or `RETRYING` logical delivery per document. A database trigger independently blocks edits to that document version while delivery is pending. The dispatch Action also takes the document lock and performs the same check so ordinary users receive a localized validation response rather than a constraint error.
 
-A `PAYMENT_RECEIVED` delivery is created only by the explicit receipt Action and initially carries one same-Company `invoice_transaction_id` referencing a Payment on the same Invoice. Insert and transaction-kind triggers independently enforce that relationship. The provider worker rechecks it under the standard configuration/Document/Invoice/UUID-ordered transaction locks. Later correction to a non-Payment kind or deletion clears only the nullable live reference through the Delivery-owned detachment Action; the foreign key remains a deletion fallback. Resolved content, recipients, attempts, provider events, and document-level history remain immutable, and no detached receipt may be retried.
+A `PAYMENT_RECEIVED` delivery is created only by the explicit receipt Action and initially carries one same-Company `invoice_transaction_id` referencing a Payment on the same Invoice plus the exact immutable transaction edit version used to resolve Payment amount/date and outstanding balance. Insert and transaction-kind triggers independently enforce the initial relationship, and the receipt guard makes the stored version immutable. The provider worker and manual retry compare the current locked Payment with both identifiers. A later same-kind edit preserves historical identity but invalidates submission/retry of the frozen message; correction to a non-Payment kind or deletion clears only the nullable live reference through the Delivery-owned detachment Action, with the foreign key as a deletion fallback. Resolved content, recipients, version, attempts, provider events, and document-level history remain immutable, and no detached or version-stale receipt may be retried.
 
 ### `email_delivery_recipients`
 

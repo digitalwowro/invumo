@@ -11,6 +11,7 @@ return new class extends Migration
     {
         Schema::table('email_deliveries', function (Blueprint $table): void {
             $table->uuid('invoice_transaction_id')->nullable();
+            $table->unsignedBigInteger('invoice_transaction_edit_version')->nullable();
             $table->index(
                 ['company_id', 'invoice_transaction_id'],
                 'email_deliveries_invoice_transaction_index',
@@ -30,7 +31,11 @@ return new class extends Migration
                     REFERENCES invoice_transactions (company_id, id)
                     ON DELETE SET NULL (invoice_transaction_id),
                 ADD CONSTRAINT email_deliveries_payment_received_event_check CHECK (
-                    invoice_transaction_id IS NULL OR event_type = 'PAYMENT_RECEIVED'
+                    (event_type = 'PAYMENT_RECEIVED'
+                        AND invoice_transaction_edit_version IS NOT NULL)
+                    OR (event_type <> 'PAYMENT_RECEIVED'
+                        AND invoice_transaction_id IS NULL
+                        AND invoice_transaction_edit_version IS NULL)
                 );
 
             CREATE OR REPLACE FUNCTION public.invumo_payment_received_delivery_reference_guard()
@@ -41,10 +46,11 @@ return new class extends Migration
             BEGIN
                 IF TG_OP = 'INSERT' THEN
                     IF (NEW.event_type = 'PAYMENT_RECEIVED') IS DISTINCT FROM
-                        (NEW.invoice_transaction_id IS NOT NULL)
+                        (NEW.invoice_transaction_id IS NOT NULL
+                            AND NEW.invoice_transaction_edit_version IS NOT NULL)
                     THEN
                         RAISE EXCEPTION USING ERRCODE = '23514',
-                            MESSAGE = 'payment-received delivery requires one Payment reference';
+                            MESSAGE = 'payment-received delivery requires one Payment version reference';
                     END IF;
 
                     IF NEW.invoice_transaction_id IS NOT NULL AND NOT EXISTS (
@@ -54,24 +60,27 @@ return new class extends Migration
                           AND transaction.id = NEW.invoice_transaction_id
                           AND transaction.invoice_id = NEW.document_id
                           AND transaction.kind = 'PAYMENT'
+                          AND transaction.edit_version = NEW.invoice_transaction_edit_version
                     ) THEN
                         RAISE EXCEPTION USING ERRCODE = '23514',
-                            MESSAGE = 'payment-received delivery reference is invalid';
+                            MESSAGE = 'payment-received delivery version reference is invalid';
                     END IF;
 
                     RETURN NEW;
                 END IF;
 
-                IF NEW.invoice_transaction_id IS DISTINCT FROM OLD.invoice_transaction_id
+                IF NEW.invoice_transaction_edit_version IS DISTINCT FROM
+                        OLD.invoice_transaction_edit_version
+                    OR (NEW.invoice_transaction_id IS DISTINCT FROM OLD.invoice_transaction_id
                     AND NOT (
                         OLD.invoice_transaction_id IS NOT NULL
                         AND NEW.invoice_transaction_id IS NULL
                         AND OLD.event_type = 'PAYMENT_RECEIVED'
                         AND NEW.event_type = 'PAYMENT_RECEIVED'
-                    )
+                    ))
                 THEN
                     RAISE EXCEPTION USING ERRCODE = '23001',
-                        MESSAGE = 'payment-received delivery reference is immutable';
+                        MESSAGE = 'payment-received delivery version reference is immutable';
                 END IF;
 
                 RETURN NEW;
@@ -79,7 +88,8 @@ return new class extends Migration
             $function$;
 
             CREATE TRIGGER email_deliveries_payment_received_reference_guard
-            BEFORE INSERT OR UPDATE OF invoice_transaction_id ON email_deliveries
+            BEFORE INSERT OR UPDATE OF invoice_transaction_id, invoice_transaction_edit_version
+                ON email_deliveries
             FOR EACH ROW EXECUTE FUNCTION public.invumo_payment_received_delivery_reference_guard();
 
             CREATE OR REPLACE FUNCTION public.invumo_payment_received_transaction_kind_guard()
@@ -139,7 +149,10 @@ return new class extends Migration
 
         Schema::table('email_deliveries', function (Blueprint $table): void {
             $table->dropIndex('email_deliveries_invoice_transaction_index');
-            $table->dropColumn('invoice_transaction_id');
+            $table->dropColumn([
+                'invoice_transaction_id',
+                'invoice_transaction_edit_version',
+            ]);
         });
     }
 };

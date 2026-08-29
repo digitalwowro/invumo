@@ -11,6 +11,7 @@ use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Http\Requests\InvoiceListRequest;
+use App\Modules\Transactions\Queries\InvoiceLedgerAggregate;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Query\Builder;
@@ -26,6 +27,7 @@ final readonly class InvoiceListPage
 
     public function __construct(
         private CompanyAbilityCheck $abilities,
+        private InvoiceLedgerAggregate $ledger,
     ) {}
 
     /** @return array<string, mixed> */
@@ -63,7 +65,7 @@ final readonly class InvoiceListPage
     {
         return DB::connection(config('database.tenant_connection'))
             ->table('documents')
-            ->leftJoinSub($this->ledgerQuery(), 'ledger', function ($join): void {
+            ->leftJoinSub($this->ledger->query(), 'ledger', function ($join): void {
                 $join->on('ledger.company_id', '=', 'documents.company_id')
                     ->on('ledger.invoice_id', '=', 'documents.id');
             })
@@ -84,22 +86,6 @@ final readonly class InvoiceListPage
             ])
             ->selectRaw('COALESCE(ledger.net_paid, 0) AS net_paid')
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
-    }
-
-    private function ledgerQuery(): Builder
-    {
-        return DB::connection(config('database.tenant_connection'))
-            ->table('invoice_transactions')
-            ->select(['company_id', 'invoice_id'])
-            ->selectRaw(<<<'SQL'
-                SUM(CASE
-                    WHEN kind = 'PAYMENT' THEN amount
-                    WHEN kind = 'REFUND' THEN -amount
-                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'INCREASE_PAID' THEN amount
-                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'DECREASE_PAID' THEN -amount
-                    ELSE 0 END) AS net_paid
-                SQL)
-            ->groupBy('company_id', 'invoice_id');
     }
 
     /** @param array{q: string, issueFrom: string, issueTo: string, dueFrom: string, dueTo: string, lifecycle: string, payment: string, overdue: string, sort: string, perPage: int} $filters */

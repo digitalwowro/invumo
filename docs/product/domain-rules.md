@@ -535,6 +535,15 @@ Recurring template
 - v1 excludes custom fonts, print padding/scale/logo-size controls, custom favicons, Pay buttons, viewer-facing Share buttons, fixed-per-page footers, signature/stamp images, and Invumo-branding removal controls.
 - v1 also excludes credit notes, automatic late fees, payment-processing fees, tax-inclusive pricing, user-editable system translation dictionaries, PDF QR codes, PDF invoice-status labels, and arbitrary footer-element builders.
 
+## Dashboard
+
+- Keep the Company dashboard operational and bounded; do not add analytics or reporting.
+- An unpaid Invoice is an Issued Invoice with a positive outstanding balance, including a Partially Paid Invoice.
+- Paid this month is the gross value of Payment rows dated within the current Company-local calendar month. Refunds and Adjustments do not reduce or increase this metric.
+- Outstanding and overdue values derive from the authoritative Invoice total and complete transaction ledger.
+- Monetary values are grouped by currency. Never add unlike currencies or imply an FX conversion.
+- Recent Invoices are a bounded Company-scoped list and use the same authoritative lifecycle, payment, and overdue derivation as the Invoice workspace.
+
 ## Audit history
 
 Audit at least:

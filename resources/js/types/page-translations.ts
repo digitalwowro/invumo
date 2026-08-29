@@ -42,12 +42,6 @@ export type SettingsUiTranslations = {
     };
 };
 
-export type DashboardTranslations = {
-    title: string;
-    subtitle: string;
-    members: string;
-};
-
 export type ErrorPageTranslations = {
     page: {
         headTitle: string;

@@ -1,33 +1,44 @@
 import { Head } from '@inertiajs/react';
-import { Users } from 'lucide-react';
+import { ReceiptText } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
+import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
-import type { DashboardTranslations } from '@/types';
+import { DashboardContent } from '@/features/dashboard/components/dashboard-content';
+import type { DashboardData, DashboardTranslations } from '@/types/dashboard';
 
 export default function Dashboard({
     company,
-    membersUrl,
+    dashboard,
     translations,
 }: {
     company: { name: string };
-    membersUrl: string;
+    dashboard: DashboardData;
     translations: DashboardTranslations;
 }) {
     return (
         <>
             <Head title={translations.title} />
-            <PageFrame>
-                <PageHeader
-                    title={translations.title}
-                    subtitle={`${company.name} · ${translations.subtitle}`}
-                    actions={
-                        <ActionLink href={membersUrl} variant="secondary">
-                            <Users aria-hidden="true" />
-                            {translations.members}
-                        </ActionLink>
-                    }
-                />
+            <PageFrame width="full">
+                <Stack gap="2xl">
+                    <PageHeader
+                        title={translations.title}
+                        subtitle={`${company.name} · ${translations.subtitle}`}
+                        actions={
+                            <ActionLink
+                                href={dashboard.invoicesUrl}
+                                variant="secondary"
+                            >
+                                <ReceiptText aria-hidden="true" />
+                                {translations.view_invoices}
+                            </ActionLink>
+                        }
+                    />
+                    <DashboardContent
+                        dashboard={dashboard}
+                        labels={translations}
+                    />
+                </Stack>
             </PageFrame>
         </>
     );

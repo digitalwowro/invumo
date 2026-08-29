@@ -70,12 +70,6 @@ function timelineItem(
     const reason = event.reason
         ? `${props.labels.reason}: ${event.reason}`
         : undefined;
-    const impersonator = event.impersonatorName
-        ? props.labels.original_operator.replace(
-              ':name',
-              event.impersonatorName,
-          )
-        : undefined;
 
     return {
         id: event.id,
@@ -89,7 +83,7 @@ function timelineItem(
             .replace(':type', target)
             .replace(':id', event.targetId),
         description: reason,
-        detail: impersonator,
+        detail: event.supportAccess ? props.labels.support_access : undefined,
         control:
             event.before || event.after ? (
                 <AuditChangesDialog

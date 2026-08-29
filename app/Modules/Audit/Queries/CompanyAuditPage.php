@@ -56,13 +56,13 @@ final readonly class CompanyAuditPage
         return DB::connection(config('database.tenant_connection'))
             ->table('audit_events as event')
             ->leftJoin('users as actor', 'actor.id', '=', 'event.actor_user_id')
-            ->leftJoin('users as impersonator', 'impersonator.id', '=', 'event.impersonator_user_id')
             ->where('event.company_id', $company->id)
             ->select([
                 'event.id', 'event.actor_type', 'event.actor_reference',
                 'event.action', 'event.target_type', 'event.target_id',
                 'event.occurred_at', 'event.reason', 'event.before', 'event.after',
-                'actor.name as actor_name', 'impersonator.name as impersonator_name',
+                'actor.name as actor_name',
+                DB::raw('(event.impersonator_user_id IS NOT NULL) AS support_access'),
             ]);
     }
 
@@ -73,8 +73,7 @@ final readonly class CompanyAuditPage
             $pattern = '%'.$this->escapeLike($filters['q']).'%';
             $query->where(function (Builder $search) use ($pattern): void {
                 $search->whereRaw('('.self::EVENT_SEARCH.") ILIKE ? ESCAPE '!'", [$pattern])
-                    ->orWhereRaw("coalesce(actor.name, '') ILIKE ? ESCAPE '!'", [$pattern])
-                    ->orWhereRaw("coalesce(impersonator.name, '') ILIKE ? ESCAPE '!'", [$pattern]);
+                    ->orWhereRaw("coalesce(actor.name, '') ILIKE ? ESCAPE '!'", [$pattern]);
             });
         }
 
@@ -114,7 +113,7 @@ final readonly class CompanyAuditPage
             'actorType' => (string) $row->actor_type,
             'actorName' => $row->actor_name,
             'actorReference' => $row->actor_reference,
-            'impersonatorName' => $row->impersonator_name,
+            'supportAccess' => (bool) $row->support_access,
             'action' => (string) $row->action,
             'targetType' => (string) $row->target_type,
             'targetId' => (string) $row->target_id,

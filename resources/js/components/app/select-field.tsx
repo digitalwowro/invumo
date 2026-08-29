@@ -14,6 +14,7 @@ type SelectOption = {
     value: string;
     label: string;
     disabled?: boolean;
+    testId?: string;
 };
 
 type SelectFieldProps = {
@@ -80,6 +81,7 @@ export function SelectField({
                                 key={option.value}
                                 value={option.value}
                                 disabled={option.disabled}
+                                data-testid={option.testId}
                             >
                                 {option.label}
                             </SelectItem>

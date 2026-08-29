@@ -126,6 +126,8 @@ type DestructiveFormDialogProps = {
     processing: boolean;
     children: ReactNode;
     onDismiss?: () => void;
+    triggerTestId?: string;
+    confirmTestId?: string;
 };
 
 export function DestructiveFormDialog({
@@ -139,6 +141,8 @@ export function DestructiveFormDialog({
     processing,
     children,
     onDismiss,
+    triggerTestId,
+    confirmTestId,
 }: DestructiveFormDialogProps) {
     return (
         <Dialog
@@ -149,7 +153,11 @@ export function DestructiveFormDialog({
             }}
         >
             <DialogTrigger asChild>
-                <Button type="button" variant="destructive">
+                <Button
+                    type="button"
+                    variant="destructive"
+                    data-testid={triggerTestId}
+                >
                     {triggerLabel}
                 </Button>
             </DialogTrigger>
@@ -170,6 +178,7 @@ export function DestructiveFormDialog({
                         form={formId}
                         variant="destructive-confirm"
                         disabled={processing}
+                        data-testid={confirmTestId}
                     >
                         {processing && <Spinner />}
                         {confirmLabel}

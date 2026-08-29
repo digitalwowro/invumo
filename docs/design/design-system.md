@@ -86,7 +86,11 @@ The internal application tokens and Company outward-brand tokens are separate na
 
 ### 4.3 Logo boundary
 
-The small square mark in the supplied HTML is a placeholder, not an approved final logo. The design system reserves one logo/mark slot and permits the eventual Invumo product mark to use the money-fill lime in the sidebar. The logo asset itself requires a separate decision; feature implementation must not recreate the placeholder as if it were final.
+The approved Invumo product mark is the uppercase `INVUMO` word set in Archivo 900 inside a fixed lime chip. The letters are always ink `#121418`, the chip is always lime `#A3E635`, tracking is fixed at `0.05em`, and the restrained corner radius must never become a pill. The mark is never split, recoloured, inverted, or set in the product interface typeface.
+
+Visible application surfaces render the mark through the shared code-owned `AppLogo` component and the source-owned Archivo 900 font. Exact logo colours live only in dedicated semantic tokens in the global theme; Company branding and application state tokens never alter them. The sidebar uses the 14px size, public headers use the 18px size, and authentication uses the 29px size. Below the 11px wordmark floor, use the supplied `I` tile instead of shrinking the word.
+
+Supplied raster assets are reserved for browser and operating-system surfaces that require files, including the native 16px and 32px favicons and 180px Apple touch icon. The code-owned mark remains authoritative for normal application rendering.
 
 ## 5. System architecture
 

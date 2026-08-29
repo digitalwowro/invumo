@@ -12,7 +12,7 @@ export type CompanyAuditRow = {
     actorType: AuditActorType;
     actorName: string | null;
     actorReference: string | null;
-    impersonatorName: string | null;
+    supportAccess: boolean;
     action: string;
     targetType: string;
     targetId: string;
@@ -56,7 +56,7 @@ export type CompanyAuditTranslations = {
     next: string;
     not_available: string;
     target_context: string;
-    original_operator: string;
+    support_access: string;
     reason: string;
     changes: string;
     changes_title: string;

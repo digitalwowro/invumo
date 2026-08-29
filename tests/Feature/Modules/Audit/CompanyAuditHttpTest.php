@@ -12,6 +12,8 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
+use App\Modules\Platform\Data\PlatformRole;
+use App\Modules\Platform\Models\PlatformOperator;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +32,17 @@ final class CompanyAuditHttpTest extends TestCase
             'email' => 'private-admin@example.com',
         ]);
         $member = User::factory()->create();
+        $platformOwner = User::factory()->create(['name' => 'Private Platform Operator']);
+        PlatformOperator::query()->create([
+            'user_id' => $platformOwner->id,
+            'role' => PlatformRole::Owner,
+        ]);
         $company->memberships()->create(['user_id' => $admin->id, 'role' => CompanyRole::Admin]);
         $company->memberships()->create(['user_id' => $member->id, 'role' => CompanyRole::Member]);
         $this->event($company, [
             'actor_type' => AuditActorType::User,
             'actor_user_id' => $admin->id,
-            'impersonator_user_id' => $owner->id,
+            'impersonator_user_id' => $platformOwner->id,
             'action' => 'company.customer.updated',
             'target_type' => 'Customer',
             'reason' => 'Approved correction',
@@ -54,14 +61,16 @@ final class CompanyAuditHttpTest extends TestCase
                 ->where('companySettingsNavigation.9.key', 'audit')
                 ->where('audit.items.0.action', 'company.customer.updated')
                 ->where('audit.items.0.actorName', 'Audit Admin')
-                ->where('audit.items.0.impersonatorName', $owner->name)
+                ->where('audit.items.0.supportAccess', true)
+                ->missing('audit.items.0.impersonatorName')
                 ->where('audit.items.0.reason', 'Approved correction')
                 ->where('audit.items.0.before.status', 'DRAFT')
                 ->where('audit.items.0.after.status', 'ACTIVE')
                 ->missing('audit.items.0.correlationId')
                 ->missing('audit.items.0.idempotencyReference'));
             $response->assertDontSee('hidden-correlation-marker')
-                ->assertDontSee('hidden-idempotency-marker');
+                ->assertDontSee('hidden-idempotency-marker')
+                ->assertDontSee('Private Platform Operator');
             if ($actor->is($owner)) {
                 $response->assertDontSee('private-admin@example.com');
             }
@@ -125,6 +134,10 @@ final class CompanyAuditHttpTest extends TestCase
 
         $this->get(route('company-audit.index', [$company, 'q' => str_repeat('x', 121)]))
             ->assertSessionHasErrors('q');
+
+        $this->actingAs($owner)->get(route('company-audit.index', [
+            $company, 'q' => 'Private Platform Operator',
+        ]))->assertInertia(fn (Assert $page) => $page->has('audit.items', 0));
     }
 
     public function test_cursor_and_database_indexes_are_stable_and_rls_hides_foreign_events(): void

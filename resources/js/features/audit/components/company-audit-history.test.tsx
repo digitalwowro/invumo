@@ -32,7 +32,7 @@ const labels: CompanyAuditTranslations = {
     next: 'Next',
     not_available: 'Not available',
     target_context: ':type · :id',
-    original_operator: 'Original operator: :name',
+    support_access: 'Performed through Invumo support access',
     reason: 'Reason',
     changes: 'View changes',
     changes_title: 'Recorded changes',
@@ -77,7 +77,7 @@ describe('CompanyAuditHistory', () => {
                             actorType: 'USER',
                             actorName: 'Audit Admin',
                             actorReference: null,
-                            impersonatorName: 'Platform Owner',
+                            supportAccess: true,
                             action: 'company.customer.updated',
                             targetType: 'Customer',
                             targetId: 'customer-id',
@@ -110,7 +110,7 @@ describe('CompanyAuditHistory', () => {
             screen.getByText('Reason: Approved correction'),
         ).toBeInTheDocument();
         expect(
-            screen.getByText('Original operator: Platform Owner'),
+            screen.getByText('Performed through Invumo support access'),
         ).toBeInTheDocument();
         expect(
             screen.getByRole('button', { name: 'View changes' }),

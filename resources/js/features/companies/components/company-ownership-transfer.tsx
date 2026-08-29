@@ -60,6 +60,8 @@ export function CompanyOwnershipTransfer({
                             formId={formId}
                             processing={processing}
                             onDismiss={resetAndClearErrors}
+                            triggerTestId="ownership-transfer-trigger"
+                            confirmTestId="ownership-transfer-confirm"
                         >
                             <Stack gap="lg">
                                 <input
@@ -81,6 +83,7 @@ export function CompanyOwnershipTransfer({
                                     options={candidates.map((candidate) => ({
                                         value: candidate.id,
                                         label: `${candidate.name} · ${candidate.email} · ${translations.roles[candidate.role]}`,
+                                        testId: `ownership-destination-${candidate.id}`,
                                     }))}
                                 />
                                 <input

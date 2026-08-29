@@ -138,6 +138,8 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+          mkdir -p public
+          echo 'http://127.0.0.1:5173' > public/hot
           PGPASSWORD=postgres psql --host=127.0.0.1 --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 <<'SQL'
           CREATE ROLE invumo_schema LOGIN PASSWORD 'invumo_schema_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
           CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;

@@ -7,6 +7,7 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Customers\Models\CustomerDeliveryRecipient;
 use App\Modules\Delivery\Actions\CreatePublicDocumentLink;
 use App\Modules\Delivery\Data\EmailDeliveryState;
 use App\Modules\Delivery\Models\EmailDelivery;
@@ -74,11 +75,18 @@ function companyForInvoiceBrowser(string $language = 'en'): array
             'currency_code' => 'RON', 'currency_precision' => 2,
             'is_default' => true, 'active' => true,
         ]);
-        Customer::query()->create([
+        $customer = Customer::query()->create([
             'type' => 'COMPANY',
             'legal_name' => 'Browser Invoice Customer SRL',
             'email' => 'invoice-customer@example.com',
             'document_language' => $language,
+        ]);
+        CustomerDeliveryRecipient::query()->create([
+            'customer_id' => $customer->id,
+            'role' => 'TO',
+            'explicit_name' => 'Invoice recipient',
+            'explicit_email' => 'invoice-customer@example.com',
+            'display_order' => 1,
         ]);
     });
 

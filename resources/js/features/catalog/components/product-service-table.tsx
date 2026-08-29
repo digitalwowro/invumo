@@ -1,4 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
+import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
 import { Cluster } from '@/components/app/layout';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
@@ -215,13 +216,15 @@ function ProductActions({
                     )
                 }
             />
-            <ConfirmationDialog
+            <GuardedActionDialog
                 triggerLabel={labels.delete}
                 title={labels.delete_title}
                 description={labels.delete_description}
                 confirmLabel={labels.confirm_delete}
                 cancelLabel={i18n.common.actions.cancel}
                 closeLabel={i18n.common.accessibility.close_navigation}
+                warningTitle={labels.dependency_warning_title}
+                guard={product.deleteGuard}
                 tone="destructive"
                 onConfirm={() => request(product.deleteUrl, 'delete')}
             />

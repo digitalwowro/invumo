@@ -1,11 +1,16 @@
 import { router } from '@inertiajs/react';
+import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
 import { ConfirmationDialog } from '@/components/app/responsive-dialog';
-import type { CustomerTranslations } from '@/types/customer';
+import type {
+    CustomerDeleteGuard,
+    CustomerTranslations,
+} from '@/types/customer';
 
 type Props = {
     archiveUrl: string | null;
     restoreUrl: string | null;
     deleteUrl: string | null;
+    deleteGuard: CustomerDeleteGuard;
     publicDecisionIdentity: { count: number; eraseUrl: string | null };
     labels: CustomerTranslations['workspace'];
     cancelLabel: string;
@@ -16,6 +21,7 @@ export function CustomerLifecycleActions({
     archiveUrl,
     restoreUrl,
     deleteUrl,
+    deleteGuard,
     publicDecisionIdentity,
     labels,
     cancelLabel,
@@ -51,13 +57,15 @@ export function CustomerLifecycleActions({
                 />
             )}
             {deleteUrl && (
-                <ConfirmationDialog
+                <GuardedActionDialog
                     triggerLabel={labels.delete}
                     title={labels.delete_title}
                     description={labels.delete_description}
                     confirmLabel={labels.confirm_delete}
                     cancelLabel={cancelLabel}
                     closeLabel={closeLabel}
+                    warningTitle={labels.delete_dependency_title}
+                    guard={deleteGuard}
                     onConfirm={() => router.delete(deleteUrl)}
                 />
             )}

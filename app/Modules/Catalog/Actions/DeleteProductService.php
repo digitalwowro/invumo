@@ -13,6 +13,8 @@ use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -46,6 +48,22 @@ final readonly class DeleteProductService
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageCatalog);
         $product = ProductService::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
+
+        $documentLines = DocumentLine::query()
+            ->where('product_service_id', $product->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+        $templateLines = RecurringTemplateLine::query()
+            ->where('product_service_id', $product->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+
+        if ($documentLines->isNotEmpty() || $templateLines->isNotEmpty()) {
+            throw ProductServiceException::dependencies();
+        }
+
         $product->delete();
 
         $this->recordAuditEvent->handle(new AuditEventData(

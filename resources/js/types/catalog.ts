@@ -1,3 +1,5 @@
+import type { DependencyGuard } from '@/types/dependency-guard';
+
 export type CatalogPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
 
 export type CatalogOption = {
@@ -40,6 +42,7 @@ export type ProductServiceRow = {
     archiveUrl: string;
     restoreUrl: string;
     deleteUrl: string;
+    deleteGuard: DependencyGuard;
 };
 
 export type ProductServiceCursorPage = {

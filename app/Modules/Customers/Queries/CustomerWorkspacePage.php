@@ -7,7 +7,9 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Documents\Models\Document;
 use App\Modules\Quotes\Queries\CustomerPublicDecisionIdentityState;
+use App\Modules\Recurring\Models\RecurringTemplate;
 use Illuminate\Auth\Access\AuthorizationException;
 
 final readonly class CustomerWorkspacePage
@@ -33,6 +35,8 @@ final readonly class CustomerWorkspacePage
         $canManage = $this->abilities->allows($actor, $company, CompanyAbility::ManageCustomers);
         $canDelete = $this->abilities->allows($actor, $company, CompanyAbility::DeleteCustomers);
         $archived = $customer->archived_at !== null;
+        $documentCount = Document::query()->where('customer_id', $customer->id)->count();
+        $templateCount = RecurringTemplate::query()->where('customer_id', $customer->id)->count();
 
         return [
             'customer' => $this->customer($customer),
@@ -53,6 +57,15 @@ final readonly class CustomerWorkspacePage
             'deleteUrl' => $canDelete
                 ? route('customers.destroy', [$company, $customer], false)
                 : null,
+            'deleteGuard' => [
+                'blocked' => $documentCount + $templateCount > 0,
+                'description' => $documentCount + $templateCount > 0
+                    ? __('customers_ui.workspace.delete_dependency_description', [
+                        'documents' => $documentCount,
+                        'templates' => $templateCount,
+                    ])
+                    : null,
+            ],
             'publicDecisionIdentity' => $this->publicDecisionIdentity->for(
                 $company,
                 $actor,

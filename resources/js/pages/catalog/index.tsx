@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
@@ -28,6 +28,8 @@ type Props = {
 };
 
 export default function CatalogIndex(props: Props) {
+    const { errors } = usePage().props;
+
     return (
         <>
             <Head title={props.translations.index.head_title} />
@@ -39,6 +41,12 @@ export default function CatalogIndex(props: Props) {
                     />
                     {props.status && (
                         <SystemMessage title={props.status} tone="money" />
+                    )}
+                    {errors.product_service && (
+                        <SystemMessage
+                            title={errors.product_service}
+                            tone="error"
+                        />
                     )}
                     <ProductServiceCreateForm
                         {...props}

@@ -72,6 +72,8 @@ return [
         'restore_description' => 'Înregistrarea va fi disponibilă pentru liniile documentelor noi.',
         'delete_title' => 'Ștergi definitiv această înregistrare?',
         'delete_description' => 'Ștergerea reușește doar dacă niciun document sau șablon nu face referire la înregistrare.',
+        'dependency_warning_title' => 'Ștergerea definitivă este blocată',
+        'delete_dependency_description' => 'Referințe care blochează: rânduri de document — :documents; rânduri de șablon recurent — :templates. Elimină dependențele sau păstrează înregistrarea arhivată.',
         'confirm_archive' => 'Arhivează înregistrarea',
         'confirm_restore' => 'Restaurează înregistrarea',
         'confirm_delete' => 'Șterge definitiv înregistrarea',

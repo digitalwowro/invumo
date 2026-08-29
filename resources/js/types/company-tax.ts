@@ -1,3 +1,5 @@
+import type { DependencyGuard } from '@/types/dependency-guard';
+
 export type TaxPreset = {
     id: string;
     name: string;
@@ -6,6 +8,10 @@ export type TaxPreset = {
     archived: boolean;
     updateUrl: string | null;
     archiveUrl: string | null;
+    restoreUrl: string | null;
+    deleteUrl: string;
+    archiveGuard: DependencyGuard;
+    deleteGuard: DependencyGuard;
 };
 
 export type CompanyTaxPresetTranslations = {
@@ -34,11 +40,32 @@ export type CompanyTaxPresetTranslations = {
     archive_title: string;
     archive_description: string;
     confirm_archive: string;
+    restore: string;
+    restore_title: string;
+    restore_description: string;
+    confirm_restore: string;
+    delete: string;
+    delete_title: string;
+    delete_description: string;
+    confirm_delete: string;
+    dependency_warning_title: string;
+    archive_dependency_description: string;
+    delete_dependency_description: string;
     empty_title: string;
     empty_description: string;
     unsaved_warning: string;
     fields: Record<'name' | 'percentage' | 'is_default', string>;
     field_descriptions: Record<'percentage' | 'is_default', string>;
-    feedback: Record<'created' | 'updated' | 'archived', string>;
-    errors: Record<'percentage_invalid' | 'archived', string>;
+    feedback: Record<
+        'created' | 'updated' | 'archived' | 'restored' | 'deleted',
+        string
+    >;
+    errors: Record<
+        | 'percentage_invalid'
+        | 'archived'
+        | 'not_archived'
+        | 'default_dependency'
+        | 'dependencies',
+        string
+    >;
 };

@@ -12,6 +12,7 @@ import { CustomerLifecycleActions } from '@/features/customers/components/custom
 import { CustomerWorkspaceNavigation } from '@/features/customers/components/customer-workspace-navigation';
 import { interpolate } from '@/lib/translations';
 import type {
+    CustomerDeleteGuard,
     CustomerFieldLimits,
     CustomerOption,
     CustomerRecord,
@@ -33,6 +34,7 @@ type Props = {
     archiveUrl: string | null;
     restoreUrl: string | null;
     deleteUrl: string | null;
+    deleteGuard: CustomerDeleteGuard;
     publicDecisionIdentity: { count: number; eraseUrl: string | null };
     countryOptions: CustomerOption[];
     customerTypeOptions: CustomerOption[];
@@ -51,6 +53,7 @@ export default function CustomerWorkspace({
     archiveUrl,
     restoreUrl,
     deleteUrl,
+    deleteGuard,
     publicDecisionIdentity,
     countryOptions,
     customerTypeOptions,
@@ -129,6 +132,7 @@ export default function CustomerWorkspace({
                             archiveUrl={archiveUrl}
                             restoreUrl={restoreUrl}
                             deleteUrl={deleteUrl}
+                            deleteGuard={deleteGuard}
                             publicDecisionIdentity={publicDecisionIdentity}
                             labels={labels}
                             cancelLabel={i18n.common.actions.cancel}

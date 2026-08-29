@@ -16,6 +16,16 @@ final class BankAccountException extends RuntimeException
         return new self('archived');
     }
 
+    public static function notArchived(): self
+    {
+        return new self('not_archived');
+    }
+
+    public static function dependencies(): self
+    {
+        return new self('dependencies');
+    }
+
     public static function currencyUnavailable(): self
     {
         return new self('currency_unavailable');

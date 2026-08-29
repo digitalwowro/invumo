@@ -42,6 +42,9 @@ describe('bank account form data', () => {
                 archived: false,
                 updateUrl: '/bank',
                 archiveUrl: '/bank/archive',
+                restoreUrl: null,
+                deleteUrl: '/bank',
+                deleteGuard: { blocked: false, description: null },
             },
             routingFields,
         );

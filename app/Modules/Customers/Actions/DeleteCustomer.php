@@ -13,6 +13,8 @@ use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Customers\Exceptions\CustomerException;
 use App\Modules\Customers\Models\Customer;
+use App\Modules\Documents\Models\Document;
+use App\Modules\Recurring\Models\RecurringTemplate;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -46,6 +48,22 @@ final readonly class DeleteCustomer
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::DeleteCustomers);
         $customer = Customer::query()->whereKey($customerId)->lockForUpdate()->firstOrFail();
+
+        $documents = Document::query()
+            ->where('customer_id', $customer->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+        $templates = RecurringTemplate::query()
+            ->where('customer_id', $customer->id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['id']);
+
+        if ($documents->isNotEmpty() || $templates->isNotEmpty()) {
+            throw CustomerException::dependencies();
+        }
+
         $customer->delete();
 
         $this->recordAuditEvent->handle(new AuditEventData(

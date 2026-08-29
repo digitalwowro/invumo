@@ -75,7 +75,8 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Local routing details are a flat allowlisted object containing at most these eight fields: routing number, sort code, bank code, branch code, transit number, institution number, BSB, and IFSC. Each retained value is trimmed, non-empty, and at most 64 characters; custom keys, nested values, and provider payloads are rejected.
 - A company may designate a default bank account; each quote or invoice may override it or omit bank details.
 - A quote or invoice stores a snapshot of any bank details presented on the document.
-- Editing, archiving, or deleting the source bank account must not rewrite an existing document snapshot.
+- Editing, archiving, or restoring the source bank account must not rewrite an existing document snapshot. Restoring an account never silently makes it the Company default.
+- Archive is the normal lifecycle for a used account. Permanent deletion is permitted only when no document snapshot or recurring-template default still identifies it; the UI warns about dependencies and the owning Action rechecks them under locks.
 
 ## Customer selection and creation
 
@@ -103,6 +104,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - v1 excludes separate shipping/service addresses, customer tags, customer-specific manual date formats, and an ambiguous free-form legal-info field.
 - A quote or invoice snapshots the customer identity, billing/legal address, and registration details used on that document.
 - Editing or deleting the customer must not silently rewrite an existing document snapshot.
+- Archive is the normal lifecycle for a used Customer. Permanent deletion is permitted only when no document or recurring template still references it; the UI warns about dependencies and the owning Action rechecks them under locks.
 
 ## Document customer reference / PO number
 
@@ -126,6 +128,7 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Copy a default price only when its currency matches the document currency. On mismatch, copy non-price defaults and require manual price entry or confirmation; never perform FX conversion.
 - Owner/Admin roles manage entries by default. Members may search and use active entries subject to the approved permission matrix.
 - Archive a previously used entry rather than hard-deleting it by default.
+- Permanent deletion is permitted only when no ordinary document line or recurring-template line retains the catalog reference; the UI warns about dependencies and the owning Action rechecks them under locks.
 - A referenced Company currency cannot become inactive and a referenced tax preset cannot be archived while any Customer or Product/Service still stores that default. The root source mutation reports the dependency, and deferred PostgreSQL validation independently prevents direct or concurrent writes from creating silent fallback state.
 - Reducing a Company currency's precision is rejected while any Product/Service default price in that currency needs more fractional digits. Users must update those catalog prices explicitly; configuration saves never round or rewrite them silently.
 - Catalog audit records retain changed-field names and only non-sensitive operational facts: price presence, currency code, period unit, tax-presence, and archive/delete state. They never retain product/service name, description, internal code/SKU, unit, price, or tax-preset name.
@@ -327,7 +330,7 @@ Each company maintains reusable tax-rate presets:
 - Optional default designation
 - Active or archived state
 
-Users may add, edit, and archive presets. Referenced presets should be archived rather than hard-deleted, but Customer defaults must first be changed or cleared so their stored explicit choice never silently becomes a Company fallback.
+Users may add, edit, archive, restore, and permanently delete eligible presets. Referenced presets should be archived rather than hard-deleted, but Customer and Product/Service defaults must first be changed or cleared so their stored explicit choice never silently becomes a Company fallback. Permanent deletion additionally requires that no retained document tax source or explicit recurring-template Customer default identifies the preset. A recurring-template line remains a self-contained tax snapshot and its optional source reference may clear on deletion. Restoring a preset never silently makes it the Company default. The UI warns about dependencies and the owning Action rechecks them under locks.
 
 Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
 

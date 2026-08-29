@@ -682,11 +682,14 @@ Stable idempotency keys are persisted on the aggregate/event that owns the effec
 
 ### Restrict normal parent deletion
 
-- Customer deletion is blocked by Documents or recurring templates.
-- Product/Tax/Bank deletion is blocked where an active source dependency must remain; ordinary history continues to use copied snapshot values.
+- Customer deletion is blocked by Documents or recurring templates. Product/service deletion is blocked by ordinary document lines or recurring-template lines that retain the catalog provenance.
+- A tax preset cannot be archived while a Customer or Product/Service still selects it as a live default. Permanent deletion additionally refuses retained document tax defaults/lines and explicit recurring-template Customer defaults; a recurring-template line remains a self-contained tax snapshot whose nullable source reference may clear on deletion.
+- Bank-account archiving does not rewrite retained snapshots. Permanent deletion is blocked by document bank snapshots and recurring-template defaults that still identify the source account.
 - Quote deletion is blocked by any dependent Quote-to-Invoice provenance.
 - Invoice deletion is blocked by any Payment, Refund, Adjustment, or active Quote provenance link.
 - No ordinary parent cascade may bypass these guards.
+
+List/detail Queries expose localized dependency warnings so a user can resolve references before confirming a destructive action. Those counts are advisory: every owning root Action repeats the dependency check under stable UUID-ordered locks, and same-Company restrictive foreign keys plus forced RLS independently reject a concurrent or cross-Company bypass. Restoring an archived tax preset or bank account never silently makes it the Company default.
 
 ### Authorized document deletion
 

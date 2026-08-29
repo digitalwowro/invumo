@@ -86,6 +86,8 @@ The internal application tokens and Company outward-brand tokens are separate na
 
 ### 4.3 Logo boundary
 
+This logo contract is the separately approved brand decision recorded as durable decision D-132; it is not derived from the Phase 1 typography system or any Phase 11 feature batch. Archivo is permitted only inside the product mark and does not become a third application-content typeface.
+
 The approved Invumo product mark is the uppercase `INVUMO` word set in Archivo 900 inside a fixed lime chip. The letters are always ink `#121418`, the chip is always lime `#A3E635`, tracking is fixed at `0.05em`, and the restrained corner radius must never become a pill. The mark is never split, recoloured, inverted, or set in the product interface typeface.
 
 Visible application surfaces render the mark through the shared code-owned `AppLogo` component and the source-owned Archivo 900 font. Exact logo colours live only in dedicated semantic tokens in the global theme; Company branding and application state tokens never alter them. The sidebar uses the 14px size, public headers use the 18px size, and authentication uses the 29px size. Below the 11px wordmark floor, use the supplied `I` tile instead of shrinking the word.

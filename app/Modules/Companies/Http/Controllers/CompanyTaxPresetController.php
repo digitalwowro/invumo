@@ -5,6 +5,8 @@ namespace App\Modules\Companies\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Actions\ArchiveTaxPreset;
 use App\Modules\Companies\Actions\CreateTaxPreset;
+use App\Modules\Companies\Actions\DeleteTaxPreset;
+use App\Modules\Companies\Actions\RestoreTaxPreset;
 use App\Modules\Companies\Actions\UpdateTaxPreset;
 use App\Modules\Companies\Exceptions\TaxPresetException;
 use App\Modules\Companies\Http\Requests\SaveTaxPresetRequest;
@@ -75,6 +77,36 @@ final class CompanyTaxPresetController extends Controller
         }
 
         return back()->with('status', __('companies_ui.settings.taxes.feedback.archived'));
+    }
+
+    public function restore(
+        Request $request,
+        Company $company,
+        string $taxPreset,
+        RestoreTaxPreset $restore,
+    ): RedirectResponse {
+        try {
+            $restore->handle($company, $request->user(), $taxPreset);
+        } catch (TaxPresetException $exception) {
+            $this->validationError($exception);
+        }
+
+        return back()->with('status', __('companies_ui.settings.taxes.feedback.restored'));
+    }
+
+    public function destroy(
+        Request $request,
+        Company $company,
+        string $taxPreset,
+        DeleteTaxPreset $delete,
+    ): RedirectResponse {
+        try {
+            $delete->handle($company, $request->user(), $taxPreset);
+        } catch (TaxPresetException $exception) {
+            $this->validationError($exception);
+        }
+
+        return back()->with('status', __('companies_ui.settings.taxes.feedback.deleted'));
     }
 
     private function validationError(TaxPresetException $exception): never

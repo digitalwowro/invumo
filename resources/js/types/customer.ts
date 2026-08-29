@@ -1,4 +1,5 @@
 import type { CustomerDefaultsTranslations } from '@/types/customer-defaults';
+import type { DependencyGuard } from '@/types/dependency-guard';
 
 export type CustomerType = 'INDIVIDUAL' | 'COMPANY';
 
@@ -124,6 +125,8 @@ export type CustomerTranslations = {
         delete: string;
         delete_title: string;
         delete_description: string;
+        delete_dependency_title: string;
+        delete_dependency_description: string;
         confirm_delete: string;
         erase_public_decision_identity: string;
         erase_public_decision_identity_title: string;
@@ -152,6 +155,8 @@ export type CustomerTranslations = {
     delivery: CustomerDeliveryTranslations;
     defaults: CustomerDefaultsTranslations;
 };
+
+export type CustomerDeleteGuard = DependencyGuard;
 
 export type CustomerContact = {
     id: string;

@@ -2,7 +2,6 @@
 
 use App\Modules\Catalog\Http\Controllers\ProductServiceController;
 use App\Modules\Companies\Http\Controllers\CompanyAppearanceController;
-use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
 use App\Modules\Companies\Http\Controllers\CompanyController;
 use App\Modules\Companies\Http\Controllers\CompanyDashboardController;
 use App\Modules\Companies\Http\Controllers\CompanyDocumentDefaultsController;
@@ -12,7 +11,6 @@ use App\Modules\Companies\Http\Controllers\CompanyMemberController;
 use App\Modules\Companies\Http\Controllers\CompanyNumberSeriesController;
 use App\Modules\Companies\Http\Controllers\CompanyOwnershipController;
 use App\Modules\Companies\Http\Controllers\CompanySettingsController;
-use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
 use App\Modules\Customers\Http\Controllers\CustomerContactController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDefaultsController;
@@ -220,28 +218,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('companies/{company}/settings/numbering/counters/{counter}', [DocumentNumberCounterController::class, 'update'])
                 ->middleware('throttle:10,1')
                 ->name('company-number-counters.update');
-            Route::get('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'index'])
-                ->name('company-tax-presets.index');
-            Route::post('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'store'])
-                ->middleware('throttle:20,1')
-                ->name('company-tax-presets.store');
-            Route::patch('companies/{company}/settings/taxes/{taxPreset}', [CompanyTaxPresetController::class, 'update'])
-                ->middleware('throttle:20,1')
-                ->name('company-tax-presets.update');
-            Route::patch('companies/{company}/settings/taxes/{taxPreset}/archive', [CompanyTaxPresetController::class, 'archive'])
-                ->middleware('throttle:20,1')
-                ->name('company-tax-presets.archive');
-            Route::get('companies/{company}/settings/bank-accounts', [CompanyBankAccountController::class, 'index'])
-                ->name('company-bank-accounts.index');
-            Route::post('companies/{company}/settings/bank-accounts', [CompanyBankAccountController::class, 'store'])
-                ->middleware('throttle:20,1')
-                ->name('company-bank-accounts.store');
-            Route::patch('companies/{company}/settings/bank-accounts/{bankAccount}', [CompanyBankAccountController::class, 'update'])
-                ->middleware('throttle:20,1')
-                ->name('company-bank-accounts.update');
-            Route::patch('companies/{company}/settings/bank-accounts/{bankAccount}/archive', [CompanyBankAccountController::class, 'archive'])
-                ->middleware('throttle:20,1')
-                ->name('company-bank-accounts.archive');
+            require __DIR__.'/company-sources.php';
             Route::get('companies/{company}/settings/appearance', [CompanyAppearanceController::class, 'edit'])
                 ->name('company-appearance.edit');
             Route::post('companies/{company}/settings/appearance', [CompanyAppearanceController::class, 'update'])

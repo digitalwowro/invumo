@@ -5,6 +5,8 @@ namespace App\Modules\Companies\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Actions\ArchiveBankAccount;
 use App\Modules\Companies\Actions\CreateBankAccount;
+use App\Modules\Companies\Actions\DeleteBankAccount;
+use App\Modules\Companies\Actions\RestoreBankAccount;
 use App\Modules\Companies\Actions\UpdateBankAccount;
 use App\Modules\Companies\Exceptions\BankAccountException;
 use App\Modules\Companies\Http\Requests\SaveBankAccountRequest;
@@ -79,6 +81,36 @@ final class CompanyBankAccountController extends Controller
         }
 
         return back()->with('status', __('companies_ui.settings.bank_accounts.feedback.archived'));
+    }
+
+    public function restore(
+        Request $request,
+        Company $company,
+        string $bankAccount,
+        RestoreBankAccount $restore,
+    ): RedirectResponse {
+        try {
+            $restore->handle($company, $request->user(), $bankAccount);
+        } catch (BankAccountException $exception) {
+            $this->validationError($exception);
+        }
+
+        return back()->with('status', __('companies_ui.settings.bank_accounts.feedback.restored'));
+    }
+
+    public function destroy(
+        Request $request,
+        Company $company,
+        string $bankAccount,
+        DeleteBankAccount $delete,
+    ): RedirectResponse {
+        try {
+            $delete->handle($company, $request->user(), $bankAccount);
+        } catch (BankAccountException $exception) {
+            $this->validationError($exception);
+        }
+
+        return back()->with('status', __('companies_ui.settings.bank_accounts.feedback.deleted'));
     }
 
     private function validationError(BankAccountException $exception): never

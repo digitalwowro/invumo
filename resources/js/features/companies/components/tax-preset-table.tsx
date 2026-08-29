@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
 import { Cluster } from '@/components/app/layout';
 import { OperationalTable } from '@/components/app/operational-table';
 import type { OperationalTableStateCopy } from '@/components/app/operational-table';
@@ -98,7 +99,7 @@ export function TaxPresetTable({
                                 />
                             )}
                             {preset.archiveUrl && (
-                                <ConfirmationDialog
+                                <GuardedActionDialog
                                     triggerLabel={labels.archive}
                                     title={labels.archive_title}
                                     description={interpolate(
@@ -108,6 +109,10 @@ export function TaxPresetTable({
                                     confirmLabel={labels.confirm_archive}
                                     cancelLabel={cancelLabel}
                                     closeLabel={closeLabel}
+                                    warningTitle={
+                                        labels.dependency_warning_title
+                                    }
+                                    guard={preset.archiveGuard}
                                     onConfirm={() =>
                                         router.patch(
                                             preset.archiveUrl as string,
@@ -117,6 +122,45 @@ export function TaxPresetTable({
                                     }
                                 />
                             )}
+                            {preset.restoreUrl && (
+                                <ConfirmationDialog
+                                    tone="default"
+                                    triggerLabel={labels.restore}
+                                    title={labels.restore_title}
+                                    description={interpolate(
+                                        labels.restore_description,
+                                        { name: preset.name },
+                                    )}
+                                    confirmLabel={labels.confirm_restore}
+                                    cancelLabel={cancelLabel}
+                                    closeLabel={closeLabel}
+                                    onConfirm={() =>
+                                        router.patch(
+                                            preset.restoreUrl as string,
+                                            {},
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                />
+                            )}
+                            <GuardedActionDialog
+                                triggerLabel={labels.delete}
+                                title={labels.delete_title}
+                                description={interpolate(
+                                    labels.delete_description,
+                                    { name: preset.name },
+                                )}
+                                confirmLabel={labels.confirm_delete}
+                                cancelLabel={cancelLabel}
+                                closeLabel={closeLabel}
+                                warningTitle={labels.dependency_warning_title}
+                                guard={preset.deleteGuard}
+                                onConfirm={() =>
+                                    router.delete(preset.deleteUrl, {
+                                        preserveScroll: true,
+                                    })
+                                }
+                            />
                         </Cluster>
                     ),
                 },

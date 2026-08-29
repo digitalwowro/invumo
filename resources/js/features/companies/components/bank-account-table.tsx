@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
 import { Cluster, Stack } from '@/components/app/layout';
 import { OperationalTable } from '@/components/app/operational-table';
 import type { OperationalTableStateCopy } from '@/components/app/operational-table';
@@ -167,6 +168,45 @@ export function BankAccountTable({
                                     }
                                 />
                             )}
+                            {account.restoreUrl && (
+                                <ConfirmationDialog
+                                    tone="default"
+                                    triggerLabel={labels.restore}
+                                    title={labels.restore_title}
+                                    description={interpolate(
+                                        labels.restore_description,
+                                        { label: account.label },
+                                    )}
+                                    confirmLabel={labels.confirm_restore}
+                                    cancelLabel={cancelLabel}
+                                    closeLabel={closeLabel}
+                                    onConfirm={() =>
+                                        router.patch(
+                                            account.restoreUrl as string,
+                                            {},
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                />
+                            )}
+                            <GuardedActionDialog
+                                triggerLabel={labels.delete}
+                                title={labels.delete_title}
+                                description={interpolate(
+                                    labels.delete_description,
+                                    { label: account.label },
+                                )}
+                                confirmLabel={labels.confirm_delete}
+                                cancelLabel={cancelLabel}
+                                closeLabel={closeLabel}
+                                warningTitle={labels.dependency_warning_title}
+                                guard={account.deleteGuard}
+                                onConfirm={() =>
+                                    router.delete(account.deleteUrl, {
+                                        preserveScroll: true,
+                                    })
+                                }
+                            />
                         </Cluster>
                     ),
                 },

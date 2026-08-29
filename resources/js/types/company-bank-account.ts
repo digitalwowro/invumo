@@ -1,3 +1,5 @@
+import type { DependencyGuard } from '@/types/dependency-guard';
+
 export type BankRoutingField =
     | 'routing_number'
     | 'sort_code'
@@ -22,6 +24,9 @@ export type BankAccount = {
     archived: boolean;
     updateUrl: string | null;
     archiveUrl: string | null;
+    restoreUrl: string | null;
+    deleteUrl: string;
+    deleteGuard: DependencyGuard;
 };
 
 export type BankAccountFormData = {
@@ -66,6 +71,16 @@ export type CompanyBankAccountTranslations = {
     archive_title: string;
     archive_description: string;
     confirm_archive: string;
+    restore: string;
+    restore_title: string;
+    restore_description: string;
+    confirm_restore: string;
+    delete: string;
+    delete_title: string;
+    delete_description: string;
+    confirm_delete: string;
+    dependency_warning_title: string;
+    delete_dependency_description: string;
     empty_title: string;
     empty_description: string;
     unsaved_warning: string;
@@ -86,9 +101,16 @@ export type CompanyBankAccountTranslations = {
         string
     >;
     routing_fields: Record<BankRoutingField, string>;
-    feedback: Record<'created' | 'updated' | 'archived', string>;
+    feedback: Record<
+        'created' | 'updated' | 'archived' | 'restored' | 'deleted',
+        string
+    >;
     errors: Record<
-        'archived' | 'currency_unavailable' | 'routing_details_invalid',
+        | 'archived'
+        | 'not_archived'
+        | 'currency_unavailable'
+        | 'routing_details_invalid'
+        | 'dependencies',
         string
     >;
 };

@@ -72,6 +72,8 @@ return [
         'restore_description' => 'The entry will become available for new document lines.',
         'delete_title' => 'Delete this entry permanently?',
         'delete_description' => 'Deletion succeeds only when no document or template line references this entry.',
+        'dependency_warning_title' => 'Permanent deletion is blocked',
+        'delete_dependency_description' => 'Blocking references: document lines — :documents; recurring-template lines — :templates. Remove those dependencies or keep this entry archived.',
         'confirm_archive' => 'Archive entry',
         'confirm_restore' => 'Restore entry',
         'confirm_delete' => 'Delete entry permanently',

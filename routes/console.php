@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('delivery:dispatch-due')->everyMinute()->withoutOverlapping(2);
+Schedule::command('company-erasure:reconcile-files')->everyFiveMinutes()->withoutOverlapping(2);

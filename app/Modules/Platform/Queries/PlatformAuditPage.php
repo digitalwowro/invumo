@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 final readonly class PlatformAuditPage
 {
+    public function __construct(private PlatformErasureHistory $erasureHistory) {}
+
     /** @return array<string, mixed> */
     public function for(Request $request): array
     {
@@ -31,6 +33,7 @@ final readonly class PlatformAuditPage
                 'after' => $event->after,
                 'occurredAt' => $event->occurred_at->toIso8601String(),
             ])->toArray(),
+            'erasurePage' => $this->erasureHistory->page(),
         ];
     }
 }

@@ -11,7 +11,7 @@ During implementation, run the smallest test set that proves the changed behavio
 
 - PHP behavior: the directly affected Pest file or cohesive module subset;
 - React behavior: the directly affected Vitest file;
-- rendered UI: the directly affected Pest Browser journey and required viewport/locale;
+- rendered UI: the directly affected Pest Browser journey and required viewport/locale, always launched through the supervised Composer wrapper;
 - schema, RLS, authorization, locking, or exact-decimal behavior: the focused integration and adversarial tests for that boundary;
 - shared components or cross-cutting foundations: every known consumer test that can be affected.
 
@@ -34,8 +34,10 @@ Typical commands are:
 ```bash
 vendor/bin/pest tests/Feature/path/ChangedBehaviorTest.php --stop-on-failure
 npm run test:unit -- resources/js/path/changed-behavior.test.tsx
-vendor/bin/pest tests/Browser/ChangedJourneyTest.php --stop-on-failure
+composer test:browser -- tests/Browser/ChangedJourneyTest.php --stop-on-failure
 ```
+
+The browser wrapper closes standard input so Pest cannot wait invisibly for an interactive failure prompt, prints a heartbeat every 15 seconds, applies a ten-minute hard timeout, and terminates the complete Pest/Playwright process group after success, failure, timeout, or interruption. This prevents silent waits and orphaned Playwright servers. Interactive `--debug` runs are excluded from automated verification and require an explicit `BROWSER_TEST_INTERACTIVE=true` headed-terminal session.
 
 `composer ci:static`, `composer ci:check:core`, and `composer ci:check` remain available for broad or offline verification. They are not routine per-change commands.
 

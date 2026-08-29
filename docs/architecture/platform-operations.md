@@ -40,7 +40,7 @@ v1 pages are:
 3. **Accounts** — searchable owner, current plan/lifecycle, suspension state, owned-Company count, and lifecycle dates.
 4. **Companies** — searchable control-plane Company name, owning Account/User, member count, archive state, and creation date.
 5. **Plan lifecycle** — filterable active, trialing, past-due, cancel-at-end, expired, and upcoming-expiry views.
-6. **Platform audit** — append-only history of platform grants and every platform mutation.
+6. **Platform audit** — append-only history of platform grants and every platform mutation, plus privacy-minimal erasure proof and aggregate private-file cleanup status.
 
 These are operational lists, not product analytics or financial reports. Use stable indexed ordering and cursor pagination for growing lists.
 
@@ -140,7 +140,7 @@ Normal request entry, Company selection, direct Company URLs, invitation accepta
 
 Each event records a UUIDv7 identifier, nullable actor User for bootstrap/system cases, nullable original impersonator User when the effective User is acting through impersonation, action, target type/UUID, required reason where applicable, allowlisted before/after fields, occurrence time, and an idempotency/correlation reference when needed.
 
-Platform audit follows the same payload-safety contract as Company audit: action-specific allowlists, no copied requests/models/provider payloads, no credentials/tokens, and no tenant business content. Runtime code may insert and authorized Platform Owners may read; ordinary Users cannot read it, and application runtime code cannot update or delete it.
+Platform audit follows the same payload-safety contract as Company audit: action-specific allowlists, no copied requests/models/provider payloads, no credentials/tokens, and no tenant business content. Runtime code may insert and authorized Platform Owners may read; ordinary Users cannot read it, and application runtime code cannot update or delete it. The same protected page exposes the separate `data_erasure_events` proof stream with aggregate Company-file cleanup counts. It never returns a retained disk, storage key, location fingerprint, or deleted tenant payload.
 
 Required actions include platform-owner grant/revoke, impersonation start/end, User suspension/reactivation, Account suspension/reactivation, session revocation, and plan/lifecycle changes. Company audit events add a nullable original-impersonator User reference so an impersonated mutation never erases the real operator identity.
 
@@ -150,6 +150,8 @@ Control-plane tables use strict runtime grants and Laravel authorization, not te
 
 - `platform_operators`: UUIDv7 `id`, unique/indexed `user_id`, checked role, timestamps;
 - `platform_audit_events`: UUIDv7 `id`, nullable/indexed actor, nullable/indexed original impersonator, action, target type/UUID, reason, allowlisted `jsonb` before/after, occurred timestamp, optional unique idempotency key;
+- `data_erasure_events`: privacy-minimal UUIDv7 proof, nullable actor, action, subject type/UUID, and occurred timestamp;
+- `company_erasure_files`: retained erasure-event relationship, private storage coordinate and non-secret location fingerprint only while cleanup is pending, attempt/failure state, and immutable completion evidence;
 - `users`: nullable `suspended_at` and `last_login_at`;
 - `accounts`: the lifecycle and nullable `suspended_at` fields defined above.
 

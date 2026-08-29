@@ -88,6 +88,7 @@
             "npm run visual-snapshots:check",
             "npm run lines:check",
             "npm run modules:check",
+            "npm run test:tooling",
             "npm run types:check",
             "npm run test:unit",
             "npm run build",
@@ -107,7 +108,7 @@
             "pest tests/Unit tests/Feature"
         ],
         "test:browser": [
-            "pest tests/Browser"
+            "node scripts/run-browser-tests.mjs"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

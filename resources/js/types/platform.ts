@@ -113,6 +113,18 @@ export type PlatformAuditRow = {
     occurredAt: string;
 };
 
+export type PlatformErasureRow = {
+    id: string;
+    actorName: string | null;
+    action: string;
+    subjectType: string;
+    subjectId: string;
+    occurredAt: string;
+    fileCount: number;
+    pendingFileCount: number;
+    failedFileCount: number;
+};
+
 export type PlatformActivityRow = Pick<
     PlatformAuditRow,
     'id' | 'actorName' | 'action' | 'targetType' | 'occurredAt'

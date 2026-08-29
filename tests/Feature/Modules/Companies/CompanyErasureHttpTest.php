@@ -6,16 +6,17 @@ use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Data\DataErasureAction;
 use App\Modules\Audit\Models\DataErasureEvent;
+use App\Modules\Companies\Actions\CleanCompanyErasureFiles;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Data\CompanyAssetPurpose;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Jobs\DeleteErasedCompanyFiles;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyAsset;
+use App\Modules\Companies\Models\CompanyErasureFile;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
-use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -67,12 +68,20 @@ final class CompanyErasureHttpTest extends TestCase
         $this->assertSame(DataErasureAction::CompanyErased, $event->action);
         $this->assertSame($company->id, $event->subject_id);
         $this->assertSame($owner->id, $event->actor_user_id);
+        $cleanup = CompanyErasureFile::query()->sole();
+        $this->assertSame($event->id, $cleanup->data_erasure_event_id);
+        $this->assertSame('logos/erase.png', $cleanup->storage_key);
         Queue::assertPushed(DeleteErasedCompanyFiles::class, function ($job): bool {
-            $job->handle(app(FilesystemManager::class));
+            $job->handle(app(CleanCompanyErasureFiles::class));
 
-            return $job->companyId !== '' && count($job->files) === 1;
+            return $job->erasureEventId !== '';
         });
         Storage::disk('company_assets_local')->assertMissing('logos/erase.png');
+        $this->assertDatabaseHas('company_erasure_files', [
+            'id' => $cleanup->id,
+            'storage_disk' => null,
+            'storage_key' => null,
+        ]);
     }
 
     public function test_only_owner_can_open_or_submit_company_erasure(): void

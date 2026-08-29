@@ -3,12 +3,16 @@
 namespace Tests\Feature\Modules\Platform;
 
 use App\Models\User;
+use App\Modules\Audit\Data\DataErasureAction;
+use App\Modules\Audit\Models\DataErasureEvent;
 use App\Modules\Companies\Actions\CreateCompany;
+use App\Modules\Companies\Models\CompanyErasureFile;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Platform\Data\PlatformRole;
 use App\Modules\Platform\Models\PlatformOperator;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -122,6 +126,64 @@ class PlatformOperationsHttpTest extends TestCase
                 ->component('platform/audit')
                 ->where('i18n.locale', 'ro')
                 ->where('translations.audit.title', 'Audit platformă'));
+    }
+
+    public function test_platform_audit_exposes_privacy_minimal_erasure_and_cleanup_evidence(): void
+    {
+        $operator = $this->platformOwner();
+        $event = DataErasureEvent::query()->create([
+            'actor_user_id' => null,
+            'action' => DataErasureAction::CompanyErased,
+            'subject_type' => 'COMPANY',
+            'subject_id' => (string) Str::uuid7(),
+            'occurred_at' => now(),
+        ]);
+        CompanyErasureFile::query()->create([
+            'data_erasure_event_id' => $event->id,
+            'storage_disk' => 'company_assets_local',
+            'storage_key' => 'opaque/private.pdf',
+            'storage_configuration_fingerprint' => str_repeat('a', 64),
+            'attempt_count' => 1,
+            'last_attempted_at' => now(),
+            'last_failure_category' => 'STORAGE_UNAVAILABLE',
+            'last_failure_summary' => 'Private file cleanup could not be confirmed.',
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($operator)->get(route('platform.audit.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('erasurePage.items', 1)
+                ->where('erasurePage.items.0.subjectId', $event->subject_id)
+                ->where('erasurePage.items.0.pendingFileCount', 1)
+                ->where('erasurePage.items.0.failedFileCount', 1)
+                ->missing('erasurePage.items.0.storageKey'));
+    }
+
+    public function test_platform_erasure_evidence_cursor_retrieves_older_proof(): void
+    {
+        $operator = $this->platformOwner();
+        $oldest = null;
+
+        foreach (range(0, 25) as $minutes) {
+            $event = DataErasureEvent::query()->create([
+                'actor_user_id' => null,
+                'action' => DataErasureAction::UserAccountErased,
+                'subject_type' => 'USER_ACCOUNT',
+                'subject_id' => (string) Str::uuid7(),
+                'occurred_at' => now()->subMinutes($minutes),
+            ]);
+            $oldest = $event;
+        }
+
+        $this->actingAs($operator);
+        $nextUrl = $this->get(route('platform.audit.index'))
+            ->inertiaProps('erasurePage.nextUrl');
+
+        $this->assertIsString($nextUrl);
+        $this->get($nextUrl)->assertInertia(fn (Assert $page) => $page
+            ->has('erasurePage.items', 1)
+            ->where('erasurePage.items.0.id', $oldest?->id));
     }
 
     private function platformOwner(): User

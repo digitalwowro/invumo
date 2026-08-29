@@ -11,7 +11,6 @@ use App\Modules\Companies\Data\CompanyErasureState;
 use App\Modules\Companies\Data\EraseCompanyData;
 use App\Modules\Companies\Data\ErasedCompanyFile;
 use App\Modules\Companies\Exceptions\CompanyErasureException;
-use App\Modules\Companies\Jobs\DeleteErasedCompanyFiles;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyAsset;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
@@ -25,27 +24,27 @@ final readonly class EraseCompany
         private CompanyActionAuthorizer $authorizer,
         private PrepareCompanyDeliveryErasure $deliveryErasure,
         private RecordDataErasure $recordErasure,
+        private RecordCompanyErasureFiles $recordFiles,
+        private QueueCompanyErasureFileCleanup $queueFileCleanup,
     ) {}
 
     public function handle(Company $company, User $actor, EraseCompanyData $data): void
     {
-        $files = $this->tenantContext->runForMember(
+        $erasureEventId = $this->tenantContext->runForMember(
             $actor,
             $company->id,
-            fn (): array => DB::connection(config('database.tenant_connection'))->transaction(
-                fn (): array => $this->erase($company, $actor, $data),
+            fn (): ?string => DB::connection(config('database.tenant_connection'))->transaction(
+                fn (): ?string => $this->erase($company, $actor, $data),
                 3,
             ),
         );
 
-        if ($files !== []) {
-            DeleteErasedCompanyFiles::dispatch($company->id, $files)
-                ->onConnection('database')->onQueue('default')->afterCommit();
+        if ($erasureEventId !== null) {
+            $this->queueFileCleanup->handle($erasureEventId);
         }
     }
 
-    /** @return list<ErasedCompanyFile> */
-    private function erase(Company $company, User $actor, EraseCompanyData $data): array
+    private function erase(Company $company, User $actor, EraseCompanyData $data): ?string
     {
         $this->authorizer->authorize($actor, $company, CompanyAbility::DeleteCompany);
         $lockedCompany = Company::query()->whereKey($company->id)->lockForUpdate()->firstOrFail();
@@ -83,13 +82,14 @@ final readonly class EraseCompany
             ), $delivery->files),
         ];
 
-        $this->recordErasure->handle(
+        $event = $this->recordErasure->handle(
             DataErasureAction::CompanyErased,
             $lockedCompany->id,
             $actor->id,
         );
+        $fileCount = $this->recordFiles->handle($event->id, $files);
         $lockedCompany->delete();
 
-        return $files;
+        return $fileCount > 0 ? $event->id : null;
     }
 }

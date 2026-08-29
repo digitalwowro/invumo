@@ -38,7 +38,7 @@ The approved module catalog is:
 | Module         | Owns                                                                                                                    |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `Identity`     | Account-level identity, entitlement, and coupled User/personal-Account erasure beyond Fortify's authentication entry points |
-| `Companies`    | Companies, memberships, invitations, ownership, configuration, private assets, dashboard composition, and Company/access erasure |
+| `Companies`    | Companies, memberships, invitations, ownership, configuration, private assets, dashboard composition, Company/access erasure, and durable private-file cleanup reconciliation |
 | `Customers`    | Customers, contacts, delivery recipients, defaults, and customer search                                                 |
 | `Catalog`      | Products and services, catalog defaults, search, and archive behavior                                                   |
 | `Documents`    | Shared document lines, snapshots, numbering, calculation orchestration, and common document behavior                    |
@@ -48,7 +48,7 @@ The approved module catalog is:
 | `Recurring`    | Recurring templates, occurrence generation, schedule resolution, and automation controls                                |
 | `Delivery`     | Public document access, PDF composition, email/reminder workflows, delivery history, and provider-event normalization   |
 | `Audit`        | Append-only tenant audit, privacy-minimal non-tenant erasure proofs, and authorized operational/audit queries          |
-| `Platform`     | Operator authorization, control-plane administration, Account lifecycle/suspension, full User impersonation, and audit  |
+| `Platform`     | Operator authorization, control-plane administration, Account lifecycle/suspension, full User impersonation, audit, and privacy-minimal erasure-evidence presentation |
 
 This catalog describes ownership, not deployment. A cross-cutting workflow still runs inside one database transaction and one application. Split or merge a module only through an approved architecture change backed by actual code pressure.
 

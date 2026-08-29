@@ -130,6 +130,8 @@ The Laravel scheduler is invoked once per minute from the `invumo` user's cronta
 
 Batch 9E registers `delivery:dispatch-due` every minute. It claims at most 50 due payload-free rows with `FOR UPDATE SKIP LOCKED` under the explicit dispatcher role, resets that role, and inserts encrypted Company jobs in the same PostgreSQL transaction. Slow reminder resolution and provider calls remain queue-worker work under ordinary Company context.
 
+Phase 11 registers `company-erasure:reconcile-files` every five minutes. It queues an encrypted cleanup job for a pending durable erasure manifest that has never run or has remained unattended for at least six hours. The job carries only the erasure-event UUID, retries files independently, and clears storage coordinates only after absence is confirmed. Moving or repointing a configured storage disk requires pending Company erasure cleanup to reach zero first; the stored location fingerprint otherwise keeps the cleanup visibly pending rather than checking the wrong location.
+
 ```bash
 crontab -l
 journalctl --identifier=invumo-scheduler

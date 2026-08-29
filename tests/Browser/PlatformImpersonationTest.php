@@ -69,6 +69,7 @@ it('starts impersonation after one password-confirmed submission', function () {
         ->assertDontSee('You are acting as Target User (browser-target@example.com).')
         ->navigate('/platform/audit')
         ->assertSee('Platform audit')
+        ->assertSee('Data erasure evidence')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertScript("document.querySelector('[data-slot=table-container]').scrollWidth === document.querySelector('[data-slot=table-container]').clientWidth")
         ->assertNoJavaScriptErrors()

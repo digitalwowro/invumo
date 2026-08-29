@@ -18,6 +18,7 @@ use App\Modules\Customers\Models\Customer;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
 use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
+use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -63,18 +64,13 @@ final readonly class DeleteTaxPreset
             DocumentLine::query()->where('tax_preset_id', $preset->id),
             DocumentTaxDefault::query()->where('tax_preset_id', $preset->id),
             RecurringTemplateCustomerValue::query()->where('tax_preset_id', $preset->id),
+            RecurringTemplateLine::query()->where('tax_preset_id', $preset->id),
         ];
 
-        $hasDependencies = false;
-
         foreach ($dependencies as $dependency) {
-            foreach ($dependency->orderBy('id')->lockForUpdate()->get(['id']) as $lockedDependency) {
-                $hasDependencies = true;
+            if ($dependency->orderBy('id')->lockForUpdate()->first(['id']) !== null) {
+                throw TaxPresetException::dependencies();
             }
-        }
-
-        if ($hasDependencies) {
-            throw TaxPresetException::dependencies();
         }
 
         $preset->delete();

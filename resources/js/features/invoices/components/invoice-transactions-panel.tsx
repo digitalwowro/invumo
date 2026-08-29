@@ -36,7 +36,10 @@ const createKinds: Array<{
 ];
 
 export function InvoiceTransactionsPanel(props: Props) {
-    const disabled = props.invoiceDirty;
+    const disabled = props.invoiceDirty || props.transactions.deliveryPending;
+    const disabledDescription = props.invoiceDirty
+        ? props.labels.unsaved_notice
+        : props.labels.delivery_pending_notice;
     const storeUrl = props.transactions.storeUrl;
     const actions = storeUrl ? (
         <Cluster gap="sm">
@@ -63,7 +66,7 @@ export function InvoiceTransactionsPanel(props: Props) {
                         }
                         disabledDescription={
                             disabled
-                                ? props.labels.unsaved_notice
+                                ? disabledDescription
                                 : props.labels.balance_notice
                         }
                     />
@@ -98,6 +101,12 @@ export function InvoiceTransactionsPanel(props: Props) {
                         tone="warning"
                     />
                 )}
+                {props.transactions.deliveryPending && (
+                    <SystemMessage
+                        title={props.labels.delivery_pending_notice}
+                        tone="warning"
+                    />
+                )}
                 <Grid columns={4} gap="lg">
                     {summaryKeys.map(([label, value]) => (
                         <Surface as="article" key={label}>
@@ -117,6 +126,7 @@ export function InvoiceTransactionsPanel(props: Props) {
                     transactions={props.transactions}
                     labels={props.labels}
                     disabled={disabled}
+                    disabledDescription={disabledDescription}
                 />
             </Stack>
         </Surface>

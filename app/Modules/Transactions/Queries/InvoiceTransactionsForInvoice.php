@@ -42,6 +42,7 @@ final readonly class InvoiceTransactionsForInvoice
             ->groupBy('invoice_transaction_id');
         $deliveryPending = EmailDelivery::query()
             ->where('document_id', $invoiceId)
+            ->where('event_type', '!=', EmailTemplateEvent::PaymentReminder)
             ->whereIn('dispatch_state', [
                 EmailDeliveryState::Queued,
                 EmailDeliveryState::Retrying,
@@ -115,6 +116,7 @@ final readonly class InvoiceTransactionsForInvoice
             'storeUrl' => $mutable && $canManage
                 ? route('invoice-transactions.store', [$company, $invoiceId], false)
                 : null,
+            'deliveryPending' => $deliveryPending,
             'abilities' => [
                 'manage' => $mutable && $canManage,
                 'adjust' => $mutable && $canAdjust,

@@ -30,6 +30,7 @@ final readonly class RecurringTemplateDraftPage
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
         private RecurringTemplateInheritancePage $inheritancePage,
+        private RecurringTemplateDeletionPreview $deletionPreview,
     ) {}
 
     /** @return array<string, mixed> */
@@ -87,6 +88,12 @@ final readonly class RecurringTemplateDraftPage
             && $this->abilities->allows(
                 $actor, $company, CompanyAbility::ManageRecurringAutomation,
             );
+        $canDelete = $this->abilities->allows(
+            $actor, $company, CompanyAbility::DeleteRecurringTemplates,
+        );
+        $deletion = $canDelete
+            ? $this->deletionPreview->forTemplates([$template->id => $template->state])[$template->id]
+            : ['highRisk' => false, 'guard' => ['blocked' => false, 'description' => null]];
 
         return [
             'template' => [
@@ -167,10 +174,9 @@ final readonly class RecurringTemplateDraftPage
             'retryUrl' => route('recurring.retry', [$company, $template], false),
             'duplicateCreationKey' => (string) Str::uuid7(),
             'deleteUrl' => route('recurring.destroy', [$company, $template], false),
+            'deletion' => $deletion,
             'indexUrl' => route('recurring.index', $company, false),
-            'canDelete' => $this->abilities->allows(
-                $actor, $company, CompanyAbility::DeleteRecurringTemplates,
-            ) && $template->state === RecurringTemplateState::Draft,
+            'canDelete' => $canDelete,
             'canEditDraft' => $template->state === RecurringTemplateState::Draft,
             'canManageSchedule' => match ($template->state) {
                 RecurringTemplateState::Draft => $this->abilities->allows(

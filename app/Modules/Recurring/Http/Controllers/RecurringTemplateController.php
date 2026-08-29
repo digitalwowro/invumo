@@ -4,7 +4,7 @@ namespace App\Modules\Recurring\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
-use App\Modules\Recurring\Actions\DeleteRecurringTemplateDraft;
+use App\Modules\Recurring\Actions\DeleteRecurringTemplate;
 use App\Modules\Recurring\Exceptions\RecurringTemplateException;
 use App\Modules\Recurring\Http\Requests\DeleteRecurringTemplateRequest;
 use App\Modules\Recurring\Http\Requests\RecurringTemplateListRequest;
@@ -34,10 +34,16 @@ final class RecurringTemplateController extends Controller
         DeleteRecurringTemplateRequest $request,
         Company $company,
         string $template,
-        DeleteRecurringTemplateDraft $delete,
+        DeleteRecurringTemplate $delete,
     ): RedirectResponse {
         try {
-            $delete->handle($company, $request->user(), $template);
+            $delete->handle(
+                $company,
+                $request->user(),
+                $template,
+                $request->boolean('confirmed'),
+                $request->boolean('confirmed_high_risk'),
+            );
         } catch (RecurringTemplateException $exception) {
             throw ValidationException::withMessages([
                 'template' => __("recurring_ui.errors.{$exception->reason()}"),

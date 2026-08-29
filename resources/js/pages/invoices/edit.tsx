@@ -16,6 +16,7 @@ import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft
 import { InvoiceTransactionsPanel } from '@/features/invoices/components/invoice-transactions-panel';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type {
     DocumentDelivery,
     DocumentDeliveryTranslations,
@@ -56,7 +57,11 @@ type Props = {
         currencyReviewRequired: boolean;
         templateUrl: string | null;
     };
-    deletion: { url: string | null; highRisk: boolean };
+    deletion: {
+        url: string | null;
+        highRisk: boolean;
+        guard: DependencyGuard;
+    };
     indexUrl: string;
     sourceUrls: InvoiceSourceUrls;
     inlineCustomerStoreUrl: string;
@@ -138,6 +143,7 @@ export default function EditInvoice({
                                         url={deletion.url}
                                         number={invoice.number}
                                         highRisk={deletion.highRisk}
+                                        guard={deletion.guard}
                                         labels={translations.deletion}
                                     />
                                 )}

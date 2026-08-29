@@ -330,7 +330,7 @@ Each company maintains reusable tax-rate presets:
 - Optional default designation
 - Active or archived state
 
-Users may add, edit, archive, restore, and permanently delete eligible presets. Referenced presets should be archived rather than hard-deleted, but Customer and Product/Service defaults must first be changed or cleared so their stored explicit choice never silently becomes a Company fallback. Permanent deletion additionally requires that no retained document tax source or explicit recurring-template Customer default identifies the preset. A recurring-template line remains a self-contained tax snapshot and its optional source reference may clear on deletion. Restoring a preset never silently makes it the Company default. The UI warns about dependencies and the owning Action rechecks them under locks.
+Users may add, edit, archive, restore, and permanently delete eligible presets. Referenced presets should be archived rather than hard-deleted, but Customer and Product/Service defaults must first be changed or cleared so their stored explicit choice never silently becomes a Company fallback. Permanent deletion additionally requires that no retained document tax source, explicit recurring-template Customer default, or recurring-template line identifies the preset. Restoring a preset never silently makes it the Company default. The UI warns about dependencies and the owning Action rechecks them under bounded locks.
 
 Applying a preset snapshots its name and percentage onto the document line. Later preset changes must not alter existing documents.
 
@@ -439,6 +439,7 @@ Recurring template
 - If automatic email fails, retry delivery against the same generated invoice rather than creating another invoice for that occurrence.
 - Permanently deleting an eligible generated Invoice uses the ordinary guarded Invoice-deletion workflow and deletes its linked occurrence and pending occurrence-dispatch state. The template cursor, logical ordinal, and successful-occurrence count do not rewind; stale work for the deleted occurrence is a no-op, while later distinct occurrences generate normally within the unchanged schedule/end/count limits.
 - Cancelling a generated Invoice retains its occurrence and does not prevent later scheduled occurrences.
+- Owner/Admin may permanently delete a recurring template in any lifecycle state only after every generated Invoice and its occurrence has been removed through the ordinary guarded Invoice workflow. Non-Draft deletion uses the stronger warning because it stops automation. Open dispatches are cancelled; closed failure history and a privacy-minimal deletion audit remain. The UI presents current occurrence dependencies, while the owning Action and restrictive foreign key recheck them under lock.
 - Scheduled execution must be idempotent and safe under retries or overlapping runs.
 - Use a stable occurrence idempotency key and record last run, next run, outcome, and generated invoice.
 - Calculate each occurrence from its local calendar rule at the company automation time, then resolve it through the company IANA timezone into UTC; never add a fixed UTC duration for monthly/quarterly/yearly recurrence.

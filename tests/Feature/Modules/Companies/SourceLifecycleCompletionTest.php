@@ -23,7 +23,9 @@ use App\Modules\Quotes\Models\Quote;
 use App\Modules\Recurring\Models\RecurringTemplate;
 use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
 use App\Modules\Recurring\Models\RecurringTemplateDefault;
+use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Closure;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -74,7 +76,9 @@ final class SourceLifecycleCompletionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('taxPresets.0.archiveGuard.blocked', true)
                 ->where('taxPresets.0.deleteGuard.blocked', true)
-                ->where('taxPresets.0.deleteGuard.description', fn (mixed $value): bool => is_string($value) && str_contains($value, 'document snapshots or lines — 2')));
+                ->where('taxPresets.0.deleteGuard.description', fn (mixed $value): bool => is_string($value)
+                    && str_contains($value, 'document snapshots or lines — 2')
+                    && str_contains($value, 'recurring templates — 2')));
         $this->get(route('company-bank-accounts.index', $company))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('bankAccounts.0.deleteGuard.blocked', true)
@@ -148,6 +152,44 @@ final class SourceLifecycleCompletionTest extends TestCase
         ));
     }
 
+    public function test_recurring_line_tax_provenance_blocks_action_and_database_deletion(): void
+    {
+        [$owner, $company] = $this->company();
+        [$tax, $line] = $this->tenant($company, function (): array {
+            $tax = TaxPreset::query()->create(['name' => 'VAT', 'percentage' => '19']);
+            $customer = Customer::query()->create([
+                'type' => 'COMPANY', 'legal_name' => 'Recurring Customer SRL',
+            ]);
+            $template = RecurringTemplate::query()->create([
+                'client_creation_key' => (string) Str::uuid7(),
+                'internal_name' => 'Tax provenance', 'customer_id' => $customer->id,
+            ]);
+            $line = RecurringTemplateLine::query()->create([
+                'recurring_template_id' => $template->id, 'position' => 1,
+                'description' => 'Taxed service', 'tax_mode' => 'EXPLICIT',
+                'tax_preset_id' => $tax->id, 'tax_name' => 'VAT', 'tax_percentage' => '19',
+            ]);
+
+            return [$tax, $line];
+        });
+
+        $this->actingAs($owner)
+            ->delete(route('company-tax-presets.destroy', [$company, $tax]))
+            ->assertSessionHasErrors('tax_preset');
+
+        try {
+            $this->tenant($company, fn () => TaxPreset::query()->whereKey($tax->id)->delete());
+            $this->fail('Recurring line tax provenance must restrict preset deletion.');
+        } catch (QueryException $exception) {
+            $this->assertContains($exception->errorInfo[0] ?? null, ['23001', '23503']);
+        }
+
+        $this->tenant($company, function () use ($tax, $line): void {
+            $this->assertNotNull(TaxPreset::query()->find($tax->id));
+            $this->assertSame($tax->id, RecurringTemplateLine::query()->findOrFail($line->id)->tax_preset_id);
+        });
+    }
+
     /** @return array{TaxPreset, BankAccount, Customer, ProductService} */
     private function dependentSources(Company $company): array
     {
@@ -184,6 +226,11 @@ final class SourceLifecycleCompletionTest extends TestCase
             ]);
             RecurringTemplateCustomerValue::query()->create([
                 'recurring_template_id' => $template->id, 'explicit_fields' => ['tax_default'],
+                'tax_preset_id' => $tax->id, 'tax_name' => 'VAT', 'tax_percentage' => '19',
+            ]);
+            RecurringTemplateLine::query()->create([
+                'recurring_template_id' => $template->id, 'position' => 1,
+                'description' => 'Taxed recurring line', 'tax_mode' => 'EXPLICIT',
                 'tax_preset_id' => $tax->id, 'tax_name' => 'VAT', 'tax_percentage' => '19',
             ]);
             RecurringTemplateDefault::query()->create([

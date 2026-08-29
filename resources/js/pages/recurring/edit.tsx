@@ -12,6 +12,7 @@ import { RecurringTemplateLifecycleActions } from '@/features/recurring/componen
 import { RecurringTemplateScheduleForm } from '@/features/recurring/components/recurring-template-schedule-form';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type {
     RecurringSourceProps,
     RecurringInheritanceProps,
@@ -35,6 +36,7 @@ type Props = RecurringSourceProps &
         retryUrl: string;
         duplicateCreationKey: string;
         deleteUrl: string;
+        deletion: { highRisk: boolean; guard: DependencyGuard };
         indexUrl: string;
         canDelete: boolean;
         canEditDraft: boolean;
@@ -100,6 +102,8 @@ export default function EditRecurringTemplate(props: Props) {
                                 {props.canDelete && (
                                     <RecurringTemplateDeleteDialog
                                         url={props.deleteUrl}
+                                        highRisk={props.deletion.highRisk}
+                                        guard={props.deletion.guard}
                                         labels={props.translations.deletion}
                                     />
                                 )}

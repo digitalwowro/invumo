@@ -619,7 +619,7 @@ Product/Tax source edits never rewrite the template line. A generated Invoice co
 
 The stored `item_price` remains a currency-neutral `numeric(30,8)` source input; template persistence never rounds it to the current preview currency. Therefore Company precision changes do not enumerate, reject, or rewrite recurring lines. The generated Invoice is the quantized financial snapshot: inherited mode uses the occurrence's current resolved precision, while explicit currency mode uses the template's fixed code/precision snapshot.
 
-Tax, bank, and recipient-contact provenance is optional explanatory linkage around self-contained snapshots. Archiving a referenced source does not invalidate or rewrite the template snapshot; selecting a different unavailable source is rejected, and Contact deletion clears only nullable provenance. Source mutations still lock affected recurring rows in stable UUID order so concurrent saves cannot silently cross the chosen snapshot boundary.
+Tax, bank, and recipient-contact provenance is explanatory linkage around self-contained snapshots. Archiving a referenced source does not invalidate or rewrite the template snapshot; selecting a different unavailable source is rejected, and Contact deletion clears only nullable provenance. A recurring line's explicit tax-preset provenance remains restrictive for permanent preset deletion so its source intent and stored snapshot cannot diverge. Source mutations use stable locks so concurrent saves cannot silently cross the chosen snapshot boundary.
 
 Batch 10A stores the editable input snapshot subset with optional restrictive Product provenance, the shared exact-decimal envelopes, and a deferrable Company/template/position uniqueness constraint. Complete 1-based rewrites cover insertion, deletion, and reordering in one Draft-update transaction; Product archival remains snapshot-safe, while permanent Product deletion is blocked until the provenance reference is removed.
 
@@ -683,10 +683,11 @@ Stable idempotency keys are persisted on the aggregate/event that owns the effec
 ### Restrict normal parent deletion
 
 - Customer deletion is blocked by Documents or recurring templates. Product/service deletion is blocked by ordinary document lines or recurring-template lines that retain the catalog provenance.
-- A tax preset cannot be archived while a Customer or Product/Service still selects it as a live default. Permanent deletion additionally refuses retained document tax defaults/lines and explicit recurring-template Customer defaults; a recurring-template line remains a self-contained tax snapshot whose nullable source reference may clear on deletion.
+- A tax preset cannot be archived while a Customer or Product/Service still selects it as a live default. Permanent deletion additionally refuses retained document tax defaults/lines, explicit recurring-template Customer defaults, and recurring-template lines that retain explicit preset provenance.
 - Bank-account archiving does not rewrite retained snapshots. Permanent deletion is blocked by document bank snapshots and recurring-template defaults that still identify the source account.
 - Quote deletion is blocked by any dependent Quote-to-Invoice provenance.
 - Invoice deletion is blocked by any Payment, Refund, Adjustment, or active Quote provenance link.
+- Recurring-template deletion is blocked while any generated occurrence remains. Non-Draft deletion requires the stronger destructive confirmation; open occurrence dispatches are cancelled, closed failure history remains, and the retained audit tombstone carries only state and an execution-history boolean. Deleting an eligible generated Invoice through its ordinary guard removes that occurrence first, after which the template may be deleted without rewinding or reusing schedule history.
 - No ordinary parent cascade may bypass these guards.
 
 List/detail Queries expose localized dependency warnings so a user can resolve references before confirming a destructive action. Those counts are advisory: every owning root Action repeats the dependency check under stable UUID-ordered locks, and same-Company restrictive foreign keys plus forced RLS independently reject a concurrent or cross-Company bypass. Restoring an archived tax preset or bank account never silently makes it the Company default.

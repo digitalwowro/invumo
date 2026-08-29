@@ -167,7 +167,7 @@ A Member may therefore reach a valid Invoice state where cancellation still requ
 | Pause/resume or complete an Active template                          | Guarded | Guarded | No     | No implicit pause-period backfill                                                     |
 | Edit schedule/customer/currency/lines/delivery on an Active template | Guarded | Guarded | No     | Confirmation; affects future unmaterialized occurrences only                          |
 | Enable/disable automatic email on a template                         | Guarded | Guarded | No     | Currency-review latch remains authoritative                                           |
-| Archive/delete a recurring template where dependencies permit        | Guarded | Guarded | No     | Preserve completed/failed occurrence history as required by schema                    |
+| Permanently delete a recurring template where dependencies permit   | Guarded | Guarded | No     | Delete generated Invoices first; retain closed failure history and minimal audit      |
 | Retry a failed occurrence or automation action                       | Guarded | Guarded | No     | Same idempotency identity; eligibility rechecked                                      |
 | Manually send an already-generated Invoice                           | Yes     | Yes     | Yes    | Uses normal Invoice send permission; provider acceptance may clear the currency latch |
 

@@ -163,10 +163,12 @@ return [
         'trigger' => 'Delete invoice',
         'title' => 'Permanently delete this Invoice?',
         'description' => 'This Draft and its current content will be permanently deleted. Its number remains reserved in history.',
-        'high_risk_description' => 'This Invoice has been issued. Deletion is irreversible, but its number and minimal audit history remain reserved.',
+        'high_risk_description' => 'This Invoice has been issued, shared, or sent. Deletion is irreversible, but its number and minimal audit history remain reserved.',
         'number_label' => 'Exact Invoice number',
         'number_description' => 'Type the exact Invoice number shown above to continue.',
-        'acknowledgment' => 'I understand that this issued Invoice will be permanently deleted.',
+        'acknowledgment' => 'I understand that this Invoice will be permanently deleted.',
+        'dependency_title' => 'Resolve the Invoice dependencies first',
+        'dependency_description' => 'Transactions: :transactions. Linked Quotes: :quotes. Provider submissions still in progress: :submissions.',
         'confirm' => 'Delete permanently',
     ],
     'reminders' => [
@@ -216,6 +218,7 @@ return [
         'draft_notice' => 'Issue this Invoice before recording financial transactions.',
         'cancelled_notice' => 'Transactions are retained as read-only history while this Invoice is Cancelled.',
         'unsaved_notice' => 'Save the current Invoice changes before changing its transactions.',
+        'delivery_pending_notice' => 'Wait for the queued email delivery to finish before changing transactions.',
         'balance_notice' => 'The current Invoice balance does not allow this transaction.',
         'receipt' => [
             'send' => 'Send receipt',

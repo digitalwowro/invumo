@@ -53,14 +53,14 @@ final readonly class DeleteCustomer
             ->where('customer_id', $customer->id)
             ->orderBy('id')
             ->lockForUpdate()
-            ->get(['id']);
+            ->first(['id']);
         $templates = RecurringTemplate::query()
             ->where('customer_id', $customer->id)
             ->orderBy('id')
             ->lockForUpdate()
-            ->get(['id']);
+            ->first(['id']);
 
-        if ($documents->isNotEmpty() || $templates->isNotEmpty()) {
+        if ($documents !== null || $templates !== null) {
             throw CustomerException::dependencies();
         }
 

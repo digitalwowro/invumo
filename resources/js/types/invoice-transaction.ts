@@ -34,6 +34,7 @@ export type InvoiceTransactions = {
     };
     items: InvoiceTransactionRow[];
     storeUrl: string | null;
+    deliveryPending: boolean;
     abilities: { manage: boolean; adjust: boolean };
     actions: { payment: boolean; refund: boolean; adjustment: boolean };
     today: string;
@@ -51,6 +52,7 @@ export type InvoiceTransactionTranslations = {
     draft_notice: string;
     cancelled_notice: string;
     unsaved_notice: string;
+    delivery_pending_notice: string;
     balance_notice: string;
     receipt: {
         send: string;

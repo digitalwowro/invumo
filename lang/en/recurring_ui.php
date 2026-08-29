@@ -284,8 +284,11 @@ return [
     ],
     'deletion' => [
         'delete' => 'Delete',
-        'title' => 'Permanently delete this Draft template?',
+        'title' => 'Permanently delete this recurring template?',
         'description' => 'The Draft and its detached lines will be removed. This cannot be undone.',
+        'high_risk_description' => 'This template has left Draft state. Deletion permanently stops its automation and removes the template; closed execution and minimal audit history remain.',
+        'dependency_title' => 'Delete generated Invoices first',
+        'dependency_description' => 'Generated Invoice occurrences still retained: :occurrences.',
         'confirm' => 'Permanently delete',
     ],
     'feedback' => [
@@ -312,6 +315,8 @@ return [
         'reminder_mode_invalid' => 'Template reminder rows are allowed only with a template schedule.',
         'reminder_duplicate' => 'Each reminder timing may appear only once.',
         'confirmation_required' => 'Confirm this automation change.',
+        'high_risk_confirmation_required' => 'Confirm permanent deletion of this non-Draft recurring template.',
+        'dependency' => 'Delete every generated Invoice before permanently deleting this recurring template.',
         'completed' => 'A completed recurring template cannot be changed.',
         'schedule_incomplete' => 'Complete the schedule and Company timezone settings first.',
         'schedule_exhausted' => 'This schedule has no eligible future occurrence.',

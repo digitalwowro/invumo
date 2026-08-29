@@ -265,6 +265,11 @@ final class DocumentDeliveryHttpTest extends DocumentDeliveryTestCase
             ]);
         });
 
+        $this->get(route('quotes.edit', [$company, $quote]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('deletion.guard.blocked', true)
+                ->where('deletion.guard.description', 'Linked Invoices: 0. Provider submissions still in progress: 1.'));
+
         $this->delete(route('quotes.destroy', [$company, $quote]), [
             'confirmed' => true,
             'confirmed_high_risk' => true,

@@ -47,7 +47,9 @@ final class QuoteInvoicePublicLinkHistoryTest extends PublicDocumentTestCase
         $this->actingAs($owner)
             ->get(route('quotes.edit', [$company, $quote]))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('invoiceAllocation.invoices.0.canUnlink', false));
+                ->where('invoiceAllocation.invoices.0.canUnlink', false)
+                ->where('deletion.guard.blocked', true)
+                ->where('deletion.guard.description', 'Linked Invoices: 1. Provider submissions still in progress: 0.'));
         $this->post(route('quotes.invoices.unlink', [$company, $quote, $invoice]), [
             'reason' => 'Revoked link should not matter',
             'confirmed' => true,

@@ -9,6 +9,7 @@ import type {
     CustomerOption,
     CustomerTranslations,
 } from '@/types/customer';
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type {
     DocumentCurrencyOption,
     DocumentCustomerSearchItem,
@@ -106,7 +107,10 @@ export type QuoteRow = {
     editUrl: string;
     viewUrl: string;
     deleteUrl: string;
-    deleteHighRisk: boolean;
+    deletion: {
+        highRisk: boolean;
+        guard: DependencyGuard;
+    };
     canDelete: boolean;
 };
 

@@ -147,7 +147,12 @@ final class InvoiceDeletionHttpTest extends TestCase
             'edit_version' => 1,
         ]));
 
-        $this->actingAs($owner)->delete(route('invoices.destroy', [$company, $invoice]), [
+        $this->actingAs($owner)->get(route('invoices.edit', [$company, $invoice]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('deletion.guard.blocked', true)
+                ->where('deletion.guard.description', 'Transactions: 1. Linked Quotes: 0. Provider submissions still in progress: 0.'));
+
+        $this->delete(route('invoices.destroy', [$company, $invoice]), [
             'confirmed' => true, 'confirmed_high_risk' => true,
             'confirmation_number' => $invoice->rendered_number,
         ])->assertSessionHasErrors('invoice');

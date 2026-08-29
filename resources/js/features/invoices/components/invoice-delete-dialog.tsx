@@ -1,16 +1,24 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { DestructiveActionDialog } from '@/components/app/destructive-action-dialog';
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type { InvoiceTranslations } from '@/types/invoice';
 
 type Props = {
     url: string;
     number: string;
     highRisk: boolean;
+    guard: DependencyGuard;
     labels: InvoiceTranslations['deletion'];
 };
 
-export function InvoiceDeleteDialog({ url, number, highRisk, labels }: Props) {
+export function InvoiceDeleteDialog({
+    url,
+    number,
+    highRisk,
+    guard,
+    labels,
+}: Props) {
     const { i18n } = usePage().props;
     const [open, setOpen] = useState(false);
     const form = useForm({
@@ -47,6 +55,8 @@ export function InvoiceDeleteDialog({ url, number, highRisk, labels }: Props) {
             cancelLabel={i18n.common.actions.cancel}
             confirmLabel={labels.confirm}
             closeLabel={i18n.common.accessibility.close_navigation}
+            guard={guard}
+            warningTitle={labels.dependency_title}
             generalError={errors.invoice}
             processing={form.processing}
             onConfirm={destroy}

@@ -192,6 +192,7 @@ export type InvoiceTranslations = {
         | 'number_label'
         | 'number_description'
         | 'acknowledgment'
+        | 'dependency_title'
         | 'confirm',
         string
     >;

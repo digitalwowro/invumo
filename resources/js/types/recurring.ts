@@ -1,3 +1,4 @@
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type {
     DocumentCatalogFormOptions,
     DocumentCustomerFormOptions,
@@ -44,6 +45,7 @@ export type RecurringTemplateRow = {
     editUrl: string;
     deleteUrl: string;
     canDelete: boolean;
+    deletion: { highRisk: boolean; guard: DependencyGuard };
 };
 
 export type RecurringTemplateCursorPage = {

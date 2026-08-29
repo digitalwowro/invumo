@@ -56,12 +56,12 @@ final readonly class DeleteBankAccount
 
         $documentSnapshots = DocumentBankSnapshot::query()
             ->where('bank_account_id', $account->id)
-            ->orderBy('id')->lockForUpdate()->get(['id']);
+            ->orderBy('id')->lockForUpdate()->first(['id']);
         $templateDefaults = RecurringTemplateDefault::query()
             ->where('bank_account_id', $account->id)
-            ->orderBy('id')->lockForUpdate()->get(['id']);
+            ->orderBy('id')->lockForUpdate()->first(['id']);
 
-        if ($documentSnapshots->isNotEmpty() || $templateDefaults->isNotEmpty()) {
+        if ($documentSnapshots !== null || $templateDefaults !== null) {
             throw BankAccountException::dependencies();
         }
 

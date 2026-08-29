@@ -13,6 +13,36 @@ vi.stubGlobal(
 );
 
 describe('DestructiveActionDialog', () => {
+    it('shows a dependency and disables ordinary confirmation', () => {
+        const confirm = vi.fn();
+        render(
+            <DestructiveActionDialog
+                open
+                onOpenChange={vi.fn()}
+                triggerLabel="Delete invoice"
+                title="Delete permanently?"
+                description="This cannot be undone."
+                cancelLabel="Cancel"
+                confirmLabel="Delete permanently"
+                closeLabel="Close"
+                guard={{
+                    blocked: true,
+                    description: 'Transactions: 1.',
+                }}
+                warningTitle="Resolve dependencies"
+                processing={false}
+                onConfirm={confirm}
+            />,
+        );
+
+        expect(screen.getByText('Resolve dependencies')).toBeInTheDocument();
+        expect(screen.getByText('Transactions: 1.')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Delete permanently' }),
+        ).toBeDisabled();
+        expect(confirm).not.toHaveBeenCalled();
+    });
+
     it('requires the exact value and acknowledgment in strong mode', async () => {
         const user = userEvent.setup();
         const confirm = vi.fn();

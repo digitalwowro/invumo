@@ -125,6 +125,9 @@ export type RecurringTranslations = {
         delete: string;
         title: string;
         description: string;
+        high_risk_description: string;
+        dependency_title: string;
+        dependency_description: string;
         confirm: string;
     };
 };

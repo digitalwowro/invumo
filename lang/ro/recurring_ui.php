@@ -284,8 +284,11 @@ return [
     ],
     'deletion' => [
         'delete' => 'Șterge',
-        'title' => 'Ștergi definitiv această ciornă de șablon?',
+        'title' => 'Ștergi definitiv acest șablon recurent?',
         'description' => 'Ciorna și liniile sale detașate vor fi eliminate. Acțiunea nu poate fi anulată.',
+        'high_risk_description' => 'Acest șablon nu mai este Ciornă. Ștergerea oprește definitiv automatizarea și elimină șablonul; istoricul închis de execuție și auditul minim rămân.',
+        'dependency_title' => 'Șterge mai întâi Facturile generate',
+        'dependency_description' => 'Apariții cu Facturi generate încă păstrate: :occurrences.',
         'confirm' => 'Șterge definitiv',
     ],
     'feedback' => [
@@ -312,6 +315,8 @@ return [
         'reminder_mode_invalid' => 'Rândurile de memento sunt permise doar pentru programul șablonului.',
         'reminder_duplicate' => 'Fiecare moment al mementoului poate apărea o singură dată.',
         'confirmation_required' => 'Confirmă această modificare a automatizării.',
+        'high_risk_confirmation_required' => 'Confirmă ștergerea definitivă a acestui șablon recurent care nu mai este Ciornă.',
+        'dependency' => 'Șterge toate Facturile generate înainte de a șterge definitiv acest șablon recurent.',
         'completed' => 'Un șablon recurent finalizat nu poate fi modificat.',
         'schedule_incomplete' => 'Completează mai întâi programarea și fusul orar al companiei.',
         'schedule_exhausted' => 'Această programare nu mai are nicio apariție viitoare eligibilă.',

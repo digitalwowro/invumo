@@ -13,6 +13,7 @@ use App\Modules\Customers\Models\Customer;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
 use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
+use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Auth\Access\AuthorizationException;
 
 final readonly class CompanyTaxPresetsPage
@@ -50,6 +51,8 @@ final readonly class CompanyTaxPresetsPage
                     ->whereColumn('document_tax_defaults.tax_preset_id', 'tax_presets.id'),
                 'template_reference_count' => RecurringTemplateCustomerValue::query()->selectRaw('count(*)')
                     ->whereColumn('recurring_template_customer_values.tax_preset_id', 'tax_presets.id'),
+                'template_line_reference_count' => RecurringTemplateLine::query()->selectRaw('count(*)')
+                    ->whereColumn('recurring_template_lines.tax_preset_id', 'tax_presets.id'),
             ])
             ->orderByRaw('archived_at ASC NULLS FIRST')
             ->orderByDesc('is_default')
@@ -68,7 +71,8 @@ final readonly class CompanyTaxPresetsPage
         $productCount = (int) $preset->getAttribute('product_reference_count');
         $documentCount = (int) $preset->getAttribute('document_line_reference_count')
             + (int) $preset->getAttribute('document_default_reference_count');
-        $templateCount = (int) $preset->getAttribute('template_reference_count');
+        $templateCount = (int) $preset->getAttribute('template_reference_count')
+            + (int) $preset->getAttribute('template_line_reference_count');
 
         return [
             'id' => $preset->id,

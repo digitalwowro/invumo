@@ -179,7 +179,9 @@ return [
         'delete' => 'Delete',
         'title' => 'Permanently delete this Quote?',
         'description' => 'The current Quote and its snapshots will be removed. Its number and minimal audit history remain reserved.',
-        'high_risk_description' => 'This Quote is no longer a Draft. Permanently deleting it removes the current customer-visible record while retaining its number and minimal audit history.',
+        'high_risk_description' => 'This Quote has customer-visible history or is no longer a Draft. Deletion removes the current record while retaining its number and minimal audit history.',
+        'dependency_title' => 'Resolve the Quote dependencies first',
+        'dependency_description' => 'Linked Invoices: :invoices. Provider submissions still in progress: :submissions.',
         'confirm' => 'Permanently delete',
     ],
     'conversion' => [

@@ -36,6 +36,16 @@ final class RecurringTemplateException extends DomainException
         return new self('confirmation_required');
     }
 
+    public static function highRiskConfirmationRequired(): self
+    {
+        return new self('high_risk_confirmation_required');
+    }
+
+    public static function dependency(): self
+    {
+        return new self('dependency');
+    }
+
     public static function completed(): self
     {
         return new self('completed');

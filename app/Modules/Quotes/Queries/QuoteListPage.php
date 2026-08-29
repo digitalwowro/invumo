@@ -24,7 +24,10 @@ final readonly class QuoteListPage
 
     private const SEARCH = "coalesce(documents.rendered_number, '') || ' ' || coalesce(documents.customer_reference, '') || ' ' || coalesce(customer.first_name, '') || ' ' || coalesce(customer.last_name, '') || ' ' || coalesce(customer.legal_name, '')";
 
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private QuoteDeletionPreview $deletionPreview,
+    ) {}
 
     /** @return array<string, mixed> */
     public function for(Company $company, User $actor, QuoteListRequest $request): array
@@ -41,11 +44,25 @@ final readonly class QuoteListPage
         $this->applySort($query, $filters['sort']);
         $page = $query->cursorPaginate($filters['perPage'])->withQueryString();
         $canDelete = $this->abilities->allows($actor, $company, CompanyAbility::DeleteQuotes);
+        $lifecycles = [];
+
+        foreach ($page->items() as $row) {
+            $lifecycles[(string) $row->id] = QuoteLifecycle::from((string) $row->lifecycle);
+        }
+
+        $deletions = $canDelete
+            ? $this->deletionPreview->forDocuments($lifecycles)
+            : array_map(fn (): array => [
+                'highRisk' => false,
+                'guard' => ['blocked' => false, 'description' => null],
+            ], $lifecycles);
 
         return [
             'quotes' => [
                 'items' => array_map(
-                    fn (stdClass $row): array => $this->row($company, $row, $localDate, $canDelete),
+                    fn (stdClass $row): array => $this->row(
+                        $company, $row, $localDate, $canDelete, $deletions[(string) $row->id],
+                    ),
                     $page->items(),
                 ),
                 'previousUrl' => $page->previousPageUrl(),
@@ -119,9 +136,17 @@ final readonly class QuoteListPage
         };
     }
 
-    /** @return array<string, mixed> */
-    private function row(Company $company, stdClass $row, CarbonImmutable $localDate, bool $canDelete): array
-    {
+    /**
+     * @param  array{highRisk: bool, guard: array{blocked: bool, description: string|null}}  $deletion
+     * @return array<string, mixed>
+     */
+    private function row(
+        Company $company,
+        stdClass $row,
+        CarbonImmutable $localDate,
+        bool $canDelete,
+        array $deletion,
+    ): array {
         $lifecycle = QuoteLifecycle::from((string) $row->lifecycle);
         $validUntil = $row->valid_until === null
             ? null
@@ -147,7 +172,7 @@ final readonly class QuoteListPage
             'editUrl' => route('quotes.edit', [$company, $row->id], false),
             'viewUrl' => route('quotes.current.show', [$company, $row->id], false),
             'deleteUrl' => route('quotes.destroy', [$company, $row->id], false),
-            'deleteHighRisk' => $lifecycle !== QuoteLifecycle::Draft,
+            'deletion' => $deletion,
             'canDelete' => $canDelete,
         ];
     }

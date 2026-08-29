@@ -16,6 +16,7 @@ import { QuoteInvoiceAllocationSection } from '@/features/quotes/components/quot
 import { QuoteLifecycleDialog } from '@/features/quotes/components/quote-lifecycle-dialog';
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type { DependencyGuard } from '@/types/dependency-guard';
 import type {
     DocumentDelivery,
     DocumentDeliveryTranslations,
@@ -47,7 +48,7 @@ type Props = {
     conversionUrl: string;
     conversionKey: string;
     invoiceAllocation: QuoteInvoiceAllocation;
-    deleteUrl: string;
+    deletion: { url: string | null; highRisk: boolean; guard: DependencyGuard };
     representationUrl: string;
     pdfUrl: string;
     publicLink: PublicDocumentLink;
@@ -81,7 +82,7 @@ export default function EditQuote({
     conversionUrl,
     conversionKey,
     invoiceAllocation,
-    deleteUrl,
+    deletion,
     representationUrl,
     pdfUrl,
     publicLink,
@@ -139,10 +140,11 @@ export default function EditQuote({
                                         labels={translations.lifecycle}
                                     />
                                 )}
-                                {quoteAbilities.delete && (
+                                {quoteAbilities.delete && deletion.url && (
                                     <QuoteDeleteDialog
-                                        url={deleteUrl}
-                                        highRisk={quote.lifecycle !== 'DRAFT'}
+                                        url={deletion.url}
+                                        highRisk={deletion.highRisk}
+                                        guard={deletion.guard}
                                         labels={translations.deletion}
                                     />
                                 )}

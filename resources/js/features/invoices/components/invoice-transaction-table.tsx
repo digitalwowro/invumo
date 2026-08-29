@@ -21,6 +21,7 @@ type Props = {
     transactions: InvoiceTransactions;
     labels: InvoiceTransactionTranslations;
     disabled: boolean;
+    disabledDescription: string;
 };
 
 export function InvoiceTransactionTable(props: Props) {
@@ -109,7 +110,7 @@ export function InvoiceTransactionTable(props: Props) {
                                 transaction={transaction}
                                 labels={labels}
                                 disabled={props.disabled}
-                                disabledDescription={labels.unsaved_notice}
+                                disabledDescription={props.disabledDescription}
                             />
                         )}
                         {transaction.updateUrl && (
@@ -121,7 +122,7 @@ export function InvoiceTransactionTable(props: Props) {
                                 limits={transactions.limits}
                                 canAdjust={transactions.abilities.adjust}
                                 disabled={props.disabled}
-                                disabledDescription={labels.unsaved_notice}
+                                disabledDescription={props.disabledDescription}
                             />
                         )}
                         {transaction.deleteUrl && (
@@ -129,7 +130,7 @@ export function InvoiceTransactionTable(props: Props) {
                                 transaction={transaction}
                                 labels={labels}
                                 disabled={props.disabled}
-                                disabledDescription={labels.unsaved_notice}
+                                disabledDescription={props.disabledDescription}
                             />
                         )}
                     </Cluster>

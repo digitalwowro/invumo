@@ -102,6 +102,8 @@ final class PaymentReceivedDeliveryHttpTest extends DocumentDeliveryTestCase
 
         $this->get(route('invoices.edit', [$company, $invoice]))
             ->assertInertia(fn (Assert $page) => $page
+                ->where('transactions.deliveryPending', true)
+                ->where('translations.transactions.delivery_pending_notice', 'Așteaptă finalizarea trimiterii emailului din coadă înainte de a modifica tranzacțiile.')
                 ->where('transactions.items.0.receipt.count', 1)
                 ->where('transactions.items.0.receipt.latestState', 'QUEUED')
                 ->where('directDelivery.history.0.eventType', 'PAYMENT_RECEIVED'));

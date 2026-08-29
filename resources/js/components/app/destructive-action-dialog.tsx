@@ -15,6 +15,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import type { DependencyGuard } from '@/types/dependency-guard';
 
 type Props = {
     open: boolean;
@@ -25,6 +26,8 @@ type Props = {
     cancelLabel: string;
     confirmLabel: string;
     closeLabel: string;
+    guard?: DependencyGuard;
+    warningTitle?: string;
     strongConfirmation?: {
         expectedValue: string;
         value: string;
@@ -45,8 +48,9 @@ export function DestructiveActionDialog(props: Props) {
     const formId = useId();
     const strong = props.strongConfirmation;
     const ready =
-        strong === undefined ||
-        (strong.acknowledged && strong.value === strong.expectedValue);
+        !props.guard?.blocked &&
+        (strong === undefined ||
+            (strong.acknowledged && strong.value === strong.expectedValue));
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -101,6 +105,13 @@ export function DestructiveActionDialog(props: Props) {
                                     }}
                                 />
                             </>
+                        )}
+                        {props.guard?.blocked && props.guard.description && (
+                            <SystemMessage
+                                title={props.warningTitle ?? props.title}
+                                description={props.guard.description}
+                                tone="warning"
+                            />
                         )}
                         {props.generalError && (
                             <SystemMessage

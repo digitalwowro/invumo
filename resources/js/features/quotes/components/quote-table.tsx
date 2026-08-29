@@ -177,7 +177,8 @@ function QuoteActions({
                 {quote.canDelete && (
                     <QuoteDeleteDialog
                         url={quote.deleteUrl}
-                        highRisk={quote.deleteHighRisk}
+                        highRisk={quote.deletion.highRisk}
+                        guard={quote.deletion.guard}
                         labels={labels.deletion}
                     />
                 )}

@@ -163,10 +163,12 @@ return [
         'trigger' => 'Șterge factura',
         'title' => 'Ștergi definitiv această Factură?',
         'description' => 'Această Ciornă și conținutul ei curent vor fi șterse definitiv. Numărul rămâne rezervat în istoric.',
-        'high_risk_description' => 'Această Factură a fost emisă. Ștergerea este ireversibilă, dar numărul și istoricul minim de audit rămân rezervate.',
+        'high_risk_description' => 'Această Factură a fost emisă, partajată sau trimisă. Ștergerea este ireversibilă, dar numărul și istoricul minim de audit rămân rezervate.',
         'number_label' => 'Numărul exact al Facturii',
         'number_description' => 'Introdu numărul exact al Facturii afișat mai sus pentru a continua.',
-        'acknowledgment' => 'Înțeleg că această Factură emisă va fi ștearsă definitiv.',
+        'acknowledgment' => 'Înțeleg că această Factură va fi ștearsă definitiv.',
+        'dependency_title' => 'Rezolvă mai întâi dependențele Facturii',
+        'dependency_description' => 'Tranzacții: :transactions. Oferte asociate: :quotes. Trimiteri către furnizor încă în curs: :submissions.',
         'confirm' => 'Șterge definitiv',
     ],
     'reminders' => [
@@ -216,6 +218,7 @@ return [
         'draft_notice' => 'Emite această Factură înainte de a înregistra tranzacții financiare.',
         'cancelled_notice' => 'Tranzacțiile sunt păstrate ca istoric protejat la modificare cât timp această Factură este Anulată.',
         'unsaved_notice' => 'Salvează modificările curente ale Facturii înainte de a-i modifica tranzacțiile.',
+        'delivery_pending_notice' => 'Așteaptă finalizarea trimiterii emailului din coadă înainte de a modifica tranzacțiile.',
         'balance_notice' => 'Soldul curent al Facturii nu permite această tranzacție.',
         'receipt' => [
             'send' => 'Trimite confirmarea',

@@ -179,7 +179,9 @@ return [
         'delete' => 'Șterge',
         'title' => 'Ștergi definitiv această ofertă?',
         'description' => 'Oferta curentă și instantaneele ei vor fi eliminate. Numărul și istoricul minim de audit rămân rezervate.',
-        'high_risk_description' => 'Această ofertă nu mai este o ciornă. Ștergerea definitivă elimină înregistrarea curentă vizibilă clientului, păstrând numărul și istoricul minim de audit.',
+        'high_risk_description' => 'Această ofertă are istoric vizibil clientului sau nu mai este o ciornă. Ștergerea elimină înregistrarea curentă, păstrând numărul și istoricul minim de audit.',
+        'dependency_title' => 'Rezolvă mai întâi dependențele ofertei',
+        'dependency_description' => 'Facturi asociate: :invoices. Trimiteri către furnizor încă în curs: :submissions.',
         'confirm' => 'Șterge definitiv',
     ],
     'conversion' => [

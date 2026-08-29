@@ -27,7 +27,6 @@ use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
-use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Data\ResolvedInvoiceState;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Recurring\Queries\RecurringInvoiceAutomationState;
@@ -46,6 +45,7 @@ final readonly class InvoiceDraftPage
         private CatalogLineDefaults $catalogDefaults,
         private InvoiceTransactionsForInvoice $transactions,
         private InvoiceLifecycleActionsForInvoice $lifecycleActions,
+        private InvoiceDeletionPreview $deletionPreview,
         private DocumentPublicLinkState $publicLinkState,
         private DocumentDeliveryPage $deliveryPage,
         private InvoiceReminderPage $reminderPage,
@@ -78,6 +78,10 @@ final readonly class InvoiceDraftPage
             ->where('kind', DocumentKind::Invoice)
             ->firstOrFail();
         $invoice = Invoice::query()->whereKey($document->id)->firstOrFail();
+        $canDelete = $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices);
+        $deletion = $canDelete
+            ? $this->deletionPreview->for($document->id, $invoice->lifecycle)
+            : ['highRisk' => false, 'guard' => ['blocked' => false, 'description' => null]];
         $settings = CompanySetting::query()->firstOrFail();
         $ledger = $this->transactions->ledger($document->id);
         $state = ResolvedInvoiceState::resolve(
@@ -224,10 +228,10 @@ final readonly class InvoiceDraftPage
             'reminders' => $this->reminderPage->for($company, $actor, $document),
             'recurringAutomation' => $this->recurringAutomation->for($company, $document),
             'deletion' => [
-                'url' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteInvoices)
+                'url' => $canDelete
                     ? route('invoices.destroy', [$company, $document], false)
                     : null,
-                'highRisk' => $invoice->lifecycle !== InvoiceLifecycle::Draft,
+                ...$deletion,
             ],
             'indexUrl' => route('invoices.index', $company, false),
             'sourceUrls' => [

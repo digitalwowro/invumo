@@ -53,14 +53,14 @@ final readonly class DeleteProductService
             ->where('product_service_id', $product->id)
             ->orderBy('id')
             ->lockForUpdate()
-            ->get(['id']);
+            ->first(['id']);
         $templateLines = RecurringTemplateLine::query()
             ->where('product_service_id', $product->id)
             ->orderBy('id')
             ->lockForUpdate()
-            ->get(['id']);
+            ->first(['id']);
 
-        if ($documentLines->isNotEmpty() || $templateLines->isNotEmpty()) {
+        if ($documentLines !== null || $templateLines !== null) {
             throw ProductServiceException::dependencies();
         }
 

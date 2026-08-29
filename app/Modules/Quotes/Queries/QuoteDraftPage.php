@@ -41,6 +41,7 @@ final readonly class QuoteDraftPage
         private CatalogFormOptions $catalogForm,
         private CatalogLineDefaults $catalogDefaults,
         private QuoteInvoiceAllocation $invoiceAllocation,
+        private QuoteDeletionPreview $deletionPreview,
         private DocumentPublicLinkState $publicLinkState,
         private DocumentDeliveryPage $deliveryPage,
     ) {}
@@ -107,6 +108,10 @@ final readonly class QuoteDraftPage
             'value' => $account->id,
             'label' => $account->label,
         ])->values()->all();
+        $canDelete = $this->abilities->allows($actor, $company, CompanyAbility::DeleteQuotes);
+        $deletion = $canDelete
+            ? $this->deletionPreview->forDocuments([$document->id => $quote->lifecycle])[$document->id]
+            : ['highRisk' => false, 'guard' => ['blocked' => false, 'description' => null]];
 
         if ($document->currency_code !== null
             && $currencies->firstWhere('currency_code', $document->currency_code) === null) {
@@ -189,7 +194,10 @@ final readonly class QuoteDraftPage
                 $document->currency_precision ?? 0,
                 $displayStatus,
             ),
-            'deleteUrl' => route('quotes.destroy', [$company, $document], false),
+            'deletion' => [
+                'url' => $canDelete ? route('quotes.destroy', [$company, $document], false) : null,
+                ...$deletion,
+            ],
             'representationUrl' => route('quotes.current.show', [$company, $document], false),
             'pdfUrl' => route('quotes.current.pdf', [$company, $document], false),
             'publicLink' => $this->publicLinkState->for(
@@ -207,7 +215,7 @@ final readonly class QuoteDraftPage
             'indexUrl' => route('quotes.index', $company, false),
             'quoteAbilities' => [
                 'correctLifecycle' => $this->abilities->allows($actor, $company, CompanyAbility::ManageQuotes),
-                'delete' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteQuotes),
+                'delete' => $canDelete,
             ],
             'sourceUrls' => [
                 'customerSearch' => route('quote-sources.customers.index', $company, false),

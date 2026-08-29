@@ -22,7 +22,10 @@ final readonly class RecurringTemplateListPage
 
     private const SEARCH = "recurring_templates.internal_name || ' ' || coalesce(recurring_templates.customer_reference, '') || ' ' || coalesce(customer.first_name, '') || ' ' || coalesce(customer.last_name, '') || ' ' || coalesce(customer.legal_name, '')";
 
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private RecurringTemplateDeletionPreview $deletionPreview,
+    ) {}
 
     /** @return array<string, mixed> */
     public function for(
@@ -51,6 +54,18 @@ final readonly class RecurringTemplateListPage
             ->get()
             ->unique('recurring_template_id')
             ->keyBy('recurring_template_id');
+        $states = [];
+
+        foreach ($page->items() as $row) {
+            $states[(string) $row->id] = RecurringTemplateState::from((string) $row->state);
+        }
+
+        $deletions = $canDelete
+            ? $this->deletionPreview->forTemplates($states)
+            : array_map(fn (): array => [
+                'highRisk' => false,
+                'guard' => ['blocked' => false, 'description' => null],
+            ], $states);
 
         return [
             'templates' => [
@@ -60,6 +75,7 @@ final readonly class RecurringTemplateListPage
                         $row,
                         $canDelete,
                         $occurrences->get((string) $row->id),
+                        $deletions[(string) $row->id],
                     ),
                     $page->items(),
                 ),
@@ -117,12 +133,16 @@ final readonly class RecurringTemplateListPage
         };
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  array{highRisk: bool, guard: array{blocked: bool, description: string|null}}  $deletion
+     * @return array<string, mixed>
+     */
     private function row(
         Company $company,
         stdClass $row,
         bool $canDelete,
         ?RecurringOccurrence $occurrence,
+        array $deletion,
     ): array {
         $state = RecurringTemplateState::from((string) $row->state);
 
@@ -142,7 +162,8 @@ final readonly class RecurringTemplateListPage
             'updatedAt' => CarbonImmutable::parse((string) $row->updated_at)->toISOString(),
             'editUrl' => route('recurring.edit', [$company, $row->id], false),
             'deleteUrl' => route('recurring.destroy', [$company, $row->id], false),
-            'canDelete' => $canDelete && $state === RecurringTemplateState::Draft,
+            'canDelete' => $canDelete,
+            'deletion' => $deletion,
         ];
     }
 }

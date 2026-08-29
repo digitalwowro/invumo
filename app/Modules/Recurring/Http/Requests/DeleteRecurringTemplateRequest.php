@@ -14,6 +14,9 @@ final class DeleteRecurringTemplateRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return ['confirmed' => ['required', 'accepted']];
+        return [
+            'confirmed' => ['required', 'accepted'],
+            'confirmed_high_risk' => ['sometimes', 'boolean'],
+        ];
     }
 }

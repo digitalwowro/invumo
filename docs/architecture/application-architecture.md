@@ -9,26 +9,26 @@ This document records the approved technology and application-architecture basel
 
 Build Invumo as one modular Laravel application with a React/TypeScript interface connected through Inertia.
 
-| Concern                         | Decision                                                                                                                           |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Backend and application runtime | Laravel 13 on PHP 8.5                                                                                                              |
-| Web interface                   | React 19 with strict TypeScript                                                                                                    |
-| Laravel/React integration       | Inertia 3                                                                                                                          |
-| Project foundation              | Official Laravel React starter kit                                                                                                 |
-| Authentication                  | Built-in Laravel Fortify sessions, email verification/recovery, rate limiting, and secure session management                       |
-| Type-safe route integration     | Laravel Wayfinder                                                                                                                  |
-| Database                        | PostgreSQL 18                                                                                                                      |
-| Frontend build                  | Vite                                                                                                                               |
-| Styling and components          | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md) |
+| Concern                         | Decision                                                                                                                                                                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend and application runtime | Laravel 13 on PHP 8.5                                                                                                                                                                  |
+| Web interface                   | React 19 with strict TypeScript                                                                                                                                                        |
+| Laravel/React integration       | Inertia 3                                                                                                                                                                              |
+| Project foundation              | Official Laravel React starter kit                                                                                                                                                     |
+| Authentication                  | Built-in Laravel Fortify sessions, email verification/recovery, rate limiting, and secure session management                                                                           |
+| Type-safe route integration     | Laravel Wayfinder                                                                                                                                                                      |
+| Database                        | PostgreSQL 18                                                                                                                                                                          |
+| Frontend build                  | Vite                                                                                                                                                                                   |
+| Styling and components          | Tailwind CSS 4, source-owned shadcn/ui components, and the centralized [Invumo Design System Contract](../design/design-system.md)                                                     |
 | Localization                    | Laravel language files as the only authored string source and `config/localization.php` as the sole supported-locale allowlist; resolved strings passed to React through Inertia props |
-| Package management              | Composer and npm with committed lockfiles                                                                                          |
-| Automated testing               | Pest 4, Vitest, and Pest Browser backed by Playwright                                                                              |
-| Code quality                    | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier                                                            |
-| Continuous integration          | GitHub Actions                                                                                                                     |
-| Agent development support       | Laravel Boost as a development-only dependency                                                                                     |
-| Background work                 | Laravel database queue with one supervised PHP worker                                                                              |
-| Scheduling                      | Laravel scheduler invoked once per minute by cron                                                                                  |
-| Deployment shape                | One SaaS application deployment and one PostgreSQL database at `app.invumo.com`                                                    |
+| Package management              | Composer and npm with committed lockfiles                                                                                                                                              |
+| Automated testing               | Pest 4, Vitest, and Pest Browser backed by Playwright                                                                                                                                  |
+| Code quality                    | Laravel Pint, Larastan/PHPStan, strict TypeScript, ESLint, and Prettier                                                                                                                |
+| Continuous integration          | GitHub Actions                                                                                                                                                                         |
+| Agent development support       | Laravel Boost as a development-only dependency                                                                                                                                         |
+| Background work                 | Laravel database queue with one supervised PHP worker                                                                                                                                  |
+| Scheduling                      | Laravel scheduler invoked once per minute by cron                                                                                                                                      |
+| Deployment shape                | One SaaS application deployment and one PostgreSQL database at `app.invumo.com`                                                                                                        |
 
 This choice optimizes total system complexity rather than language count. PHP and TypeScript remain in one repository and one deployable application; they do not create separate backend and frontend services.
 
@@ -187,7 +187,8 @@ Vibe coding increases the value of automated boundaries. The baseline requires:
 - Byte-level visual references owned by the pinned GitHub Ubuntu runner, with comparison artifacts retained on failure; non-canonical environments still run the browser behavior, accessibility, JavaScript, typography-selection, and responsive-state assertions
 - Hash-bound baseline-review evidence that names the protected screens, causal code change, intended visual differences, and inspected runner artifact; CI rejects a snapshot update without matching evidence
 - Database constraints and migrations reviewed as product behavior
-- GitHub Actions checks that run tests, analysis, formatting/linting checks, and the production asset build before deployment
+- A manually dispatched GitHub Actions phase gate that runs only at phase closeout, with static/frontend checks, four isolated PostgreSQL PHP shards, and two isolated PostgreSQL browser shards executing concurrently before one consolidated terminal result
+- Proportionate local verification during feature batches: directly affected PHP, React, browser, schema/RLS, authorization, audit, localization, and concurrency coverage is required, while the complete local suite is reserved for CI/test-infrastructure diagnosis or a justified broad-risk change rather than repeated after every edit
 - Design-contract guards that reject raw colours and major component-layer bypasses in feature/page code, plus a development/test component gallery and representative visual-regression coverage for the shared system
 - A source-file size guard that warns above the 300-line soft limit and fails above the 500-line hard limit
 - A module-boundary guard that rejects prohibited backend cross-module/concrete-integration imports and inverted frontend layer dependencies

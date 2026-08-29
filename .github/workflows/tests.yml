@@ -1,47 +1,41 @@
-name: tests
+name: phase quality gate
+
+run-name: Phase ${{ inputs.phase }} quality gate
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Phase number being closed
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: phase-quality-gate-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DB_HOST: 127.0.0.1
+  DB_PORT: 5432
+  DB_DATABASE: invumo_test
+  DB_USERNAME: invumo_runtime
+  DB_PASSWORD: invumo_runtime_test_password
+  DB_SCHEMA_HOST: 127.0.0.1
+  DB_SCHEMA_PORT: 5432
+  DB_SCHEMA_DATABASE: invumo_test
+  DB_SCHEMA_USERNAME: invumo_schema
+  DB_SCHEMA_PASSWORD: invumo_schema_test_password
+  POSTGRESQL_CLIENT_BIN_DIRECTORY: /usr/lib/postgresql/18/bin
+  POSTGRESQL_CLIENT_MAJOR_VERSION: 18
+
 jobs:
-  ci:
+  static-checks:
+    name: Static and frontend checks
     runs-on: ubuntu-24.04
-
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_DB: invumo_test
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      CANONICAL_VISUAL_SNAPSHOTS: 'true'
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
-      DB_DATABASE: invumo_test
-      DB_USERNAME: invumo_runtime
-      DB_PASSWORD: invumo_runtime_test_password
-      DB_SCHEMA_HOST: 127.0.0.1
-      DB_SCHEMA_PORT: 5432
-      DB_SCHEMA_DATABASE: invumo_test
-      DB_SCHEMA_USERNAME: invumo_schema
-      DB_SCHEMA_PASSWORD: invumo_schema_test_password
-      POSTGRESQL_CLIENT_BIN_DIRECTORY: /usr/lib/postgresql/18/bin
-      POSTGRESQL_CLIENT_MAJOR_VERSION: 18
+    timeout-minutes: 12
 
     steps:
       - name: Checkout code
@@ -61,12 +55,64 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run static and frontend checks
+        run: composer ci:static
+
+      - name: Confirm generated sources are committed
+        run: git diff --exit-code
+
+  php-tests:
+    name: PHP tests (${{ matrix.shard }}/4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: invumo_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, fileinfo, gd
+          tools: composer:v2
+          coverage: none
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
-
-      - name: Install frontend dependencies
-        run: npm ci
 
       - name: Install PostgreSQL 18 client
         run: |
@@ -88,7 +134,7 @@ jobs:
           "${POSTGRESQL_CLIENT_BIN_DIRECTORY}/pg_dump" --version | grep -E "^pg_dump \\(PostgreSQL\\) ${POSTGRESQL_CLIENT_MAJOR_VERSION}\\."
           "${POSTGRESQL_CLIENT_BIN_DIRECTORY}/psql" --version | grep -E "^psql \\(PostgreSQL\\) ${POSTGRESQL_CLIENT_MAJOR_VERSION}\\."
 
-      - name: Prepare application
+      - name: Prepare application and database
         run: |
           cp .env.example .env
           php artisan key:generate
@@ -110,17 +156,111 @@ jobs:
           SQL
           php artisan migrate --database=pgsql_schema --force
 
-      - name: Install browser runtime
-        run: npx playwright install --with-deps chromium
+      - name: Run PHP shard
+        run: vendor/bin/pest tests/Unit tests/Feature --shard="${{ matrix.shard }}/4"
 
-      - name: Run CI Checks
-        run: composer ci:check
+  browser-tests:
+    name: Browser tests (${{ matrix.shard }}/2)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: invumo_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      CANONICAL_VISUAL_SNAPSHOTS: 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, fileinfo, gd
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+
+      - name: Prepare application and database
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          docker exec --interactive "${{ job.services.postgres.id }}" psql --username=postgres --dbname=invumo_test --set=ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE invumo_schema LOGIN PASSWORD 'invumo_schema_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE invumo_runtime LOGIN PASSWORD 'invumo_runtime_test_password' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE invumo_dispatcher NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          GRANT invumo_dispatcher TO invumo_runtime WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
+          ALTER DATABASE invumo_test OWNER TO invumo_schema;
+          REVOKE ALL ON DATABASE invumo_test FROM PUBLIC;
+          GRANT CONNECT ON DATABASE invumo_test TO invumo_schema, invumo_runtime;
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          GRANT USAGE, CREATE ON SCHEMA public TO invumo_schema;
+          GRANT USAGE ON SCHEMA public TO invumo_runtime;
+          ALTER DEFAULT PRIVILEGES FOR ROLE invumo_schema IN SCHEMA public
+              GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO invumo_runtime;
+          ALTER DEFAULT PRIVILEGES FOR ROLE invumo_schema IN SCHEMA public
+              GRANT USAGE, SELECT ON SEQUENCES TO invumo_runtime;
+          SQL
+          php artisan migrate --database=pgsql_schema --force
+          npm run build
+          npx playwright install --with-deps chromium
+
+      - name: Run browser shard
+        run: vendor/bin/pest tests/Browser --shard="${{ matrix.shard }}/2"
 
       - name: Upload browser comparison details
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: browser-comparison-details
+          name: browser-comparison-details-${{ matrix.shard }}
           path: tests/Browser/Screenshots/ImageDiffView
           if-no-files-found: ignore
           retention-days: 7
+
+  phase-gate:
+    name: Phase quality gate
+    if: always()
+    needs: [static-checks, php-tests, browser-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+
+    steps:
+      - name: Confirm every parallel gate passed
+        env:
+          STATIC_RESULT: ${{ needs.static-checks.result }}
+          PHP_RESULT: ${{ needs.php-tests.result }}
+          BROWSER_RESULT: ${{ needs.browser-tests.result }}
+        run: |
+          test "${STATIC_RESULT}" = success
+          test "${PHP_RESULT}" = success
+          test "${BROWSER_RESULT}" = success

@@ -71,6 +71,16 @@
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
+            "@ci:check:core",
+            "@test:browser"
+        ],
+        "ci:check:core": [
+            "Composer\\Config::disableProcessTimeout",
+            "@ci:static",
+            "@test:php"
+        ],
+        "ci:static": [
+            "Composer\\Config::disableProcessTimeout",
             "@frontend:generate",
             "npm run lint:check",
             "npm run format:check",
@@ -81,20 +91,23 @@
             "npm run types:check",
             "npm run test:unit",
             "npm run build",
-            "@test",
-            "@test:browser"
+            "@lint:check",
+            "@types:check"
         ],
         "types:check": [
             "phpstan analyse"
         ],
         "test": [
-            "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "@php artisan test"
+            "@test:php"
+        ],
+        "test:php": [
+            "@php artisan config:clear --ansi",
+            "pest tests/Unit tests/Feature"
         ],
         "test:browser": [
-            "pest tests/Browser --compact"
+            "pest tests/Browser"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

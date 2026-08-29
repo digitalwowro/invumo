@@ -3,31 +3,31 @@
     "baselines": [
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_Romanian_expansion_and_diacritics_on_desktop.snap",
-            "pngSha256": "1338b409f042ba4e9077ad96b21961f61c3ebffee2b02852ad1e959d85c1cf5f",
-            "reviewedOn": "2026-08-25",
-            "causeCommit": "a989b0d",
-            "baselineCommit": "903295c",
+            "pngSha256": "95f5b77fd5eb0b0eec2593ccb3cf3c990b49617f6d00fee11dabfd745b171b3f",
+            "reviewedOn": "2026-08-29",
+            "causeCommit": "33c2d78",
+            "baselineCommit": "cece2db",
             "screens": ["Romanian design-system gallery on desktop"],
             "intendedChanges": [
-                "Operational-table columns size from their content instead of equal fixed widths",
-                "Amounts, statuses, and actions retain readable compact widths without page overflow"
+                "Add the new reminder states În așteptare, Se procesează, Omisă, Înlocuită, and Suprimată to the shared status gallery",
+                "Retain every established component and layout outside the status gallery unchanged"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the GitHub Ubuntu actual and difference PNGs from Actions run 32823698233; confirmed the Romanian table change matched the shared table code change before adopting the runner-produced actual image."
+            "inspectionEvidence": "Viewed the local canonical actual and difference PNGs at original resolution after Batch 9E; confirmed all highlighted pixels were confined to the Romanian status gallery and matched the five new reminder states before updating the baseline."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_English_design_system_matrix_on_desktop.snap",
-            "pngSha256": "6bdae5516d391297317af696ddc02a0117d410298d70d5a610121ede3e7e5923",
-            "reviewedOn": "2026-08-25",
-            "causeCommit": "a989b0d",
-            "baselineCommit": "903295c",
+            "pngSha256": "16828c9d754e439a8b0d517d0f1e25d415830abfc5c0b106268610c89a493320",
+            "reviewedOn": "2026-08-29",
+            "causeCommit": "33c2d78",
+            "baselineCommit": "cece2db",
             "screens": ["English design-system gallery on desktop"],
             "intendedChanges": [
-                "Operational-table columns size from their content instead of equal fixed widths",
-                "Amounts, statuses, and actions retain readable compact widths without page overflow"
+                "Add the new reminder states Pending, Processing, Skipped, Superseded, and Suppressed to the shared status gallery",
+                "Retain every established component and layout outside the status gallery unchanged"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the GitHub Ubuntu actual and difference PNGs from Actions run 32823698233; confirmed the English table change matched the shared table code change before adopting the runner-produced actual image."
+            "inspectionEvidence": "Viewed the local canonical actual and difference PNGs at original resolution after Batch 9E; confirmed all highlighted pixels were confined to the English status gallery and matched the five new reminder states before updating the baseline."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_responsive_navigation_on_a_narrow_viewport.snap",

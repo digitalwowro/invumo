@@ -25,8 +25,8 @@ The complete quality gate rejects a missing entry, stale hash, untracked snapsho
 3. Match every visible difference to an intended source change. If any difference is unexplained, fix the regression instead of refreshing the baseline.
 4. Adopt the exact reviewed GitHub `actual` PNG only after the rendering is accepted.
 5. Update the matching evidence entry with its decoded PNG hash and review facts.
-6. Run `npm run visual-snapshots:check` and the complete `composer ci:check` gate.
-7. Push and require the replacement GitHub Actions run to complete successfully.
+6. Run `npm run visual-snapshots:check` plus the directly affected browser tests locally.
+7. At phase closeout, push and manually dispatch the phase quality gate. Require the runner's exact byte comparison to pass; if it fails, inspect the uploaded artifacts and adopt only the reviewed runner-produced actual image before rerunning the phase gate.
 
 Never run snapshot-update mode repeatedly until CI becomes green. Failed comparison artifacts are evidence to inspect, not generated approval.
 

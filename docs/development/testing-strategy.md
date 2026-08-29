@@ -37,7 +37,7 @@ npm run test:unit -- resources/js/path/changed-behavior.test.tsx
 composer test:browser -- tests/Browser/ChangedJourneyTest.php --stop-on-failure
 ```
 
-The browser wrapper closes standard input so Pest cannot wait invisibly for an interactive failure prompt, prints a heartbeat every 15 seconds, applies a ten-minute hard timeout, and terminates the complete Pest/Playwright process group after success, failure, timeout, or interruption. This prevents silent waits and orphaned Playwright servers. Interactive `--debug` runs are excluded from automated verification and require an explicit `BROWSER_TEST_INTERACTIVE=true` headed-terminal session.
+The browser wrapper closes standard input so Pest cannot wait invisibly for an interactive failure prompt, prints a heartbeat every 15 seconds, applies PHPUnit's 120-second default limit to each Browser test, applies a ten-minute hard suite timeout, and terminates the complete Pest/Playwright process group after success, failure, timeout, or interruption. A missing or stale locator therefore fails the active test instead of consuming the whole suite timeout. `BROWSER_TEST_CASE_TIMEOUT_SECONDS` may raise the per-test limit only for a reviewed journey with a demonstrated longer bound. Interactive `--debug` runs are excluded from automated verification and require an explicit `BROWSER_TEST_INTERACTIVE=true` headed-terminal session.
 
 `composer ci:static`, `composer ci:check:core`, and `composer ci:check` remain available for broad or offline verification. They are not routine per-change commands.
 

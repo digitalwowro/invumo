@@ -13,9 +13,33 @@ test('adds the Browser suite unless a focused Browser path is supplied', () => {
     assert.deepEqual(browserArguments(['--shard=1/2']), [
         'tests/Browser',
         '--shard=1/2',
+        '--enforce-time-limit',
+        '--default-time-limit=120',
     ]);
     assert.deepEqual(browserArguments(['tests/Browser/ExampleTest.php']), [
         'tests/Browser/ExampleTest.php',
+        '--enforce-time-limit',
+        '--default-time-limit=120',
+    ]);
+    assert.deepEqual(
+        browserArguments(
+            [
+                'tests/Browser/ExampleTest.php',
+                '--enforce-time-limit',
+                '--default-time-limit=45',
+            ],
+            90,
+        ),
+        [
+            'tests/Browser/ExampleTest.php',
+            '--enforce-time-limit',
+            '--default-time-limit=45',
+        ],
+    );
+    assert.deepEqual(browserArguments([], 90), [
+        'tests/Browser',
+        '--enforce-time-limit',
+        '--default-time-limit=90',
     ]);
 });
 

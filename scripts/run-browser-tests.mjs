@@ -5,6 +5,7 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1_000;
+const DEFAULT_TEST_TIMEOUT_SECONDS = 120;
 const DEFAULT_HEARTBEAT_MS = 15_000;
 const DEFAULT_KILL_GRACE_MS = 5_000;
 
@@ -88,12 +89,32 @@ export async function superviseBrowserTests({
     });
 }
 
-export function browserArguments(cliArguments) {
+export function browserArguments(
+    cliArguments,
+    testTimeoutSeconds = DEFAULT_TEST_TIMEOUT_SECONDS,
+) {
     const hasBrowserPath = cliArguments.some((argument) =>
         argument.startsWith('tests/Browser'),
     );
+    const argumentsWithSuite = hasBrowserPath
+        ? [...cliArguments]
+        : ['tests/Browser', ...cliArguments];
 
-    return hasBrowserPath ? cliArguments : ['tests/Browser', ...cliArguments];
+    if (!argumentsWithSuite.includes('--enforce-time-limit')) {
+        argumentsWithSuite.push('--enforce-time-limit');
+    }
+
+    if (
+        !argumentsWithSuite.some(
+            (argument) =>
+                argument === '--default-time-limit' ||
+                argument.startsWith('--default-time-limit='),
+        )
+    ) {
+        argumentsWithSuite.push(`--default-time-limit=${testTimeoutSeconds}`);
+    }
+
+    return argumentsWithSuite;
 }
 
 function terminateProcessGroup(child, signal) {
@@ -122,6 +143,12 @@ function positiveMilliseconds(environmentKey, fallback) {
         : fallback;
 }
 
+function positiveSeconds(environmentKey, fallback) {
+    const seconds = Number.parseInt(process.env[environmentKey] ?? '', 10);
+
+    return Number.isInteger(seconds) && seconds > 0 ? seconds : fallback;
+}
+
 async function main() {
     const cliArguments = process.argv.slice(2);
 
@@ -137,9 +164,18 @@ async function main() {
         return;
     }
 
+    const testTimeoutSeconds = positiveSeconds(
+        'BROWSER_TEST_CASE_TIMEOUT_SECONDS',
+        DEFAULT_TEST_TIMEOUT_SECONDS,
+    );
+
+    console.error(
+        `[browser-tests] each test is limited to ${testTimeoutSeconds}s`,
+    );
+
     process.exitCode = await superviseBrowserTests({
         executable: 'vendor/bin/pest',
-        args: browserArguments(cliArguments),
+        args: browserArguments(cliArguments, testTimeoutSeconds),
         timeoutMs: positiveMilliseconds(
             'BROWSER_TEST_TIMEOUT_SECONDS',
             DEFAULT_TIMEOUT_MS,

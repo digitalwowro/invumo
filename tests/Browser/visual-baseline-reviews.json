@@ -3,44 +3,45 @@
     "baselines": [
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_Romanian_expansion_and_diacritics_on_desktop.snap",
-            "pngSha256": "95f5b77fd5eb0b0eec2593ccb3cf3c990b49617f6d00fee11dabfd745b171b3f",
-            "reviewedOn": "2026-08-29",
-            "causeCommit": "33c2d78",
-            "baselineCommit": "cece2db",
+            "pngSha256": "5623131b4e4b2364afcdcfde8dc90bf1fbdcf18dfeb128d22c50787766ac87ec",
+            "reviewedOn": "2026-08-30",
+            "causeCommit": "9075ca3",
+            "baselineCommit": "5656a46",
             "screens": ["Romanian design-system gallery on desktop"],
             "intendedChanges": [
-                "Add the new reminder states În așteptare, Se procesează, Omisă, Înlocuită, and Suprimată to the shared status gallery",
-                "Retain every established component and layout outside the status gallery unchanged"
+                "Replace the placeholder sidebar mark with the approved lime INVUMO code-rendered wordmark",
+                "Retain the complete Romanian gallery content, layout, states, table containment, and surrounding navigation unchanged"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the local canonical actual and difference PNGs at original resolution after Batch 9E; confirmed all highlighted pixels were confined to the Romanian status gallery and matched the five new reminder states before updating the baseline."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33278632381 at original resolution; confirmed the visible difference was confined to the approved product mark introduced by 9075ca3 before adopting the exact runner-produced actual PNG."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_English_design_system_matrix_on_desktop.snap",
-            "pngSha256": "16828c9d754e439a8b0d517d0f1e25d415830abfc5c0b106268610c89a493320",
-            "reviewedOn": "2026-08-29",
-            "causeCommit": "33c2d78",
-            "baselineCommit": "cece2db",
+            "pngSha256": "feb2e143c4e101c3a90d9b535bf5015c715cd797421a7dc0bf1f3a82e42db273",
+            "reviewedOn": "2026-08-30",
+            "causeCommit": "9075ca3",
+            "baselineCommit": "5656a46",
             "screens": ["English design-system gallery on desktop"],
             "intendedChanges": [
-                "Add the new reminder states Pending, Processing, Skipped, Superseded, and Suppressed to the shared status gallery",
-                "Retain every established component and layout outside the status gallery unchanged"
+                "Replace the placeholder sidebar mark with the approved lime INVUMO code-rendered wordmark",
+                "Retain the complete English gallery content, layout, states, table containment, and surrounding navigation unchanged"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the local canonical actual and difference PNGs at original resolution after Batch 9E; confirmed all highlighted pixels were confined to the English status gallery and matched the five new reminder states before updating the baseline."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33278632381 at original resolution; confirmed the visible difference was confined to the approved product mark introduced by 9075ca3 before adopting the exact runner-produced actual PNG."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_responsive_navigation_on_a_narrow_viewport.snap",
-            "pngSha256": "654046b8d4209c66d120063e475204314490a4730eef562d37ea148d86e8614b",
-            "reviewedOn": "2026-08-25",
-            "causeCommit": "e15ac51",
-            "baselineCommit": "e15ac51",
+            "pngSha256": "44101d85b0eebc7774cadfe5d2be170544e87e5519f88f7c9d491df30bb98f76",
+            "reviewedOn": "2026-08-30",
+            "causeCommit": "9075ca3",
+            "baselineCommit": "5656a46",
             "screens": ["English design-system navigation sheet on iPhone 15"],
             "intendedChanges": [
-                "Retain the established narrow navigation-sheet baseline unchanged while bootstrapping the evidence registry"
+                "Replace the placeholder navigation-sheet mark with the approved lime INVUMO code-rendered wordmark",
+                "Retain the narrow navigation sheet, backdrop, labels, and viewport containment unchanged"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Decoded and viewed the current canonical PNG at original resolution during the evidence-registry bootstrap; confirmed the navigation sheet, backdrop, labels, and viewport containment are intentional."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33278632381 at original resolution; confirmed the visible difference was confined to the approved product mark introduced by 9075ca3 before adopting the exact runner-produced actual PNG."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_shared_confirmation_overlay.snap",

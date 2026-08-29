@@ -4,6 +4,7 @@ namespace App\Modules\Invoices\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Documents\Data\DocumentDraftFailure;
 use App\Modules\Documents\Data\DocumentLineFailure;
 use App\Modules\Documents\Data\DocumentNumberAllocationException;
 use App\Modules\Documents\Data\DocumentSourceFailure;
@@ -46,7 +47,7 @@ final class InvoiceDraftController extends Controller
     ): RedirectResponse {
         try {
             $invoice = $create->handle($company, $request->user(), $request->creationKey());
-        } catch (InvoiceDraftException|DocumentNumberAllocationException $exception) {
+        } catch (InvoiceDraftException|DocumentDraftFailure|DocumentNumberAllocationException $exception) {
             throw ValidationException::withMessages([
                 'invoice' => __("invoices_ui.errors.{$exception->reason()}"),
             ]);
@@ -92,7 +93,7 @@ final class InvoiceDraftController extends Controller
     ): RedirectResponse {
         try {
             $update->handle($company, $request->user(), $invoice, $request->draft());
-        } catch (InvoiceDraftException|InvoiceLifecycleException|DocumentSourceFailure|DocumentLineFailure $exception) {
+        } catch (InvoiceDraftException|DocumentDraftFailure|InvoiceLifecycleException|DocumentSourceFailure|DocumentLineFailure $exception) {
             $field = match ($exception->reason()) {
                 'stale' => 'edit_version',
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',

@@ -85,6 +85,7 @@ final readonly class DecidePublicQuote
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
+        $deliveries = $this->deliveryHistory->all($document->id);
         $decisions = QuotePublicDecision::query()
             ->where('quote_id', $document->id)
             ->orderBy('id')
@@ -111,7 +112,7 @@ final readonly class DecidePublicQuote
             return $data->decision;
         }
 
-        if ($this->deliveryHistory->hasPending($document->id)) {
+        if ($this->deliveryHistory->hasPendingIn($deliveries)) {
             throw PublicQuoteDecisionException::deliveryPending();
         }
 

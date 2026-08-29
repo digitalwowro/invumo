@@ -4,6 +4,7 @@ namespace App\Modules\Quotes\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Documents\Data\DocumentDraftFailure;
 use App\Modules\Documents\Data\DocumentLineFailure;
 use App\Modules\Documents\Data\DocumentNumberAllocationException;
 use App\Modules\Documents\Data\DocumentSourceFailure;
@@ -45,7 +46,7 @@ final class QuoteDraftController extends Controller
     ): RedirectResponse {
         try {
             $quote = $create->handle($company, $request->user(), $request->creationKey());
-        } catch (QuoteDraftException|DocumentNumberAllocationException $exception) {
+        } catch (QuoteDraftException|DocumentDraftFailure|DocumentNumberAllocationException $exception) {
             throw ValidationException::withMessages([
                 'quote' => __("quotes_ui.errors.{$exception->reason()}"),
             ]);
@@ -91,7 +92,7 @@ final class QuoteDraftController extends Controller
     ): RedirectResponse {
         try {
             $update->handle($company, $request->user(), $quote, $request->draft());
-        } catch (QuoteDraftException|DocumentSourceFailure|DocumentLineFailure $exception) {
+        } catch (QuoteDraftException|DocumentDraftFailure|DocumentSourceFailure|DocumentLineFailure $exception) {
             $field = match ($exception->reason()) {
                 'stale' => 'edit_version',
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',

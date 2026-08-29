@@ -10,7 +10,7 @@ The master brief is the canonical statement of scope. The domain-rules document 
 ## Development tracking
 
 - [`development/development-tracker.md`](development/development-tracker.md) — the only canonical phase sequence, progress checklist, dependency map, acceptance-gate record, and implementation log
-- [`development/testing-strategy.md`](development/testing-strategy.md) — approved proportionate local verification and manual phase-only GitHub quality-gate contract
+- [`development/testing-strategy.md`](development/testing-strategy.md) — approved proportionate local verification, cross-phase invariant regression review, and manual phase-only GitHub quality-gate contract
 - [`development/visual-snapshot-baselines.md`](development/visual-snapshot-baselines.md) — required inspection evidence and hash-bound workflow for canonical GitHub visual-baseline updates
 
 Update the tracker as work advances. Do not create or maintain phase status, task completion, or a competing implementation sequence in another document.

@@ -2,24 +2,39 @@
 
 namespace App\Modules\Invoices\Data;
 
+use App\Modules\Documents\Data\DocumentDraftData;
 use App\Modules\Documents\Data\DocumentLineData;
 
-final readonly class InvoiceDraftData
+final readonly class InvoiceDraftData extends DocumentDraftData
 {
     /** @param list<DocumentLineData> $lines */
     public function __construct(
-        public int $editVersion,
-        public ?string $customerId,
-        public ?string $customerConfirmationToken,
-        public ?string $currencyCode,
-        public ?string $documentLanguage,
-        public ?string $issueDate,
+        int $editVersion,
+        ?string $customerId,
+        ?string $customerConfirmationToken,
+        ?string $currencyCode,
+        ?string $documentLanguage,
+        ?string $issueDate,
         public ?int $paymentTermDays,
         public ?string $dueDate,
-        public ?string $customerReference,
-        public ?string $bankAccountId,
-        public ?string $termsAndConditions,
-        public ?string $notes,
-        public array $lines,
-    ) {}
+        ?string $customerReference,
+        ?string $bankAccountId,
+        ?string $termsAndConditions,
+        ?string $notes,
+        array $lines,
+    ) {
+        parent::__construct(
+            $editVersion,
+            $customerId,
+            $customerConfirmationToken,
+            $currencyCode,
+            $documentLanguage,
+            $issueDate,
+            $customerReference,
+            $bankAccountId,
+            $termsAndConditions,
+            $notes,
+            $lines,
+        );
+    }
 }

@@ -33,6 +33,16 @@ final class LockDocumentDeliveryHistory
             ->first() instanceof EmailDelivery;
     }
 
+    /** @param Collection<int, EmailDelivery> $deliveries */
+    public function hasPendingIn(Collection $deliveries): bool
+    {
+        return $deliveries->contains(fn (EmailDelivery $delivery): bool => in_array(
+            $delivery->dispatch_state,
+            [EmailDeliveryState::Queued, EmailDeliveryState::Retrying],
+            true,
+        ));
+    }
+
     public function hasPendingDirect(string $documentId): bool
     {
         return $this->hasPendingDirectIn($this->all($documentId));

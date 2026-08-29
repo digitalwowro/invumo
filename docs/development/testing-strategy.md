@@ -17,6 +17,16 @@ During implementation, run the smallest test set that proves the changed behavio
 
 Use `--stop-on-failure` during iteration. A passing focused test is not permission to omit a known affected tenant, authorization, audit, localization, responsive, or concurrency boundary.
 
+## Cross-phase invariant regression review
+
+Every feature batch has a named seam-review responsibility in addition to its local tests:
+
+1. For every new foreign key, reference, or reachable state, find earlier cleanup, deletion, archive, eligibility, fallback, and resolution code that enumerates references or depends on that state being absent.
+2. For every new controller, command, job, retry, scheduled path, or other entry point to an existing operation, enumerate the existing entry points and verify that the authoritative guard is shared or exercised consistently by each path.
+3. Update the owning invariant boundary and add focused behavior/integration tests in the same batch. If the affected behavior belongs to a completed phase, reopen that owning task for the correction rather than deferring it to Phase 11 or 12.
+
+At phase closeout, compare the complete phase diff with the prior successful phase-gate SHA. Review schema references, state/constraint additions, and new operation entry points against their earlier consumers. Record the impacted boundaries and focused evidence, or an explicit finding that none were introduced, in the tracker before dispatching the manual phase gate. The full suite confirms tests; it does not replace this semantic seam review.
+
 Typical commands are:
 
 ```bash
@@ -37,7 +47,7 @@ Pushing a batch does not run GitHub Actions. Do not wait for or poll a GitHub ru
 
 After the final batch and phase acceptance review:
 
-1. complete any remaining focused acceptance evidence;
+1. complete any remaining focused acceptance evidence and the cross-phase invariant regression review;
 2. push the phase-closing commits and durable memory;
 3. manually dispatch `.github/workflows/tests.yml` with the phase number;
 4. require the consolidated `Phase quality gate` job to pass;
@@ -74,4 +84,4 @@ Any later switch to migrate-once/truncate or transaction-based isolation require
 
 ## Evidence
 
-Tracker evidence names the focused tests used for each task or batch. Only a phase acceptance gate records the full manually dispatched GitHub run. The first run of the reworked workflow may expose workflow-infrastructure defects; those defects are fixed and the gate rerun before any production migration. Historical full-gate evidence remains valid; this policy changes future execution frequency, not prior verification.
+Tracker evidence names the focused tests and cross-phase seam review used for each task or batch. Only a phase acceptance gate records the full manually dispatched GitHub run. The first run of the reworked workflow may expose workflow-infrastructure defects; those defects are fixed and the gate rerun before any production migration. Historical full-gate evidence remains valid; this policy changes future execution frequency, not prior verification.

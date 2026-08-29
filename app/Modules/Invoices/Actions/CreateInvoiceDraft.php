@@ -5,27 +5,18 @@ namespace App\Modules\Invoices\Actions;
 use App\Foundation\Documents\DocumentCalendar;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
-use App\Modules\Audit\Actions\RecordAuditEvent;
-use App\Modules\Audit\Data\AuditActorType;
-use App\Modules\Audit\Data\AuditEventData;
-use App\Modules\Audit\Data\AuditPayload;
 use App\Modules\Companies\Contracts\AuthorizesCompanyActions;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Delivery\Actions\CopyCompanyReminderRules;
 use App\Modules\Delivery\Actions\LockCompanyReminderRules;
-use App\Modules\Documents\Actions\InitializeDocumentDefaults;
+use App\Modules\Documents\Actions\CreateDocumentDraft;
 use App\Modules\Documents\Actions\LockDocumentConfiguration;
-use App\Modules\Documents\Contracts\AllocatesDocumentNumbers;
-use App\Modules\Documents\Data\DocumentAssignmentSource;
+use App\Modules\Documents\Actions\RecordDocumentCreated;
 use App\Modules\Documents\Data\DocumentKind;
-use App\Modules\Documents\Data\DocumentNumberEventType;
 use App\Modules\Documents\Models\Document;
-use App\Modules\Documents\Models\DocumentNumberEvent;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
-use App\Modules\Invoices\Exceptions\InvoiceDraftException;
 use App\Modules\Invoices\Models\Invoice;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateInvoiceDraft
@@ -33,12 +24,11 @@ final readonly class CreateInvoiceDraft
     public function __construct(
         private TenantContext $tenantContext,
         private AuthorizesCompanyActions $authorizer,
-        private AllocatesDocumentNumbers $numbers,
         private LockDocumentConfiguration $lockConfiguration,
-        private InitializeDocumentDefaults $initializeDefaults,
         private LockCompanyReminderRules $lockReminderRules,
+        private CreateDocumentDraft $createDocument,
         private CopyCompanyReminderRules $copyReminderRules,
-        private RecordAuditEvent $recordAuditEvent,
+        private RecordDocumentCreated $recordCreated,
     ) {}
 
     public function handle(Company $company, User $actor, string $creationKey): Document
@@ -67,92 +57,26 @@ final readonly class CreateInvoiceDraft
 
         $configuration = $this->lockConfiguration->handle();
         $reminderRules = $this->lockReminderRules->handle();
-        $settings = $configuration->settings;
-        $currency = $configuration->currencies
-            ->where('active', true)
-            ->firstWhere('is_default', true);
-        $taxPreset = $configuration->taxPresets
-            ->whereNull('archived_at')
-            ->firstWhere('is_default', true);
-        $bankAccount = $configuration->bankAccounts
-            ->whereNull('archived_at')
-            ->firstWhere('is_default', true);
-        $bankCurrency = $bankAccount?->currency_id === null
-            ? null
-            : $configuration->currencies->firstWhere('id', $bankAccount->currency_id);
-
-        if ($settings->timezone === null) {
-            throw InvoiceDraftException::configurationRequired();
-        }
-
-        $localDate = Date::now($settings->timezone)->toImmutable()->startOfDay();
-        $number = $this->numbers->next(DocumentKind::Invoice, $localDate->year);
-        $document = Document::query()->create([
-            'kind' => DocumentKind::Invoice,
-            'rendered_number' => $number->rendered,
-            'assignment_source' => DocumentAssignmentSource::Automatic,
-            'number_series_id' => $number->seriesId,
-            'number_period_key' => $number->periodKey,
-            'number_sequence' => $number->sequence,
-            'client_creation_key' => $creationKey,
-            'issue_date' => $localDate->toDateString(),
-            'currency_code' => $currency?->currency_code,
-            'currency_precision' => $currency?->currency_precision,
-            'document_language' => $settings->default_document_language,
-            'customer_reference' => null,
-            'terms_and_conditions' => $settings->default_terms_and_conditions,
-            'notes' => $settings->default_invoice_notes,
-            'subtotal' => 0,
-            'tax_total' => 0,
-            'total' => 0,
-        ]);
-
+        $created = $this->createDocument->handle(
+            DocumentKind::Invoice,
+            $creationKey,
+            $configuration,
+        );
         Invoice::query()->create([
-            'document_id' => $document->id,
+            'document_id' => $created->document->id,
             'document_kind' => DocumentKind::Invoice,
             'lifecycle' => InvoiceLifecycle::Draft,
-            'payment_term_days' => $settings->default_payment_term_days,
-            'due_date' => $settings->default_payment_term_days === null
+            'payment_term_days' => $created->settings->default_payment_term_days,
+            'due_date' => $created->settings->default_payment_term_days === null
                 ? null
                 : DocumentCalendar::addDays(
-                    $localDate->toDateString(),
-                    $settings->default_payment_term_days,
+                    $created->localDate,
+                    $created->settings->default_payment_term_days,
                 ),
         ]);
-        $this->copyReminderRules->handle($document->id, $reminderRules);
+        $this->copyReminderRules->handle($created->document->id, $reminderRules);
+        $this->recordCreated->handle($actor, $created->document, $creationKey);
 
-        $this->initializeDefaults->handle(
-            $document,
-            $settings,
-            $taxPreset,
-            $bankAccount,
-            $bankCurrency,
-        );
-
-        $audit = $this->recordAuditEvent->handle(new AuditEventData(
-            actorType: AuditActorType::User,
-            actorUserId: $actor->id,
-            action: 'company.invoice.created',
-            targetType: 'Invoice',
-            targetId: $document->id,
-            idempotencyReference: $creationKey,
-            after: AuditPayload::fromAllowedFields([
-                'assignment_source' => DocumentAssignmentSource::Automatic->value,
-                'has_currency' => $currency !== null,
-                'edit_version' => 1,
-            ], ['assignment_source', 'has_currency', 'edit_version']),
-        ));
-
-        DocumentNumberEvent::query()->create([
-            'document_id' => $document->id,
-            'document_kind' => DocumentKind::Invoice,
-            'rendered_number' => $number->rendered,
-            'event_type' => DocumentNumberEventType::Assigned,
-            'assignment_source' => DocumentAssignmentSource::Automatic,
-            'occurred_at' => now(),
-            'related_audit_event_id' => $audit->id,
-        ]);
-
-        return $document->refresh();
+        return $created->document->refresh();
     }
 }

@@ -56,7 +56,12 @@ final readonly class CompanyTransactionListSummary
             ->selectRaw("COUNT(*) FILTER (WHERE kind = 'REFUND') AS refunds_count")
             ->selectRaw("COALESCE(SUM(amount) FILTER (WHERE kind = 'REFUND'), 0) AS refunds_total")
             ->selectRaw("COUNT(*) FILTER (WHERE kind = 'ADJUSTMENT') AS adjustments_count")
-            ->selectRaw("COALESCE(SUM(amount) FILTER (WHERE kind = 'ADJUSTMENT'), 0) AS adjustments_total");
+            ->selectRaw(<<<'SQL'
+                COALESCE(SUM(CASE
+                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'INCREASE_PAID' THEN amount
+                    WHEN kind = 'ADJUSTMENT' AND adjustment_direction = 'DECREASE_PAID' THEN -amount
+                    ELSE 0 END), 0) AS adjustments_total
+                SQL);
     }
 
     private function base(): Builder

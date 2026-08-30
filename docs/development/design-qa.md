@@ -10,4 +10,4 @@
 - Project adaptation: existing Invumo shell, semantic tokens, shared table/status/form components, authorization, Laravel translations, and Inertia query behavior remain authoritative.
 - Verification: focused browser tests passed on desktop and iPhone 15 with no JavaScript or accessibility errors; focused HTTP coverage passed for filters, summaries, localization, and every cursor-sort page.
 
-final result: passed
+Final result: passed

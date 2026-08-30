@@ -120,6 +120,37 @@ final class CompanyTransactionListHttpTest extends TestCase
             ->where('filters.sort', 'date_asc'));
     }
 
+    public function test_adjustment_summary_applies_each_adjustment_direction(): void
+    {
+        [$company, $owner] = $this->company();
+        $invoice = $this->issuedInvoice($company, $owner, 'Adjustment Customer SRL', '1000');
+        $this->transaction(
+            $company,
+            $invoice,
+            'ADJUSTMENT',
+            '300',
+            'INCREASE',
+            direction: 'INCREASE_PAID',
+            reason: 'Increase correction',
+        );
+        $this->transaction(
+            $company,
+            $invoice,
+            'ADJUSTMENT',
+            '200',
+            'DECREASE',
+            direction: 'DECREASE_PAID',
+            reason: 'Decrease correction',
+        );
+
+        $this->actingAs($owner)->get(route('transactions.index', $company))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('summary.all.count', 2)
+                ->where('summary.adjustments.count', 2)
+                ->where('summary.adjustments.amounts.0.currencyCode', 'RON')
+                ->where('summary.adjustments.amounts.0.amount', '100.00'));
+    }
+
     public function test_cursor_pagination_requests_later_pages_without_duplicates(): void
     {
         [$company, $owner] = $this->company();
@@ -239,16 +270,20 @@ final class CompanyTransactionListHttpTest extends TestCase
         string $amount,
         string $reference,
         string $date = '2026-08-27',
+        ?string $direction = null,
+        ?string $reason = null,
     ): InvoiceTransaction {
         return $this->tenant($company, fn (): InvoiceTransaction => InvoiceTransaction::query()->create([
             'invoice_id' => $invoice->id,
             'kind' => $kind,
+            'adjustment_direction' => $direction,
             'amount' => $amount,
             'currency_code' => 'RON',
             'currency_precision' => 2,
             'transaction_date' => $date,
             'payment_method' => 'Bank transfer',
             'reference' => $reference,
+            'adjustment_reason' => $reason,
             'creation_key' => (string) Str::uuid7(),
             'edit_version' => 1,
         ]));

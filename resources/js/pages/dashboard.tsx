@@ -1,10 +1,11 @@
 import { Head } from '@inertiajs/react';
-import { ReceiptText } from 'lucide-react';
+import { Plus, ReceiptText } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { DashboardContent } from '@/features/dashboard/components/dashboard-content';
+import { interpolate } from '@/lib/translations';
 import type { DashboardData, DashboardTranslations } from '@/types/dashboard';
 
 export default function Dashboard({
@@ -23,15 +24,28 @@ export default function Dashboard({
                 <Stack gap="2xl">
                     <PageHeader
                         title={translations.title}
-                        subtitle={`${company.name} · ${translations.subtitle}`}
+                        subtitle={`${company.name} · ${interpolate(
+                            translations.subtitle,
+                            { date: dashboard.asOfDate },
+                        )}`}
                         actions={
-                            <ActionLink
-                                href={dashboard.invoicesUrl}
-                                variant="secondary"
-                            >
-                                <ReceiptText aria-hidden="true" />
-                                {translations.view_invoices}
-                            </ActionLink>
+                            <>
+                                <ActionLink
+                                    href={dashboard.invoicesUrl}
+                                    variant="secondary"
+                                >
+                                    <ReceiptText aria-hidden="true" />
+                                    {translations.view_invoices}
+                                </ActionLink>
+                                {dashboard.createInvoiceUrl && (
+                                    <ActionLink
+                                        href={dashboard.createInvoiceUrl}
+                                    >
+                                        <Plus aria-hidden="true" />
+                                        {translations.new_invoice}
+                                    </ActionLink>
+                                )}
+                            </>
                         }
                     />
                     <DashboardContent

@@ -200,7 +200,7 @@ final readonly class ResolveRecurringInvoiceData
                 null, $line->product_service_id, $line->description,
                 $line->item_price, $line->quantity, $line->unit,
                 $line->period_unit, $line->period_quantity, $line->discount_percentage,
-                $tax[0], $tax[1], $tax[2],
+                $tax[0], $tax[1], $tax[2], true,
             );
         })->all());
     }

@@ -26,6 +26,41 @@ export type UseCurrentUrlReturn = {
     whenCurrentUrl: WhenCurrentUrlFn;
 };
 
+export function urlPath(
+    url: NonNullable<InertiaLinkProps['href']> | string,
+): string | null {
+    try {
+        const path = new URL(toUrl(url), 'http://localhost').pathname;
+
+        return path === '/' ? path : path.replace(/\/+$/, '');
+    } catch {
+        return null;
+    }
+}
+
+export function matchesCurrentUrl(
+    urlToCheck: NonNullable<InertiaLinkProps['href']>,
+    currentUrl: string,
+    includeDescendants: boolean = false,
+): boolean {
+    const targetPath = urlPath(urlToCheck);
+    const currentPath = urlPath(currentUrl);
+
+    if (targetPath === null || currentPath === null) {
+        return false;
+    }
+
+    if (targetPath === currentPath) {
+        return true;
+    }
+
+    return (
+        includeDescendants &&
+        targetPath !== '/' &&
+        currentPath.startsWith(`${targetPath}/`)
+    );
+}
+
 export function useCurrentUrl(): UseCurrentUrlReturn {
     const page = usePage();
     const currentUrlPath = new URL(
@@ -41,22 +76,8 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         startsWith: boolean = false,
     ) => {
         const urlToCompare = currentUrl ?? currentUrlPath;
-        const urlString = toUrl(urlToCheck);
 
-        const comparePath = (path: string): boolean =>
-            startsWith ? urlToCompare.startsWith(path) : path === urlToCompare;
-
-        if (!urlString.startsWith('http')) {
-            return comparePath(urlString);
-        }
-
-        try {
-            const absoluteUrl = new URL(urlString);
-
-            return comparePath(absoluteUrl.pathname);
-        } catch {
-            return false;
-        }
+        return matchesCurrentUrl(urlToCheck, urlToCompare, startsWith);
     };
 
     const isCurrentOrParentUrl: IsCurrentOrParentUrlFn = (

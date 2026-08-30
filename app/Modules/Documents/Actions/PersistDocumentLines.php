@@ -17,6 +17,7 @@ final readonly class PersistDocumentLines
     public function __construct(
         private PrepareDocumentLine $prepareLine,
         private DocumentCalculator $documentCalculator,
+        private ResolveDocumentLineCustomization $customization,
     ) {}
 
     /**
@@ -52,6 +53,7 @@ final readonly class PersistDocumentLines
             $attributes = [
                 ...$prepared->attributes,
                 'tax_preset_id' => $data->taxPresetId,
+                'is_customized' => $this->customization->for($line, $data),
                 ...$this->nullableAmounts($calculation),
             ];
             $line->fill(['document_id' => $document->id, 'position' => $index + 1, ...$attributes]);

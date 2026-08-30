@@ -20,6 +20,7 @@ import {
     SidebarHeader,
 } from '@/components/ui/sidebar-layout';
 import { useI18n } from '@/hooks/use-i18n';
+import { index as companySettingsIndex } from '@/routes/company-settings';
 import { edit as editProfile } from '@/routes/profile';
 import type { NavItem } from '@/types';
 
@@ -111,6 +112,9 @@ export function AppSidebar({
         mainNavItems.push({
             title: t('navigation.settings'),
             href: companyContext.current?.settingsUrl ?? editProfile(),
+            activeHref: companyContext.current
+                ? companySettingsIndex(companyContext.current.id)
+                : '/settings',
             icon: Settings,
         });
     }

@@ -405,10 +405,13 @@ The settings row stores the current document delivery mode and whether public ac
 - period unit `NONE`, `MONTH`, or `YEAR` and period quantity
 - discount percentage and stored discount value
 - optional source Tax-preset reference plus snapshotted tax name and percentage
+- durable `is_customized` provenance for the last explicit source application
 - stored items subtotal, items total, grand subtotal, tax value, and final line total
 - `UNIQUE (company_id, document_id, position) DEFERRABLE INITIALLY IMMEDIATE`
 
 Calculated columns are written only by the authoritative calculation service and are checked for scale/range and non-negative results. Issue/send validation requires at least one complete billable line. The line's source references never drive recalculation after selection.
+
+`documents.defaults_customized` and `document_lines.is_customized` drive the editor's `Default`/`Customized` labels. `Default` means the current values came from the last explicit Company/Customer/catalog application; it does not compare the snapshot with today's source values. A manual line begins Customized, and changing any editable value on a default catalog line makes it Customized. Explicitly reapplying a Product or Service replaces that line's source values and resets its label to Default. Document-default edits latch the document to Customized; v1 has no implicit reset based on later source changes or coincidentally equal text. Quote-to-Invoice conversion carries this provenance with the copied snapshots, while scheduled generation treats its fully resolved occurrence inputs as the applied source.
 
 Committed line positions are a dense one-based sequence with no gaps. PostgreSQL independently guarantees positive and unique positions; the owning document aggregate Action guarantees contiguity whenever line membership or order changes. The browser keeps add/remove/reorder/undo changes in its local reducer until the next aggregate save, so v1 has no separate persisted line-membership, line-undo, or reorder write path.
 

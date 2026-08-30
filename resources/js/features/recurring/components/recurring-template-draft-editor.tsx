@@ -11,7 +11,6 @@ import { DocumentCustomerControls } from '@/components/domain/documents/document
 import {
     calculateDocumentLine,
     completeLine,
-    DocumentTotals,
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
 import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
@@ -92,7 +91,13 @@ export function RecurringTemplateDraftEditor(props: Props) {
 
     const applyProduct = (index: number, product: DocumentProductDefaults) => {
         changeLines((lines) =>
-            applyRecurringProduct(lines, index, product, customer.taxDefault),
+            applyRecurringProduct(
+                lines,
+                index,
+                product,
+                customer.taxDefault,
+                precision,
+            ),
         );
     };
 
@@ -204,6 +209,7 @@ export function RecurringTemplateDraftEditor(props: Props) {
                     <DocumentLineEditor
                         lines={form.data.lines}
                         calculated={calculated}
+                        totals={totals}
                         taxDefault={customer.taxDefault}
                         limits={props.limits}
                         labels={props.labels}
@@ -215,7 +221,6 @@ export function RecurringTemplateDraftEditor(props: Props) {
                             setProductSelector(true);
                         }}
                     />
-                    <DocumentTotals labels={props.labels} totals={totals} />
                     <FormActions separated>
                         <SubmitButton
                             processing={form.processing}

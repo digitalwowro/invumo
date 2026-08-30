@@ -24,8 +24,9 @@ use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentBankSnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
-use App\Modules\Documents\Models\DocumentLine;
 use App\Modules\Documents\Models\DocumentTaxDefault;
+use App\Modules\Documents\Queries\DocumentCustomerSnapshotPage;
+use App\Modules\Documents\Queries\DocumentDraftLinesPage;
 use App\Modules\Quotes\Data\QuoteDisplayStatus;
 use App\Modules\Quotes\Models\Quote;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -44,6 +45,8 @@ final readonly class QuoteDraftPage
         private QuoteDeletionPreview $deletionPreview,
         private DocumentPublicLinkState $publicLinkState,
         private DocumentDeliveryPage $deliveryPage,
+        private DocumentCustomerSnapshotPage $customerSnapshotPage,
+        private DocumentDraftLinesPage $draftLinesPage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -79,10 +82,7 @@ final readonly class QuoteDraftPage
             $quote->valid_until,
             $localDate,
         );
-        $lines = DocumentLine::query()
-            ->where('document_id', $document->id)
-            ->orderBy('position')
-            ->get();
+        $lines = $this->draftLinesPage->for($document);
         $customer = $document->customer_id === null
             ? null
             : Customer::query()->whereKey($document->customer_id)->first();
@@ -144,10 +144,12 @@ final readonly class QuoteDraftPage
                 'customer' => $customer === null ? null : [
                     'id' => $customer->id,
                     'displayName' => $customer->displayName(),
+                    'snapshot' => $this->customerSnapshotPage->for($document->id),
                 ],
                 'currencyCode' => $document->currency_code,
                 'currencyPrecision' => $document->currency_precision,
                 'documentLanguage' => $document->document_language,
+                'defaultsCustomized' => $document->defaults_customized,
                 'termsAndConditions' => $document->terms_and_conditions,
                 'notes' => $document->notes,
                 'taxDefault' => $taxDefault === null ? null : [
@@ -166,21 +168,7 @@ final readonly class QuoteDraftPage
                 'subtotal' => $this->money($document->subtotal, $document->currency_precision),
                 'taxTotal' => $this->money($document->tax_total, $document->currency_precision),
                 'total' => $this->money($document->total, $document->currency_precision),
-                'lines' => $lines->map(fn (DocumentLine $line): array => [
-                    'id' => $line->id,
-                    'productServiceId' => $line->product_service_id,
-                    'description' => $line->description,
-                    'itemPrice' => $line->item_price,
-                    'quantity' => $line->quantity,
-                    'unit' => $line->unit,
-                    'periodUnit' => $line->period_unit->value,
-                    'periodQuantity' => $line->period_quantity,
-                    'discountPercentage' => $line->discount_percentage,
-                    'taxName' => $line->tax_name,
-                    'taxPercentage' => $line->tax_percentage,
-                    'taxPresetId' => $line->tax_preset_id,
-                    'finalLineTotal' => $this->money($line->final_line_total, $document->currency_precision),
-                ])->values(),
+                'lines' => $lines,
             ],
             'updateUrl' => route('quotes.update', [$company, $document], false),
             'lifecycleUrl' => route('quotes.lifecycle.update', [$company, $document], false),

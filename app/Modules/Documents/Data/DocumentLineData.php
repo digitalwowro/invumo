@@ -19,5 +19,6 @@ final readonly class DocumentLineData
         public ?string $taxName,
         public string $taxPercentage,
         public ?string $taxPresetId,
+        public bool $sourceApplied = false,
     ) {}
 }

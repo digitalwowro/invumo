@@ -1,3 +1,8 @@
+import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    compactDecimal,
+    compactDocumentLineDecimals,
+} from '@/domain/documents/document-line-decimals';
 import type {
     QuoteCustomerSelection,
     QuoteDraft,
@@ -19,6 +24,7 @@ export type QuoteEditorData = {
     bankAccountId: string | null;
     termsAndConditions: string;
     notes: string;
+    defaultsCustomized: boolean;
     lines: QuoteLine[];
 };
 
@@ -26,6 +32,7 @@ export const blankQuoteLine = (tax: QuoteTaxDefault | null): QuoteLine => ({
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
+    productServiceName: null,
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -34,10 +41,12 @@ export const blankQuoteLine = (tax: QuoteTaxDefault | null): QuoteLine => ({
     periodQuantity: '',
     discountPercentage: '0',
     taxName: tax?.name ?? '',
-    taxPercentage: tax?.percentage ?? '0',
+    taxPercentage: compactDecimal(tax?.percentage ?? '0'),
     taxPresetId: tax?.id ?? null,
     priceStatus: null,
     finalLineTotal: null,
+    isCustomized: true,
+    sourceApplied: false,
 });
 
 export const quoteFormData = (quote: QuoteDraft): QuoteEditorData => ({
@@ -53,17 +62,27 @@ export const quoteFormData = (quote: QuoteDraft): QuoteEditorData => ({
     bankAccountId: quote.bankAccount?.id ?? null,
     termsAndConditions: quote.termsAndConditions ?? '',
     notes: quote.notes ?? '',
-    lines: quote.lines.map((line) => ({
-        ...line,
-        key: line.id ?? crypto.randomUUID(),
-        description: line.description ?? '',
-        itemPrice: line.itemPrice ?? '',
-        quantity: line.quantity ?? '',
-        unit: line.unit ?? '',
-        periodQuantity: line.periodQuantity ?? '',
-        taxName: line.taxName ?? '',
-        priceStatus: null,
-    })),
+    defaultsCustomized: quote.defaultsCustomized,
+    lines: quote.lines.map((line) =>
+        compactDocumentLineDecimals(
+            {
+                ...line,
+                key: line.id ?? crypto.randomUUID(),
+                description: detachedLineDescription(
+                    line.description,
+                    line.productServiceName,
+                ),
+                itemPrice: line.itemPrice ?? '',
+                quantity: line.quantity ?? '',
+                unit: line.unit ?? '',
+                periodQuantity: line.periodQuantity ?? '',
+                taxName: line.taxName ?? '',
+                priceStatus: null,
+                sourceApplied: false,
+            },
+            quote.currencyPrecision,
+        ),
+    ),
 });
 
 export const customerFromQuote = (
@@ -78,6 +97,7 @@ export const customerFromQuote = (
     taxDefault: quote.taxDefault,
     emailAttachmentMode: quote.emailAttachmentMode,
     recipientCount: quote.recipientCount,
+    snapshot: quote.customer?.snapshot ?? null,
     confirmationToken: null,
 });
 
@@ -97,27 +117,34 @@ export const applyProductDefaults = (
     index: number,
     defaults: QuoteProductDefaults,
     fallbackTax: QuoteTaxDefault | null,
+    currencyPrecision: number | null,
 ): QuoteLine[] =>
     lines.map((line, itemIndex) =>
         itemIndex === index
-            ? {
-                  ...line,
-                  productServiceId: defaults.sourceProductServiceId,
-                  description: defaults.description,
-                  itemPrice: defaults.unitPrice ?? '',
-                  unit: defaults.unit ?? '',
-                  periodUnit: defaults.periodUnit,
-                  taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
-                  taxPercentage:
-                      defaults.tax?.percentage ??
-                      fallbackTax?.percentage ??
-                      '0',
-                  taxPresetId:
-                      defaults.tax?.sourceTaxPresetId ??
-                      fallbackTax?.id ??
-                      null,
-                  priceStatus: defaults.priceStatus,
-              }
+            ? compactDocumentLineDecimals(
+                  {
+                      ...line,
+                      productServiceId: defaults.sourceProductServiceId,
+                      productServiceName: defaults.name ?? null,
+                      description: defaults.description,
+                      itemPrice: defaults.unitPrice ?? '',
+                      unit: defaults.unit ?? '',
+                      periodUnit: defaults.periodUnit,
+                      taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
+                      taxPercentage:
+                          defaults.tax?.percentage ??
+                          fallbackTax?.percentage ??
+                          '0',
+                      taxPresetId:
+                          defaults.tax?.sourceTaxPresetId ??
+                          fallbackTax?.id ??
+                          null,
+                      priceStatus: defaults.priceStatus,
+                      isCustomized: false,
+                      sourceApplied: true,
+                  },
+                  currencyPrecision,
+              )
             : line,
     );
 

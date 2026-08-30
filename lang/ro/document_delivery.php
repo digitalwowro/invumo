@@ -12,6 +12,7 @@ return [
         'button_label' => 'Eticheta butonului pentru linkul securizat',
         'signature' => 'Semnătură',
         'attachment_mode' => 'Mod de livrare',
+        'language' => 'Limbă',
         'modes' => [
             'SECURE_LINK_ONLY' => 'Doar link securizat',
             'ATTACH_PDF' => 'Link securizat și PDF atașat',

@@ -39,6 +39,7 @@ const labels: DocumentDeliveryTranslations = {
         button_label: 'Button label',
         signature: 'Signature',
         attachment_mode: 'Delivery mode',
+        language: 'Language',
         modes: {
             SECURE_LINK_ONLY: 'Secure link only',
             ATTACH_PDF: 'Secure link and PDF',

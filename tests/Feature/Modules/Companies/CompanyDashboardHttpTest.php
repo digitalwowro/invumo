@@ -97,13 +97,17 @@ final class CompanyDashboardHttpTest extends TestCase
             ->where('dashboard.currencyGroups.0.overdueCount', 0)
             ->where('dashboard.currencyGroups.0.paidThisMonth', '50.00')
             ->where('dashboard.currencyGroups.0.outstandingTotal', '0.00')
+            ->has('dashboard.currencyGroups.0.recentInvoices.all', 1)
             ->where('dashboard.currencyGroups.1.currencyCode', 'RON')
             ->where('dashboard.currencyGroups.1.unpaidCount', 1)
             ->where('dashboard.currencyGroups.1.overdueCount', 1)
             ->where('dashboard.currencyGroups.1.overdueTotal', '60.00')
             ->where('dashboard.currencyGroups.1.paidThisMonth', '40.00')
             ->where('dashboard.currencyGroups.1.outstandingTotal', '60.00')
-            ->has('dashboard.recentInvoices', 5)
+            ->where('dashboard.currencyGroups.1.aging.1.key', 'days_1_30')
+            ->where('dashboard.currencyGroups.1.aging.1.total', '60.00')
+            ->has('dashboard.currencyGroups.1.recentInvoices.all', 5)
+            ->where('dashboard.expectedThroughDate', '2026-09-28')
             ->where('dashboard.invoicesUrl', route('invoices.index', $company, false)));
         $this->assertSame($auditsBefore, $this->tenant($company, fn (): int => AuditEvent::query()->count()));
 
@@ -121,8 +125,7 @@ final class CompanyDashboardHttpTest extends TestCase
 
         $response = $this->actingAs($owner)->get(route('companies.dashboard', $company));
         $response->assertInertia(fn (Assert $page) => $page
-            ->has('dashboard.currencyGroups', 0)
-            ->has('dashboard.recentInvoices', 0));
+            ->has('dashboard.currencyGroups', 0));
         $this->get(route('companies.dashboard', $other))->assertNotFound();
         $this->tenant($company, fn () => $this->assertNull(Document::query()->find($foreign->id)));
     }

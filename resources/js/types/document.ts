@@ -11,6 +11,7 @@ export type DocumentLineDraft = {
     key: string;
     id: string | null;
     productServiceId: string | null;
+    productServiceName?: string | null;
     description: string;
     itemPrice: string;
     quantity: string;
@@ -24,6 +25,8 @@ export type DocumentLineDraft = {
     taxMode?: 'INHERIT_CUSTOMER' | 'EXPLICIT' | 'NONE';
     priceStatus?: 'COPIED' | 'ENTER_MANUALLY' | 'CURRENCY_MISMATCH' | null;
     finalLineTotal: string | null;
+    isCustomized?: boolean;
+    sourceApplied?: boolean;
 };
 
 export type DocumentLineLimits = {
@@ -34,11 +37,17 @@ export type DocumentLineLimits = {
 
 export type DocumentLineLabels = {
     line: string;
+    product_or_service: string;
+    select_product: string;
     move_up: string;
     move_down: string;
     remove_line: string;
     line_total: string;
     incomplete: string;
+    subtotal: string;
+    tax_total: string;
+    provenance_default: string;
+    provenance_customized: string;
     fields: Record<string, string>;
     periods: Record<DocumentPeriodUnit, string>;
     tax_modes?: Record<'INHERIT_CUSTOMER' | 'EXPLICIT' | 'NONE', string>;
@@ -72,6 +81,7 @@ export type DocumentCustomerSelection = {
 
 export type DocumentProductDefaults = {
     sourceProductServiceId: string;
+    name?: string;
     description: string;
     unitPrice: string | null;
     priceStatus: 'COPIED' | 'ENTER_MANUALLY' | 'CURRENCY_MISMATCH';
@@ -124,8 +134,8 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     title: string;
     description: string;
     add_line: string;
-    subtotal: string;
-    tax_total: string;
+    products_services_section: string;
+    products_services_description: string;
     total: string;
     save: string;
     unsaved_warning: string;
@@ -154,7 +164,6 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     create_product: string;
     create_product_title: string;
     create_product_description: string;
-    select_product: string;
     product_search_title: string;
     product_search_description: string;
     product_search_label: string;
@@ -169,6 +178,8 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     currency: string;
     language: string;
     tax_default: string;
+    billing_contact: string;
+    tax_identifier: string;
     recipients: string;
     delivery: string;
     bank_account: string;

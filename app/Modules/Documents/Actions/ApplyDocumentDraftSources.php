@@ -26,6 +26,11 @@ final class ApplyDocumentDraftSources
             ->first();
         $currencyChanged = $currencyCode !== $document->currency_code;
         $bankChanged = $bankAccountId !== $bankSnapshot?->bank_account_id;
+        $defaultsChanged = $currencyChanged
+            || $documentLanguage !== $document->document_language
+            || $bankChanged
+            || $termsAndConditions !== $document->terms_and_conditions
+            || $notes !== $document->notes;
 
         if ($currencyChanged) {
             $currency = $currencyCode === null
@@ -48,6 +53,7 @@ final class ApplyDocumentDraftSources
             'document_language' => $documentLanguage,
             'terms_and_conditions' => $termsAndConditions,
             'notes' => $notes,
+            'defaults_customized' => $document->defaults_customized || $defaultsChanged,
         ]);
 
         if (! $bankChanged) {

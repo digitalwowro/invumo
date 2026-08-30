@@ -62,6 +62,7 @@ final class UpdateInvoiceDraftRequest extends FormRequest
             'lines.*.tax_name' => ['nullable', 'string', 'max:'.DocumentFieldLimits::TAX_NAME],
             'lines.*.tax_percentage' => ['required', 'string', $this->decimal('percentage')],
             'lines.*.tax_preset_id' => ['nullable', 'uuid'],
+            'lines.*.source_applied' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -98,6 +99,7 @@ final class UpdateInvoiceDraftRequest extends FormRequest
                 taxName: $this->stringOrNull($line['tax_name'] ?? null),
                 taxPercentage: (string) $line['tax_percentage'],
                 taxPresetId: $this->stringOrNull($line['tax_preset_id'] ?? null),
+                sourceApplied: (bool) ($line['source_applied'] ?? false),
             ), $lines),
         );
     }

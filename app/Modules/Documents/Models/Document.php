@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $customer_reference
  * @property string|null $terms_and_conditions
  * @property string|null $notes
+ * @property bool $defaults_customized
  * @property string $subtotal
  * @property string $tax_total
  * @property string $total
@@ -39,7 +40,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'number_series_id', 'number_period_key', 'number_sequence',
     'client_creation_key', 'issue_date', 'currency_code',
     'currency_precision', 'document_language', 'customer_reference', 'terms_and_conditions',
-    'notes', 'subtotal', 'tax_total', 'total', 'edit_version', 'content_version',
+    'notes', 'defaults_customized', 'subtotal', 'tax_total', 'total', 'edit_version',
+    'content_version',
 ])]
 class Document extends TenantOwnedModel
 {
@@ -94,6 +96,7 @@ class Document extends TenantOwnedModel
             'number_sequence' => 'integer',
             'issue_date' => 'immutable_date',
             'currency_precision' => 'integer',
+            'defaults_customized' => 'boolean',
             'edit_version' => 'integer',
             'content_version' => 'integer',
         ];

@@ -1,6 +1,7 @@
 import { Paperclip } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DocumentDeliveryRetryDialog } from '@/features/delivery/components/document-delivery-retry-dialog';
+import { cn } from '@/lib/utils';
 import type {
     DeliveryHistoryItem,
     DocumentDeliveryTranslations,
@@ -11,6 +12,7 @@ type Props = {
     locale: string;
     timezone: string;
     labels: DocumentDeliveryTranslations;
+    embedded?: boolean;
 };
 
 export function DocumentDeliveryHistory({
@@ -18,6 +20,7 @@ export function DocumentDeliveryHistory({
     locale,
     timezone,
     labels,
+    embedded = false,
 }: Props) {
     if (items.length === 0) {
         return (
@@ -37,7 +40,12 @@ export function DocumentDeliveryHistory({
               }).format(new Date(value));
 
     return (
-        <div className="divide-y divide-divider rounded-lg border border-border">
+        <div
+            className={cn(
+                'divide-y divide-divider',
+                !embedded && 'rounded-lg border border-border',
+            )}
+        >
             {items.map((item) => (
                 <article
                     key={item.id}

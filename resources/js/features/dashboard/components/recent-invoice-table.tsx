@@ -30,13 +30,16 @@ export function RecentInvoiceTable({ invoices, labels }: Props) {
             key: 'invoice',
             label: copy.columns.invoice,
             kind: 'identity',
+            render: (invoice) => <BodyStrong>{invoice.number}</BodyStrong>,
+        },
+        {
+            key: 'customer',
+            label: copy.columns.customer,
+            kind: 'text',
             render: (invoice) => (
-                <div className="flex flex-col gap-1">
-                    <BodyStrong>{invoice.number}</BodyStrong>
-                    <SecondaryText>
-                        {invoice.customerName ?? copy.not_available}
-                    </SecondaryText>
-                </div>
+                <TableValue>
+                    {invoice.customerName ?? copy.not_available}
+                </TableValue>
             ),
         },
         {
@@ -49,7 +52,9 @@ export function RecentInvoiceTable({ invoices, labels }: Props) {
                         {invoice.issueDate ?? copy.not_available}
                     </TableValue>
                     <SecondaryText>
-                        {invoice.dueDate ?? copy.not_available}
+                        {invoice.dueDate === null
+                            ? copy.not_available
+                            : copy.due.replace(':date', invoice.dueDate)}
                     </SecondaryText>
                 </div>
             ),
@@ -59,11 +64,21 @@ export function RecentInvoiceTable({ invoices, labels }: Props) {
             label: copy.columns.total,
             kind: 'amount',
             render: (invoice) => (
-                <TableAmount>
-                    {invoice.total === null
-                        ? copy.not_available
-                        : `${invoice.total} ${invoice.currencyCode ?? ''}`}
-                </TableAmount>
+                <div className="flex flex-col items-end gap-1">
+                    <TableAmount>
+                        {invoice.total} {invoice.currencyCode}
+                    </TableAmount>
+                    <SecondaryText>
+                        {invoice.lifecycle === 'DRAFT'
+                            ? copy.not_issued
+                            : invoice.outstanding === '0.00'
+                              ? copy.settled
+                              : copy.open.replace(
+                                    ':amount',
+                                    invoice.outstanding,
+                                )}
+                    </SecondaryText>
+                </div>
             ),
         },
         {
@@ -110,6 +125,7 @@ export function RecentInvoiceTable({ invoices, labels }: Props) {
             onRowActivate={(invoice) => router.visit(invoice.viewUrl)}
             state={invoices.length === 0 ? 'empty' : 'ready'}
             stateCopy={stateCopy}
+            embedded
         />
     );
 }

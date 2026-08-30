@@ -28,6 +28,7 @@ use App\Modules\Quotes\Actions\CreateQuoteDraft;
 use Closure;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class QuoteSourceSnapshotTest extends TestCase
@@ -142,6 +143,7 @@ final class QuoteSourceSnapshotTest extends TestCase
             $company, $product, 'currency_code' => 'RON',
         ]))->assertOk()->json();
         $this->assertSame('COPIED', $defaults['priceStatus']);
+        $this->assertSame($product->name, $defaults['name']);
         $this->patch(route('quotes.update', [$company, $quote]), [
             ...$this->draft(),
             'lines' => [$this->line(
@@ -154,6 +156,9 @@ final class QuoteSourceSnapshotTest extends TestCase
         $line = $this->tenant($company, fn (): DocumentLine => DocumentLine::query()->sole());
         $this->assertSame($product->id, $line->product_service_id);
         $this->assertSame($tax->id, $line->tax_preset_id);
+        $this->get(route('quotes.edit', [$company, $quote]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('quote.lines.0.productServiceName', $product->name));
         $this->tenant($company, fn () => $product->update(['archived_at' => now()]));
 
         $this->patch(route('quotes.update', [$company, $quote]), [

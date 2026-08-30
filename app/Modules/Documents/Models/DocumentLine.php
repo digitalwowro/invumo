@@ -28,13 +28,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
  * @property string|null $grand_subtotal
  * @property string|null $tax_amount
  * @property string|null $final_line_total
+ * @property bool $is_customized
  */
 #[Fillable([
     'document_id', 'position', 'product_service_id', 'description',
     'item_price', 'quantity', 'unit', 'period_unit', 'period_quantity',
     'discount_percentage', 'discount_amount', 'tax_preset_id', 'tax_name',
     'tax_percentage', 'items_subtotal', 'items_total', 'grand_subtotal',
-    'tax_amount', 'final_line_total',
+    'tax_amount', 'final_line_total', 'is_customized',
 ])]
 class DocumentLine extends TenantOwnedModel
 {
@@ -44,6 +45,7 @@ class DocumentLine extends TenantOwnedModel
         return [
             'position' => 'integer',
             'period_unit' => PeriodUnit::class,
+            'is_customized' => 'boolean',
         ];
     }
 }

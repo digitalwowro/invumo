@@ -5,11 +5,15 @@ import type { DocumentLineLabels } from '@/types/document';
 
 const labels = {
     line: 'Line',
+    product_or_service: 'Product or Service',
+    select_product: 'Select Product or Service',
     move_up: 'Move up',
     move_down: 'Move down',
     remove_line: 'Remove',
     line_total: 'Line total',
     incomplete: 'Incomplete',
+    subtotal: 'Subtotal',
+    tax_total: 'Tax',
     fields: {
         description: 'Description',
         item_price: 'Item price',
@@ -22,12 +26,15 @@ const labels = {
         tax_percentage: 'Tax',
     },
     periods: { NONE: 'None', MONTH: 'Month', YEAR: 'Year' },
+    provenance_default: 'Default',
+    provenance_customized: 'Customized',
 } satisfies DocumentLineLabels;
 
 const line = {
     key: 'local-1',
     id: null,
     productServiceId: null,
+    productServiceName: 'Consulting',
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -39,6 +46,8 @@ const line = {
     taxPercentage: '0',
     taxPresetId: null,
     finalLineTotal: null,
+    isCustomized: true,
+    sourceApplied: false,
 };
 
 describe('QuoteLineCard', () => {
@@ -46,6 +55,7 @@ describe('QuoteLineCard', () => {
         const onChange = vi.fn();
         const onMove = vi.fn();
         const onRemove = vi.fn();
+        const onSelectProduct = vi.fn();
 
         render(
             <DocumentLineCard
@@ -59,6 +69,7 @@ describe('QuoteLineCard', () => {
                 }}
                 labels={labels}
                 errors={{}}
+                onSelectProduct={onSelectProduct}
                 onChange={onChange}
                 onMove={onMove}
                 onRemove={onRemove}
@@ -70,6 +81,11 @@ describe('QuoteLineCard', () => {
         });
         fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
         fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Select Product or Service',
+            }),
+        );
 
         expect(onChange).toHaveBeenCalledWith({
             ...line,
@@ -77,6 +93,14 @@ describe('QuoteLineCard', () => {
         });
         expect(onMove).toHaveBeenCalledWith(-1);
         expect(onRemove).toHaveBeenCalledOnce();
+        expect(onSelectProduct).toHaveBeenCalledOnce();
+        expect(screen.getByLabelText('Product or Service')).toHaveValue(
+            'Consulting',
+        );
+        expect(screen.getByLabelText('Product or Service')).toHaveAttribute(
+            'readonly',
+        );
         expect(screen.getByText(/Incomplete/)).toBeInTheDocument();
+        expect(screen.getByText('Customized')).toBeInTheDocument();
     });
 });

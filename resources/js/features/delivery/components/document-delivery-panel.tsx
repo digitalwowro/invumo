@@ -1,10 +1,5 @@
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { ContentSection } from '@/components/app/content-section';
+import { FactStrip } from '@/components/app/fact-strip';
 import { DocumentDeliveryComposer } from '@/features/delivery/components/document-delivery-composer';
 import { DocumentDeliveryHistory } from '@/features/delivery/components/document-delivery-history';
 import type {
@@ -23,25 +18,46 @@ export function DocumentDeliveryPanel({
     labels,
     documentDirty = false,
 }: Props) {
+    const composer = delivery.composer;
+
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-1">
-                        <CardTitle>{labels.title}</CardTitle>
-                        <CardDescription>{labels.description}</CardDescription>
-                    </div>
-                    {delivery.composer && (
-                        <DocumentDeliveryComposer
-                            composer={delivery.composer}
-                            limits={delivery.limits}
-                            labels={labels.composer}
-                            disabled={documentDirty}
-                        />
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
+        <ContentSection
+            title={labels.title}
+            description={labels.description}
+            headerActions={
+                composer ? (
+                    <DocumentDeliveryComposer
+                        composer={composer}
+                        limits={delivery.limits}
+                        labels={labels.composer}
+                        disabled={documentDirty}
+                    />
+                ) : undefined
+            }
+        >
+            {composer && (
+                <FactStrip
+                    tone="subtle"
+                    className="border-b border-divider"
+                    facts={[
+                        {
+                            label: labels.composer.recipients,
+                            value: String(composer.recipients.length),
+                        },
+                        {
+                            label: labels.composer.attachment_mode,
+                            value: labels.composer.modes[
+                                composer.attachmentMode
+                            ],
+                        },
+                        {
+                            label: labels.composer.language,
+                            value: composer.language.toUpperCase(),
+                        },
+                    ]}
+                />
+            )}
+            <section className="flex flex-col gap-3 p-5 sm:p-6">
                 <h3 className="font-semibold text-foreground">
                     {labels.history.title}
                 </h3>
@@ -50,8 +66,9 @@ export function DocumentDeliveryPanel({
                     locale={delivery.locale}
                     timezone={delivery.timezone}
                     labels={labels}
+                    embedded
                 />
-            </CardContent>
-        </Card>
+            </section>
+        </ContentSection>
     );
 }

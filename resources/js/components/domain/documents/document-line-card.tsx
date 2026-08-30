@@ -1,10 +1,11 @@
-import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Search, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { TextareaField, TextField } from '@/components/app/form-field';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
-import { Surface } from '@/components/app/surface';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { LineAmounts } from '@/lib/money/line-calculation';
 import type {
     DocumentLineDraft,
     DocumentLineLabels,
@@ -15,14 +16,15 @@ import type {
 
 type Props = {
     line: DocumentLineDraft;
+    amounts?: LineAmounts | null;
     index: number;
     count: number;
     limits: DocumentLineLimits;
     labels: DocumentLineLabels;
     errors: Record<string, string>;
-    sourceAction?: ReactNode;
     sourceNotice?: ReactNode;
     inheritedTax?: DocumentTaxDefault | null;
+    onSelectProduct: () => void;
     onChange: (line: DocumentLineDraft) => void;
     onMove: (direction: -1 | 1) => void;
     onRemove: () => void;
@@ -38,20 +40,45 @@ export function DocumentLineCard(props: Props) {
     );
 
     return (
-        <Surface
-            className="space-y-6"
+        <article
+            className="flex flex-col gap-5 border-b border-divider px-5 py-5 sm:px-6"
             data-test={`document-line-${props.index}`}
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">
-                    {props.labels.line} {props.index + 1}
-                </h2>
+                <div className="flex items-center gap-2">
+                    <span
+                        className="font-data text-xs font-bold tracking-[0.09em] uppercase"
+                        aria-label={`${props.labels.line} ${props.index + 1}`}
+                    >
+                        {props.labels.line} {props.index + 1}
+                    </span>
+                    {typeof props.line.isCustomized === 'boolean' && (
+                        <Badge
+                            variant={
+                                props.line.isCustomized ? 'quiet' : 'muted'
+                            }
+                        >
+                            {props.line.isCustomized
+                                ? props.labels.provenance_customized
+                                : props.labels.provenance_default}
+                        </Badge>
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-2">
-                    {props.sourceAction}
                     <Button
                         type="button"
                         variant="secondary"
-                        size="icon"
+                        size="compact"
+                        data-testid={`document-product-select-${props.index}`}
+                        onClick={props.onSelectProduct}
+                    >
+                        <Search data-icon="inline-start" aria-hidden="true" />
+                        {props.labels.select_product}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon-xs"
                         aria-label={props.labels.move_up}
                         disabled={props.index === 0}
                         onClick={() => props.onMove(-1)}
@@ -61,7 +88,7 @@ export function DocumentLineCard(props: Props) {
                     <Button
                         type="button"
                         variant="secondary"
-                        size="icon"
+                        size="icon-xs"
                         aria-label={props.labels.move_down}
                         disabled={props.index === props.count - 1}
                         onClick={() => props.onMove(1)}
@@ -71,7 +98,7 @@ export function DocumentLineCard(props: Props) {
                     <Button
                         type="button"
                         variant="destructive"
-                        size="icon"
+                        size="icon-xs"
                         aria-label={props.labels.remove_line}
                         onClick={props.onRemove}
                     >
@@ -79,6 +106,13 @@ export function DocumentLineCard(props: Props) {
                     </Button>
                 </div>
             </div>
+            <TextField
+                label={props.labels.product_or_service}
+                input={{
+                    readOnly: true,
+                    value: props.line.productServiceName ?? '',
+                }}
+            />
             {props.sourceNotice}
             {props.line.taxMode && props.labels.tax_modes && (
                 <SelectField
@@ -217,10 +251,18 @@ export function DocumentLineCard(props: Props) {
                     }}
                 />
             </Grid>
-            <p className="text-right font-mono text-sm text-foreground-muted tabular-nums">
-                {props.labels.line_total}:{' '}
-                {props.line.finalLineTotal ?? props.labels.incomplete}
-            </p>
-        </Surface>
+            <div className="font-data flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm text-foreground-muted tabular-nums">
+                {props.amounts && (
+                    <span>
+                        {props.labels.subtotal}: {props.amounts.grand_subtotal}{' '}
+                        · {props.labels.tax_total}: {props.amounts.tax_amount}
+                    </span>
+                )}
+                <span className="font-bold text-foreground">
+                    {props.labels.line_total}:{' '}
+                    {props.line.finalLineTotal ?? props.labels.incomplete}
+                </span>
+            </div>
+        </article>
     );
 }

@@ -134,6 +134,7 @@ final class CopyDocumentSnapshots
                     'discount_percentage', 'discount_amount', 'tax_preset_id',
                     'tax_name', 'tax_percentage', 'items_subtotal', 'items_total',
                     'grand_subtotal', 'tax_amount', 'final_line_total',
+                    'is_customized',
                 ]),
             ]);
         }

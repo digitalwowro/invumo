@@ -1,8 +1,8 @@
 import { Grid } from '@/components/app/layout';
-import { Surface } from '@/components/app/surface';
 import type { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import { calculateLineAmounts } from '@/lib/money/line-calculation';
 import type { LineAmounts } from '@/lib/money/line-calculation';
+import { cn } from '@/lib/utils';
 import type {
     DocumentEditorTranslations,
     DocumentLineDraft,
@@ -45,8 +45,14 @@ export function normalizeEditedLine(
     previous: DocumentLineDraft,
     next: DocumentLineDraft,
 ): DocumentLineDraft {
+    const customized = EDITABLE_LINE_FIELDS.some(
+        (field) => previous[field] !== next[field],
+    );
+
     return {
         ...next,
+        isCustomized: customized ? true : next.isCustomized,
+        sourceApplied: customized ? false : next.sourceApplied,
         taxPresetId:
             previous.taxName !== next.taxName ||
             previous.taxPercentage !== next.taxPercentage
@@ -57,6 +63,38 @@ export function normalizeEditedLine(
                 ? null
                 : next.priceStatus,
     };
+}
+
+const EDITABLE_LINE_FIELDS = [
+    'productServiceId',
+    'description',
+    'itemPrice',
+    'quantity',
+    'unit',
+    'periodUnit',
+    'periodQuantity',
+    'discountPercentage',
+    'taxName',
+    'taxPercentage',
+    'taxPresetId',
+    'taxMode',
+] as const satisfies ReadonlyArray<keyof DocumentLineDraft>;
+
+export function detachedLineDescription(
+    description: string | null,
+    productServiceName: string | null | undefined,
+): string {
+    const value = description ?? '';
+
+    if (!productServiceName) {
+        return value;
+    }
+
+    return value === productServiceName
+        ? ''
+        : value.startsWith(`${productServiceName}\n`)
+          ? value.slice(productServiceName.length + 1)
+          : value;
 }
 
 export function moveDocumentLine(
@@ -79,12 +117,19 @@ export function moveDocumentLine(
 export function DocumentTotals({
     labels,
     totals,
+    embedded = false,
 }: {
     labels: DocumentEditorTranslations;
     totals: ReturnType<typeof calculateDocumentAmounts> | null;
+    embedded?: boolean;
 }) {
     return (
-        <Surface>
+        <div
+            className={cn(
+                'bg-background px-5 py-5 sm:px-6',
+                embedded && 'border-t border-divider',
+            )}
+        >
             <Grid columns={3} gap="lg">
                 <Total label={labels.subtotal} value={totals?.grand_subtotal} />
                 <Total label={labels.tax_total} value={totals?.tax_amount} />
@@ -94,7 +139,7 @@ export function DocumentTotals({
                     strong
                 />
             </Grid>
-        </Surface>
+        </div>
     );
 }
 
@@ -108,8 +153,10 @@ function Total({
     strong?: boolean;
 }) {
     return (
-        <div className="space-y-1">
-            <p className="text-sm text-foreground-muted">{label}</p>
+        <div className="flex flex-col gap-1">
+            <p className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-muted uppercase">
+                {label}
+            </p>
             <p
                 className={`font-mono tabular-nums ${strong ? 'text-xl font-semibold' : 'text-base'}`}
             >

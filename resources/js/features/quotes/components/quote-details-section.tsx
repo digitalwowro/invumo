@@ -20,7 +20,7 @@ export function QuoteDetailsSection(props: Props) {
             title={props.labels.details_section}
             description={props.labels.details_description}
         >
-            <Grid columns={3} gap="lg">
+            <Grid columns={4} gap="lg" className="lg:grid-cols-4">
                 <TextField
                     label={props.labels.fields.issue_date}
                     error={props.errors.issue_date}
@@ -56,18 +56,20 @@ export function QuoteDetailsSection(props: Props) {
                             props.onChange('validUntil', event.target.value),
                     }}
                 />
+                <TextField
+                    label={props.labels.fields.customer_reference}
+                    error={props.errors.customer_reference}
+                    input={{
+                        value: props.customerReference,
+                        maxLength: props.limits.customerReference,
+                        onChange: (event) =>
+                            props.onChange(
+                                'customerReference',
+                                event.target.value,
+                            ),
+                    }}
+                />
             </Grid>
-            <TextField
-                label={props.labels.fields.customer_reference}
-                description={props.labels.customer_reference_description}
-                error={props.errors.customer_reference}
-                input={{
-                    value: props.customerReference,
-                    maxLength: props.limits.customerReference,
-                    onChange: (event) =>
-                        props.onChange('customerReference', event.target.value),
-                }}
-            />
         </FormSection>
     );
 }

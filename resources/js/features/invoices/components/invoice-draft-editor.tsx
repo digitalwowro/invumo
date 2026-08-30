@@ -9,7 +9,6 @@ import { DocumentDefaultsSection } from '@/components/domain/documents/document-
 import {
     calculateDocumentLine,
     completeLine,
-    DocumentTotals,
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
 import { InvoiceDetailsSection } from '@/features/invoices/components/invoice-details-section';
@@ -129,12 +128,19 @@ export function InvoiceDraftEditor(props: Props) {
                 index,
                 defaults,
                 customer.taxDefault,
+                precision,
             ),
         );
     };
 
     const changeDefault = (field: string, value: string | null) => {
-        form.setData(field as keyof typeof form.data, value as never);
+        form.setData((current) => ({
+            ...current,
+            [field]: value,
+            defaultsCustomized:
+                current.defaultsCustomized ||
+                current[field as keyof typeof current] !== value,
+        }));
 
         if (field === 'currencyCode') {
             setPrecision(
@@ -212,28 +218,10 @@ export function InvoiceDraftEditor(props: Props) {
                         errors={errors}
                         onChange={changeDetail}
                     />
-                    <DocumentDefaultsSection
-                        customer={customer}
-                        currencyCode={form.data.currencyCode}
-                        documentLanguage={form.data.documentLanguage}
-                        bankAccountId={form.data.bankAccountId}
-                        bankAccountLabel={
-                            props.invoice.bankAccount?.label ?? null
-                        }
-                        termsAndConditions={form.data.termsAndConditions}
-                        notes={form.data.notes}
-                        currencyOptions={props.currencyOptions}
-                        languageOptions={props.languageOptions}
-                        bankAccountOptions={props.bankAccountOptions}
-                        termsLimit={props.limits.termsAndConditions}
-                        notesLimit={props.limits.notes}
-                        labels={props.labels}
-                        errors={errors}
-                        onChange={changeDefault}
-                    />
                     <DocumentLineEditor
                         lines={form.data.lines}
                         calculated={calculated}
+                        totals={totals}
                         taxDefault={customer.taxDefault}
                         limits={props.limits}
                         labels={props.labels}
@@ -245,7 +233,28 @@ export function InvoiceDraftEditor(props: Props) {
                             setProductSelector(true);
                         }}
                     />
-                    <DocumentTotals labels={props.labels} totals={totals} />
+                    <DocumentDefaultsSection
+                        currencyCode={form.data.currencyCode}
+                        documentLanguage={form.data.documentLanguage}
+                        bankAccountId={form.data.bankAccountId}
+                        bankAccountLabel={
+                            props.invoice.bankAccount?.label ?? null
+                        }
+                        taxDefault={customer.taxDefault}
+                        recipientCount={customer.recipientCount}
+                        emailAttachmentMode={customer.emailAttachmentMode}
+                        termsAndConditions={form.data.termsAndConditions}
+                        notes={form.data.notes}
+                        isCustomized={form.data.defaultsCustomized}
+                        currencyOptions={props.currencyOptions}
+                        languageOptions={props.languageOptions}
+                        bankAccountOptions={props.bankAccountOptions}
+                        termsLimit={props.limits.termsAndConditions}
+                        notesLimit={props.limits.notes}
+                        labels={props.labels}
+                        errors={errors}
+                        onChange={changeDefault}
+                    />
                     {props.showActions !== false && (
                         <InvoiceEditorLifecycleActions
                             lifecycle={props.invoice.lifecycle}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { normalizeEditedLine } from '@/components/domain/documents/document-draft-lines';
 import {
     addCalendarDays,
+    applyProductDefaults,
     blankQuoteLine,
     changeQuoteDetail,
     customerFromQuote,
@@ -18,10 +19,15 @@ const quote: QuoteDraft = {
     customerReference: 'PO-42',
     lifecycle: 'DRAFT',
     status: 'DRAFT',
-    customer: { id: 'customer-1', displayName: 'Customer SRL' },
+    customer: {
+        id: 'customer-1',
+        displayName: 'Customer SRL',
+        snapshot: null,
+    },
     currencyCode: 'RON',
     currencyPrecision: 2,
     documentLanguage: 'ro',
+    defaultsCustomized: false,
     termsAndConditions: 'Terms',
     notes: 'Notes',
     taxDefault: { id: 'tax-1', name: 'TVA', percentage: '19' },
@@ -56,6 +62,8 @@ describe('Quote Draft source form data', () => {
             productServiceId: null,
             taxPresetId: 'tax-1',
             taxPercentage: '19',
+            isCustomized: true,
+            sourceApplied: false,
         });
     });
 
@@ -73,6 +81,8 @@ describe('Quote Draft source form data', () => {
             productServiceId: 'product-1',
             taxPresetId: 'tax-1',
             priceStatus: null,
+            isCustomized: true,
+            sourceApplied: false,
         });
         expect(
             normalizeEditedLine(line, { ...line, taxPercentage: '20' }),
@@ -80,6 +90,28 @@ describe('Quote Draft source form data', () => {
             productServiceId: 'product-1',
             taxPresetId: null,
         });
+    });
+
+    it('marks a freshly applied catalog source as default', () => {
+        expect(
+            applyProductDefaults(
+                [blankQuoteLine(quote.taxDefault)],
+                0,
+                {
+                    sourceProductServiceId: 'product-1',
+                    name: 'Consulting',
+                    description: 'Work',
+                    unitPrice: '100',
+                    priceStatus: 'COPIED',
+                    sourceCurrencyCode: 'RON',
+                    unit: 'hour',
+                    periodUnit: 'NONE',
+                    tax: null,
+                },
+                quote.taxDefault,
+                quote.currencyPrecision,
+            )[0],
+        ).toMatchObject({ isCustomized: false, sourceApplied: true });
     });
 
     it('derives calendar validity without crossing the supported year range', () => {
@@ -92,6 +124,25 @@ describe('Quote Draft source form data', () => {
         ).toMatchObject({
             validityDays: '45',
             validUntil: '2026-10-10',
+        });
+    });
+
+    it('presents persisted decimals without storage padding', () => {
+        const line = {
+            ...blankQuoteLine(quote.taxDefault),
+            itemPrice: '1800.00000000',
+            quantity: '1.250000',
+            discountPercentage: '10.000000',
+            taxPercentage: '19.000000',
+        };
+
+        expect(
+            quoteFormData({ ...quote, lines: [line] }).lines[0],
+        ).toMatchObject({
+            itemPrice: '1800.00',
+            quantity: '1.25',
+            discountPercentage: '10',
+            taxPercentage: '19',
         });
     });
 });

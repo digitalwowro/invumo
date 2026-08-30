@@ -79,7 +79,10 @@ final class InvoiceDraftHttpTest extends TestCase
         $this->tenant($company, function (): void {
             $document = Document::query()->sole();
             $this->assertSame('214.20000000', $document->total);
-            $this->assertSame('214.20000000', DocumentLine::query()->sole()->final_line_total);
+            $line = DocumentLine::query()->sole();
+            $this->assertSame('214.20000000', $line->final_line_total);
+            $this->assertTrue($line->is_customized);
+            $this->assertFalse($document->defaults_customized);
             $this->assertSame(2, $document->edit_version);
             $audit = AuditEvent::query()->where('action', 'company.invoice.draft_updated')->sole();
             $encoded = json_encode([$audit->before, $audit->after], JSON_THROW_ON_ERROR);
@@ -93,6 +96,20 @@ final class InvoiceDraftHttpTest extends TestCase
                 ->component('invoices/index')
                 ->has('invoices.items', 1)
                 ->where('invoices.items.0.customerReference', '50%'));
+
+        $this->patch(route('invoices.update', [$company, $invoice]), [
+            ...$this->defaults(),
+            'edit_version' => 2,
+            'notes' => 'Only for this Invoice',
+            'lines' => [[
+                ...$this->line('Consulting', '100.00', '2.000000', '10', 'TVA', '19'),
+                'id' => $this->tenant($company, fn (): string => DocumentLine::query()->sole()->id),
+            ]],
+        ])->assertRedirect()->assertSessionDoesntHaveErrors();
+
+        $this->tenant($company, fn () => $this->assertTrue(
+            Document::query()->sole()->defaults_customized,
+        ));
     }
 
     public function test_confirmed_customer_applies_payment_terms_and_detached_snapshot(): void
@@ -102,6 +119,12 @@ final class InvoiceDraftHttpTest extends TestCase
         $customer = $this->tenant($company, fn (): Customer => Customer::query()->create([
             'type' => CustomerType::Company,
             'legal_name' => 'Customer SRL',
+            'email' => 'billing@customer.example',
+            'address_line_1' => 'Strada Exemplu 10',
+            'city' => 'Cluj-Napoca',
+            'country_code' => 'RO',
+            'tax_registration_label' => 'CUI',
+            'tax_registration_identifier' => 'RO12345678',
             'payment_term_days' => 14,
         ]));
         $invoice = app(CreateInvoiceDraft::class)->handle(
@@ -130,6 +153,12 @@ final class InvoiceDraftHttpTest extends TestCase
             $this->assertSame($customer->id, Document::query()->sole()->customer_id);
             $this->assertSame('Customer SRL', $snapshot->legal_name);
         });
+        $this->actingAs($owner)
+            ->get(route('invoices.edit', [$company, $invoice]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('invoice.customer.snapshot.email', 'billing@customer.example')
+                ->where('invoice.customer.snapshot.address_line_1', 'Strada Exemplu 10')
+                ->where('invoice.customer.snapshot.tax_registration_identifier', 'RO12345678'));
     }
 
     public function test_roles_localization_stale_writes_and_cross_company_access_fail_closed(): void

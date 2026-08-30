@@ -43,7 +43,8 @@ final readonly class CatalogLineDefaults
 
         return [
             'sourceProductServiceId' => $product->id,
-            'description' => $this->lineDescription($product),
+            'name' => $product->name,
+            'description' => $product->description ?? '',
             'unitPrice' => $priceMatches && $product->unit_price !== null
                 ? (string) DecimalRules::moneySource($product->unit_price)->toScale(
                     DecimalRules::currencyPrecision($sourceCurrency->currency_precision),
@@ -63,12 +64,5 @@ final readonly class CatalogLineDefaults
                 'percentage' => $taxPreset->percentage,
             ] : null,
         ];
-    }
-
-    private function lineDescription(ProductService $product): string
-    {
-        return $product->description === null
-            ? $product->name
-            : $product->name."\n".$product->description;
     }
 }

@@ -32,7 +32,8 @@ final class CatalogLineDefaultsTest extends TestCase
 
         $matched = $this->tenant($company, fn (): array => app(CatalogLineDefaults::class)
             ->for($company, $member, $product->id, 'RON'));
-        $this->assertSame('Consulting'."\n".'Detailed work', $matched['description']);
+        $this->assertSame('Consulting', $matched['name']);
+        $this->assertSame('Detailed work', $matched['description']);
         $this->assertSame('120.50', $matched['unitPrice']);
         $this->assertSame('COPIED', $matched['priceStatus']);
         $this->assertSame('hour', $matched['unit']);
@@ -48,7 +49,7 @@ final class CatalogLineDefaultsTest extends TestCase
         $this->tenant($company, fn () => $product->update([
             'name' => 'Changed source', 'description' => null, 'unit_price' => '99.00000000',
         ]));
-        $this->assertSame('Consulting'."\n".'Detailed work', $matched['description']);
+        $this->assertSame('Detailed work', $matched['description']);
         $this->assertSame('120.50', $matched['unitPrice']);
     }
 

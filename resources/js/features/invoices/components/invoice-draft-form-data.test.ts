@@ -3,6 +3,7 @@ import { normalizeEditedLine } from '@/components/domain/documents/document-draf
 import {
     addCalendarDays,
     applyInvoiceCustomerDefaults,
+    applyInvoiceProductDefaults,
     blankInvoiceLine,
     changeInvoiceDetail,
     customerFromInvoice,
@@ -22,10 +23,15 @@ const invoice: InvoiceDraft = {
     paymentState: null,
     isOverdue: false,
     displayStatus: 'DRAFT',
-    customer: { id: 'customer-1', displayName: 'Customer SRL' },
+    customer: {
+        id: 'customer-1',
+        displayName: 'Customer SRL',
+        snapshot: null,
+    },
     currencyCode: 'RON',
     currencyPrecision: 2,
     documentLanguage: 'ro',
+    defaultsCustomized: false,
     termsAndConditions: 'Terms',
     notes: 'Notes',
     taxDefault: { id: 'tax-1', name: 'TVA', percentage: '19' },
@@ -54,6 +60,8 @@ describe('Invoice Draft form data', () => {
         expect(blankInvoiceLine(invoice.taxDefault)).toMatchObject({
             taxPresetId: 'tax-1',
             taxPercentage: '19',
+            isCustomized: true,
+            sourceApplied: false,
         });
     });
 
@@ -65,6 +73,61 @@ describe('Invoice Draft form data', () => {
             payment_term_days: 30,
             customer_reference: 'PO-42',
             lines: [],
+        });
+    });
+
+    it('marks a reapplied catalog source as default until it is edited', () => {
+        const applied = applyInvoiceProductDefaults(
+            [blankInvoiceLine(invoice.taxDefault)],
+            0,
+            {
+                sourceProductServiceId: 'product-1',
+                name: 'Consulting',
+                description: 'Work',
+                unitPrice: '100',
+                priceStatus: 'COPIED',
+                sourceCurrencyCode: 'RON',
+                unit: 'hour',
+                periodUnit: 'NONE',
+                tax: null,
+            },
+            invoice.taxDefault,
+            invoice.currencyPrecision,
+        )[0];
+
+        expect(applied).toMatchObject({
+            isCustomized: false,
+            sourceApplied: true,
+        });
+        expect(
+            invoiceRequestData({
+                ...invoiceFormData(invoice),
+                lines: [applied],
+            }).lines[0],
+        ).toMatchObject({ source_applied: true });
+    });
+
+    it('separates a legacy catalog name prefix from the line description', () => {
+        const existingLine = {
+            ...blankInvoiceLine(invoice.taxDefault),
+            id: 'line-1',
+            productServiceName: 'Consulting',
+            description: 'Consulting\nDetailed work',
+            itemPrice: '1800.00000000',
+            quantity: '1.500000',
+            discountPercentage: '10.000000',
+            taxPercentage: '19.000000',
+        };
+
+        expect(
+            invoiceFormData({ ...invoice, lines: [existingLine] }).lines[0],
+        ).toMatchObject({
+            productServiceName: 'Consulting',
+            description: 'Detailed work',
+            itemPrice: '1800.00',
+            quantity: '1.5',
+            discountPercentage: '10',
+            taxPercentage: '19',
         });
     });
 
@@ -102,6 +165,10 @@ describe('Invoice Draft form data', () => {
         };
         expect(
             normalizeEditedLine(line, { ...line, itemPrice: '25' }),
-        ).toMatchObject({ priceStatus: null });
+        ).toMatchObject({
+            priceStatus: null,
+            isCustomized: true,
+            sourceApplied: false,
+        });
     });
 });

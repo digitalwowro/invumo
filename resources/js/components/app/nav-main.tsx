@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { resolveActiveNavItem } from '@/components/app/resolve-active-nav-item';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -19,7 +20,8 @@ export function NavMain({
     items: NavItem[];
     label?: string;
 }) {
-    const { isCurrentUrl } = useCurrentUrl();
+    const { currentUrl } = useCurrentUrl();
+    const activeItem = resolveActiveNavItem(items, currentUrl);
 
     return (
         <SidebarGroup>
@@ -29,7 +31,8 @@ export function NavMain({
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild
-                            isActive={isCurrentUrl(item.href)}
+                            isActive={item === activeItem}
+                            className="text-sidebar-nav"
                             tooltip={{ children: item.title }}
                         >
                             <Link href={item.href} prefetch>

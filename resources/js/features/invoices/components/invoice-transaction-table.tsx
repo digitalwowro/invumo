@@ -22,6 +22,7 @@ type Props = {
     labels: InvoiceTransactionTranslations;
     disabled: boolean;
     disabledDescription: string;
+    embedded?: boolean;
 };
 
 export function InvoiceTransactionTable(props: Props) {
@@ -155,6 +156,7 @@ export function InvoiceTransactionTable(props: Props) {
                 errorTitle: labels.error_title,
                 errorDescription: labels.error_description,
             }}
+            embedded={props.embedded}
         />
     );
 }

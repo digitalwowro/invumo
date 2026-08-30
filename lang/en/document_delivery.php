@@ -12,6 +12,7 @@ return [
         'button_label' => 'Secure-link button label',
         'signature' => 'Signature',
         'attachment_mode' => 'Delivery mode',
+        'language' => 'Language',
         'modes' => [
             'SECURE_LINK_ONLY' => 'Secure link only',
             'ATTACH_PDF' => 'Secure link and attached PDF',

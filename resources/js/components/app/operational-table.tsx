@@ -9,6 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type OperationalTableState =
     'ready' | 'loading' | 'empty' | 'no-results' | 'error';
@@ -45,6 +46,7 @@ type OperationalTableProps<Row> = {
     stateAction?: ReactNode;
     onRowActivate?: (row: Row) => void;
     rowLabel?: (row: Row) => string;
+    embedded?: boolean;
 };
 
 const cellClasses: Record<ColumnKind, string> = {
@@ -112,6 +114,7 @@ export function OperationalTable<Row>({
     stateAction,
     onRowActivate,
     rowLabel,
+    embedded = false,
 }: OperationalTableProps<Row>) {
     const activateFromKeyboard = (
         event: KeyboardEvent<HTMLTableRowElement>,
@@ -128,7 +131,10 @@ export function OperationalTable<Row>({
     return (
         <div
             data-slot="operational-table"
-            className="w-full max-w-full min-w-0 overflow-hidden rounded-lg border border-border bg-background"
+            className={cn(
+                'w-full max-w-full min-w-0 overflow-hidden border border-border bg-background',
+                embedded ? 'rounded-none border-x-0 border-b-0' : 'rounded-lg',
+            )}
         >
             {toolbar && (
                 <div className="border-b border-divider p-4">{toolbar}</div>

@@ -1,9 +1,12 @@
+import { Link } from '@inertiajs/react';
 import { ReceiptText } from 'lucide-react';
+import { useState } from 'react';
+import { ContentSection } from '@/components/app/content-section';
 import { Stack } from '@/components/app/layout';
 import { MetricStrip } from '@/components/app/metric-strip';
 import type { MetricStripItem } from '@/components/app/metric-strip';
-import { SectionHeader } from '@/components/app/section-header';
 import { MoneyValue } from '@/components/domain/money-value';
+import { Button } from '@/components/ui/button';
 import {
     Empty,
     EmptyDescription,
@@ -11,12 +14,20 @@ import {
     EmptyMedia,
     EmptyTitle,
 } from '@/components/ui/empty';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { DashboardActivityGrid } from '@/features/dashboard/components/dashboard-activity-grid';
+import { DashboardBalanceOverview } from '@/features/dashboard/components/dashboard-balance-overview';
+import { DashboardCurrencySwitcher } from '@/features/dashboard/components/dashboard-currency-switcher';
+import { DashboardHealthGrid } from '@/features/dashboard/components/dashboard-health-grid';
 import { RecentInvoiceTable } from '@/features/dashboard/components/recent-invoice-table';
+import { interpolate } from '@/lib/translations';
 import type {
     DashboardCurrencyGroup,
     DashboardData,
     DashboardTranslations,
 } from '@/types/dashboard';
+
+type RecentScope = 'all' | 'unpaid' | 'drafts';
 
 type Props = {
     dashboard: DashboardData;
@@ -24,56 +35,111 @@ type Props = {
 };
 
 export function DashboardContent({ dashboard, labels }: Props) {
-    return (
-        <Stack gap="2xl">
-            {dashboard.currencyGroups.length === 0 ? (
-                <Empty>
-                    <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                            <ReceiptText aria-hidden="true" />
-                        </EmptyMedia>
-                        <EmptyTitle>{labels.activity.empty_title}</EmptyTitle>
-                        <EmptyDescription>
-                            {labels.activity.empty_description}
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
-            ) : (
-                dashboard.currencyGroups.map((group) => (
-                    <CurrencyMetrics
-                        key={group.currencyCode}
-                        group={group}
-                        labels={labels}
-                    />
-                ))
-            )}
+    const [currency, setCurrency] = useState(
+        dashboard.currencyGroups[0]?.currencyCode ?? '',
+    );
+    const [recentScope, setRecentScope] = useState<RecentScope>('all');
+    const group =
+        dashboard.currencyGroups.find(
+            (candidate) => candidate.currencyCode === currency,
+        ) ?? dashboard.currencyGroups[0];
 
-            <section className="min-w-0">
-                <Stack gap="lg">
-                    <SectionHeader
-                        title={labels.recent.title}
-                        description={labels.recent.description}
-                    />
-                    <RecentInvoiceTable
-                        invoices={dashboard.recentInvoices}
-                        labels={labels}
-                    />
-                </Stack>
-            </section>
+    if (!group) {
+        return (
+            <Empty>
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <ReceiptText aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle>{labels.activity.empty_title}</EmptyTitle>
+                    <EmptyDescription>
+                        {labels.activity.empty_description}
+                    </EmptyDescription>
+                </EmptyHeader>
+            </Empty>
+        );
+    }
+
+    return (
+        <Stack gap="xl">
+            <DashboardCurrencySwitcher
+                groups={dashboard.currencyGroups}
+                value={group.currencyCode}
+                onValueChange={setCurrency}
+                labels={labels}
+            />
+            <DashboardBalanceOverview
+                group={group}
+                labels={labels}
+                monthLabel={dashboard.monthLabel}
+                expectedThroughDate={dashboard.expectedThroughDate}
+            />
+            <DashboardMetricStrip group={group} labels={labels} />
+            <DashboardActivityGrid
+                group={group}
+                labels={labels}
+                invoicesUrl={dashboard.invoicesUrl}
+                recurringUrl={dashboard.recurringUrl}
+            />
+            <ContentSection
+                title={labels.recent.title}
+                description={interpolate(labels.recent.description, {
+                    currency: group.currencyCode,
+                })}
+                headerActions={
+                    <ToggleGroup
+                        type="single"
+                        variant="outline"
+                        value={recentScope}
+                        aria-label={labels.recent.title}
+                        onValueChange={(value) =>
+                            value && setRecentScope(value as RecentScope)
+                        }
+                        className="bg-background"
+                    >
+                        {(['all', 'unpaid', 'drafts'] as const).map((scope) => (
+                            <ToggleGroupItem
+                                key={scope}
+                                value={scope}
+                                className="text-xs data-[state=on]:bg-foreground data-[state=on]:text-foreground-inverse"
+                            >
+                                {labels.recent.scopes[scope]}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
+                }
+                footer={
+                    <Button asChild variant="ghost" size="compact">
+                        <Link href={dashboard.invoicesUrl}>
+                            {labels.recent.view_all}
+                        </Link>
+                    </Button>
+                }
+            >
+                <RecentInvoiceTable
+                    invoices={group.recentInvoices[recentScope]}
+                    labels={labels}
+                />
+            </ContentSection>
+            <DashboardHealthGrid
+                group={group}
+                labels={labels}
+                invoicesUrl={dashboard.invoicesUrl}
+            />
         </Stack>
     );
 }
 
-function CurrencyMetrics({
+function DashboardMetricStrip({
     group,
     labels,
 }: {
     group: DashboardCurrencyGroup;
     labels: DashboardTranslations;
 }) {
-    const value = (amount: string, tone: 'default' | 'positive' | 'danger') => (
+    const amount = (value: string, tone: 'default' | 'positive' | 'danger') => (
         <MoneyValue
-            value={`${amount} ${group.currencyCode}`}
+            value={`${value} ${group.currencyCode}`}
             emphasis="strong"
             tone={tone}
         />
@@ -83,42 +149,44 @@ function CurrencyMetrics({
             key: 'unpaid',
             label: labels.metrics.unpaid_invoices,
             value: group.unpaidCount,
+            detail: amount(group.outstandingTotal, 'default'),
         },
         {
             key: 'overdue',
             label: labels.metrics.overdue_invoices,
             value: group.overdueCount,
-            detail: (
-                <span className="text-xs text-foreground-muted">
-                    {labels.metrics.overdue_balance}:{' '}
-                    {value(group.overdueTotal, 'danger')}
-                </span>
-            ),
+            detail: amount(group.overdueTotal, 'danger'),
         },
         {
             key: 'paid',
             label: labels.metrics.paid_this_month,
-            value: value(group.paidThisMonth, 'positive'),
+            value: amount(group.paidThisMonth, 'positive'),
+            detail: (
+                <span className="text-xs text-foreground-muted">
+                    {interpolate(labels.metrics.payments_received, {
+                        count: group.paidThisMonthCount,
+                    })}
+                </span>
+            ),
         },
         {
-            key: 'outstanding',
-            label: labels.metrics.outstanding_total,
-            value: value(group.outstandingTotal, 'default'),
+            key: 'drafts',
+            label: labels.metrics.drafts,
+            value: group.draftCount,
+            detail: (
+                <span className="font-data text-xs text-foreground-muted tabular-nums">
+                    {interpolate(labels.metrics.unbilled, {
+                        amount: `${group.draftTotal} ${group.currencyCode}`,
+                    })}
+                </span>
+            ),
         },
     ];
 
     return (
-        <section className="min-w-0">
-            <Stack gap="lg">
-                <SectionHeader
-                    title={group.currencyCode}
-                    description={labels.currency.description}
-                />
-                <MetricStrip
-                    ariaLabel={`${group.currencyCode} ${labels.currency.description}`}
-                    items={items}
-                />
-            </Stack>
-        </section>
+        <MetricStrip
+            ariaLabel={`${group.currencyCode} ${labels.currency.description}`}
+            items={items}
+        />
     );
 }

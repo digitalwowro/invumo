@@ -60,10 +60,15 @@ export type InvoiceDraft = {
     paymentState: InvoicePaymentState | null;
     isOverdue: boolean;
     displayStatus: InvoiceDisplayStatus;
-    customer: { id: string; displayName: string } | null;
+    customer: {
+        id: string;
+        displayName: string;
+        snapshot: Record<string, string | null> | null;
+    } | null;
     currencyCode: string | null;
     currencyPrecision: number | null;
     documentLanguage: string | null;
+    defaultsCustomized: boolean;
     termsAndConditions: string | null;
     notes: string | null;
     taxDefault: InvoiceTaxDefault | null;

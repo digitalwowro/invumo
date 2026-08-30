@@ -935,6 +935,8 @@ When a company has multiple document currencies, show operational totals grouped
 
 For v1 dashboard semantics, an unpaid Invoice is an Issued Invoice with a positive outstanding balance, including a Partially Paid Invoice. Paid this month is the gross value of Payment rows whose transaction date falls in the current Company-local calendar month and whose Invoice remains Issued; Refunds and Adjustments are excluded. Cancelled Invoices are excluded from every operational metric. Outstanding and overdue amounts use the authoritative Invoice ledger and remain grouped by currency.
 
+The selected-currency operational view may additionally show Draft count and unbilled value; outstanding due in the next 30 days; outstanding aging buckets for not due, 1–30, 31–60, and over 60 days late; the proportion of current Issued Invoices settled; the overdue share of current outstanding value; and the average age from issue date of current unpaid Invoices. These are bounded operational summaries, not analytics. Attention lists are limited to overdue or next-seven-day Invoices, failed Invoice deliveries, Sent Quotes expiring within 14 days, and Active recurring templates scheduled within seven days. Recent Invoice scopes return at most five rows per selected currency and scope.
+
 ## 27. Audit history
 
 Maintain an audit trail for significant business operations, including:

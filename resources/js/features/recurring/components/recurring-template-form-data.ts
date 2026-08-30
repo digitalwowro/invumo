@@ -1,3 +1,8 @@
+import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    compactDecimal,
+    compactDocumentLineDecimals,
+} from '@/domain/documents/document-line-decimals';
 import type {
     DocumentCustomerSelection,
     DocumentLineDraft,
@@ -26,6 +31,7 @@ export const blankRecurringLine = (
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
+    productServiceName: null,
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -34,7 +40,7 @@ export const blankRecurringLine = (
     periodQuantity: '',
     discountPercentage: '0',
     taxName: tax?.name ?? '',
-    taxPercentage: tax?.percentage ?? '0',
+    taxPercentage: compactDecimal(tax?.percentage ?? '0'),
     taxPresetId: null,
     taxMode: 'INHERIT_CUSTOMER',
     priceStatus: null,
@@ -50,18 +56,26 @@ export const recurringTemplateFormData = (
     customerId: template.customer.customerId ?? '',
     customerConfirmationToken: template.customer.confirmationToken ?? '',
     customerReference: template.customerReference ?? '',
-    lines: template.lines.map((line) => ({
-        ...line,
-        key: line.id ?? crypto.randomUUID(),
-        description: line.description ?? '',
-        itemPrice: line.itemPrice ?? '',
-        quantity: line.quantity ?? '',
-        unit: line.unit ?? '',
-        periodQuantity: line.periodQuantity ?? '',
-        taxName: line.taxName ?? '',
-        taxMode: line.taxMode ?? 'EXPLICIT',
-        priceStatus: null,
-    })),
+    lines: template.lines.map((line) =>
+        compactDocumentLineDecimals(
+            {
+                ...line,
+                key: line.id ?? crypto.randomUUID(),
+                description: detachedLineDescription(
+                    line.description,
+                    line.productServiceName,
+                ),
+                itemPrice: line.itemPrice ?? '',
+                quantity: line.quantity ?? '',
+                unit: line.unit ?? '',
+                periodQuantity: line.periodQuantity ?? '',
+                taxName: line.taxName ?? '',
+                taxMode: line.taxMode ?? 'EXPLICIT',
+                priceStatus: null,
+            },
+            template.currencyPrecision,
+        ),
+    ),
     inheritance: normalizeInheritance(inheritance),
 });
 
@@ -129,23 +143,30 @@ export const applyRecurringProduct = (
     index: number,
     product: DocumentProductDefaults,
     fallbackTax: DocumentTaxDefault | null,
+    currencyPrecision: number | null,
 ): DocumentLineDraft[] =>
     lines.map((line, lineIndex) =>
         lineIndex === index
-            ? {
-                  ...line,
-                  productServiceId: product.sourceProductServiceId,
-                  description: product.description,
-                  itemPrice: product.unitPrice ?? '',
-                  unit: product.unit ?? '',
-                  periodUnit: product.periodUnit,
-                  taxName: product.tax?.name ?? fallbackTax?.name ?? '',
-                  taxPercentage:
-                      product.tax?.percentage ?? fallbackTax?.percentage ?? '0',
-                  taxPresetId: product.tax?.sourceTaxPresetId ?? null,
-                  taxMode: product.tax ? 'EXPLICIT' : 'INHERIT_CUSTOMER',
-                  priceStatus: product.priceStatus,
-              }
+            ? compactDocumentLineDecimals(
+                  {
+                      ...line,
+                      productServiceId: product.sourceProductServiceId,
+                      productServiceName: product.name ?? null,
+                      description: product.description,
+                      itemPrice: product.unitPrice ?? '',
+                      unit: product.unit ?? '',
+                      periodUnit: product.periodUnit,
+                      taxName: product.tax?.name ?? fallbackTax?.name ?? '',
+                      taxPercentage:
+                          product.tax?.percentage ??
+                          fallbackTax?.percentage ??
+                          '0',
+                      taxPresetId: product.tax?.sourceTaxPresetId ?? null,
+                      taxMode: product.tax ? 'EXPLICIT' : 'INHERIT_CUSTOMER',
+                      priceStatus: product.priceStatus,
+                  },
+                  currencyPrecision,
+              )
             : line,
     );
 

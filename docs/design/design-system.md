@@ -189,7 +189,7 @@ The values below are the complete internal v1 palette. They are documented here 
 | `sidebar-border`            | `#262A33` |
 | `sidebar-foreground`        | `#F4F5F7` |
 | `sidebar-muted`             | `#8E949F` |
-| `sidebar-nav`               | `#B6BCC7` |
+| `sidebar-nav`               | `#9CA2AD` |
 | `sidebar-hover`             | `#1D212A` |
 | `sidebar-active`            | `#22262F` |
 | `sidebar-active-foreground` | `#FFFFFF` |
@@ -197,7 +197,7 @@ The values below are the complete internal v1 palette. They are documented here 
 | `sidebar-avatar`            | `#262A33` |
 | `sidebar-avatar-foreground` | `#C6CBD4` |
 
-The active navigation item uses `sidebar-active` plus a thin `money-fill` leading marker. It must never become a large lime, Company-coloured, or saturated block.
+Inactive navigation text uses `sidebar-nav`; active navigation text uses `sidebar-foreground`. The active navigation item uses `sidebar-active` plus a thin `money-fill` leading marker. Parent navigation remains active throughout its child and detail routes. It must never become a large lime, Company-coloured, or saturated block.
 
 ### 6.3 Semantic-state tokens
 
@@ -591,6 +591,8 @@ domain-specific filters, cells, values, and actions.
 Summary metrics use `MetricStrip`: adjacent cells separated by rules, not a grid of floating rounded cards. Labels use `MetaLabel`; values use `MetricValue`; semantic colour is limited to overdue money, received money, and neutral values.
 
 Dashboards must remain operational rather than decorative. Do not add a chart or metric that does not answer a supported v1 operational question.
+
+The Company dashboard uses one selected-currency context across its balance summary, aging distribution, metric strip, attention panels, and recent rows. The compact aging bar is a semantic operational distribution, not a trend chart; it uses the approved neutral, warning, and danger tokens and always repeats meaning in text and values.
 
 ### 10.10 Charts
 

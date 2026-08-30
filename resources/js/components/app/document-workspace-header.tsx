@@ -29,7 +29,7 @@ export function DocumentWorkspaceHeader(props: Props) {
     return (
         <header
             data-slot="document-workspace-header"
-            className="-mx-4 -mt-6 bg-background px-4 pt-5 sm:-mx-6 sm:px-6 md:sticky md:top-0 md:z-20 lg:-mx-8 lg:px-8"
+            className="-mx-4 -mt-6 border-b border-divider bg-background px-4 pt-5 sm:-mx-6 sm:px-6 md:sticky md:top-0 md:z-20 lg:-mx-8 lg:px-8"
         >
             <div className="flex flex-col gap-4">
                 <div className="flex min-w-0 flex-col gap-1">
@@ -73,7 +73,7 @@ export function DocumentWorkspaceHeader(props: Props) {
                         {props.primaryActions}
                     </div>
                 </div>
-                <div className="min-w-0 overflow-x-auto">{props.tabs}</div>
+                {props.tabs}
             </div>
         </header>
     );

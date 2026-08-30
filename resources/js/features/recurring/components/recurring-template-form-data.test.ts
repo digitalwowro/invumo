@@ -127,12 +127,13 @@ describe('Recurring-template Draft form data', () => {
                 },
             },
             customer.taxDefault,
+            customer.currencyPrecision,
         );
 
         expect(applied).toMatchObject({
             productServiceId: 'product-1',
             description: 'Consulting',
-            itemPrice: '100',
+            itemPrice: '100.00',
             taxName: 'Reduced TVA',
             taxPercentage: '9',
             taxPresetId: 'tax-2',

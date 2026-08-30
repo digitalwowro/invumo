@@ -118,6 +118,7 @@ final readonly class ConvertQuoteToInvoice
             'customer_reference' => $source->customer_reference,
             'terms_and_conditions' => $source->terms_and_conditions,
             'notes' => $settings->default_invoice_notes,
+            'defaults_customized' => $source->defaults_customized,
             'subtotal' => $source->subtotal,
             'tax_total' => $source->tax_total,
             'total' => $source->total,

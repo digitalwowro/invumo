@@ -4,6 +4,7 @@ namespace App\Modules\Recurring\Queries;
 
 use App\Foundation\Documents\DocumentFieldLimits as DocumentContentLimits;
 use App\Models\User;
+use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Catalog\Queries\CatalogFormOptions;
 use App\Modules\Catalog\Queries\CatalogLineDefaults;
 use App\Modules\Companies\Data\CompanyAbility;
@@ -81,6 +82,9 @@ final readonly class RecurringTemplateDraftPage
             ->where('recurring_template_id', $template->id)
             ->orderBy('position')
             ->get();
+        $productNames = ProductService::query()
+            ->whereIn('id', $lines->pluck('product_service_id')->filter())
+            ->pluck('name', 'id');
         $occurrence = RecurringOccurrence::query()
             ->where('recurring_template_id', $template->id)
             ->orderByDesc('logical_ordinal')->first();
@@ -137,6 +141,7 @@ final readonly class RecurringTemplateDraftPage
                 'lines' => $lines->map(fn (RecurringTemplateLine $line): array => [
                     'id' => $line->id,
                     'productServiceId' => $line->product_service_id,
+                    'productServiceName' => $productNames->get($line->product_service_id),
                     'description' => $line->description,
                     'itemPrice' => $line->item_price,
                     'quantity' => $line->quantity,

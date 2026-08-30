@@ -1,3 +1,8 @@
+import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    compactDecimal,
+    compactDocumentLineDecimals,
+} from '@/domain/documents/document-line-decimals';
 import type {
     InvoiceCustomerSelection,
     InvoiceDraft,
@@ -19,6 +24,7 @@ export type InvoiceEditorData = {
     bankAccountId: string | null;
     termsAndConditions: string;
     notes: string;
+    defaultsCustomized: boolean;
     lines: InvoiceLine[];
 };
 
@@ -28,6 +34,7 @@ export const blankInvoiceLine = (
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
+    productServiceName: null,
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -36,10 +43,12 @@ export const blankInvoiceLine = (
     periodQuantity: '',
     discountPercentage: '0',
     taxName: tax?.name ?? '',
-    taxPercentage: tax?.percentage ?? '0',
+    taxPercentage: compactDecimal(tax?.percentage ?? '0'),
     taxPresetId: tax?.id ?? null,
     priceStatus: null,
     finalLineTotal: null,
+    isCustomized: true,
+    sourceApplied: false,
 });
 
 export const invoiceFormData = (invoice: InvoiceDraft): InvoiceEditorData => ({
@@ -56,17 +65,27 @@ export const invoiceFormData = (invoice: InvoiceDraft): InvoiceEditorData => ({
     bankAccountId: invoice.bankAccount?.id ?? null,
     termsAndConditions: invoice.termsAndConditions ?? '',
     notes: invoice.notes ?? '',
-    lines: invoice.lines.map((line) => ({
-        ...line,
-        key: line.id ?? crypto.randomUUID(),
-        description: line.description ?? '',
-        itemPrice: line.itemPrice ?? '',
-        quantity: line.quantity ?? '',
-        unit: line.unit ?? '',
-        periodQuantity: line.periodQuantity ?? '',
-        taxName: line.taxName ?? '',
-        priceStatus: null,
-    })),
+    defaultsCustomized: invoice.defaultsCustomized,
+    lines: invoice.lines.map((line) =>
+        compactDocumentLineDecimals(
+            {
+                ...line,
+                key: line.id ?? crypto.randomUUID(),
+                description: detachedLineDescription(
+                    line.description,
+                    line.productServiceName,
+                ),
+                itemPrice: line.itemPrice ?? '',
+                quantity: line.quantity ?? '',
+                unit: line.unit ?? '',
+                periodQuantity: line.periodQuantity ?? '',
+                taxName: line.taxName ?? '',
+                priceStatus: null,
+                sourceApplied: false,
+            },
+            invoice.currencyPrecision,
+        ),
+    ),
 });
 
 export const invoiceRequestData = (data: InvoiceEditorData) => ({
@@ -96,6 +115,7 @@ export const invoiceRequestData = (data: InvoiceEditorData) => ({
         tax_name: line.taxName,
         tax_percentage: line.taxPercentage,
         tax_preset_id: line.taxPresetId,
+        source_applied: line.sourceApplied ?? false,
     })),
 });
 
@@ -111,6 +131,7 @@ export const customerFromInvoice = (
     taxDefault: invoice.taxDefault,
     emailAttachmentMode: invoice.emailAttachmentMode,
     recipientCount: invoice.recipientCount,
+    snapshot: invoice.customer?.snapshot ?? null,
     confirmationToken: null,
 });
 
@@ -139,27 +160,34 @@ export const applyInvoiceProductDefaults = (
     index: number,
     defaults: InvoiceProductDefaults,
     fallbackTax: InvoiceTaxDefault | null,
+    currencyPrecision: number | null,
 ): InvoiceLine[] =>
     lines.map((line, itemIndex) =>
         itemIndex === index
-            ? {
-                  ...line,
-                  productServiceId: defaults.sourceProductServiceId,
-                  description: defaults.description,
-                  itemPrice: defaults.unitPrice ?? '',
-                  unit: defaults.unit ?? '',
-                  periodUnit: defaults.periodUnit,
-                  taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
-                  taxPercentage:
-                      defaults.tax?.percentage ??
-                      fallbackTax?.percentage ??
-                      '0',
-                  taxPresetId:
-                      defaults.tax?.sourceTaxPresetId ??
-                      fallbackTax?.id ??
-                      null,
-                  priceStatus: defaults.priceStatus,
-              }
+            ? compactDocumentLineDecimals(
+                  {
+                      ...line,
+                      productServiceId: defaults.sourceProductServiceId,
+                      productServiceName: defaults.name ?? null,
+                      description: defaults.description,
+                      itemPrice: defaults.unitPrice ?? '',
+                      unit: defaults.unit ?? '',
+                      periodUnit: defaults.periodUnit,
+                      taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
+                      taxPercentage:
+                          defaults.tax?.percentage ??
+                          fallbackTax?.percentage ??
+                          '0',
+                      taxPresetId:
+                          defaults.tax?.sourceTaxPresetId ??
+                          fallbackTax?.id ??
+                          null,
+                      priceStatus: defaults.priceStatus,
+                      isCustomized: false,
+                      sourceApplied: true,
+                  },
+                  currencyPrecision,
+              )
             : line,
     );
 

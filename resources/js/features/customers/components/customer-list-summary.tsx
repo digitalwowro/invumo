@@ -14,6 +14,7 @@ const cardFilters: Record<Key, CustomerFilters['status']> = {
     active: 'active',
     archived: 'archived',
 };
+const cardOrder: Key[] = ['active', 'all', 'archived'];
 
 export function CustomerListSummaryCards(props: {
     action: string;
@@ -26,7 +27,7 @@ export function CustomerListSummaryCards(props: {
         <OperationalListSummary
             ariaLabel={props.labels.summary.aria_label}
             totalLabel={props.commonLabels.total}
-            cards={(Object.keys(props.summary) as Key[]).map((key) => ({
+            cards={cardOrder.map((key) => ({
                 key,
                 label: props.labels.summary[key],
                 href: customerListUrl(props.action, {

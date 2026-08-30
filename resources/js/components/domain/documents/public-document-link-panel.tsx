@@ -1,15 +1,9 @@
 import { Form } from '@inertiajs/react';
 import { Clipboard, Link2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
+import { ContentSection } from '@/components/app/content-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import type {
     PublicDocumentLink,
     PublicDocumentTranslations,
@@ -43,21 +37,16 @@ export function PublicDocumentLinkPanel({ link, labels }: Props) {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                        <CardTitle>{labels.title}</CardTitle>
-                        <CardDescription>{labels.description}</CardDescription>
-                    </div>
-                    <Badge variant="quiet">
-                        {labels.statuses[link.status]}
-                    </Badge>
-                </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+        <ContentSection
+            title={labels.title}
+            description={labels.description}
+            headerActions={
+                <Badge variant="quiet">{labels.statuses[link.status]}</Badge>
+            }
+        >
+            <div className="flex flex-col gap-4 p-5 sm:p-6">
                 {link.url && (
-                    <code className="rounded-md bg-muted p-3 text-sm break-all">
+                    <code className="rounded-md border border-divider bg-surface-subtle p-3 text-sm break-all">
                         {link.url}
                     </code>
                 )}
@@ -118,7 +107,7 @@ export function PublicDocumentLinkPanel({ link, labels }: Props) {
                         </Form>
                     )}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </ContentSection>
     );
 }

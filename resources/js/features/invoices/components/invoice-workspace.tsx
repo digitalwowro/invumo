@@ -4,10 +4,10 @@ import { ActionLink } from '@/components/app/action-link';
 import { DocumentWorkspaceHeader } from '@/components/app/document-workspace-header';
 import { DownloadLink } from '@/components/app/download-link';
 import { PageFrame } from '@/components/app/page-frame';
+import { WorkspaceTabs } from '@/components/app/workspace-tabs';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs } from '@/components/ui/tabs';
 import { InvoiceDeleteDialog } from '@/features/invoices/components/invoice-delete-dialog';
 import { InvoiceEditorLifecycleActions } from '@/features/invoices/components/invoice-editor-lifecycle-actions';
 import { InvoiceWorkspaceContent } from '@/features/invoices/components/invoice-workspace-content';
@@ -119,39 +119,36 @@ export function InvoiceWorkspace(props: InvoiceWorkspaceComposedProps) {
                             </>
                         }
                         tabs={
-                            <TabsList
-                                variant="line"
-                                aria-label={workspace.document_facts}
-                                className="h-auto min-h-0 w-max gap-1 p-0"
-                            >
-                                <WorkspaceTabTrigger
-                                    value="build"
-                                    label={workspace.build_tab}
-                                    pill={
-                                        lineCount === 1
-                                            ? workspace.line_count_one
-                                            : workspace.line_count.replace(
-                                                  ':count',
-                                                  String(lineCount),
-                                              )
-                                    }
-                                />
-                                <WorkspaceTabTrigger
-                                    value="money"
-                                    label={workspace.money_tab}
-                                    pill={moneyPill}
-                                />
-                                <WorkspaceTabTrigger
-                                    value="sharing"
-                                    label={workspace.sharing_tab}
-                                    pill={
-                                        props.publicDocumentTranslations
+                            <WorkspaceTabs<InvoiceWorkspaceTab>
+                                label={workspace.document_facts}
+                                testIdPrefix="invoice-workspace"
+                                items={[
+                                    {
+                                        value: 'build',
+                                        label: workspace.build_tab,
+                                        pill:
+                                            lineCount === 1
+                                                ? workspace.line_count_one
+                                                : workspace.line_count.replace(
+                                                      ':count',
+                                                      String(lineCount),
+                                                  ),
+                                    },
+                                    {
+                                        value: 'money',
+                                        label: workspace.money_tab,
+                                        pill: moneyPill,
+                                    },
+                                    {
+                                        value: 'sharing',
+                                        label: workspace.sharing_tab,
+                                        pill: props.publicDocumentTranslations
                                             .management.statuses[
                                             props.publicLink.status
-                                        ]
-                                    }
-                                />
-                            </TabsList>
+                                        ],
+                                    },
+                                ]}
+                            />
                         }
                     />
                     <InvoiceWorkspaceContent
@@ -165,25 +162,6 @@ export function InvoiceWorkspace(props: InvoiceWorkspaceComposedProps) {
                 </Tabs>
             </PageFrame>
         </div>
-    );
-}
-
-function WorkspaceTabTrigger(props: {
-    value: InvoiceWorkspaceTab;
-    label: string;
-    pill: string;
-}) {
-    return (
-        <TabsTrigger
-            value={props.value}
-            data-testid={`invoice-workspace-${props.value}-tab`}
-            className="flex-none rounded-none px-3 pt-2 pb-3"
-        >
-            {props.label}
-            <Badge variant="quiet" className="normal-case">
-                {props.pill}
-            </Badge>
-        </TabsTrigger>
     );
 }
 

@@ -76,6 +76,7 @@ export type DocumentDeliveryTranslations = {
         button_label: string;
         signature: string;
         attachment_mode: string;
+        language: string;
         modes: Record<DeliveryAttachmentMode, string>;
         recipients: string;
         recipient_name: string;

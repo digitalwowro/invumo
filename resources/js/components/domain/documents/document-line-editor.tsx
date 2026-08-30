@@ -1,11 +1,14 @@
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { FormSection } from '@/components/app/form-section';
 import { SystemMessage } from '@/components/app/system-message';
 import {
+    DocumentTotals,
     moveDocumentLine,
     normalizeEditedLine,
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineCard } from '@/components/domain/documents/document-line-card';
 import { Button } from '@/components/ui/button';
+import type { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import type { LineAmounts } from '@/lib/money/line-calculation';
 import type {
     DocumentLineLimits,
@@ -17,6 +20,7 @@ import type {
 type Props = {
     lines: DocumentLineDraft[];
     calculated: Array<LineAmounts | null>;
+    totals: ReturnType<typeof calculateDocumentAmounts> | null;
     taxDefault: DocumentTaxDefault | null;
     limits: DocumentLineLimits;
     labels: DocumentEditorTranslations;
@@ -31,6 +35,7 @@ type Props = {
 export function DocumentLineEditor({
     lines,
     calculated,
+    totals,
     taxDefault,
     limits,
     labels,
@@ -40,7 +45,23 @@ export function DocumentLineEditor({
     onSelectProduct,
 }: Props) {
     return (
-        <>
+        <FormSection
+            title={labels.products_services_section}
+            description={labels.products_services_description}
+            flush
+            headerActions={
+                <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                        onChange((current) => [...current, onAdd(taxDefault)])
+                    }
+                >
+                    <Plus aria-hidden="true" />
+                    {labels.add_line}
+                </Button>
+            }
+        >
             {lines.map((line, index) => (
                 <DocumentLineCard
                     key={line.key}
@@ -49,24 +70,15 @@ export function DocumentLineEditor({
                         finalLineTotal:
                             calculated[index]?.final_line_total ?? null,
                     }}
+                    amounts={calculated[index]}
                     index={index}
                     count={lines.length}
                     limits={limits}
                     labels={labels}
                     errors={errors}
                     inheritedTax={taxDefault}
-                    sourceAction={
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            data-testid={`document-product-select-${index}`}
-                            onClick={() => onSelectProduct(index)}
-                        >
-                            <Search aria-hidden="true" />
-                            {labels.select_product}
-                        </Button>
-                    }
                     sourceNotice={sourceNotice(line, labels)}
+                    onSelectProduct={() => onSelectProduct(index)}
                     onChange={(next) =>
                         onChange((current) =>
                             current.map((item, itemIndex) =>
@@ -92,7 +104,8 @@ export function DocumentLineEditor({
             ))}
             <Button
                 type="button"
-                variant="secondary"
+                variant="ghost"
+                className="w-full rounded-none border-b border-divider bg-surface-subtle py-3"
                 onClick={() =>
                     onChange((current) => [...current, onAdd(taxDefault)])
                 }
@@ -100,7 +113,8 @@ export function DocumentLineEditor({
                 <Plus aria-hidden="true" />
                 {labels.add_line}
             </Button>
-        </>
+            <DocumentTotals labels={labels} totals={totals} embedded />
+        </FormSection>
     );
 }
 

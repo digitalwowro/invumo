@@ -72,12 +72,24 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
 
     const applyProduct = (index: number, defaults: QuoteProductDefaults) => {
         changeLines((lines) =>
-            applyProductDefaults(lines, index, defaults, customer.taxDefault),
+            applyProductDefaults(
+                lines,
+                index,
+                defaults,
+                customer.taxDefault,
+                precision,
+            ),
         );
     };
 
     const changeDefault = (field: string, value: string | null) => {
-        form.setData(field as keyof typeof form.data, value as never);
+        form.setData((current) => ({
+            ...current,
+            [field]: value,
+            defaultsCustomized:
+                current.defaultsCustomized ||
+                current[field as keyof typeof current] !== value,
+        }));
 
         if (field === 'currencyCode') {
             setPrecision(
@@ -126,6 +138,7 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                 tax_name: line.taxName,
                 tax_percentage: line.taxPercentage,
                 tax_preset_id: line.taxPresetId,
+                source_applied: line.sourceApplied ?? false,
             })),
         }));
         form.patch(props.updateUrl, {
@@ -181,28 +194,10 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                         errors={errors}
                         onChange={changeDetail}
                     />
-                    <DocumentDefaultsSection
-                        customer={customer}
-                        currencyCode={form.data.currencyCode}
-                        documentLanguage={form.data.documentLanguage}
-                        bankAccountId={form.data.bankAccountId}
-                        bankAccountLabel={
-                            props.quote.bankAccount?.label ?? null
-                        }
-                        termsAndConditions={form.data.termsAndConditions}
-                        notes={form.data.notes}
-                        currencyOptions={props.currencyOptions}
-                        languageOptions={props.languageOptions}
-                        bankAccountOptions={props.bankAccountOptions}
-                        termsLimit={props.limits.termsAndConditions}
-                        notesLimit={props.limits.notes}
-                        labels={props.labels}
-                        errors={errors}
-                        onChange={changeDefault}
-                    />
                     <DocumentLineEditor
                         lines={form.data.lines}
                         calculated={calculated}
+                        totals={totals}
                         taxDefault={customer.taxDefault}
                         limits={props.limits}
                         labels={props.labels}
@@ -214,15 +209,36 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                             setProductSelector(true);
                         }}
                     />
+                    <DocumentDefaultsSection
+                        currencyCode={form.data.currencyCode}
+                        documentLanguage={form.data.documentLanguage}
+                        bankAccountId={form.data.bankAccountId}
+                        bankAccountLabel={
+                            props.quote.bankAccount?.label ?? null
+                        }
+                        taxDefault={customer.taxDefault}
+                        recipientCount={customer.recipientCount}
+                        emailAttachmentMode={customer.emailAttachmentMode}
+                        termsAndConditions={form.data.termsAndConditions}
+                        notes={form.data.notes}
+                        isCustomized={form.data.defaultsCustomized}
+                        currencyOptions={props.currencyOptions}
+                        languageOptions={props.languageOptions}
+                        bankAccountOptions={props.bankAccountOptions}
+                        termsLimit={props.limits.termsAndConditions}
+                        notesLimit={props.limits.notes}
+                        labels={props.labels}
+                        errors={errors}
+                        onChange={changeDefault}
+                    />
                     <QuoteDraftSummary
-                        totals={totals}
                         processing={form.processing}
                         dirty={form.isDirty}
                         currencyCode={props.quote.currencyCode}
                         conversionUrl={props.conversion.url}
                         conversionKey={props.conversion.creationKey}
                         allocation={props.conversion.allocation}
-                        editorLabels={props.labels}
+                        saveLabel={props.labels.save}
                         conversionLabels={props.conversionLabels}
                     />
                 </Stack>

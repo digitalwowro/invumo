@@ -111,7 +111,7 @@ export function InvoiceWorkspaceContent(props: Props) {
                 <TabsContent
                     value="sharing"
                     forceMount
-                    className="mt-0 space-y-5 data-[state=inactive]:hidden"
+                    className="mt-0 flex flex-col gap-5 data-[state=inactive]:hidden"
                 >
                     <PublicDocumentLinkPanel
                         link={props.publicLink}

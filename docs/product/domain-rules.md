@@ -554,6 +554,10 @@ Recurring template
 - Outstanding and overdue values derive from the authoritative Invoice total and complete transaction ledger.
 - Monetary values are grouped by currency. Never add unlike currencies or imply an FX conversion.
 - Recent Invoices are a bounded Company-scoped list and use the same authoritative lifecycle, payment, and overdue derivation as the Invoice workspace.
+- Expected-next-30-days is the outstanding value on Issued, unpaid Invoices due from the Company-local current date through 30 days later, inclusive.
+- Outstanding aging uses Company-local dates and the mutually exclusive not-due, 1–30-days-late, 31–60-days-late, and over-60-days-late buckets.
+- Draft value is unbilled document total. Settled rate is currently settled Issued Invoices divided by current Issued Invoices; overdue share is overdue outstanding divided by all outstanding; average unpaid age is the Company-local current date minus issue date for current unpaid Invoices.
+- Dashboard attention is bounded to four rows per panel and selected currency. It covers overdue or next-seven-day Invoices, failed Invoice deliveries, Sent Quotes expiring within 14 days, and Active recurring templates scheduled within seven days. Recent Invoice scopes are bounded to five rows per selected currency and scope.
 
 ## Audit history
 

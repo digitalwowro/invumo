@@ -3,31 +3,31 @@
     "baselines": [
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_Romanian_expansion_and_diacritics_on_desktop.snap",
-            "pngSha256": "5623131b4e4b2364afcdcfde8dc90bf1fbdcf18dfeb128d22c50787766ac87ec",
+            "pngSha256": "a161c90dfeacf0d74c048a1d26bb09a936caa1a3e41295e65618d3e35d558500",
             "reviewedOn": "2026-08-30",
-            "causeCommit": "9075ca3",
-            "baselineCommit": "5656a46",
+            "causeCommit": "9906b15",
+            "baselineCommit": "bb872ee",
             "screens": ["Romanian design-system gallery on desktop"],
             "intendedChanges": [
-                "Replace the placeholder sidebar mark with the approved lime INVUMO code-rendered wordmark",
-                "Retain the complete Romanian gallery content, layout, states, table containment, and surrounding navigation unchanged"
+                "Remove the shared page-header bottom divider and its reserved bottom padding",
+                "Retain the complete Romanian gallery content, component states, table containment, and surrounding navigation while reducing the page height by 25 pixels"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33278632381 at original resolution; confirmed the visible difference was confined to the approved product mark introduced by 9075ca3 before adopting the exact runner-produced actual PNG."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33302001641 at original resolution; confirmed every visible shift came from the approved shared header-divider and padding removal in 9906b15, with Romanian content, component states, containment, and navigation unchanged."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_English_design_system_matrix_on_desktop.snap",
-            "pngSha256": "feb2e143c4e101c3a90d9b535bf5015c715cd797421a7dc0bf1f3a82e42db273",
+            "pngSha256": "d6e4555a883d466c21a446675ec916c29eacb1efa160bd75504a3ebe8f68d681",
             "reviewedOn": "2026-08-30",
-            "causeCommit": "9075ca3",
-            "baselineCommit": "5656a46",
+            "causeCommit": "9906b15",
+            "baselineCommit": "bb872ee",
             "screens": ["English design-system gallery on desktop"],
             "intendedChanges": [
-                "Replace the placeholder sidebar mark with the approved lime INVUMO code-rendered wordmark",
-                "Retain the complete English gallery content, layout, states, table containment, and surrounding navigation unchanged"
+                "Remove the shared page-header bottom divider and its reserved bottom padding",
+                "Retain the complete English gallery content, component states, table containment, and surrounding navigation while reducing the page height by 25 pixels"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33278632381 at original resolution; confirmed the visible difference was confined to the approved product mark introduced by 9075ca3 before adopting the exact runner-produced actual PNG."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33302001641 at original resolution; confirmed every visible shift came from the approved shared header-divider and padding removal in 9906b15, with English content, component states, containment, and navigation unchanged."
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_responsive_navigation_on_a_narrow_viewport.snap",

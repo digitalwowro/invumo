@@ -101,7 +101,7 @@ export function InvoiceWorkspaceSidebar(props: Props) {
                 facts={props.facts}
             />
             <Card className="gap-4 p-5 py-5">
-                <h2 className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-subtle uppercase">
+                <h2 className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-muted uppercase">
                     {props.labels.workspace.sharing_facts}
                 </h2>
                 <dl className="space-y-3">
@@ -146,7 +146,7 @@ function BalanceRow(props: Fact & { accent?: boolean }) {
 function FactsCard({ title, facts }: { title: string; facts: Fact[] }) {
     return (
         <Card className="gap-4 p-5 py-5">
-            <h2 className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-subtle uppercase">
+            <h2 className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-muted uppercase">
                 {title}
             </h2>
             <dl className="space-y-3">

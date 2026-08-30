@@ -37,3 +37,7 @@ The English and Romanian desktop gallery baselines updated in `903295c` were cau
 ## Product-mark review
 
 The English desktop, Romanian desktop, and narrow-navigation gallery baselines were updated from the exact GitHub Ubuntu actual PNGs produced by Phase 11 gate run `33278632381`. The expected, actual, and difference images were viewed at original resolution. The visible difference was confined to replacing the old placeholder with the approved lime code-rendered `INVUMO` mark introduced by `9075ca3`; gallery content, responsive containment, component states, and navigation remained correct.
+
+## Shared page-header review
+
+The English and Romanian desktop gallery baselines were updated from the exact GitHub Ubuntu actual PNGs produced by Phase 11 gate run `33302001641`. The expected, actual, and difference images were viewed at original resolution. The complete 25-pixel height reduction and corresponding vertical shift came from removing the shared page-header divider and reserved bottom padding in `9906b15`; both-language content, component states, table containment, and navigation remained correct.

@@ -176,6 +176,7 @@ function WorkspaceTabTrigger(props: {
     return (
         <TabsTrigger
             value={props.value}
+            data-testid={`invoice-workspace-${props.value}-tab`}
             className="flex-none rounded-none px-3 pt-2 pb-3"
         >
             {props.label}

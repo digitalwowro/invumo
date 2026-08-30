@@ -94,7 +94,7 @@ final class InvoiceListFilterHttpTest extends TestCase
 
         $this->actingAs($owner)->get(route('invoices.index', $company))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('translations.index.filters', 'Filtre')
+                ->where('i18n.common.operational_list.filters', 'Filtre')
                 ->where('translations.index.payment_options.OUTSTANDING', 'Neplătită sau parțială')
                 ->where('translations.index.date_presets.last_ninety_days', 'Ultimele 90 de zile')
                 ->where('translations.index.summary.awaiting', 'În așteptarea plății'));

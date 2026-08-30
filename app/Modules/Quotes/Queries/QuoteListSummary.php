@@ -10,6 +10,8 @@ use stdClass;
 
 final readonly class QuoteListSummary
 {
+    private const string EXPIRED_SQL = "quotes.valid_until IS NOT NULL AND quotes.valid_until < ?::date AND quotes.lifecycle NOT IN ('ACCEPTED', 'REJECTED')";
+
     /** @return array<string, array{count: int, amounts: list<array{currencyCode: string, amount: string}>}> */
     public function for(CarbonImmutable $localDate): array
     {
@@ -45,9 +47,9 @@ final readonly class QuoteListSummary
     {
         return $this->base()
             ->selectRaw('COUNT(*) AS all_count')
-            ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".$this->expired().')) AS sent_count', [$localDate->toDateString()])
+            ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".self::EXPIRED_SQL.')) AS sent_count', [$localDate->toDateString()])
             ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'ACCEPTED') AS accepted_count")
-            ->selectRaw('COUNT(*) FILTER (WHERE '.$this->expired().') AS expired_count', [$localDate->toDateString()])
+            ->selectRaw('COUNT(*) FILTER (WHERE '.self::EXPIRED_SQL.') AS expired_count', [$localDate->toDateString()])
             ->firstOrFail();
     }
 
@@ -60,12 +62,12 @@ final readonly class QuoteListSummary
             ->orderBy('documents.currency_code')
             ->select('documents.currency_code')
             ->selectRaw('MAX(documents.currency_precision) AS currency_precision')
-            ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".$this->expired().')) AS sent_count', [$localDate->toDateString()])
-            ->selectRaw("COALESCE(SUM(documents.total) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".$this->expired().')), 0) AS sent_total', [$localDate->toDateString()])
+            ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".self::EXPIRED_SQL.')) AS sent_count', [$localDate->toDateString()])
+            ->selectRaw("COALESCE(SUM(documents.total) FILTER (WHERE quotes.lifecycle = 'SENT' AND NOT (".self::EXPIRED_SQL.')), 0) AS sent_total', [$localDate->toDateString()])
             ->selectRaw("COUNT(*) FILTER (WHERE quotes.lifecycle = 'ACCEPTED') AS accepted_count")
             ->selectRaw("COALESCE(SUM(documents.total) FILTER (WHERE quotes.lifecycle = 'ACCEPTED'), 0) AS accepted_total")
-            ->selectRaw('COUNT(*) FILTER (WHERE '.$this->expired().') AS expired_count', [$localDate->toDateString()])
-            ->selectRaw('COALESCE(SUM(documents.total) FILTER (WHERE '.$this->expired().'), 0) AS expired_total', [$localDate->toDateString()]);
+            ->selectRaw('COUNT(*) FILTER (WHERE '.self::EXPIRED_SQL.') AS expired_count', [$localDate->toDateString()])
+            ->selectRaw('COALESCE(SUM(documents.total) FILTER (WHERE '.self::EXPIRED_SQL.'), 0) AS expired_total', [$localDate->toDateString()]);
     }
 
     private function base(): Builder
@@ -77,10 +79,5 @@ final readonly class QuoteListSummary
                     ->on('quotes.document_id', '=', 'documents.id');
             })
             ->where('documents.kind', 'QUOTE');
-    }
-
-    private function expired(): string
-    {
-        return "quotes.valid_until IS NOT NULL AND quotes.valid_until < ?::date AND quotes.lifecycle NOT IN ('ACCEPTED', 'REJECTED')";
     }
 }

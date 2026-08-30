@@ -1,4 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
+import { Stack } from '@/components/app/layout';
+import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
@@ -11,39 +13,42 @@ import {
 } from '@/components/app/typography';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
+import { CustomerListSummaryCards } from '@/features/customers/components/customer-list-summary';
 import { CustomerListTools } from '@/features/customers/components/customer-list-tools';
+import {
+    countCustomerFilters,
+    customerListQuery,
+} from '@/features/customers/lib/customer-list-query';
 import { interpolate } from '@/lib/translations';
 import type {
     CustomerCursorPage,
     CustomerFilters,
     CustomerListRow,
+    CustomerListSummary,
     CustomerOption,
     CustomerTranslations,
 } from '@/types/customer';
+import type { OperationalListTranslations } from '@/types/localization';
 
 type Props = {
     page: CustomerCursorPage;
     filters: CustomerFilters;
+    summary: CustomerListSummary;
     countryOptions: CustomerOption[];
     indexUrl: string;
     labels: CustomerTranslations['index'];
+    commonLabels: OperationalListTranslations;
 };
 
-export function CustomerTable({
-    page,
-    filters,
-    countryOptions,
-    indexUrl,
-    labels,
-}: Props) {
+export function CustomerTable(props: Props) {
     const { i18n } = usePage().props;
     const columns: OperationalColumn<CustomerListRow>[] = [
         {
             key: 'customer',
-            label: labels.columns.customer,
+            label: props.labels.columns.customer,
             kind: 'identity',
             render: (customer) => (
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                     <BodyStrong>{customer.displayName}</BodyStrong>
                     {customer.email && (
                         <SecondaryText>{customer.email}</SecondaryText>
@@ -52,45 +57,48 @@ export function CustomerTable({
             ),
         },
         {
-            key: 'type',
-            label: labels.columns.type,
-            kind: 'status',
-            render: (customer) => <TableValue>{customer.typeLabel}</TableValue>,
-        },
-        {
             key: 'reference',
-            label: labels.columns.reference,
+            label: props.commonLabels.columns.customer_reference,
             kind: 'data',
             render: (customer) => (
                 <TableValue>
-                    {customer.externalReference ?? labels.not_available}
+                    {customer.externalReference ??
+                        props.commonLabels.not_available}
                 </TableValue>
             ),
         },
         {
-            key: 'country',
-            label: labels.columns.country,
-            kind: 'data',
+            key: 'details',
+            label: props.labels.columns.details,
+            kind: 'text',
             render: (customer) => (
-                <TableValue>
-                    {customer.countryCode ?? labels.not_available}
-                </TableValue>
+                <div className="flex flex-col gap-1">
+                    <TableValue>{customer.typeLabel}</TableValue>
+                    <SecondaryText>
+                        {customer.countryCode ??
+                            props.commonLabels.not_available}
+                    </SecondaryText>
+                </div>
             ),
         },
         {
             key: 'status',
-            label: labels.columns.status,
+            label: props.commonLabels.columns.status,
             kind: 'status',
             render: (customer) => (
                 <StatusBadge
                     status={customer.archived ? 'archived' : 'active'}
-                    label={customer.archived ? labels.archived : labels.active}
+                    label={
+                        customer.archived
+                            ? props.labels.archived
+                            : props.labels.active
+                    }
                 />
             ),
         },
         {
             key: 'updated',
-            label: labels.columns.updated,
+            label: props.labels.columns.updated,
             kind: 'data',
             render: (customer) => (
                 <TableValue>
@@ -98,81 +106,95 @@ export function CustomerTable({
                         ? new Intl.DateTimeFormat(i18n.locale, {
                               dateStyle: 'medium',
                           }).format(new Date(customer.updatedAt))
-                        : labels.not_available}
+                        : props.commonLabels.not_available}
                 </TableValue>
+            ),
+        },
+        {
+            key: 'actions',
+            label: props.commonLabels.columns.actions,
+            kind: 'actions',
+            render: (customer) => (
+                <Button asChild variant="secondary">
+                    <Link href={customer.workspaceUrl}>
+                        {props.labels.columns.open}
+                    </Link>
+                </Button>
             ),
         },
     ];
     const filtered =
-        filters.q !== '' ||
-        filters.status !== 'active' ||
-        filters.country !== null;
-    const state = page.items.length
+        countCustomerFilters(props.filters) > 0 ||
+        props.filters.sort !== 'recent' ||
+        props.filters.perPage !== 25;
+    const state = props.page.items.length
         ? 'ready'
         : filtered
           ? 'no-results'
           : 'empty';
     const stateCopy: OperationalTableStateCopy = {
-        loading: labels.loading,
-        emptyTitle: labels.empty_title,
-        emptyDescription: labels.empty_description,
-        noResultsTitle: labels.no_results_title,
-        noResultsDescription: labels.no_results_description,
-        errorTitle: labels.error_title,
-        errorDescription: labels.error_description,
+        loading: props.labels.loading,
+        emptyTitle: props.labels.empty_title,
+        emptyDescription: props.labels.empty_description,
+        noResultsTitle: props.labels.no_results_title,
+        noResultsDescription: props.labels.no_results_description,
+        errorTitle: props.labels.error_title,
+        errorDescription: props.labels.error_description,
     };
 
     return (
-        <OperationalTable
-            ariaLabel={labels.title}
-            columns={columns}
-            rows={page.items}
-            rowKey={(customer) => customer.id}
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <CustomerListTools
-                    action={indexUrl}
-                    filters={filters}
-                    countryOptions={countryOptions}
-                    labels={labels}
-                />
-            }
-            footer={
-                <nav
-                    aria-label={`${labels.previous} / ${labels.next}`}
-                    className="flex justify-end gap-2"
-                >
-                    {page.previousUrl ? (
-                        <Button asChild variant="secondary">
-                            <Link href={page.previousUrl} preserveScroll>
-                                {labels.previous}
-                            </Link>
-                        </Button>
-                    ) : (
-                        <Button disabled variant="secondary">
-                            {labels.previous}
-                        </Button>
-                    )}
-                    {page.nextUrl ? (
-                        <Button asChild variant="secondary">
-                            <Link href={page.nextUrl} preserveScroll>
-                                {labels.next}
-                            </Link>
-                        </Button>
-                    ) : (
-                        <Button disabled variant="secondary">
-                            {labels.next}
-                        </Button>
-                    )}
-                </nav>
-            }
-            onRowActivate={(customer) => router.visit(customer.workspaceUrl)}
-            rowLabel={(customer) =>
-                interpolate(labels.open_customer, {
-                    name: customer.displayName,
-                })
-            }
-        />
+        <Stack gap="lg">
+            <CustomerListSummaryCards
+                action={props.indexUrl}
+                filters={props.filters}
+                summary={props.summary}
+                labels={props.labels}
+                commonLabels={props.commonLabels}
+            />
+            <OperationalTable
+                ariaLabel={props.labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(customer) => customer.id}
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <CustomerListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        countryOptions={props.countryOptions}
+                        labels={props.labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <OperationalListPagination
+                        shownCount={props.page.items.length}
+                        previousUrl={props.page.previousUrl}
+                        nextUrl={props.page.nextUrl}
+                        perPage={props.filters.perPage}
+                        onPerPageChange={(perPage) =>
+                            router.get(
+                                props.indexUrl,
+                                customerListQuery({
+                                    ...props.filters,
+                                    perPage,
+                                }),
+                                { preserveScroll: true, replace: true },
+                            )
+                        }
+                        labels={props.commonLabels}
+                    />
+                }
+                onRowActivate={(customer) =>
+                    router.visit(customer.workspaceUrl)
+                }
+                rowLabel={(customer) =>
+                    interpolate(props.labels.open_customer, {
+                        name: customer.displayName,
+                    })
+                }
+            />
+        </Stack>
     );
 }

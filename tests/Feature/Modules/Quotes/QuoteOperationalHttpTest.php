@@ -116,6 +116,9 @@ final class QuoteOperationalHttpTest extends TestCase
         $first->assertInertia(fn (Assert $page) => $page
             ->component('quotes/index')
             ->has('quotes.items', 25)
+            ->where('summary.all.count', 27)
+            ->where('summary.sent.count', 0)
+            ->where('datePresets.today', '2026-08-26')
             ->where('quotes.nextUrl', fn (mixed $value): bool => is_string($value)));
         $this->get((string) $first->inertiaProps('quotes.nextUrl'))
             ->assertInertia(fn (Assert $page) => $page->has('quotes.items', 2));

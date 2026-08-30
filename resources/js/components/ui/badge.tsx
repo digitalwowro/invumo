@@ -9,6 +9,8 @@ const badgeVariants = cva(
     {
         variants: {
             variant: {
+                ink: 'border-transparent bg-primary text-primary-foreground',
+                accent: 'border-transparent bg-product-mark-fill text-product-mark-ink',
                 positive:
                     'border-transparent bg-money-fill text-money-fill-foreground',
                 danger:

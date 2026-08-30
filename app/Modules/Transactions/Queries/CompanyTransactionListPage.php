@@ -6,10 +6,12 @@ use App\Foundation\Money\DecimalRules;
 use App\Models\User;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
 use App\Modules\Transactions\Http\Requests\CompanyTransactionListRequest;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
@@ -17,7 +19,10 @@ final readonly class CompanyTransactionListPage
 {
     private const SEARCH = "coalesce(documents.rendered_number, '') || ' ' || coalesce(customer.legal_name, '') || ' ' || coalesce(customer.first_name, '') || ' ' || coalesce(customer.last_name, '') || ' ' || coalesce(entry.reference, '') || ' ' || coalesce(entry.payment_method, '')";
 
-    public function __construct(private CompanyAbilityCheck $abilities) {}
+    public function __construct(
+        private CompanyAbilityCheck $abilities,
+        private CompanyTransactionListSummary $summary,
+    ) {}
 
     /** @return array<string, mixed> */
     public function for(
@@ -35,6 +40,8 @@ final readonly class CompanyTransactionListPage
         }
 
         $filters = $request->filters();
+        $settings = CompanySetting::query()->firstOrFail();
+        $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
         $query = $this->query();
         $this->applyFilters($query, $filters);
         $this->applySort($query, $filters['sort']);
@@ -50,6 +57,14 @@ final readonly class CompanyTransactionListPage
                 'nextUrl' => $page->nextPageUrl(),
             ],
             'filters' => $filters,
+            'summary' => $this->summary->get(),
+            'datePresets' => [
+                'today' => $localDate->toDateString(),
+                'monthStart' => $localDate->startOfMonth()->toDateString(),
+                'ninetyDaysAgo' => $localDate->subDays(89)->toDateString(),
+                'nextThirtyDays' => $localDate->addDays(30)->toDateString(),
+                'yesterday' => $localDate->subDay()->toDateString(),
+            ],
             'indexUrl' => route('transactions.index', $company, false),
         ];
     }

@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
@@ -9,12 +9,16 @@ import { InvoiceTable } from '@/features/invoices/components/invoice-table';
 import type {
     InvoiceCursorPage,
     InvoiceFilters,
+    InvoiceListDatePresets,
+    InvoiceListSummary,
     InvoiceTranslations,
 } from '@/types/invoice';
 
 type Props = {
     invoices: InvoiceCursorPage;
     filters: InvoiceFilters;
+    summary: InvoiceListSummary;
+    datePresets: InvoiceListDatePresets;
     indexUrl: string;
     createUrl: string | null;
     status?: string;
@@ -22,6 +26,8 @@ type Props = {
 };
 
 export default function InvoiceIndex(props: Props) {
+    const commonLabels = usePage().props.i18n.common.operational_list;
+
     return (
         <>
             <Head title={props.translations.index.head_title} />
@@ -45,8 +51,11 @@ export default function InvoiceIndex(props: Props) {
                     <InvoiceTable
                         page={props.invoices}
                         filters={props.filters}
+                        summary={props.summary}
+                        datePresets={props.datePresets}
                         indexUrl={props.indexUrl}
                         labels={props.translations}
+                        commonLabels={commonLabels}
                     />
                 </Stack>
             </PageFrame>

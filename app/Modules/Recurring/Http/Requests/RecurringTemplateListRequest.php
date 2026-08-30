@@ -19,12 +19,13 @@ final class RecurringTemplateListRequest extends FormRequest
         return [
             'q' => ['nullable', 'string', 'max:'.RecurringTemplateFieldLimits::SEARCH],
             'sort' => ['nullable', Rule::in(['name_asc', 'name_desc', 'recent'])],
+            'state' => ['nullable', Rule::in(['all', 'DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED'])],
             'outcome' => ['nullable', Rule::in(['all', 'failed'])],
-            'per_page' => ['nullable', 'integer', Rule::in([25, 50, 100])],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 25, 50, 100])],
         ];
     }
 
-    /** @return array{q: string, sort: string, outcome: string, perPage: int} */
+    /** @return array{q: string, sort: string, state: string, outcome: string, perPage: int} */
     public function filters(): array
     {
         $validated = $this->validated();
@@ -32,6 +33,7 @@ final class RecurringTemplateListRequest extends FormRequest
         return [
             'q' => trim((string) ($validated['q'] ?? '')),
             'sort' => (string) ($validated['sort'] ?? 'recent'),
+            'state' => (string) ($validated['state'] ?? 'all'),
             'outcome' => (string) ($validated['outcome'] ?? 'all'),
             'perPage' => (int) ($validated['per_page'] ?? 25),
         ];

@@ -73,7 +73,7 @@ final class InvoiceTransactionHttpTest extends TestCase
                 ->has('transactions.items', 3));
         $this->get(route('invoices.current.show', [$company, $invoice]))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('document.status', 'Partially paid'));
+                ->where('document.status', 'Partial'));
         $this->get(route('invoices.index', [$company, 'payment' => 'PARTIALLY_PAID']))
             ->assertInertia(fn (Assert $page) => $page
                 ->has('invoices.items', 1)

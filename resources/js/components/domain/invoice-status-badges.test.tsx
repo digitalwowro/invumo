@@ -9,11 +9,11 @@ describe('InvoiceStatusBadges', () => {
                 lifecycle="ISSUED"
                 paymentState="PARTIALLY_PAID"
                 overdue={false}
-                labels={{ PARTIALLY_PAID: 'Plătită parțial' }}
+                labels={{ PARTIALLY_PAID: 'Parțial' }}
             />,
         );
 
-        expect(screen.getByText('Plătită parțial')).toHaveAttribute(
+        expect(screen.getByText('Parțial')).toHaveAttribute(
             'data-status',
             'partial',
         );

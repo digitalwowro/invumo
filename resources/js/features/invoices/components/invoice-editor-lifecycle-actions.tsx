@@ -17,6 +17,9 @@ type Props = {
     saveLabel: string;
     issueLabels: InvoiceTranslations['issue'];
     lifecycleLabels: InvoiceTranslations['lifecycle'];
+    formId?: string;
+    separated?: boolean;
+    showStateMessage?: boolean;
 };
 
 export function InvoiceEditorLifecycleActions(props: Props) {
@@ -24,7 +27,8 @@ export function InvoiceEditorLifecycleActions(props: Props) {
 
     return (
         <>
-            {props.lifecycle === 'ISSUED' &&
+            {props.showStateMessage !== false &&
+                props.lifecycle === 'ISSUED' &&
                 props.lifecycleActions.state === 'OWNER_ADMIN_REQUIRED' && (
                     <SystemMessage
                         title={props.lifecycleActions.stateTitle}
@@ -32,10 +36,11 @@ export function InvoiceEditorLifecycleActions(props: Props) {
                         tone="warning"
                     />
                 )}
-            <FormActions separated>
+            <FormActions separated={props.separated ?? true}>
                 <SubmitButton
                     processing={props.processing}
                     testId="save-invoice"
+                    form={props.formId}
                 >
                     {props.saveLabel}
                 </SubmitButton>

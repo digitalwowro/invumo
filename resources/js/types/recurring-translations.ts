@@ -13,15 +13,9 @@ export type RecurringTranslations = {
         title: string;
         description: string;
         create: string;
-        search_label: string;
         search_placeholder: string;
-        sort_label: string;
         outcome_filter_label: string;
-        per_page_label: string;
-        clear: string;
-        previous: string;
-        next: string;
-        not_available: string;
+        state_filter_label: string;
         loading: string;
         empty_title: string;
         empty_description: string;
@@ -32,13 +26,11 @@ export type RecurringTranslations = {
         columns: Record<
             | 'template'
             | 'customer'
-            | 'reference'
-            | 'state'
             | 'next_run'
+            | 'schedule'
             | 'outcome'
             | 'automation'
             | 'updated'
-            | 'actions'
             | 'open'
             | 'open_invoice',
             string
@@ -48,9 +40,14 @@ export type RecurringTranslations = {
             RecurringTemplateFilters['outcome'],
             string
         >;
+        state_filter_options: Record<RecurringTemplateFilters['state'], string>;
         states: Record<RecurringTemplateState, string>;
         outcomes: Record<RecurringRunOutcome, string>;
         automation: Record<'enabled' | 'disabled' | 'review_required', string>;
+        summary: Record<
+            'aria_label' | 'all' | 'active' | 'paused' | 'attention',
+            string
+        >;
     };
     create: {
         head_title: string;

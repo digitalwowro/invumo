@@ -27,6 +27,7 @@ final readonly class QuoteListPage
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private QuoteDeletionPreview $deletionPreview,
+        private QuoteListSummary $summary,
     ) {}
 
     /** @return array<string, mixed> */
@@ -41,8 +42,9 @@ final readonly class QuoteListPage
         $filters = $request->filters();
         $query = $this->query();
         $this->applyFilters($query, $filters, $localDate->toDateString());
-        $this->applySort($query, $filters['sort']);
-        $page = $query->cursorPaginate($filters['perPage'])->withQueryString();
+        $page = $this->applySort($query, $filters['sort'])
+            ->cursorPaginate($filters['perPage'])
+            ->withQueryString();
         $canDelete = $this->abilities->allows($actor, $company, CompanyAbility::DeleteQuotes);
         $lifecycles = [];
 
@@ -69,6 +71,14 @@ final readonly class QuoteListPage
                 'nextUrl' => $page->nextPageUrl(),
             ],
             'filters' => $filters,
+            'summary' => $this->summary->for($localDate),
+            'datePresets' => [
+                'today' => $localDate->toDateString(),
+                'monthStart' => $localDate->startOfMonth()->toDateString(),
+                'ninetyDaysAgo' => $localDate->subDays(89)->toDateString(),
+                'nextThirtyDays' => $localDate->addDays(30)->toDateString(),
+                'yesterday' => $localDate->subDay()->toDateString(),
+            ],
             'indexUrl' => route('quotes.index', $company, false),
             'createUrl' => route('quotes.create', $company, false),
             'abilities' => ['delete' => $canDelete],
@@ -94,7 +104,10 @@ final readonly class QuoteListPage
                 'documents.currency_code', 'documents.currency_precision',
                 'documents.total', 'documents.updated_at', 'quotes.lifecycle', 'quotes.valid_until',
             ])
-            ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
+            ->selectRaw(self::CUSTOMER_NAME.' AS customer_name')
+            ->selectRaw('customer.email AS customer_email')
+            ->selectRaw('lower('.self::CUSTOMER_NAME.') AS customer_sort_name')
+            ->selectRaw("COALESCE(quotes.valid_until, DATE '9999-12-31') AS deadline_sort_date");
     }
 
     /** @param array{q: string, status: string, issueFrom: string, issueTo: string, validFrom: string, validTo: string, sort: string, perPage: int} $filters */
@@ -127,12 +140,20 @@ final readonly class QuoteListPage
         }
     }
 
-    private function applySort(Builder $query, string $sort): void
+    private function applySort(Builder $query, string $sort): Builder
     {
-        match ($sort) {
-            'issue_asc' => $query->orderBy('documents.issue_sort_date')->orderBy('documents.id'),
-            'recent' => $query->orderByDesc('documents.updated_at')->orderByDesc('documents.id'),
-            default => $query->orderByDesc('documents.issue_sort_date')->orderByDesc('documents.id'),
+        $sortable = DB::connection(config('database.tenant_connection'))
+            ->query()
+            ->fromSub($query, 'quote_list');
+
+        return match ($sort) {
+            'issue_asc' => $sortable->orderBy('issue_sort_date')->orderBy('id'),
+            'deadline_asc' => $sortable->orderBy('deadline_sort_date')->orderBy('id'),
+            'total_desc' => $sortable->orderByDesc('total')->orderByDesc('id'),
+            'total_asc' => $sortable->orderBy('total')->orderBy('id'),
+            'customer_asc' => $sortable->orderBy('customer_sort_name')->orderBy('id'),
+            'recent' => $sortable->orderByDesc('updated_at')->orderByDesc('id'),
+            default => $sortable->orderByDesc('issue_sort_date')->orderByDesc('id'),
         };
     }
 
@@ -160,6 +181,7 @@ final readonly class QuoteListPage
             'id' => (string) $row->id,
             'number' => (string) $row->rendered_number,
             'customerName' => $row->customer_name,
+            'customerEmail' => $row->customer_email,
             'customerReference' => $row->customer_reference,
             'issueDate' => $row->issue_date,
             'validUntil' => $row->valid_until,

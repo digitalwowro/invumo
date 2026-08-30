@@ -12,7 +12,7 @@ return [
         'EXPIRED' => 'Expired',
         'ISSUED' => 'Issued',
         'CANCELLED' => 'Cancelled',
-        'PARTIALLY_PAID' => 'Partially paid',
+        'PARTIALLY_PAID' => 'Partial',
         'PAID' => 'Paid',
         'OVERDUE' => 'Overdue',
     ],

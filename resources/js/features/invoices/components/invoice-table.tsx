@@ -1,32 +1,41 @@
 import { Link, router } from '@inertiajs/react';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Cluster } from '@/components/app/layout';
+import { Cluster, Stack } from '@/components/app/layout';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
     OperationalTableStateCopy,
 } from '@/components/app/operational-table';
+import { TableAmount, TableValue } from '@/components/app/typography';
 import {
-    BodyStrong,
-    SecondaryText,
-    TableAmount,
-    TableValue,
-} from '@/components/app/typography';
+    DocumentListDates,
+    DocumentListIdentity,
+} from '@/components/domain/documents/document-list-cells';
 import { InvoiceStatusBadges } from '@/components/domain/invoice-status-badges';
+import { MoneyValue } from '@/components/domain/money-value';
 import { Button } from '@/components/ui/button';
+import { InvoiceListSummaryCards } from '@/features/invoices/components/invoice-list-summary';
 import { InvoiceListTools } from '@/features/invoices/components/invoice-list-tools';
+import { InvoicePagination } from '@/features/invoices/components/invoice-pagination';
+import { countInvoiceFilters } from '@/features/invoices/lib/invoice-list-query';
 import type {
     InvoiceCursorPage,
     InvoiceFilters,
+    InvoiceListDatePresets,
+    InvoiceListSummary,
     InvoiceRow,
     InvoiceTranslations,
 } from '@/types/invoice';
+import type { OperationalListTranslations } from '@/types/localization';
 
 type Props = {
     page: InvoiceCursorPage;
     filters: InvoiceFilters;
+    summary: InvoiceListSummary;
+    datePresets: InvoiceListDatePresets;
     indexUrl: string;
     labels: InvoiceTranslations;
+    commonLabels: OperationalListTranslations;
 };
 
 export function InvoiceTable(props: Props) {
@@ -37,37 +46,37 @@ export function InvoiceTable(props: Props) {
             label: labels.columns.invoice,
             kind: 'identity',
             render: (invoice) => (
-                <div className="flex flex-col gap-1">
-                    <BodyStrong>{invoice.number}</BodyStrong>
-                    <SecondaryText>
-                        {invoice.customerName ?? labels.not_available}
-                    </SecondaryText>
-                </div>
+                <DocumentListIdentity
+                    number={invoice.number}
+                    customerName={invoice.customerName}
+                    customerEmail={invoice.customerEmail}
+                    notAvailable={props.commonLabels.not_available}
+                />
             ),
         },
         {
             key: 'reference',
-            label: labels.columns.reference,
+            label: props.commonLabels.columns.customer_reference,
             kind: 'data',
             render: (invoice) => (
                 <TableValue>
-                    {invoice.customerReference ?? labels.not_available}
+                    {invoice.customerReference ??
+                        props.commonLabels.not_available}
                 </TableValue>
             ),
         },
         {
             key: 'dates',
-            label: labels.columns.dates,
+            label: props.commonLabels.columns.issue_due_date,
             kind: 'data',
             render: (invoice) => (
-                <div className="flex flex-col gap-1">
-                    <TableValue>
-                        {invoice.issueDate ?? labels.not_available}
-                    </TableValue>
-                    <SecondaryText>
-                        {invoice.dueDate ?? labels.not_available}
-                    </SecondaryText>
-                </div>
+                <DocumentListDates
+                    issueDate={invoice.issueDate}
+                    deadline={invoice.dueDate}
+                    deadlinePrefix={labels.due_prefix}
+                    deadlineIsDanger={invoice.isOverdue}
+                    notAvailable={props.commonLabels.not_available}
+                />
             ),
         },
         {
@@ -75,16 +84,23 @@ export function InvoiceTable(props: Props) {
             label: labels.columns.total,
             kind: 'amount',
             render: (invoice) => (
-                <TableAmount>
-                    {invoice.total === null
-                        ? labels.not_available
-                        : `${invoice.total} ${invoice.currencyCode ?? ''}`}
-                </TableAmount>
+                <div className="flex flex-col items-end gap-1">
+                    <TableAmount>
+                        {invoice.total === null
+                            ? props.commonLabels.not_available
+                            : `${invoice.currencyCode ?? ''} ${invoice.total}`}
+                    </TableAmount>
+                    <OutstandingValue
+                        invoice={invoice}
+                        labels={labels}
+                        notAvailable={props.commonLabels.not_available}
+                    />
+                </div>
             ),
         },
         {
             key: 'status',
-            label: labels.columns.status,
+            label: props.commonLabels.columns.status,
             kind: 'status',
             render: (invoice) => (
                 <InvoiceStatusBadges
@@ -97,22 +113,17 @@ export function InvoiceTable(props: Props) {
         },
         {
             key: 'actions',
-            label: labels.columns.actions,
+            label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (invoice) => (
                 <InvoiceActions invoice={invoice} labels={props.labels} />
             ),
         },
     ];
-    const filtered = Object.entries(props.filters).some(([key, value]) =>
-        key === 'sort'
-            ? value !== 'issue_desc'
-            : key === 'perPage'
-              ? value !== 25
-              : key === 'lifecycle' || key === 'payment' || key === 'overdue'
-                ? value !== 'all'
-                : value !== '',
-    );
+    const filtered =
+        countInvoiceFilters(props.filters) > 0 ||
+        props.filters.sort !== 'issue_desc' ||
+        props.filters.perPage !== 25;
     const state = props.page.items.length
         ? 'ready'
         : filtered
@@ -129,27 +140,69 @@ export function InvoiceTable(props: Props) {
     };
 
     return (
-        <OperationalTable
-            ariaLabel={labels.title}
-            columns={columns}
-            rows={props.page.items}
-            rowKey={(invoice) => invoice.id}
-            rowLabel={(invoice) =>
-                `${labels.columns.invoice} ${invoice.number}`
-            }
-            onRowActivate={(invoice) =>
-                router.visit(invoice.editUrl ?? invoice.viewUrl)
-            }
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <InvoiceListTools
-                    action={props.indexUrl}
-                    filters={props.filters}
-                    labels={labels}
-                />
-            }
-            footer={<InvoicePagination page={props.page} labels={labels} />}
+        <Stack gap="lg">
+            <InvoiceListSummaryCards
+                action={props.indexUrl}
+                filters={props.filters}
+                summary={props.summary}
+                labels={labels}
+                commonLabels={props.commonLabels}
+            />
+            <OperationalTable
+                ariaLabel={labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(invoice) => invoice.id}
+                rowLabel={(invoice) =>
+                    `${labels.columns.invoice} ${invoice.number}`
+                }
+                onRowActivate={(invoice) =>
+                    router.visit(invoice.editUrl ?? invoice.viewUrl)
+                }
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <InvoiceListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        presets={props.datePresets}
+                        labels={labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <InvoicePagination
+                        action={props.indexUrl}
+                        page={props.page}
+                        filters={props.filters}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+            />
+        </Stack>
+    );
+}
+
+function OutstandingValue(props: {
+    invoice: InvoiceRow;
+    labels: InvoiceTranslations['index'];
+    notAvailable: string;
+}) {
+    const { invoice, labels, notAvailable } = props;
+    const label =
+        invoice.lifecycle === 'DRAFT'
+            ? labels.not_issued
+            : invoice.lifecycle === 'CANCELLED'
+              ? labels.cancelled_balance
+              : invoice.paymentState === 'PAID'
+                ? labels.settled
+                : `${invoice.outstanding ?? notAvailable} ${labels.outstanding}`;
+
+    return (
+        <MoneyValue
+            value={label}
+            tone={invoice.isOverdue ? 'danger' : 'muted'}
+            className="text-xs font-normal"
         />
     );
 }
@@ -172,44 +225,12 @@ function InvoiceActions(props: {
                         </Link>
                     </Button>
                 )}
-                <Button asChild variant="secondary">
+                <Button asChild variant="ghost">
                     <Link href={props.invoice.viewUrl}>
                         {props.labels.representation.view}
                     </Link>
                 </Button>
             </Cluster>
         </div>
-    );
-}
-
-function InvoicePagination(props: {
-    page: InvoiceCursorPage;
-    labels: InvoiceTranslations['index'];
-}) {
-    return (
-        <nav
-            aria-label={`${props.labels.previous} / ${props.labels.next}`}
-            className="flex justify-end gap-2"
-        >
-            <PageLink
-                href={props.page.previousUrl}
-                label={props.labels.previous}
-            />
-            <PageLink href={props.page.nextUrl} label={props.labels.next} />
-        </nav>
-    );
-}
-
-function PageLink({ href, label }: { href: string | null; label: string }) {
-    return href ? (
-        <Button asChild variant="secondary">
-            <Link href={href} preserveScroll>
-                {label}
-            </Link>
-        </Button>
-    ) : (
-        <Button disabled variant="secondary">
-            {label}
-        </Button>
     );
 }

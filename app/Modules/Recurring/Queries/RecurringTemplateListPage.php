@@ -25,6 +25,7 @@ final readonly class RecurringTemplateListPage
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private RecurringTemplateDeletionPreview $deletionPreview,
+        private RecurringTemplateListSummary $summary,
     ) {}
 
     /** @return array<string, mixed> */
@@ -83,6 +84,7 @@ final readonly class RecurringTemplateListPage
                 'nextUrl' => $page->nextPageUrl(),
             ],
             'filters' => $filters,
+            'summary' => $this->summary->get(),
             'indexUrl' => route('recurring.index', $company, false),
             'createUrl' => route('recurring.create', $company, false),
         ];
@@ -107,7 +109,7 @@ final readonly class RecurringTemplateListPage
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name');
     }
 
-    /** @param array{q: string, sort: string, outcome: string, perPage: int} $filters */
+    /** @param array{q: string, sort: string, state: string, outcome: string, perPage: int} $filters */
     private function applyFilters(Builder $query, array $filters): void
     {
         if ($filters['q'] !== '') {
@@ -118,6 +120,10 @@ final readonly class RecurringTemplateListPage
         if ($filters['outcome'] === 'failed') {
             $query->where('recurring_templates.state', RecurringTemplateState::Active)
                 ->where('recurring_templates.last_run_outcome', RecurringRunOutcome::Failed);
+        }
+
+        if ($filters['state'] !== 'all') {
+            $query->where('recurring_templates.state', $filters['state']);
         }
     }
 

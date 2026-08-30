@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
@@ -10,12 +10,14 @@ import type {
     CustomerCursorPage,
     CustomerFilters,
     CustomerOption,
+    CustomerListSummary,
     CustomerTranslations,
 } from '@/types/customer';
 
 type Props = {
     customers: CustomerCursorPage;
     filters: CustomerFilters;
+    summary: CustomerListSummary;
     countryOptions: CustomerOption[];
     abilities: { create: boolean; delete: boolean };
     indexUrl: string;
@@ -27,6 +29,7 @@ type Props = {
 export default function CustomersIndex({
     customers,
     filters,
+    summary,
     countryOptions,
     abilities,
     indexUrl,
@@ -35,11 +38,12 @@ export default function CustomersIndex({
     translations,
 }: Props) {
     const labels = translations.index;
+    const commonLabels = usePage().props.i18n.common.operational_list;
 
     return (
         <>
             <Head title={labels.head_title} />
-            <PageFrame>
+            <PageFrame width="full">
                 <Stack gap="2xl">
                     <PageHeader
                         title={labels.title}
@@ -57,9 +61,11 @@ export default function CustomersIndex({
                     <CustomerTable
                         page={customers}
                         filters={filters}
+                        summary={summary}
                         countryOptions={countryOptions}
                         indexUrl={indexUrl}
                         labels={labels}
+                        commonLabels={commonLabels}
                     />
                 </Stack>
             </PageFrame>

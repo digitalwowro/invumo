@@ -45,7 +45,7 @@ return [
         'ISSUED' => 'Emisă',
         'CANCELLED' => 'Anulată',
         'UNPAID' => 'Neplătită',
-        'PARTIALLY_PAID' => 'Plătită parțial',
+        'PARTIALLY_PAID' => 'Parțial',
         'PAID' => 'Plătită',
         'OVERDUE' => 'Restantă',
     ],

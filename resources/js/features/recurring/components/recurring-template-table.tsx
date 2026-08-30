@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Cluster } from '@/components/app/layout';
+import { Cluster, Stack } from '@/components/app/layout';
+import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
@@ -14,10 +15,17 @@ import {
 import { StatusBadge } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
 import { RecurringTemplateDeleteDialog } from '@/features/recurring/components/recurring-template-delete-dialog';
+import { RecurringTemplateListSummaryCards } from '@/features/recurring/components/recurring-template-list-summary';
 import { RecurringTemplateListTools } from '@/features/recurring/components/recurring-template-list-tools';
+import {
+    countRecurringTemplateFilters,
+    recurringTemplateListQuery,
+} from '@/features/recurring/lib/recurring-template-list-query';
+import type { OperationalListTranslations } from '@/types/localization';
 import type {
     RecurringTemplateCursorPage,
     RecurringTemplateFilters,
+    RecurringTemplateListSummary,
     RecurringTemplateRow,
 } from '@/types/recurring';
 import type { RecurringTranslations } from '@/types/recurring-translations';
@@ -26,8 +34,10 @@ import type { Status } from '@/types/status';
 type Props = {
     page: RecurringTemplateCursorPage;
     filters: RecurringTemplateFilters;
+    summary: RecurringTemplateListSummary;
     indexUrl: string;
     labels: RecurringTranslations;
+    commonLabels: OperationalListTranslations;
 };
 
 export function RecurringTemplateTable(props: Props) {
@@ -39,30 +49,48 @@ export function RecurringTemplateTable(props: Props) {
             label: labels.columns.template,
             kind: 'identity',
             render: (template) => (
-                <BodyStrong>{template.internalName}</BodyStrong>
-            ),
-        },
-        {
-            key: 'customer',
-            label: labels.columns.customer,
-            kind: 'text',
-            render: (template) => (
-                <TableValue>{template.customerName}</TableValue>
+                <div className="flex flex-col gap-1">
+                    <BodyStrong>{template.internalName}</BodyStrong>
+                    <SecondaryText>{template.customerName}</SecondaryText>
+                </div>
             ),
         },
         {
             key: 'reference',
-            label: labels.columns.reference,
+            label: props.commonLabels.columns.customer_reference,
             kind: 'data',
             render: (template) => (
                 <TableValue>
-                    {template.customerReference ?? labels.not_available}
+                    {template.customerReference ??
+                        props.commonLabels.not_available}
                 </TableValue>
             ),
         },
         {
+            key: 'schedule',
+            label: labels.columns.schedule,
+            kind: 'data',
+            render: (template) => (
+                <div className="flex flex-col gap-1">
+                    <TableValue>
+                        {template.nextRunAt === null
+                            ? props.commonLabels.not_available
+                            : new Intl.DateTimeFormat(i18n.locale, {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short',
+                              }).format(new Date(template.nextRunAt))}
+                    </TableValue>
+                    <SecondaryText>
+                        {template.lastRunOutcome === null
+                            ? props.commonLabels.not_available
+                            : labels.outcomes[template.lastRunOutcome]}
+                    </SecondaryText>
+                </div>
+            ),
+        },
+        {
             key: 'state',
-            label: labels.columns.state,
+            label: props.commonLabels.columns.status,
             kind: 'status',
             render: (template) => (
                 <StatusBadge
@@ -70,24 +98,6 @@ export function RecurringTemplateTable(props: Props) {
                     label={labels.states[template.state]}
                 />
             ),
-        },
-        {
-            key: 'outcome',
-            label: labels.columns.outcome,
-            kind: 'status',
-            render: (template) =>
-                template.lastRunOutcome === null ? (
-                    <SecondaryText>{labels.not_available}</SecondaryText>
-                ) : (
-                    <StatusBadge
-                        status={
-                            template.lastRunOutcome === 'SUCCEEDED'
-                                ? 'completed'
-                                : (template.lastRunOutcome.toLowerCase() as Status)
-                        }
-                        label={labels.outcomes[template.lastRunOutcome]}
-                    />
-                ),
         },
         {
             key: 'automation',
@@ -113,23 +123,8 @@ export function RecurringTemplateTable(props: Props) {
             ),
         },
         {
-            key: 'updated',
-            label: labels.columns.next_run,
-            kind: 'data',
-            render: (template) => (
-                <SecondaryText>
-                    {template.nextRunAt === null
-                        ? labels.not_available
-                        : new Intl.DateTimeFormat(i18n.locale, {
-                              dateStyle: 'medium',
-                              timeStyle: 'short',
-                          }).format(new Date(template.nextRunAt))}
-                </SecondaryText>
-            ),
-        },
-        {
             key: 'actions',
-            label: labels.columns.actions,
+            label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (template) => (
                 <TemplateActions template={template} labels={props.labels} />
@@ -137,9 +132,9 @@ export function RecurringTemplateTable(props: Props) {
         },
     ];
     const filtered =
-        props.filters.q !== '' ||
+        countRecurringTemplateFilters(props.filters) > 0 ||
         props.filters.sort !== 'recent' ||
-        props.filters.outcome !== 'all';
+        props.filters.perPage !== 25;
     const state = props.page.items.length
         ? 'ready'
         : filtered
@@ -156,31 +151,56 @@ export function RecurringTemplateTable(props: Props) {
     };
 
     return (
-        <OperationalTable
-            ariaLabel={labels.title}
-            columns={columns}
-            rows={props.page.items}
-            rowKey={(template) => template.id}
-            rowLabel={(template) => template.internalName}
-            onRowActivate={(template) => router.visit(template.editUrl)}
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <RecurringTemplateListTools
-                    action={props.indexUrl}
-                    filters={props.filters}
-                    labels={labels}
-                />
-            }
-            footer={<Pagination page={props.page} labels={labels} />}
-        />
+        <Stack gap="lg">
+            <RecurringTemplateListSummaryCards
+                action={props.indexUrl}
+                filters={props.filters}
+                summary={props.summary}
+                labels={labels}
+                commonLabels={props.commonLabels}
+            />
+            <OperationalTable
+                ariaLabel={labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(template) => template.id}
+                rowLabel={(template) => template.internalName}
+                onRowActivate={(template) => router.visit(template.editUrl)}
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <RecurringTemplateListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        labels={labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <OperationalListPagination
+                        shownCount={props.page.items.length}
+                        previousUrl={props.page.previousUrl}
+                        nextUrl={props.page.nextUrl}
+                        perPage={props.filters.perPage}
+                        onPerPageChange={(perPage) =>
+                            router.get(
+                                props.indexUrl,
+                                recurringTemplateListQuery({
+                                    ...props.filters,
+                                    perPage,
+                                }),
+                                { preserveScroll: true, replace: true },
+                            )
+                        }
+                        labels={props.commonLabels}
+                    />
+                }
+            />
+        </Stack>
     );
 }
 
-function TemplateActions({
-    template,
-    labels,
-}: {
+function TemplateActions(props: {
     template: RecurringTemplateRow;
     labels: RecurringTranslations;
 }) {
@@ -192,59 +212,27 @@ function TemplateActions({
         <div onClick={stop} onKeyDown={stopKeyboard}>
             <Cluster gap="sm">
                 <Button asChild variant="secondary">
-                    <Link href={template.editUrl}>
-                        {labels.index.columns.open}
+                    <Link href={props.template.editUrl}>
+                        {props.labels.index.columns.open}
                     </Link>
                 </Button>
-                {template.lastInvoiceUrl && (
-                    <Button asChild variant="secondary">
-                        <Link href={template.lastInvoiceUrl}>
-                            {labels.index.columns.open_invoice}
+                {props.template.lastInvoiceUrl && (
+                    <Button asChild variant="ghost">
+                        <Link href={props.template.lastInvoiceUrl}>
+                            {props.labels.index.columns.open_invoice}
                         </Link>
                     </Button>
                 )}
-                {template.canDelete && (
+                {props.template.canDelete && (
                     <RecurringTemplateDeleteDialog
-                        url={template.deleteUrl}
-                        highRisk={template.deletion.highRisk}
-                        stateVersion={template.deletion.stateVersion}
-                        guard={template.deletion.guard}
-                        labels={labels.deletion}
+                        url={props.template.deleteUrl}
+                        highRisk={props.template.deletion.highRisk}
+                        stateVersion={props.template.deletion.stateVersion}
+                        guard={props.template.deletion.guard}
+                        labels={props.labels.deletion}
                     />
                 )}
             </Cluster>
         </div>
-    );
-}
-
-function Pagination({
-    page,
-    labels,
-}: {
-    page: RecurringTemplateCursorPage;
-    labels: RecurringTranslations['index'];
-}) {
-    return (
-        <nav
-            aria-label={`${labels.previous} / ${labels.next}`}
-            className="flex justify-end gap-2"
-        >
-            <PageLink href={page.previousUrl} label={labels.previous} />
-            <PageLink href={page.nextUrl} label={labels.next} />
-        </nav>
-    );
-}
-
-function PageLink({ href, label }: { href: string | null; label: string }) {
-    return href ? (
-        <Button asChild variant="secondary">
-            <Link href={href} preserveScroll>
-                {label}
-            </Link>
-        </Button>
-    ) : (
-        <Button disabled variant="secondary">
-            {label}
-        </Button>
     );
 }

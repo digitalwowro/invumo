@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CompanyTransactionTable } from '@/features/transactions/components/company-transaction-table';
 import type { CompanyTransactionTranslations } from '@/types/company-transaction';
+import type { OperationalListTranslations } from '@/types/localization';
 
 vi.mock('@inertiajs/react', () => ({
     Link: ({ href, children }: PropsWithChildren<{ href: string }>) => (
@@ -20,17 +21,11 @@ const labels: CompanyTransactionTranslations = {
     head_title: 'Transactions',
     title: 'Transactions',
     description: 'Company transactions',
-    search_label: 'Search',
     search_placeholder: 'Search transactions',
     date_from: 'From',
     date_to: 'To',
+    date_label: 'Date',
     kind_label: 'Type',
-    sort_label: 'Sort',
-    per_page_label: 'Rows',
-    clear: 'Clear',
-    previous: 'Previous',
-    next: 'Next',
-    not_available: 'Not set',
     loading: 'Loading',
     empty_title: 'No transactions yet',
     empty_description: 'Transactions appear here.',
@@ -44,7 +39,6 @@ const labels: CompanyTransactionTranslations = {
         type: 'Type',
         amount: 'Amount',
         details: 'Details',
-        actions: 'Actions',
         open: 'Open Invoice',
     },
     kind_options: {
@@ -67,6 +61,59 @@ const labels: CompanyTransactionTranslations = {
         date_asc: 'Oldest',
         recent: 'Recent',
     },
+    date_presets: {
+        any: 'Any date',
+        this_month: 'This month',
+        last_ninety_days: 'Last 90 days',
+    },
+    summary: {
+        aria_label: 'Transaction overview',
+        all: 'All transactions',
+        payments: 'Payments',
+        refunds: 'Refunds',
+        adjustments: 'Adjustments',
+    },
+};
+
+const commonLabels: OperationalListTranslations = {
+    search_label: 'Search',
+    sort_label: 'Sort',
+    per_page_label: 'Rows per page',
+    filters: 'Filters',
+    show_filters: 'Show filters',
+    hide_filters: 'Hide filters',
+    active_filters: 'Active filters',
+    remove_filter: 'Remove filter',
+    clear: 'Clear',
+    shown_count: ':count shown',
+    previous: 'Previous',
+    next: 'Next',
+    not_available: 'Not available',
+    total: 'total',
+    columns: {
+        customer_reference: 'Customer reference',
+        issue_due_date: 'Issue / due date',
+        status: 'Status',
+        actions: 'Actions',
+    },
+};
+
+const summary = {
+    all: { count: 1, amounts: [] },
+    payments: { count: 0, amounts: [] },
+    refunds: { count: 0, amounts: [] },
+    adjustments: {
+        count: 1,
+        amounts: [{ currencyCode: 'RON', amount: '125.50' }],
+    },
+};
+
+const datePresets = {
+    today: '2026-08-30',
+    monthStart: '2026-08-01',
+    ninetyDaysAgo: '2026-06-01',
+    nextThirtyDays: '2026-09-29',
+    yesterday: '2026-08-29',
 };
 
 const filters = {
@@ -102,8 +149,11 @@ describe('CompanyTransactionTable', () => {
                     nextUrl: null,
                 }}
                 filters={filters}
+                summary={summary}
+                datePresets={datePresets}
                 indexUrl="/transactions"
                 labels={labels}
+                commonLabels={commonLabels}
             />,
         );
 
@@ -117,7 +167,9 @@ describe('CompanyTransactionTable', () => {
         ).toHaveClass('max-w-full', 'overflow-hidden');
         expect(screen.getByText('I-2026-0042')).toBeInTheDocument();
         expect(screen.getByText('Client SRL')).toBeInTheDocument();
-        expect(screen.getByText('125.50 RON')).toBeInTheDocument();
+        expect(
+            within(screen.getByRole('table')).getByText('RON 125.50'),
+        ).toBeInTheDocument();
         expect(screen.getByText('Decrease paid')).toBeInTheDocument();
         expect(
             screen.getByRole('link', { name: 'Open Invoice' }),
@@ -129,8 +181,11 @@ describe('CompanyTransactionTable', () => {
             <CompanyTransactionTable
                 page={{ items: [], previousUrl: null, nextUrl: null }}
                 filters={filters}
+                summary={summary}
+                datePresets={datePresets}
                 indexUrl="/transactions"
                 labels={labels}
+                commonLabels={commonLabels}
             />,
         );
 

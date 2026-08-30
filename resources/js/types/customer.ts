@@ -1,5 +1,9 @@
 import type { CustomerDefaultsTranslations } from '@/types/customer-defaults';
 import type { DependencyGuard } from '@/types/dependency-guard';
+import type {
+    OperationalListCursorPage,
+    OperationalListSummaryItem,
+} from '@/types/operational-list';
 
 export type CustomerType = 'INDIVIDUAL' | 'COMPANY';
 
@@ -59,11 +63,7 @@ export type CustomerListRow = {
     workspaceUrl: string;
 };
 
-export type CustomerCursorPage = {
-    items: CustomerListRow[];
-    previousUrl: string | null;
-    nextUrl: string | null;
-};
+export type CustomerCursorPage = OperationalListCursorPage<CustomerListRow>;
 
 export type CustomerFilters = {
     q: string;
@@ -73,20 +73,20 @@ export type CustomerFilters = {
     perPage: number;
 };
 
+export type CustomerListSummary = Record<
+    'all' | 'active' | 'archived',
+    OperationalListSummaryItem
+>;
+
 export type CustomerTranslations = {
     index: Record<string, unknown> & {
         head_title: string;
         title: string;
         description: string;
         create: string;
-        search_label: string;
         search_placeholder: string;
         status_label: string;
         country_label: string;
-        sort_label: string;
-        per_page_label: string;
-        apply: string;
-        clear: string;
         all_countries: string;
         columns: Record<string, string>;
         status_options: Record<CustomerFilters['status'], string>;
@@ -98,12 +98,10 @@ export type CustomerTranslations = {
         loading: string;
         error_title: string;
         error_description: string;
-        previous: string;
-        next: string;
         active: string;
         archived: string;
-        not_available: string;
         open_customer: string;
+        summary: Record<'aria_label' | 'all' | 'active' | 'archived', string>;
     };
     create: Record<string, string>;
     workspace: Record<string, unknown> & {

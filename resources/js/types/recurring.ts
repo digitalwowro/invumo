@@ -8,6 +8,10 @@ import type {
     DocumentProductDefaults,
     DocumentSourceUrls,
 } from '@/types/document';
+import type {
+    OperationalListCursorPage,
+    OperationalListSummaryItem,
+} from '@/types/operational-list';
 
 export type RecurringTemplateState =
     'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
@@ -52,18 +56,21 @@ export type RecurringTemplateRow = {
     };
 };
 
-export type RecurringTemplateCursorPage = {
-    items: RecurringTemplateRow[];
-    previousUrl: string | null;
-    nextUrl: string | null;
-};
+export type RecurringTemplateCursorPage =
+    OperationalListCursorPage<RecurringTemplateRow>;
 
 export type RecurringTemplateFilters = {
     q: string;
     sort: 'name_asc' | 'name_desc' | 'recent';
+    state: 'all' | RecurringTemplateState;
     outcome: 'all' | 'failed';
     perPage: number;
 };
+
+export type RecurringTemplateListSummary = Record<
+    'all' | 'active' | 'paused' | 'attention',
+    OperationalListSummaryItem
+>;
 
 export type RecurringTemplateDraft = {
     id: string;

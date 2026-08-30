@@ -397,6 +397,7 @@ The web application is responsive, not a native-mobile or mobile-first redesign.
 | `AppShell`                           | Sidebar, narrow-screen navigation, main workspace, skip link, global boundaries      |
 | `AppSidebar`                         | Product identity slot, Company switcher, authorized navigation, user/settings region |
 | `PageHeader`                         | Optional breadcrumb, one page title, subtitle/summary, primary and secondary actions |
+| `DocumentWorkspaceHeader`            | Dense document identity, status, actions, and section navigation                     |
 | `PageSection`                        | Consistent vertical separation and optional section divider                          |
 | `SectionHeader`                      | Section title, supporting copy, and a restrained action region                       |
 | `Surface`                            | Bounded neutral region only when a border/background materially improves grouping    |
@@ -404,7 +405,7 @@ The web application is responsive, not a native-mobile or mobile-first redesign.
 | `FormSection`                        | Standard form heading, description, fields, and action placement                     |
 | `DetailPanel`                        | Definition-list presentation for identity/settings details                           |
 
-Every authenticated page uses `AppShell` and `PageHeader`. A page may omit visible breadcrumbs when the route is already obvious, but it must not recreate the header locally.
+Every authenticated page uses `AppShell` and normally uses `PageHeader`. Dense document editors use the shared `DocumentWorkspaceHeader` variant so identity, saved-state feedback, document actions, and editor section navigation remain reachable together. A page may omit visible breadcrumbs when the route is already obvious, but it must not recreate either header locally. The shared page header stays visually open and uses the page stack for separation; it does not add a bottom divider or local bottom padding.
 
 ### 10.2 Buttons and actions
 
@@ -426,6 +427,7 @@ Rules:
 - Disabled and loading states preserve button width; loading composes the shared Spinner and disables repeat submission.
 - Icons use the configured single icon library, inherit `currentColor`, and follow Button sizing. Do not mix icon families.
 - Icon-only buttons require an accessible name and Tooltip.
+- Collapsible filter controls use the shared filter-toggle button: the collapsed control is secondary with an ink count badge, while the expanded control is primary with a lime count badge. Pages do not restyle this state locally.
 
 Permanent deletion of an issued, sent, or publicly shared document uses `DestructiveActionDialog` with the stronger confirmation mode required by the financial-state specification. Pages do not improvise this friction.
 
@@ -562,6 +564,28 @@ Required behavior:
 
 Feature-specific column definitions and filters are data configuration. Their appearance is not configurable by the page.
 
+Operational list pages use one shared composition contract across Customers,
+Quotes, Invoices, Transactions, and recurring templates:
+
+- the full shared application frame and open `PageHeader` treatment;
+- a compact summary-filter region before the table when supported by the
+  domain;
+- one search/filter/sort toolbar, with advanced filters collapsed by default;
+- summary selections and collapsed filters apply immediately, preserve the
+  visible active-filter count, and do not expand the filter region;
+- one active-filter treatment, one pagination/per-page treatment, and the
+  shared operational-table states;
+- row information ordered as identity, core reference/date facts, financial
+  or operational state, then actions;
+- the same concept uses the same Laravel-owned common translation key and
+  shared cell/component everywhere. A feature catalog must not rename a
+  shared concept locally; for example, document lists use the common
+  `Issue / due date`, `Customer reference`, `Status`, and `Actions` labels.
+
+Changing a shared operational-list component or common label must propagate
+to every list that consumes that concept. Feature code owns only genuine
+domain-specific filters, cells, values, and actions.
+
 ### 10.9 Metric strips and dashboards
 
 Summary metrics use `MetricStrip`: adjacent cells separated by rules, not a grid of floating rounded cards. Labels use `MetaLabel`; values use `MetricValue`; semantic colour is limited to overdue money, received money, and neutral values.
@@ -591,6 +615,8 @@ The full audit trail may expose more detail by permission, but it does not recei
 Quote, Invoice, and recurring-template editors are configurations of one shared `DocumentEditorShell`, not three independently styled forms. The shell owns:
 
 - editor page/header and unsaved-state treatment;
+- responsive Build, Payments, and Sharing navigation where those capabilities exist;
+- a compact document-facts sidebar and, for Invoices, the current balance summary;
 - Customer selection and inline creation;
 - document identity, issue/due/validity/reference fields;
 - searchable Product & Service selection and inline creation;
@@ -602,6 +628,8 @@ Quote, Invoice, and recurring-template editors are configurations of one shared 
 - validation summary, save/issue/send actions, and narrow-screen behavior.
 
 Quote-specific validity/acceptance, Invoice-specific payment state, and recurring-specific name/schedule/inheritance controls enter through typed slots or documented variants. They do not fork the editor layout or restyle shared sections.
+
+The Invoice workspace keeps its Draft form mounted while the user switches between Build, Payments & adjustments, and Sharing & reminders, so unsaved values are never discarded by local navigation. On narrow screens the sidebar follows the active section in normal document flow, the tab strip scrolls inside its own region, and actions wrap without widening the page. A send shortcut opens the real sharing tools and remains unavailable while the Invoice form has unsaved changes.
 
 Lines use one `DocumentLinesEditor` across all three aggregates. It preserves keyboard-accessible reordering, visible drag affordance, stable focus after add/remove/reorder, searchable catalog/manual-line paths, and a horizontal-scroll strategy for narrow screens. A line field must not move, rename, or change control treatment only because the parent is a Quote, Invoice, or recurring template.
 

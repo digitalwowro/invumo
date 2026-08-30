@@ -1,23 +1,40 @@
-import { Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { TextField } from '@/components/app/form-field';
-import { Grid } from '@/components/app/layout';
-import { SelectField } from '@/components/app/select-field';
-import { Button } from '@/components/ui/button';
+import { OperationalListToolbar } from '@/components/app/operational-list-toolbar';
+import { RecurringTemplateFilterPanel } from '@/features/recurring/components/recurring-template-filter-panel';
+import {
+    countRecurringTemplateFilters,
+    recurringTemplateFiltersEqual,
+    recurringTemplateListQuery,
+} from '@/features/recurring/lib/recurring-template-list-query';
+import type { OperationalListTranslations } from '@/types/localization';
 import type { RecurringTemplateFilters } from '@/types/recurring';
 import type { RecurringTranslations } from '@/types/recurring-translations';
 
-export function RecurringTemplateListTools({
-    action,
-    filters,
-    labels,
-}: {
+type Props = {
     action: string;
     filters: RecurringTemplateFilters;
     labels: RecurringTranslations['index'];
-}) {
-    const [values, setValues] = useState(filters);
+    commonLabels: OperationalListTranslations;
+};
+
+export function RecurringTemplateListTools(props: Props) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <RecurringTemplateListToolsState
+            key={JSON.stringify(props.filters)}
+            {...props}
+            open={open}
+            onOpenChange={setOpen}
+        />
+    );
+}
+
+function RecurringTemplateListToolsState(
+    props: Props & { open: boolean; onOpenChange: (open: boolean) => void },
+) {
+    const [values, setValues] = useState(props.filters);
     const mounted = useRef(false);
 
     useEffect(() => {
@@ -27,101 +44,48 @@ export function RecurringTemplateListTools({
             return;
         }
 
+        if (recurringTemplateFiltersEqual(values, props.filters)) {
+return;
+}
+
         const timeout = window.setTimeout(() => {
-            router.get(
-                action,
-                {
-                    ...(values.q ? { q: values.q } : {}),
-                    sort: values.sort,
-                    ...(values.outcome === 'failed'
-                        ? { outcome: values.outcome }
-                        : {}),
-                    per_page: values.perPage,
-                },
-                {
-                    preserveScroll: true,
-                    preserveState: true,
-                    replace: true,
-                    only: ['templates', 'filters'],
-                },
-            );
+            router.get(props.action, recurringTemplateListQuery(values), {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                only: ['templates', 'filters'],
+            });
         }, 350);
 
         return () => window.clearTimeout(timeout);
-    }, [action, values]);
+    }, [props.action, props.filters, values]);
+
+    const change = (changes: Partial<RecurringTemplateFilters>) =>
+        setValues((current) => ({ ...current, ...changes }));
 
     return (
-        <div className="space-y-3">
-            <Grid columns={4} gap="md">
-                <TextField
-                    label={labels.search_label}
-                    input={{
-                        value: values.q,
-                        maxLength: 120,
-                        placeholder: labels.search_placeholder,
-                        onChange: (event) =>
-                            setValues((current) => ({
-                                ...current,
-                                q: event.target.value,
-                            })),
-                    }}
-                    labelAction={
-                        <Search
-                            aria-hidden="true"
-                            className="size-4 text-foreground-muted"
-                        />
-                    }
-                />
-                <SelectField
-                    name="outcome"
-                    label={labels.outcome_filter_label}
-                    value={values.outcome}
-                    onValueChange={(outcome) =>
-                        setValues((current) => ({
-                            ...current,
-                            outcome:
-                                outcome as RecurringTemplateFilters['outcome'],
-                        }))
-                    }
-                    options={Object.entries(labels.outcome_filter_options).map(
-                        ([value, label]) => ({ value, label }),
-                    )}
-                />
-                <SelectField
-                    name="sort"
-                    label={labels.sort_label}
-                    value={values.sort}
-                    onValueChange={(sort) =>
-                        setValues((current) => ({
-                            ...current,
-                            sort: sort as RecurringTemplateFilters['sort'],
-                        }))
-                    }
-                    options={Object.entries(labels.sort_options).map(
-                        ([value, label]) => ({ value, label }),
-                    )}
-                />
-                <SelectField
-                    name="per_page"
-                    label={labels.per_page_label}
-                    value={String(values.perPage)}
-                    onValueChange={(perPage) =>
-                        setValues((current) => ({
-                            ...current,
-                            perPage: Number(perPage),
-                        }))
-                    }
-                    options={['25', '50', '100'].map((value) => ({
-                        value,
-                        label: value,
-                    }))}
-                />
-            </Grid>
-            <div className="flex justify-end">
-                <Button asChild type="button" variant="ghost">
-                    <Link href={action}>{labels.clear}</Link>
-                </Button>
-            </div>
-        </div>
+        <OperationalListToolbar
+            open={props.open}
+            onOpenChange={props.onOpenChange}
+            searchValue={values.q}
+            searchPlaceholder={props.labels.search_placeholder}
+            onSearchChange={(q) => change({ q })}
+            filterCount={countRecurringTemplateFilters(values)}
+            sortValue={values.sort}
+            sortOptions={Object.entries(props.labels.sort_options).map(
+                ([value, label]) => ({ value, label }),
+            )}
+            onSortChange={(sort) =>
+                change({ sort: sort as RecurringTemplateFilters['sort'] })
+            }
+            labels={props.commonLabels}
+        >
+            <RecurringTemplateFilterPanel
+                values={values}
+                labels={props.labels}
+                commonLabels={props.commonLabels}
+                onChange={change}
+            />
+        </OperationalListToolbar>
     );
 }

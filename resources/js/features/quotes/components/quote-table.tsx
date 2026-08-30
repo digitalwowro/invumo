@@ -1,24 +1,32 @@
 import { Link, router } from '@inertiajs/react';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Cluster } from '@/components/app/layout';
+import { Cluster, Stack } from '@/components/app/layout';
+import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
     OperationalTableStateCopy,
 } from '@/components/app/operational-table';
+import { TableAmount, TableValue } from '@/components/app/typography';
 import {
-    BodyStrong,
-    SecondaryText,
-    TableAmount,
-    TableValue,
-} from '@/components/app/typography';
+    DocumentListDates,
+    DocumentListIdentity,
+} from '@/components/domain/documents/document-list-cells';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
 import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
+import { QuoteListSummaryCards } from '@/features/quotes/components/quote-list-summary';
 import { QuoteListTools } from '@/features/quotes/components/quote-list-tools';
+import {
+    countQuoteFilters,
+    quoteListQuery,
+} from '@/features/quotes/lib/quote-list-query';
+import type { OperationalListTranslations } from '@/types/localization';
 import type {
     QuoteCursorPage,
     QuoteFilters,
+    QuoteListDatePresets,
+    QuoteListSummary,
     QuoteRow,
     QuoteTranslations,
 } from '@/types/quote';
@@ -27,8 +35,11 @@ import type { Status } from '@/types/status';
 type Props = {
     page: QuoteCursorPage;
     filters: QuoteFilters;
+    summary: QuoteListSummary;
+    datePresets: QuoteListDatePresets;
     indexUrl: string;
     labels: QuoteTranslations;
+    commonLabels: OperationalListTranslations;
 };
 
 export function QuoteTable(props: Props) {
@@ -39,37 +50,37 @@ export function QuoteTable(props: Props) {
             label: labels.columns.quote,
             kind: 'identity',
             render: (quote) => (
-                <div className="space-y-1">
-                    <BodyStrong>{quote.number}</BodyStrong>
-                    <SecondaryText>
-                        {quote.customerName ?? labels.not_available}
-                    </SecondaryText>
-                </div>
+                <DocumentListIdentity
+                    number={quote.number}
+                    customerName={quote.customerName}
+                    customerEmail={quote.customerEmail}
+                    notAvailable={props.commonLabels.not_available}
+                />
             ),
         },
         {
             key: 'reference',
-            label: labels.columns.reference,
+            label: props.commonLabels.columns.customer_reference,
             kind: 'data',
             render: (quote) => (
                 <TableValue>
-                    {quote.customerReference ?? labels.not_available}
+                    {quote.customerReference ??
+                        props.commonLabels.not_available}
                 </TableValue>
             ),
         },
         {
             key: 'dates',
-            label: labels.columns.dates,
+            label: props.commonLabels.columns.issue_due_date,
             kind: 'data',
             render: (quote) => (
-                <div className="space-y-1">
-                    <TableValue>
-                        {quote.issueDate ?? labels.not_available}
-                    </TableValue>
-                    <SecondaryText>
-                        {quote.validUntil ?? labels.not_available}
-                    </SecondaryText>
-                </div>
+                <DocumentListDates
+                    issueDate={quote.issueDate}
+                    deadline={quote.validUntil}
+                    deadlinePrefix={labels.valid_until_prefix}
+                    deadlineIsDanger={quote.status === 'EXPIRED'}
+                    notAvailable={props.commonLabels.not_available}
+                />
             ),
         },
         {
@@ -79,14 +90,14 @@ export function QuoteTable(props: Props) {
             render: (quote) => (
                 <TableAmount>
                     {quote.total === null
-                        ? labels.not_available
-                        : `${quote.total} ${quote.currencyCode ?? ''}`}
+                        ? props.commonLabels.not_available
+                        : `${quote.currencyCode ?? ''} ${quote.total}`}
                 </TableAmount>
             ),
         },
         {
             key: 'status',
-            label: labels.columns.status,
+            label: props.commonLabels.columns.status,
             kind: 'status',
             render: (quote) => (
                 <StatusBadge
@@ -97,22 +108,17 @@ export function QuoteTable(props: Props) {
         },
         {
             key: 'actions',
-            label: labels.columns.actions,
+            label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (quote) => (
                 <QuoteActions quote={quote} labels={props.labels} />
             ),
         },
     ];
-    const filtered = Object.entries(props.filters).some(([key, value]) =>
-        key === 'status'
-            ? value !== 'all'
-            : key === 'sort'
-              ? value !== 'issue_desc'
-              : key === 'perPage'
-                ? value !== 25
-                : value !== '',
-    );
+    const filtered =
+        countQuoteFilters(props.filters) > 0 ||
+        props.filters.sort !== 'issue_desc' ||
+        props.filters.perPage !== 25;
     const state = props.page.items.length
         ? 'ready'
         : filtered
@@ -129,34 +135,54 @@ export function QuoteTable(props: Props) {
     };
 
     return (
-        <OperationalTable
-            ariaLabel={labels.title}
-            columns={columns}
-            rows={props.page.items}
-            rowKey={(quote) => quote.id}
-            rowLabel={(quote) => `${labels.columns.quote} ${quote.number}`}
-            onRowActivate={(quote) => router.visit(quote.editUrl)}
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <QuoteListTools
-                    action={props.indexUrl}
-                    filters={props.filters}
-                    labels={labels}
-                />
-            }
-            footer={<QuotePagination page={props.page} labels={labels} />}
-        />
+        <Stack gap="lg">
+            <QuoteListSummaryCards
+                action={props.indexUrl}
+                filters={props.filters}
+                summary={props.summary}
+                labels={labels}
+                commonLabels={props.commonLabels}
+            />
+            <OperationalTable
+                ariaLabel={labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(quote) => quote.id}
+                rowLabel={(quote) => `${labels.columns.quote} ${quote.number}`}
+                onRowActivate={(quote) => router.visit(quote.editUrl)}
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <QuoteListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        presets={props.datePresets}
+                        labels={labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <OperationalListPagination
+                        shownCount={props.page.items.length}
+                        previousUrl={props.page.previousUrl}
+                        nextUrl={props.page.nextUrl}
+                        perPage={props.filters.perPage}
+                        onPerPageChange={(perPage) =>
+                            router.get(
+                                props.indexUrl,
+                                quoteListQuery({ ...props.filters, perPage }),
+                                { preserveScroll: true, replace: true },
+                            )
+                        }
+                        labels={props.commonLabels}
+                    />
+                }
+            />
+        </Stack>
     );
 }
 
-function QuoteActions({
-    quote,
-    labels,
-}: {
-    quote: QuoteRow;
-    labels: QuoteTranslations;
-}) {
+function QuoteActions(props: { quote: QuoteRow; labels: QuoteTranslations }) {
     const stop = (event: MouseEvent<HTMLDivElement>) => event.stopPropagation();
     const stopKeyboard = (event: KeyboardEvent<HTMLDivElement>) =>
         event.stopPropagation();
@@ -165,57 +191,25 @@ function QuoteActions({
         <div onClick={stop} onKeyDown={stopKeyboard}>
             <Cluster gap="sm">
                 <Button asChild variant="secondary">
-                    <Link href={quote.editUrl}>
-                        {labels.index.columns.open}
+                    <Link href={props.quote.editUrl}>
+                        {props.labels.index.columns.open}
                     </Link>
                 </Button>
-                <Button asChild variant="secondary">
-                    <Link href={quote.viewUrl}>
-                        {labels.representation.view}
+                <Button asChild variant="ghost">
+                    <Link href={props.quote.viewUrl}>
+                        {props.labels.representation.view}
                     </Link>
                 </Button>
-                {quote.canDelete && (
+                {props.quote.canDelete && (
                     <QuoteDeleteDialog
-                        url={quote.deleteUrl}
-                        highRisk={quote.deletion.highRisk}
-                        stateVersion={quote.deletion.stateVersion}
-                        guard={quote.deletion.guard}
-                        labels={labels.deletion}
+                        url={props.quote.deleteUrl}
+                        highRisk={props.quote.deletion.highRisk}
+                        stateVersion={props.quote.deletion.stateVersion}
+                        guard={props.quote.deletion.guard}
+                        labels={props.labels.deletion}
                     />
                 )}
             </Cluster>
         </div>
-    );
-}
-
-function QuotePagination({
-    page,
-    labels,
-}: {
-    page: QuoteCursorPage;
-    labels: QuoteTranslations['index'];
-}) {
-    return (
-        <nav
-            aria-label={`${labels.previous} / ${labels.next}`}
-            className="flex justify-end gap-2"
-        >
-            <PageLink href={page.previousUrl} label={labels.previous} />
-            <PageLink href={page.nextUrl} label={labels.next} />
-        </nav>
-    );
-}
-
-function PageLink({ href, label }: { href: string | null; label: string }) {
-    return href ? (
-        <Button asChild variant="secondary">
-            <Link href={href} preserveScroll>
-                {label}
-            </Link>
-        </Button>
-    ) : (
-        <Button disabled variant="secondary">
-            {label}
-        </Button>
     );
 }

@@ -114,6 +114,10 @@ final class RecurringTemplateHttpTest extends TestCase
         $page = $this->get(route('recurring.index', [
             $company, 'sort' => 'name_asc', 'per_page' => 25,
         ]))->assertOk();
+        $page->assertInertia(fn (Assert $inertia) => $inertia
+            ->where('summary.all.count', 26)
+            ->where('summary.active.count', 0)
+            ->where('filters.state', 'all'));
         $next = $page->viewData('page')['props']['templates']['nextUrl'];
         $this->assertIsString($next);
         $this->get($next)->assertOk()->assertInertia(fn (Assert $inertia) => $inertia

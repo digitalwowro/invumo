@@ -50,6 +50,7 @@ export type CommonTranslations = {
         showing: string;
         per_page: string;
     };
+    operational_list: OperationalListTranslations;
     status: {
         draft: string;
         sent: string;
@@ -83,6 +84,29 @@ export type CommonTranslations = {
         nested_denied: string;
         suspended_title: string;
         suspended_description: string;
+    };
+};
+
+export type OperationalListTranslations = {
+    search_label: string;
+    sort_label: string;
+    per_page_label: string;
+    filters: string;
+    show_filters: string;
+    hide_filters: string;
+    active_filters: string;
+    remove_filter: string;
+    clear: string;
+    shown_count: string;
+    previous: string;
+    next: string;
+    not_available: string;
+    total: string;
+    columns: {
+        customer_reference: string;
+        issue_due_date: string;
+        status: string;
+        actions: string;
     };
 };
 

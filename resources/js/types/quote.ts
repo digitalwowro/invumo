@@ -24,6 +24,11 @@ import type {
     DocumentSourceUrls,
     DocumentTaxDefault,
 } from '@/types/document';
+import type {
+    OperationalListCursorPage,
+    OperationalListDatePresets,
+    OperationalListSummaryItem,
+} from '@/types/operational-list';
 
 export type QuotePeriodUnit = DocumentPeriodUnit;
 export type QuoteLine = DocumentLineDraft;
@@ -97,6 +102,7 @@ export type QuoteRow = {
     id: string;
     number: string;
     customerName: string | null;
+    customerEmail: string | null;
     customerReference: string | null;
     issueDate: string | null;
     validUntil: string | null;
@@ -115,11 +121,7 @@ export type QuoteRow = {
     canDelete: boolean;
 };
 
-export type QuoteCursorPage = {
-    items: QuoteRow[];
-    previousUrl: string | null;
-    nextUrl: string | null;
-};
+export type QuoteCursorPage = OperationalListCursorPage<QuoteRow>;
 
 export type QuoteFilters = {
     q: string;
@@ -128,9 +130,23 @@ export type QuoteFilters = {
     issueTo: string;
     validFrom: string;
     validTo: string;
-    sort: 'issue_desc' | 'issue_asc' | 'recent';
+    sort:
+        | 'issue_desc'
+        | 'issue_asc'
+        | 'deadline_asc'
+        | 'total_desc'
+        | 'total_asc'
+        | 'customer_asc'
+        | 'recent';
     perPage: number;
 };
+
+export type QuoteListSummary = Record<
+    'all' | 'sent' | 'accepted' | 'expired',
+    OperationalListSummaryItem
+>;
+
+export type QuoteListDatePresets = OperationalListDatePresets;
 
 export type QuoteCustomerFormOptions = {
     countryOptions: CustomerOption[];
@@ -156,19 +172,15 @@ export type QuoteTranslations = {
         title: string;
         description: string;
         create: string;
-        search_label: string;
         search_placeholder: string;
         status_label: string;
         issue_from: string;
         issue_to: string;
         valid_from: string;
         valid_to: string;
-        sort_label: string;
-        per_page_label: string;
-        clear: string;
-        previous: string;
-        next: string;
-        not_available: string;
+        issue_date_label: string;
+        deadline_date_label: string;
+        valid_until_prefix: string;
         loading: string;
         empty_title: string;
         empty_description: string;
@@ -180,6 +192,18 @@ export type QuoteTranslations = {
         status_options: Record<string, string>;
         sort_options: Record<string, string>;
         statuses: Record<QuoteDisplayStatus, string>;
+        date_presets: Record<
+            | 'any'
+            | 'this_month'
+            | 'last_ninety_days'
+            | 'next_thirty_days'
+            | 'expired',
+            string
+        >;
+        summary: Record<
+            'aria_label' | 'all' | 'sent' | 'accepted' | 'expired',
+            string
+        >;
     };
     representation: Record<
         | 'head_title'

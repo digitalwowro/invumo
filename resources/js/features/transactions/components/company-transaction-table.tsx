@@ -1,4 +1,6 @@
 import { Link, router } from '@inertiajs/react';
+import { Stack } from '@/components/app/layout';
+import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
@@ -12,31 +14,34 @@ import {
 } from '@/components/app/typography';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CompanyTransactionListSummaryCards } from '@/features/transactions/components/company-transaction-list-summary';
 import { CompanyTransactionListTools } from '@/features/transactions/components/company-transaction-list-tools';
+import {
+    companyTransactionListQuery,
+    countCompanyTransactionFilters,
+} from '@/features/transactions/lib/company-transaction-list-query';
 import type {
     CompanyTransactionCursorPage,
     CompanyTransactionFilters,
+    CompanyTransactionListDatePresets,
+    CompanyTransactionListSummary,
     CompanyTransactionRow,
     CompanyTransactionTranslations,
 } from '@/types/company-transaction';
+import type { OperationalListTranslations } from '@/types/localization';
 
 type Props = {
     page: CompanyTransactionCursorPage;
     filters: CompanyTransactionFilters;
+    summary: CompanyTransactionListSummary;
+    datePresets: CompanyTransactionListDatePresets;
     indexUrl: string;
     labels: CompanyTransactionTranslations;
+    commonLabels: OperationalListTranslations;
 };
 
 export function CompanyTransactionTable(props: Props) {
     const columns: OperationalColumn<CompanyTransactionRow>[] = [
-        {
-            key: 'date',
-            label: props.labels.columns.date,
-            kind: 'data',
-            render: (transaction) => (
-                <TableValue>{transaction.transactionDate}</TableValue>
-            ),
-        },
         {
             key: 'invoice',
             label: props.labels.columns.invoice,
@@ -45,9 +50,18 @@ export function CompanyTransactionTable(props: Props) {
                 <div className="flex flex-col gap-1">
                     <BodyStrong>{transaction.invoiceNumber}</BodyStrong>
                     <SecondaryText>
-                        {transaction.customerName ?? props.labels.not_available}
+                        {transaction.customerName ??
+                            props.commonLabels.not_available}
                     </SecondaryText>
                 </div>
+            ),
+        },
+        {
+            key: 'date',
+            label: props.labels.columns.date,
+            kind: 'data',
+            render: (transaction) => (
+                <TableValue>{transaction.transactionDate}</TableValue>
             ),
         },
         {
@@ -72,16 +86,6 @@ export function CompanyTransactionTable(props: Props) {
             ),
         },
         {
-            key: 'amount',
-            label: props.labels.columns.amount,
-            kind: 'amount',
-            render: (transaction) => (
-                <TableAmount>
-                    {transaction.amount} {transaction.currencyCode}
-                </TableAmount>
-            ),
-        },
-        {
             key: 'details',
             label: props.labels.columns.details,
             kind: 'text',
@@ -89,17 +93,28 @@ export function CompanyTransactionTable(props: Props) {
                 <div className="flex max-w-80 flex-col gap-1 break-words">
                     <TableValue>
                         {transaction.paymentMethod ??
-                            props.labels.not_available}
+                            props.commonLabels.not_available}
                     </TableValue>
                     <SecondaryText>
-                        {transaction.reference ?? props.labels.not_available}
+                        {transaction.reference ??
+                            props.commonLabels.not_available}
                     </SecondaryText>
                 </div>
             ),
         },
         {
+            key: 'amount',
+            label: props.labels.columns.amount,
+            kind: 'amount',
+            render: (transaction) => (
+                <TableAmount>
+                    {transaction.currencyCode} {transaction.amount}
+                </TableAmount>
+            ),
+        },
+        {
             key: 'actions',
-            label: props.labels.columns.actions,
+            label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (transaction) => (
                 <Button asChild variant="secondary">
@@ -110,15 +125,10 @@ export function CompanyTransactionTable(props: Props) {
             ),
         },
     ];
-    const filtered = Object.entries(props.filters).some(([key, value]) =>
-        key === 'sort'
-            ? value !== 'date_desc'
-            : key === 'perPage'
-              ? value !== 25
-              : key === 'kind'
-                ? value !== 'all'
-                : value !== '',
-    );
+    const filtered =
+        countCompanyTransactionFilters(props.filters) > 0 ||
+        props.filters.sort !== 'date_desc' ||
+        props.filters.perPage !== 25;
     const state = props.page.items.length
         ? 'ready'
         : filtered
@@ -135,28 +145,57 @@ export function CompanyTransactionTable(props: Props) {
     };
 
     return (
-        <OperationalTable
-            ariaLabel={props.labels.title}
-            columns={columns}
-            rows={props.page.items}
-            rowKey={(transaction) => transaction.id}
-            rowLabel={(transaction) =>
-                `${props.labels.columns.invoice} ${transaction.invoiceNumber}`
-            }
-            onRowActivate={(transaction) =>
-                router.visit(transaction.invoiceUrl)
-            }
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <CompanyTransactionListTools
-                    action={props.indexUrl}
-                    filters={props.filters}
-                    labels={props.labels}
-                />
-            }
-            footer={<Pagination page={props.page} labels={props.labels} />}
-        />
+        <Stack gap="lg">
+            <CompanyTransactionListSummaryCards
+                action={props.indexUrl}
+                filters={props.filters}
+                summary={props.summary}
+                labels={props.labels}
+                commonLabels={props.commonLabels}
+            />
+            <OperationalTable
+                ariaLabel={props.labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(transaction) => transaction.id}
+                rowLabel={(transaction) =>
+                    `${props.labels.columns.invoice} ${transaction.invoiceNumber}`
+                }
+                onRowActivate={(transaction) =>
+                    router.visit(transaction.invoiceUrl)
+                }
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <CompanyTransactionListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        presets={props.datePresets}
+                        labels={props.labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <OperationalListPagination
+                        shownCount={props.page.items.length}
+                        previousUrl={props.page.previousUrl}
+                        nextUrl={props.page.nextUrl}
+                        perPage={props.filters.perPage}
+                        onPerPageChange={(perPage) =>
+                            router.get(
+                                props.indexUrl,
+                                companyTransactionListQuery({
+                                    ...props.filters,
+                                    perPage,
+                                }),
+                                { preserveScroll: true, replace: true },
+                            )
+                        }
+                        labels={props.commonLabels}
+                    />
+                }
+            />
+        </Stack>
     );
 }
 
@@ -166,36 +205,4 @@ function badgeVariant(kind: CompanyTransactionRow['kind']) {
         : kind === 'REFUND'
           ? 'warning'
           : 'muted';
-}
-
-function Pagination(props: {
-    page: CompanyTransactionCursorPage;
-    labels: CompanyTransactionTranslations;
-}) {
-    return (
-        <nav
-            aria-label={`${props.labels.previous} / ${props.labels.next}`}
-            className="flex justify-end gap-2"
-        >
-            <PageLink
-                href={props.page.previousUrl}
-                label={props.labels.previous}
-            />
-            <PageLink href={props.page.nextUrl} label={props.labels.next} />
-        </nav>
-    );
-}
-
-function PageLink({ href, label }: { href: string | null; label: string }) {
-    return href ? (
-        <Button asChild variant="secondary">
-            <Link href={href} preserveScroll>
-                {label}
-            </Link>
-        </Button>
-    ) : (
-        <Button disabled variant="secondary">
-            {label}
-        </Button>
-    );
 }

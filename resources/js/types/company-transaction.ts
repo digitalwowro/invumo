@@ -2,6 +2,11 @@ import type {
     InvoiceAdjustmentDirection,
     InvoiceTransactionKind,
 } from '@/types/invoice-transaction';
+import type {
+    OperationalListCursorPage,
+    OperationalListDatePresets,
+    OperationalListSummaryItem,
+} from '@/types/operational-list';
 
 export type CompanyTransactionRow = {
     id: string;
@@ -17,11 +22,8 @@ export type CompanyTransactionRow = {
     invoiceUrl: string;
 };
 
-export type CompanyTransactionCursorPage = {
-    items: CompanyTransactionRow[];
-    previousUrl: string | null;
-    nextUrl: string | null;
-};
+export type CompanyTransactionCursorPage =
+    OperationalListCursorPage<CompanyTransactionRow>;
 
 export type CompanyTransactionFilters = {
     q: string;
@@ -32,21 +34,22 @@ export type CompanyTransactionFilters = {
     perPage: number;
 };
 
+export type CompanyTransactionListSummary = Record<
+    'all' | 'payments' | 'refunds' | 'adjustments',
+    OperationalListSummaryItem
+>;
+
+export type CompanyTransactionListDatePresets = OperationalListDatePresets;
+
 export type CompanyTransactionTranslations = {
     head_title: string;
     title: string;
     description: string;
-    search_label: string;
     search_placeholder: string;
     date_from: string;
     date_to: string;
+    date_label: string;
     kind_label: string;
-    sort_label: string;
-    per_page_label: string;
-    clear: string;
-    previous: string;
-    next: string;
-    not_available: string;
     loading: string;
     empty_title: string;
     empty_description: string;
@@ -55,11 +58,16 @@ export type CompanyTransactionTranslations = {
     error_title: string;
     error_description: string;
     columns: Record<
-        'date' | 'invoice' | 'type' | 'amount' | 'details' | 'actions' | 'open',
+        'date' | 'invoice' | 'type' | 'amount' | 'details' | 'open',
         string
     >;
     kind_options: Record<'all' | InvoiceTransactionKind, string>;
     kinds: Record<InvoiceTransactionKind, string>;
     directions: Record<InvoiceAdjustmentDirection, string>;
     sort_options: Record<CompanyTransactionFilters['sort'], string>;
+    date_presets: Record<'any' | 'this_month' | 'last_ninety_days', string>;
+    summary: Record<
+        'aria_label' | 'all' | 'payments' | 'refunds' | 'adjustments',
+        string
+    >;
 };

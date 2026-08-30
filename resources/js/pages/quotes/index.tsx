@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
@@ -9,12 +9,16 @@ import { QuoteTable } from '@/features/quotes/components/quote-table';
 import type {
     QuoteCursorPage,
     QuoteFilters,
+    QuoteListDatePresets,
+    QuoteListSummary,
     QuoteTranslations,
 } from '@/types/quote';
 
 type Props = {
     quotes: QuoteCursorPage;
     filters: QuoteFilters;
+    summary: QuoteListSummary;
+    datePresets: QuoteListDatePresets;
     indexUrl: string;
     createUrl: string;
     status?: string;
@@ -22,6 +26,8 @@ type Props = {
 };
 
 export default function QuoteIndex(props: Props) {
+    const commonLabels = usePage().props.i18n.common.operational_list;
+
     return (
         <>
             <Head title={props.translations.index.head_title} />
@@ -43,8 +49,11 @@ export default function QuoteIndex(props: Props) {
                     <QuoteTable
                         page={props.quotes}
                         filters={props.filters}
+                        summary={props.summary}
+                        datePresets={props.datePresets}
                         indexUrl={props.indexUrl}
                         labels={props.translations}
+                        commonLabels={commonLabels}
                     />
                 </Stack>
             </PageFrame>

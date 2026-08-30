@@ -54,7 +54,7 @@ const labels: DashboardTranslations = {
         ISSUED: 'Issued',
         CANCELLED: 'Cancelled',
         UNPAID: 'Unpaid',
-        PARTIALLY_PAID: 'Partially paid',
+        PARTIALLY_PAID: 'Partial',
         PAID: 'Paid',
         OVERDUE: 'Overdue',
     },

@@ -30,6 +30,7 @@ final readonly class CustomerListPage
     public function __construct(
         private CompanyAbilityCheck $abilities,
         private CustomerFormOptions $options,
+        private CustomerListSummary $summary,
     ) {}
 
     /** @return array<string, mixed> */
@@ -59,6 +60,7 @@ final readonly class CustomerListPage
                 'nextUrl' => $page->nextPageUrl(),
             ],
             'filters' => $filters,
+            'summary' => $this->summary->get(),
             'abilities' => [
                 'create' => $this->abilities->allows($actor, $company, CompanyAbility::ManageCustomers),
                 'delete' => $this->abilities->allows($actor, $company, CompanyAbility::DeleteCustomers),

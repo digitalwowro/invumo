@@ -23,8 +23,11 @@ final class QuoteListRequest extends FormRequest
             'issue_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:issue_from'],
             'valid_from' => ['nullable', 'date_format:Y-m-d'],
             'valid_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:valid_from'],
-            'sort' => ['nullable', Rule::in(['issue_desc', 'issue_asc', 'recent'])],
-            'per_page' => ['nullable', 'integer', Rule::in([25, 50, 100])],
+            'sort' => ['nullable', Rule::in([
+                'issue_desc', 'issue_asc', 'deadline_asc', 'total_desc',
+                'total_asc', 'customer_asc', 'recent',
+            ])],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 25, 50, 100])],
         ];
     }
 

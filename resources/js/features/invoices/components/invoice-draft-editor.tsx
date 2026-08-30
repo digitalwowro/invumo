@@ -65,10 +65,14 @@ type Props = {
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
     onDirtyChange?: (dirty: boolean) => void;
+    onProcessingChange?: (processing: boolean) => void;
+    onLineCountChange?: (count: number) => void;
+    formId?: string;
+    showActions?: boolean;
 };
 
 export function InvoiceDraftEditor(props: Props) {
-    const { onDirtyChange } = props;
+    const { onDirtyChange, onProcessingChange, onLineCountChange } = props;
     const form = useForm(invoiceFormData(props.invoice));
     const [customer, setCustomer] = useState(
         customerFromInvoice(props.invoice),
@@ -94,6 +98,14 @@ export function InvoiceDraftEditor(props: Props) {
     useEffect(() => {
         onDirtyChange?.(form.isDirty);
     }, [form.isDirty, onDirtyChange]);
+
+    useEffect(() => {
+        onProcessingChange?.(form.processing);
+    }, [form.processing, onProcessingChange]);
+
+    useEffect(() => {
+        onLineCountChange?.(form.data.lines.length);
+    }, [form.data.lines.length, onLineCountChange]);
 
     const changeLines = (change: (lines: InvoiceLine[]) => InvoiceLine[]) => {
         form.setData((current) => ({
@@ -160,7 +172,7 @@ export function InvoiceDraftEditor(props: Props) {
 
     return (
         <>
-            <form onSubmit={submit}>
+            <form id={props.formId} onSubmit={submit}>
                 <Stack gap="xl">
                     <UnsavedChangesGuard
                         active={
@@ -234,17 +246,19 @@ export function InvoiceDraftEditor(props: Props) {
                         }}
                     />
                     <DocumentTotals labels={props.labels} totals={totals} />
-                    <InvoiceEditorLifecycleActions
-                        lifecycle={props.invoice.lifecycle}
-                        lifecycleActions={props.lifecycleActions}
-                        issueUrl={props.issueUrl}
-                        editVersion={form.data.editVersion}
-                        dirty={form.isDirty}
-                        processing={form.processing}
-                        saveLabel={props.labels.save}
-                        issueLabels={props.issueLabels}
-                        lifecycleLabels={props.lifecycleLabels}
-                    />
+                    {props.showActions !== false && (
+                        <InvoiceEditorLifecycleActions
+                            lifecycle={props.invoice.lifecycle}
+                            lifecycleActions={props.lifecycleActions}
+                            issueUrl={props.issueUrl}
+                            editVersion={form.data.editVersion}
+                            dirty={form.isDirty}
+                            processing={form.processing}
+                            saveLabel={props.labels.save}
+                            issueLabels={props.issueLabels}
+                            lifecycleLabels={props.lifecycleLabels}
+                        />
+                    )}
                 </Stack>
             </form>
             <InvoiceSourceDialogs

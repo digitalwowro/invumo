@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
@@ -9,12 +9,14 @@ import { RecurringTemplateTable } from '@/features/recurring/components/recurrin
 import type {
     RecurringTemplateCursorPage,
     RecurringTemplateFilters,
+    RecurringTemplateListSummary,
 } from '@/types/recurring';
 import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = {
     templates: RecurringTemplateCursorPage;
     filters: RecurringTemplateFilters;
+    summary: RecurringTemplateListSummary;
     indexUrl: string;
     createUrl: string;
     status?: string;
@@ -22,6 +24,8 @@ type Props = {
 };
 
 export default function RecurringIndex(props: Props) {
+    const commonLabels = usePage().props.i18n.common.operational_list;
+
     return (
         <>
             <Head title={props.translations.index.head_title} />
@@ -46,8 +50,10 @@ export default function RecurringIndex(props: Props) {
                     <RecurringTemplateTable
                         page={props.templates}
                         filters={props.filters}
+                        summary={props.summary}
                         indexUrl={props.indexUrl}
                         labels={props.translations}
+                        commonLabels={commonLabels}
                     />
                 </Stack>
             </PageFrame>

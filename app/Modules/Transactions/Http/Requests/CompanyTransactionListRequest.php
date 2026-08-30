@@ -22,7 +22,7 @@ final class CompanyTransactionListRequest extends FormRequest
             'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'kind' => ['nullable', Rule::in(['all', 'PAYMENT', 'REFUND', 'ADJUSTMENT'])],
             'sort' => ['nullable', Rule::in(['date_desc', 'date_asc', 'recent'])],
-            'per_page' => ['nullable', 'integer', Rule::in([25, 50, 100])],
+            'per_page' => ['nullable', 'integer', Rule::in([10, 25, 50, 100])],
         ];
     }
 

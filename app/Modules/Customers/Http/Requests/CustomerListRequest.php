@@ -22,7 +22,7 @@ final class CustomerListRequest extends FormRequest
             'status' => ['nullable', Rule::in(['active', 'archived', 'all'])],
             'country' => ['nullable', Rule::in(CountryCode::all())],
             'sort' => ['nullable', Rule::in(['recent', 'name_asc', 'name_desc'])],
-            'per_page' => ['nullable', Rule::in(['25', '50', '100', 25, 50, 100])],
+            'per_page' => ['nullable', Rule::in(['10', '25', '50', '100', 10, 25, 50, 100])],
             'cursor' => ['nullable', 'string', 'max:2048'],
         ];
     }

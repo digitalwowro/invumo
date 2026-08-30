@@ -12,6 +12,12 @@ import type {
     DocumentTaxDefault,
 } from '@/types/document';
 import type { InvoiceTransactionTranslations } from '@/types/invoice-transaction';
+import type { InvoiceWorkspaceTranslations } from '@/types/invoice-workspace';
+import type {
+    OperationalListCursorPage,
+    OperationalListDatePresets,
+    OperationalListSummaryItem,
+} from '@/types/operational-list';
 import type { InvoiceReminderTranslations } from '@/types/reminder';
 
 export type InvoiceCustomerSelection = DocumentCustomerSelection;
@@ -79,6 +85,7 @@ export type InvoiceRow = {
     id: string;
     number: string;
     customerName: string | null;
+    customerEmail: string | null;
     customerReference: string | null;
     issueDate: string | null;
     dueDate: string | null;
@@ -87,16 +94,13 @@ export type InvoiceRow = {
     isOverdue: boolean;
     displayStatus: InvoiceDisplayStatus;
     total: string | null;
+    outstanding: string | null;
     currencyCode: string | null;
     editUrl: string | null;
     viewUrl: string;
 };
 
-export type InvoiceCursorPage = {
-    items: InvoiceRow[];
-    previousUrl: string | null;
-    nextUrl: string | null;
-};
+export type InvoiceCursorPage = OperationalListCursorPage<InvoiceRow>;
 
 export type InvoiceFilters = {
     q: string;
@@ -105,11 +109,25 @@ export type InvoiceFilters = {
     dueFrom: string;
     dueTo: string;
     lifecycle: 'all' | InvoiceLifecycle;
-    payment: 'all' | InvoicePaymentState;
-    overdue: 'all' | 'overdue';
-    sort: 'issue_desc' | 'issue_asc' | 'recent';
+    payment: 'all' | 'OUTSTANDING' | InvoicePaymentState;
+    overdue: 'all' | 'overdue' | 'due_soon' | 'not_due';
+    sort:
+        | 'issue_desc'
+        | 'issue_asc'
+        | 'due_asc'
+        | 'total_desc'
+        | 'total_asc'
+        | 'customer_asc'
+        | 'recent';
     perPage: number;
 };
+
+export type InvoiceListSummary = Record<
+    'all' | 'awaiting' | 'overdue' | 'drafts',
+    OperationalListSummaryItem
+>;
+
+export type InvoiceListDatePresets = OperationalListDatePresets;
 
 export type InvoiceTranslations = {
     create: Record<string, string>;
@@ -119,21 +137,16 @@ export type InvoiceTranslations = {
         title: string;
         description: string;
         create: string;
-        search_label: string;
         search_placeholder: string;
         issue_from: string;
         issue_to: string;
         due_from: string;
         due_to: string;
+        issue_date_label: string;
+        due_date_label: string;
         lifecycle_label: string;
         payment_label: string;
-        overdue_label: string;
-        sort_label: string;
-        per_page_label: string;
-        clear: string;
-        previous: string;
-        next: string;
-        not_available: string;
+        due_status_label: string;
         loading: string;
         empty_title: string;
         empty_description: string;
@@ -144,8 +157,31 @@ export type InvoiceTranslations = {
         columns: Record<string, string>;
         sort_options: Record<string, string>;
         lifecycle_options: Record<'all' | InvoiceLifecycle, string>;
-        payment_options: Record<'all' | InvoicePaymentState, string>;
-        overdue_options: Record<'all' | 'overdue', string>;
+        payment_options: Record<
+            'all' | 'OUTSTANDING' | InvoicePaymentState,
+            string
+        >;
+        overdue_options: Record<
+            'all' | 'overdue' | 'due_soon' | 'not_due',
+            string
+        >;
+        date_presets: Record<
+            | 'any'
+            | 'this_month'
+            | 'last_ninety_days'
+            | 'next_thirty_days'
+            | 'past_due',
+            string
+        >;
+        summary: Record<
+            'aria_label' | 'all' | 'awaiting' | 'overdue' | 'drafts' | 'total',
+            string
+        >;
+        outstanding: string;
+        settled: string;
+        not_issued: string;
+        cancelled_balance: string;
+        due_prefix: string;
         statuses: Record<InvoiceDisplayStatus | InvoicePaymentState, string>;
     };
     representation: Record<
@@ -198,6 +234,7 @@ export type InvoiceTranslations = {
     >;
     transactions: InvoiceTransactionTranslations;
     reminders: InvoiceReminderTranslations;
+    workspace: InvoiceWorkspaceTranslations;
     recurring: Record<
         'review_title' | 'review_description' | 'open_template',
         string

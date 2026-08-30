@@ -34,6 +34,7 @@ type SubmitButtonProps = {
     processing?: boolean;
     disabled?: boolean;
     testId?: string;
+    form?: string;
 };
 
 export function SubmitButton({
@@ -41,10 +42,12 @@ export function SubmitButton({
     processing = false,
     disabled = false,
     testId,
+    form,
 }: SubmitButtonProps) {
     return (
         <Button
             type="submit"
+            form={form}
             disabled={disabled || processing}
             data-test={testId}
         >

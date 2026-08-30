@@ -12,7 +12,7 @@ return [
         'EXPIRED' => 'Expirată',
         'ISSUED' => 'Emisă',
         'CANCELLED' => 'Anulată',
-        'PARTIALLY_PAID' => 'Plătită parțial',
+        'PARTIALLY_PAID' => 'Parțial',
         'PAID' => 'Plătită',
         'OVERDUE' => 'Restantă',
     ],

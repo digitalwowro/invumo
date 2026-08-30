@@ -63,6 +63,7 @@ export function OperationalListToolbar(props: Props) {
                     <CollapsibleTrigger asChild>
                         <FilterToggleButton
                             type="button"
+                            data-testid="operational-filter-toggle"
                             expanded={props.open}
                             count={props.filterCount}
                             label={props.labels.filters}

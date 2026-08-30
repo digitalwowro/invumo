@@ -49,8 +49,8 @@ function CustomerListToolsState(
         }
 
         if (customerFiltersEqual(values, props.filters)) {
-return;
-}
+            return;
+        }
 
         const timeout = window.setTimeout(() => {
             router.get(props.action, customerListQuery(values), {

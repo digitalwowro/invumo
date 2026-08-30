@@ -45,8 +45,8 @@ function RecurringTemplateListToolsState(
         }
 
         if (recurringTemplateFiltersEqual(values, props.filters)) {
-return;
-}
+            return;
+        }
 
         const timeout = window.setTimeout(() => {
             router.get(props.action, recurringTemplateListQuery(values), {

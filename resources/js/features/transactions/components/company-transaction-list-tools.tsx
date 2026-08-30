@@ -49,8 +49,8 @@ function CompanyTransactionListToolsState(
         }
 
         if (companyTransactionFiltersEqual(values, props.filters)) {
-return;
-}
+            return;
+        }
 
         const timeout = window.setTimeout(() => {
             router.get(props.action, companyTransactionListQuery(values), {

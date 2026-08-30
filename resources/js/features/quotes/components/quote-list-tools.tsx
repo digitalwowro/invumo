@@ -49,8 +49,8 @@ function QuoteListToolsState(
         }
 
         if (quoteFiltersEqual(values, props.filters)) {
-return;
-}
+            return;
+        }
 
         const timeout = window.setTimeout(() => {
             router.get(props.action, quoteListQuery(values), {

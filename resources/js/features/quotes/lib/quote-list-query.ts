@@ -47,9 +47,4 @@ const countQuoteFilters = (filters: QuoteFilters) =>
 const quoteFiltersEqual = (left: QuoteFilters, right: QuoteFilters) =>
     operationalFiltersEqual(left, right);
 
-export {
-    countQuoteFilters,
-    quoteFiltersEqual,
-    quoteListQuery,
-    quoteListUrl,
-};
+export { countQuoteFilters, quoteFiltersEqual, quoteListQuery, quoteListUrl };

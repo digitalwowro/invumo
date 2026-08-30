@@ -114,22 +114,22 @@ function datePreset(
     presets: CompanyTransactionListDatePresets,
 ) {
     if (!values.dateFrom && !values.dateTo) {
-return 'any';
-}
+        return 'any';
+    }
 
     if (
         values.dateFrom === presets.monthStart &&
         values.dateTo === presets.today
     ) {
-return 'this_month';
-}
+        return 'this_month';
+    }
 
     if (
         values.dateFrom === presets.ninetyDaysAgo &&
         values.dateTo === presets.today
     ) {
-return 'last_ninety_days';
-}
+        return 'last_ninety_days';
+    }
 
     return '';
 }

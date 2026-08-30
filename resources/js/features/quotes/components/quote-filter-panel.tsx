@@ -165,41 +165,41 @@ function activeFilters(props: Props) {
 
 function issuePreset(values: QuoteFilters, presets: QuoteListDatePresets) {
     if (!values.issueFrom && !values.issueTo) {
-return 'any';
-}
+        return 'any';
+    }
 
     if (
         values.issueFrom === presets.monthStart &&
         values.issueTo === presets.today
     ) {
-return 'this_month';
-}
+        return 'this_month';
+    }
 
     if (
         values.issueFrom === presets.ninetyDaysAgo &&
         values.issueTo === presets.today
     ) {
-return 'last_ninety_days';
-}
+        return 'last_ninety_days';
+    }
 
     return '';
 }
 
 function deadlinePreset(values: QuoteFilters, presets: QuoteListDatePresets) {
     if (!values.validFrom && !values.validTo) {
-return 'any';
-}
+        return 'any';
+    }
 
     if (
         values.validFrom === presets.today &&
         values.validTo === presets.nextThirtyDays
     ) {
-return 'next_thirty_days';
-}
+        return 'next_thirty_days';
+    }
 
     if (!values.validFrom && values.validTo === presets.yesterday) {
-return 'expired';
-}
+        return 'expired';
+    }
 
     return '';
 }

@@ -1,5 +1,6 @@
 import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
+import type { DocumentDraftCreation } from '@/types/document';
 import type {
     QuoteCatalogFormOptions,
     QuoteConversionControl,
@@ -18,6 +19,7 @@ export type QuoteDraftEditorProps = {
     quote: QuoteDraft;
     limits: QuoteLimits;
     updateUrl: string;
+    creation?: DocumentDraftCreation;
     sourceUrls: QuoteSourceUrls;
     inlineCustomerStoreUrl: string;
     inlineProductStoreUrl: string;
@@ -32,7 +34,11 @@ export type QuoteDraftEditorProps = {
     labels: QuoteTranslations['edit'];
     customerLabels: CustomerTranslations;
     catalogLabels: CatalogTranslations;
-    conversion: QuoteConversionControl;
+    conversion?: QuoteConversionControl;
     conversionLabels: QuoteTranslations['conversion'];
     onDirtyChange?: (dirty: boolean) => void;
+    onProcessingChange?: (processing: boolean) => void;
+    onLineCountChange?: (count: number) => void;
+    formId?: string;
+    showActions?: boolean;
 };

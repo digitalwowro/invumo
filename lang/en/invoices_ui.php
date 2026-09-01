@@ -7,10 +7,10 @@ return [
     'create' => [
         'head_title' => 'New invoice',
         'title' => 'New invoice',
-        'description' => 'Start a numbered Company draft, then add its manual lines.',
-        'section_title' => 'Create the draft',
-        'section_description' => 'Invumo assigns the next Invoice number atomically. Refreshing or retrying cannot create the same request twice.',
-        'submit' => 'Create invoice draft',
+        'description' => 'Build the Invoice first. Invumo saves the Draft and assigns its number only when you select Save.',
+        'section_title' => 'Unsaved Invoice',
+        'section_description' => 'No Draft or number exists until the first successful save.',
+        'submit' => 'Save invoice',
     ],
     'edit' => array_replace_recursive($quotes['edit'], [
         'head_title' => 'Invoice',

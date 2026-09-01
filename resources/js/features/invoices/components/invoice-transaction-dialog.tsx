@@ -1,9 +1,13 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { FormDialog } from '@/components/app/form-dialog';
+import type {
+    DialogTriggerSize,
+    DialogTriggerVariant,
+} from '@/components/app/form-dialog';
 import { TextareaField, TextField } from '@/components/app/form-field';
 import { Grid, Stack } from '@/components/app/layout';
-import { FormDialog } from '@/components/app/responsive-dialog';
 import { SelectField } from '@/components/app/select-field';
 import { SystemMessage } from '@/components/app/system-message';
 import { FieldGroup } from '@/components/ui/field';
@@ -38,6 +42,8 @@ type Props = {
     canAdjust: boolean;
     disabled?: boolean;
     disabledDescription?: string;
+    triggerVariant?: DialogTriggerVariant;
+    triggerSize?: DialogTriggerSize;
 };
 
 function initialData(props: Props): TransactionForm {
@@ -121,6 +127,8 @@ export function InvoiceTransactionDialog(props: Props) {
             processing={form.processing}
             triggerDisabled={props.disabled}
             triggerDisabledDescription={props.disabledDescription}
+            triggerVariant={props.triggerVariant}
+            triggerSize={props.triggerSize}
         >
             <form
                 id={`invoice-transaction-${props.transaction?.id ?? props.createKind}`}

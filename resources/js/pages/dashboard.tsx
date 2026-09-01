@@ -1,9 +1,10 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Plus, ReceiptText } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
+import { SystemMessage } from '@/components/app/system-message';
 import { DashboardContent } from '@/features/dashboard/components/dashboard-content';
 import { interpolate } from '@/lib/translations';
 import type { DashboardData, DashboardTranslations } from '@/types/dashboard';
@@ -17,6 +18,8 @@ export default function Dashboard({
     dashboard: DashboardData;
     translations: DashboardTranslations;
 }) {
+    const { errors } = usePage().props;
+
     return (
         <>
             <Head title={translations.title} />
@@ -48,6 +51,9 @@ export default function Dashboard({
                             </>
                         }
                     />
+                    {errors.invoice && (
+                        <SystemMessage title={errors.invoice} tone="error" />
+                    )}
                     <DashboardContent
                         dashboard={dashboard}
                         labels={translations}

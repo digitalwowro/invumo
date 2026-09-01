@@ -50,17 +50,6 @@ final readonly class QuoteDraftPage
     ) {}
 
     /** @return array<string, mixed> */
-    public function create(Company $company, User $actor): array
-    {
-        $this->authorize($company, $actor);
-
-        return [
-            'storeUrl' => route('quotes.store', $company, false),
-            'creationKey' => (string) Str::uuid7(),
-        ];
-    }
-
-    /** @return array<string, mixed> */
     public function edit(
         Company $company,
         User $actor,

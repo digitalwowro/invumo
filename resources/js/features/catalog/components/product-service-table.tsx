@@ -1,6 +1,10 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
-import { Cluster } from '@/components/app/layout';
+import { Inline, Stack } from '@/components/app/layout';
+import { OperationalListPagination } from '@/components/app/operational-list-pagination';
+import { OperationalListSummary } from '@/components/app/operational-list-summary';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
@@ -14,9 +18,13 @@ import {
     TableValue,
 } from '@/components/app/typography';
 import { StatusBadge } from '@/components/domain/status-badge';
-import { Button } from '@/components/ui/button';
 import { ProductServiceEditDialog } from '@/features/catalog/components/product-service-edit-dialog';
 import { ProductServiceListTools } from '@/features/catalog/components/product-service-list-tools';
+import {
+    countProductServiceFilters,
+    productServiceListQuery,
+    productServiceListUrl,
+} from '@/features/catalog/lib/product-service-list-query';
 import type {
     CatalogCurrencyOption,
     CatalogFilters,
@@ -24,21 +32,28 @@ import type {
     CatalogOption,
     CatalogTranslations,
     ProductServiceCursorPage,
+    ProductServiceListSummary,
     ProductServiceRow,
 } from '@/types/catalog';
+import type { OperationalListTranslations } from '@/types/localization';
 
 type Props = {
     page: ProductServiceCursorPage;
     filters: CatalogFilters;
+    summary: ProductServiceListSummary;
     indexUrl: string;
     currencyOptions: CatalogCurrencyOption[];
     taxPresetOptions: CatalogOption[];
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
     labels: CatalogTranslations;
+    commonLabels: OperationalListTranslations;
 };
 
 export function ProductServiceTable(props: Props) {
+    const { i18n } = usePage().props;
+    const [editingProduct, setEditingProduct] =
+        useState<ProductServiceRow | null>(null);
     const labels = props.labels.index;
     const columns: OperationalColumn<ProductServiceRow>[] = [
         {
@@ -85,7 +100,7 @@ export function ProductServiceTable(props: Props) {
         },
         {
             key: 'status',
-            label: labels.columns.status,
+            label: props.commonLabels.columns.status,
             kind: 'status',
             render: (product) => (
                 <StatusBadge
@@ -96,7 +111,7 @@ export function ProductServiceTable(props: Props) {
         },
         {
             key: 'actions',
-            label: labels.columns.actions,
+            label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (product) => (
                 <ProductActions product={product} {...props} />
@@ -104,7 +119,9 @@ export function ProductServiceTable(props: Props) {
         },
     ];
     const filtered =
-        props.filters.q !== '' || props.filters.status !== 'active';
+        countProductServiceFilters(props.filters) > 0 ||
+        props.filters.sort !== 'recent' ||
+        props.filters.perPage !== 25;
     const state = props.page.items.length
         ? 'ready'
         : filtered
@@ -121,47 +138,82 @@ export function ProductServiceTable(props: Props) {
     };
 
     return (
-        <OperationalTable
-            ariaLabel={labels.title}
-            columns={columns}
-            rows={props.page.items}
-            rowKey={(product) => product.id}
-            state={state}
-            stateCopy={stateCopy}
-            toolbar={
-                <ProductServiceListTools
-                    action={props.indexUrl}
-                    filters={props.filters}
-                    labels={labels}
-                />
-            }
-            footer={
-                <nav
-                    aria-label={`${labels.previous} / ${labels.next}`}
-                    className="flex justify-end gap-2"
-                >
-                    <PageLink
-                        href={props.page.previousUrl}
-                        label={labels.previous}
-                    />
-                    <PageLink href={props.page.nextUrl} label={labels.next} />
-                </nav>
-            }
-        />
-    );
-}
+        <Stack gap="lg">
+            <OperationalListSummary
+                ariaLabel={labels.summary.aria_label}
+                totalLabel={props.commonLabels.total}
+                cards={(['active', 'all', 'archived'] as const).map((key) => {
+                    const status = key;
 
-function PageLink({ href, label }: { href: string | null; label: string }) {
-    return href ? (
-        <Button asChild variant="secondary">
-            <Link href={href} preserveScroll>
-                {label}
-            </Link>
-        </Button>
-    ) : (
-        <Button disabled variant="secondary">
-            {label}
-        </Button>
+                    return {
+                        key,
+                        label: labels.summary[key],
+                        href: productServiceListUrl(props.indexUrl, {
+                            ...props.filters,
+                            status,
+                        }),
+                        active: props.filters.status === status,
+                        tone: key === 'active' ? 'positive' : 'neutral',
+                        value: props.summary[key],
+                    };
+                })}
+            />
+            <OperationalTable
+                ariaLabel={labels.title}
+                columns={columns}
+                rows={props.page.items}
+                rowKey={(product) => product.id}
+                rowLabel={(product) =>
+                    `${props.labels.actions.edit}: ${product.name}`
+                }
+                onRowActivate={setEditingProduct}
+                canActivateRow={(product) => !product.archived}
+                state={state}
+                stateCopy={stateCopy}
+                toolbar={
+                    <ProductServiceListTools
+                        action={props.indexUrl}
+                        filters={props.filters}
+                        labels={labels}
+                        commonLabels={props.commonLabels}
+                    />
+                }
+                footer={
+                    <OperationalListPagination
+                        shownCount={props.page.items.length}
+                        previousUrl={props.page.previousUrl}
+                        nextUrl={props.page.nextUrl}
+                        perPage={props.filters.perPage}
+                        onPerPageChange={(perPage) =>
+                            router.get(
+                                props.indexUrl,
+                                productServiceListQuery({
+                                    ...props.filters,
+                                    perPage,
+                                }),
+                                { preserveScroll: true, replace: true },
+                            )
+                        }
+                        labels={props.commonLabels}
+                    />
+                }
+            />
+            {editingProduct && (
+                <ProductServiceEditDialog
+                    product={editingProduct}
+                    {...props}
+                    cancelLabel={i18n.common.actions.cancel}
+                    closeLabel={i18n.common.accessibility.close_navigation}
+                    open
+                    showTrigger={false}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setEditingProduct(null);
+                        }
+                    }}
+                />
+            )}
+        </Stack>
     );
 }
 
@@ -175,59 +227,65 @@ function ProductActions({
         method === 'post'
             ? router.post(url, {}, { preserveScroll: true })
             : router.delete(url, { preserveScroll: true });
+    const stop = (event: MouseEvent<HTMLDivElement>) => event.stopPropagation();
+    const stopKeyboard = (event: KeyboardEvent<HTMLDivElement>) =>
+        event.stopPropagation();
 
     return (
-        <Cluster gap="sm">
-            {!product.archived && (
-                <ProductServiceEditDialog
-                    product={product}
-                    {...props}
+        <div onClick={stop} onKeyDown={stopKeyboard}>
+            <Inline gap="sm">
+                {!product.archived && (
+                    <ProductServiceEditDialog
+                        product={product}
+                        {...props}
+                        cancelLabel={i18n.common.actions.cancel}
+                        closeLabel={i18n.common.accessibility.close_navigation}
+                    />
+                )}
+                <ConfirmationDialog
+                    tone="default"
+                    triggerLabel={
+                        product.archived ? labels.restore : labels.archive
+                    }
+                    title={
+                        product.archived
+                            ? labels.restore_title
+                            : labels.archive_title
+                    }
+                    description={
+                        product.archived
+                            ? labels.restore_description
+                            : labels.archive_description
+                    }
+                    confirmLabel={
+                        product.archived
+                            ? labels.confirm_restore
+                            : labels.confirm_archive
+                    }
                     cancelLabel={i18n.common.actions.cancel}
                     closeLabel={i18n.common.accessibility.close_navigation}
+                    onConfirm={() =>
+                        request(
+                            product.archived
+                                ? product.restoreUrl
+                                : product.archiveUrl,
+                            'post',
+                        )
+                    }
                 />
-            )}
-            <ConfirmationDialog
-                triggerLabel={
-                    product.archived ? labels.restore : labels.archive
-                }
-                title={
-                    product.archived
-                        ? labels.restore_title
-                        : labels.archive_title
-                }
-                description={
-                    product.archived
-                        ? labels.restore_description
-                        : labels.archive_description
-                }
-                confirmLabel={
-                    product.archived
-                        ? labels.confirm_restore
-                        : labels.confirm_archive
-                }
-                cancelLabel={i18n.common.actions.cancel}
-                closeLabel={i18n.common.accessibility.close_navigation}
-                onConfirm={() =>
-                    request(
-                        product.archived
-                            ? product.restoreUrl
-                            : product.archiveUrl,
-                        'post',
-                    )
-                }
-            />
-            <GuardedActionDialog
-                triggerLabel={labels.delete}
-                title={labels.delete_title}
-                description={labels.delete_description}
-                confirmLabel={labels.confirm_delete}
-                cancelLabel={i18n.common.actions.cancel}
-                closeLabel={i18n.common.accessibility.close_navigation}
-                warningTitle={labels.dependency_warning_title}
-                guard={product.deleteGuard}
-                tone="destructive"
-                onConfirm={() => request(product.deleteUrl, 'delete')}
-            />
-        </Cluster>
+                <GuardedActionDialog
+                    triggerLabel={labels.delete}
+                    title={labels.delete_title}
+                    description={labels.delete_description}
+                    confirmLabel={labels.confirm_delete}
+                    cancelLabel={i18n.common.actions.cancel}
+                    closeLabel={i18n.common.accessibility.close_navigation}
+                    warningTitle={labels.dependency_warning_title}
+                    guard={product.deleteGuard}
+                    tone="destructive"
+                    onConfirm={() => request(product.deleteUrl, 'delete')}
+                />
+            </Inline>
+        </div>
     );
 }

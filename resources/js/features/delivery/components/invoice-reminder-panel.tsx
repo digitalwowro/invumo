@@ -1,5 +1,6 @@
 import { ContentSection } from '@/components/app/content-section';
 import { Cluster, Inline, Stack } from '@/components/app/layout';
+import { SubtleMessage } from '@/components/app/subtle-message';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { DocumentDeliveryRetryDialog } from '@/features/delivery/components/document-delivery-retry-dialog';
 import { ReminderRuleForm } from '@/features/delivery/components/reminder-rule-form';
@@ -73,9 +74,7 @@ export function InvoiceReminderPanel({
                     {labels.history_title}
                 </h3>
                 {reminders.history.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        {labels.history_empty}
-                    </p>
+                    <SubtleMessage>{labels.history_empty}</SubtleMessage>
                 ) : (
                     <div className="divide-y divide-divider">
                         {reminders.history.map((item) => (

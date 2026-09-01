@@ -42,6 +42,8 @@ export type DashboardRecentInvoice = {
     id: string;
     number: string;
     customerName: string | null;
+    customerEmail: string | null;
+    customerReference: string | null;
     issueDate: string | null;
     dueDate: string | null;
     lifecycle: InvoiceLifecycle;
@@ -50,6 +52,7 @@ export type DashboardRecentInvoice = {
     total: string;
     outstanding: string;
     currencyCode: string;
+    editUrl: string | null;
     viewUrl: string;
 };
 
@@ -170,13 +173,14 @@ export type DashboardTranslations = {
         error_title: string;
         error_description: string;
         columns: Record<
-            'invoice' | 'customer' | 'dates' | 'total' | 'status' | 'actions',
+            'invoice' | 'reference' | 'dates' | 'total' | 'status' | 'actions',
             string
         >;
         due: string;
         open: string;
         settled: string;
         not_issued: string;
+        edit: string;
         view: string;
         view_all: string;
     };

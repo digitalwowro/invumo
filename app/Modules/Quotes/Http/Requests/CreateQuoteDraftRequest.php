@@ -2,19 +2,15 @@
 
 namespace App\Modules\Quotes\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-final class CreateQuoteDraftRequest extends FormRequest
+final class CreateQuoteDraftRequest extends UpdateQuoteDraftRequest
 {
-    public function authorize(): bool
-    {
-        return $this->user() !== null;
-    }
-
-    /** @return array<string, list<string>> */
+    /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
-        return ['creation_key' => ['required', 'uuid']];
+        return [
+            ...parent::rules(),
+            'creation_key' => ['required', 'uuid'],
+        ];
     }
 
     public function creationKey(): string

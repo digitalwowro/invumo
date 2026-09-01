@@ -1,13 +1,9 @@
 import { Head, usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
-import { ActionLink } from '@/components/app/action-link';
 import { FormActions } from '@/components/app/form-actions';
-import { Cluster, Stack } from '@/components/app/layout';
+import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { CustomerForm } from '@/components/domain/customers/customer-form';
-import { StatusBadge } from '@/components/domain/status-badge';
 import { CustomerLifecycleActions } from '@/features/customers/components/customer-lifecycle-actions';
 import { CustomerWorkspaceNavigation } from '@/features/customers/components/customer-workspace-navigation';
 import { interpolate } from '@/lib/translations';
@@ -72,36 +68,22 @@ export default function CustomerWorkspace({
                 })}
             />
             <PageFrame>
-                <Stack gap="2xl">
-                    <PageHeader
-                        title={customer.displayName}
-                        subtitle={labels.description}
-                        actions={
-                            <Cluster gap="sm">
-                                <StatusBadge
-                                    status={
-                                        customer.archived
-                                            ? 'archived'
-                                            : 'active'
-                                    }
-                                    label={
-                                        customer.archived
-                                            ? labels.archived
-                                            : labels.active
-                                    }
-                                />
-                                <ActionLink href={indexUrl} variant="secondary">
-                                    <ArrowLeft aria-hidden="true" />
-                                    {labels.back}
-                                </ActionLink>
-                            </Cluster>
-                        }
-                    />
+                <Stack gap="xl">
                     <CustomerWorkspaceNavigation
                         active="overview"
+                        customerName={customer.displayName}
+                        archived={customer.archived}
+                        description={labels.description}
+                        indexUrl={indexUrl}
+                        indexLabel={translations.index.title}
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
                         defaultsUrl={defaultsUrl}
+                        backLabel={labels.back}
+                        statusLabels={{
+                            active: labels.active,
+                            archived: labels.archived,
+                        }}
                         label={labels.navigation_label}
                         labels={labels.navigation}
                     />

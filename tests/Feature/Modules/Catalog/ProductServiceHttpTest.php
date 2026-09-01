@@ -33,7 +33,8 @@ final class ProductServiceHttpTest extends TestCase
         $this->get(route('catalog.index', $company))->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
             ->has('products.items', 0)
-            ->where('translations.index.title', 'Products & Services')
+            ->where('summary.active.count', 0)
+            ->where('translations.index.title', 'Products')
             ->where('limits.description', 5000));
 
         $this->post(route('catalog.store', $company), $this->payload($currency, $tax))

@@ -32,11 +32,17 @@ final readonly class CompanyDashboardPage
         $settings = CompanySetting::query()->firstOrFail();
         $localDate = Date::now($settings->timezone ?? 'UTC')->toImmutable()->startOfDay();
         $groups = $this->metrics->for($localDate);
+        $canManageInvoices = $this->abilities->allows(
+            $actor,
+            $company,
+            CompanyAbility::ManageInvoices,
+        );
         $activity = $this->activity->for(
             $company,
             $localDate,
             $this->abilities->allows($actor, $company, CompanyAbility::ViewQuotes),
             $this->abilities->allows($actor, $company, CompanyAbility::ViewRecurringTemplates),
+            $canManageInvoices,
         );
 
         return [
@@ -52,11 +58,9 @@ final readonly class CompanyDashboardPage
                 $groups,
             ),
             'invoicesUrl' => route('invoices.index', $company, false),
-            'createInvoiceUrl' => $this->abilities->allows(
-                $actor,
-                $company,
-                CompanyAbility::ManageInvoices,
-            ) ? route('invoices.create', $company, false) : null,
+            'createInvoiceUrl' => $canManageInvoices
+                ? route('invoices.create', $company, false)
+                : null,
             'transactionsUrl' => route('transactions.index', $company, false),
             'quotesUrl' => route('quotes.index', $company, false),
             'recurringUrl' => route('recurring.index', $company, false),

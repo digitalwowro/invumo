@@ -32,6 +32,8 @@ export function InvoiceTransactionTable(props: Props) {
             key: 'type',
             label: labels.columns.type,
             kind: 'status',
+            headClassName: 'w-[14%] px-3',
+            cellClassName: 'w-[14%] min-w-0 whitespace-normal px-3',
             render: (transaction) => (
                 <Stack gap="xs">
                     <Badge variant="quiet">
@@ -49,6 +51,8 @@ export function InvoiceTransactionTable(props: Props) {
             key: 'date',
             label: labels.columns.date,
             kind: 'data',
+            headClassName: 'w-[14%] px-3',
+            cellClassName: 'w-[14%] min-w-0 px-3',
             render: (transaction) => (
                 <TableValue>{transaction.transactionDate}</TableValue>
             ),
@@ -57,6 +61,8 @@ export function InvoiceTransactionTable(props: Props) {
             key: 'amount',
             label: labels.columns.amount,
             kind: 'amount',
+            headClassName: 'w-[17%] px-3',
+            cellClassName: 'w-[17%] min-w-0 whitespace-normal px-3',
             render: (transaction) => (
                 <TableAmount>
                     {transaction.amount} {transaction.currencyCode}
@@ -67,6 +73,8 @@ export function InvoiceTransactionTable(props: Props) {
             key: 'details',
             label: labels.columns.details,
             kind: 'text',
+            headClassName: 'w-[23%] px-3',
+            cellClassName: 'w-[23%] min-w-0 px-3',
             render: (transaction) => (
                 <Stack gap="xs">
                     <BodyStrong>
@@ -89,6 +97,8 @@ export function InvoiceTransactionTable(props: Props) {
             key: 'actions',
             label: labels.columns.actions,
             kind: 'actions',
+            headClassName: 'w-[32%] px-3',
+            cellClassName: 'w-[32%] min-w-0 whitespace-normal px-3',
             render: (transaction) => (
                 <Stack gap="sm">
                     {transaction.receipt?.latestState && (
@@ -105,13 +115,14 @@ export function InvoiceTransactionTable(props: Props) {
                             </Badge>
                         </Cluster>
                     )}
-                    <Cluster gap="sm">
+                    <Cluster className="justify-end" gap="xs">
                         {transaction.receipt?.sendUrl && (
                             <PaymentReceivedDialog
                                 transaction={transaction}
                                 labels={labels}
                                 disabled={props.disabled}
                                 disabledDescription={props.disabledDescription}
+                                triggerSize="compact"
                             />
                         )}
                         {transaction.updateUrl && (
@@ -124,6 +135,7 @@ export function InvoiceTransactionTable(props: Props) {
                                 canAdjust={transactions.abilities.adjust}
                                 disabled={props.disabled}
                                 disabledDescription={props.disabledDescription}
+                                triggerSize="compact"
                             />
                         )}
                         {transaction.deleteUrl && (
@@ -157,6 +169,7 @@ export function InvoiceTransactionTable(props: Props) {
                 errorDescription: labels.error_description,
             }}
             embedded={props.embedded}
+            tableClassName="table-fixed"
         />
     );
 }

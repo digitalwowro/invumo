@@ -6,7 +6,6 @@ import { Stack } from '@/components/app/layout';
 import { MetricStrip } from '@/components/app/metric-strip';
 import type { MetricStripItem } from '@/components/app/metric-strip';
 import { MoneyValue } from '@/components/domain/money-value';
-import { Button } from '@/components/ui/button';
 import {
     Empty,
     EmptyDescription,
@@ -109,12 +108,11 @@ export function DashboardContent({ dashboard, labels }: Props) {
                     </ToggleGroup>
                 }
                 footer={
-                    <Button asChild variant="ghost" size="compact">
-                        <Link href={dashboard.invoicesUrl}>
-                            {labels.recent.view_all}
-                        </Link>
-                    </Button>
+                    <Link href={dashboard.invoicesUrl}>
+                        {labels.recent.view_all}
+                    </Link>
                 }
+                footerVariant="link"
             >
                 <RecentInvoiceTable
                     invoices={group.recentInvoices[recentScope]}
@@ -137,11 +135,17 @@ function DashboardMetricStrip({
     group: DashboardCurrencyGroup;
     labels: DashboardTranslations;
 }) {
-    const amount = (value: string, tone: 'default' | 'positive' | 'danger') => (
+    const amount = (
+        value: string,
+        tone: 'default' | 'positive' | 'danger',
+        emphasis: 'normal' | 'strong' = 'strong',
+        className?: string,
+    ) => (
         <MoneyValue
             value={`${value} ${group.currencyCode}`}
-            emphasis="strong"
+            emphasis={emphasis}
             tone={tone}
+            className={className}
         />
     );
     const items: MetricStripItem[] = [
@@ -149,13 +153,20 @@ function DashboardMetricStrip({
             key: 'unpaid',
             label: labels.metrics.unpaid_invoices,
             value: group.unpaidCount,
-            detail: amount(group.outstandingTotal, 'default'),
+            detail: amount(
+                group.outstandingTotal,
+                'default',
+                'normal',
+                'text-xs text-foreground-muted',
+            ),
+            indicator: 'neutral',
         },
         {
             key: 'overdue',
             label: labels.metrics.overdue_invoices,
             value: group.overdueCount,
-            detail: amount(group.overdueTotal, 'danger'),
+            detail: amount(group.overdueTotal, 'danger', 'normal', 'text-xs'),
+            indicator: 'danger',
         },
         {
             key: 'paid',
@@ -168,6 +179,7 @@ function DashboardMetricStrip({
                     })}
                 </span>
             ),
+            indicator: 'positive',
         },
         {
             key: 'drafts',
@@ -180,6 +192,7 @@ function DashboardMetricStrip({
                     })}
                 </span>
             ),
+            indicator: 'muted',
         },
     ];
 

@@ -1,20 +1,41 @@
-import { Form, Head } from '@inertiajs/react';
-import { FilePlus2 } from 'lucide-react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
-import { FormSection } from '@/components/app/form-section';
+import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import { ActionLink } from '@/components/app/action-link';
+import { SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
-import { SystemMessage } from '@/components/app/system-message';
+import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
+import type { InvoiceDraftEditorProps } from '@/features/invoices/components/invoice-draft-editor-props';
+import type { CatalogTranslations } from '@/types/catalog';
+import type { CustomerTranslations } from '@/types/customer';
+import type { DocumentDraftCreation } from '@/types/document';
 import type { InvoiceTranslations } from '@/types/invoice';
 
-type Props = {
-    storeUrl: string;
-    creationKey: string;
+const FORM_ID = 'new-invoice-editor';
+
+type Props = Omit<
+    InvoiceDraftEditorProps,
+    | 'updateUrl'
+    | 'creation'
+    | 'issueUrl'
+    | 'lifecycleActions'
+    | 'labels'
+    | 'issueLabels'
+    | 'lifecycleLabels'
+    | 'customerLabels'
+    | 'catalogLabels'
+> & {
+    creation: DocumentDraftCreation;
+    indexUrl: string;
     translations: InvoiceTranslations;
+    customerTranslations: CustomerTranslations;
+    catalogTranslations: CatalogTranslations;
 };
 
 export default function CreateInvoice(props: Props) {
+    const [processing, setProcessing] = useState(false);
+
     return (
         <>
             <Head title={props.translations.create.head_title} />
@@ -23,38 +44,36 @@ export default function CreateInvoice(props: Props) {
                     <PageHeader
                         title={props.translations.create.title}
                         subtitle={props.translations.create.description}
+                        actions={
+                            <>
+                                <ActionLink
+                                    href={props.indexUrl}
+                                    variant="secondary"
+                                >
+                                    {props.translations.edit.cancel}
+                                </ActionLink>
+                                <SubmitButton
+                                    form={FORM_ID}
+                                    processing={processing}
+                                >
+                                    {props.translations.create.submit}
+                                </SubmitButton>
+                            </>
+                        }
                     />
-                    <Form action={props.storeUrl} method="post">
-                        {({ errors, processing }) => (
-                            <FormSection
-                                title={props.translations.create.section_title}
-                                description={
-                                    props.translations.create
-                                        .section_description
-                                }
-                                actions={
-                                    <FormActions>
-                                        <SubmitButton processing={processing}>
-                                            <FilePlus2 aria-hidden="true" />
-                                            {props.translations.create.submit}
-                                        </SubmitButton>
-                                    </FormActions>
-                                }
-                            >
-                                <input
-                                    type="hidden"
-                                    name="creation_key"
-                                    value={props.creationKey}
-                                />
-                                {errors.invoice && (
-                                    <SystemMessage
-                                        title={errors.invoice}
-                                        tone="error"
-                                    />
-                                )}
-                            </FormSection>
-                        )}
-                    </Form>
+                    <InvoiceDraftEditor
+                        {...props}
+                        updateUrl=""
+                        creation={props.creation}
+                        labels={props.translations.edit}
+                        issueLabels={props.translations.issue}
+                        lifecycleLabels={props.translations.lifecycle}
+                        customerLabels={props.customerTranslations}
+                        catalogLabels={props.catalogTranslations}
+                        formId={FORM_ID}
+                        showActions={false}
+                        onProcessingChange={setProcessing}
+                    />
                 </Stack>
             </PageFrame>
         </>

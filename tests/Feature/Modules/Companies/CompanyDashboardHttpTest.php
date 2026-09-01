@@ -98,6 +98,10 @@ final class CompanyDashboardHttpTest extends TestCase
             ->where('dashboard.currencyGroups.0.paidThisMonth', '50.00')
             ->where('dashboard.currencyGroups.0.outstandingTotal', '0.00')
             ->has('dashboard.currencyGroups.0.recentInvoices.all', 1)
+            ->where('dashboard.currencyGroups.0.recentInvoices.all.0.customerEmail', 'billing@dashboard.example')
+            ->where('dashboard.currencyGroups.0.recentInvoices.all.0.customerReference', 'PO-DASHBOARD')
+            ->where('dashboard.currencyGroups.0.recentInvoices.all.0.editUrl', route('invoices.edit', [$company, $eur->id], false))
+            ->where('dashboard.currencyGroups.0.recentInvoices.all.0.viewUrl', route('invoices.current.show', [$company, $eur->id], false))
             ->where('dashboard.currencyGroups.1.currencyCode', 'RON')
             ->where('dashboard.currencyGroups.1.unpaidCount', 1)
             ->where('dashboard.currencyGroups.1.overdueCount', 1)
@@ -170,17 +174,19 @@ final class CompanyDashboardHttpTest extends TestCase
         $this->tenant($company, function () use ($document, $customerName, $total, $currencyCode, $dueDate): void {
             $customer = Customer::query()->create([
                 'type' => CustomerType::Company, 'legal_name' => $customerName,
+                'email' => 'billing@dashboard.example',
             ]);
             $document->update([
                 'customer_id' => $customer->id, 'issue_date' => '2026-08-01',
                 'currency_code' => $currencyCode, 'currency_precision' => 2,
-                'subtotal' => $total, 'total' => $total,
+                'customer_reference' => 'PO-DASHBOARD', 'subtotal' => $total, 'total' => $total,
             ]);
             Invoice::query()->whereKey($document->id)->update(['due_date' => $dueDate]);
             DocumentCustomerSnapshot::query()->create([
                 'document_id' => $document->id,
                 'type' => CustomerType::Company,
                 'legal_name' => $customerName,
+                'email' => 'billing@dashboard.example',
             ]);
             DocumentLine::query()->create([
                 'document_id' => $document->id, 'position' => 1,

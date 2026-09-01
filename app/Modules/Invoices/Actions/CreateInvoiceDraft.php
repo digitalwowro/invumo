@@ -15,6 +15,7 @@ use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Actions\RecordDocumentCreated;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Invoices\Data\InvoiceDraftData;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use Illuminate\Support\Facades\DB;
@@ -28,23 +29,32 @@ final readonly class CreateInvoiceDraft
         private LockCompanyReminderRules $lockReminderRules,
         private CreateDocumentDraft $createDocument,
         private CopyCompanyReminderRules $copyReminderRules,
+        private UpdateInvoiceDraft $updateDraft,
         private RecordDocumentCreated $recordCreated,
     ) {}
 
-    public function handle(Company $company, User $actor, string $creationKey): Document
-    {
+    public function handle(
+        Company $company,
+        User $actor,
+        string $creationKey,
+        ?InvoiceDraftData $data = null,
+    ): Document {
         return $this->tenantContext->runForMember(
             $actor,
             $company->id,
             fn (): Document => DB::connection(config('database.tenant_connection'))->transaction(
-                fn (): Document => $this->create($company, $actor, $creationKey),
+                fn (): Document => $this->create($company, $actor, $creationKey, $data),
                 3,
             ),
         );
     }
 
-    private function create(Company $company, User $actor, string $creationKey): Document
-    {
+    private function create(
+        Company $company,
+        User $actor,
+        string $creationKey,
+        ?InvoiceDraftData $data,
+    ): Document {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
         $existing = Document::query()
             ->where('kind', DocumentKind::Invoice)
@@ -75,8 +85,18 @@ final readonly class CreateInvoiceDraft
                 ),
         ]);
         $this->copyReminderRules->handle($created->document->id, $reminderRules);
-        $this->recordCreated->handle($actor, $created->document, $creationKey);
+        $document = $data === null
+            ? $created->document
+            : $this->updateDraft->update(
+                $company,
+                $actor,
+                $created->document->id,
+                $data,
+                recordAudit: false,
+                advanceVersions: false,
+            );
+        $this->recordCreated->handle($actor, $document, $creationKey);
 
-        return $created->document->refresh();
+        return $document->refresh();
     }
 }

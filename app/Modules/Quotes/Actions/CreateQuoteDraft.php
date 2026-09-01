@@ -13,6 +13,7 @@ use App\Modules\Documents\Actions\LockDocumentConfiguration;
 use App\Modules\Documents\Actions\RecordDocumentCreated;
 use App\Modules\Documents\Data\DocumentKind;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Quotes\Data\QuoteDraftData;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
 use Illuminate\Support\Facades\DB;
@@ -24,23 +25,32 @@ final readonly class CreateQuoteDraft
         private AuthorizesCompanyActions $authorizer,
         private LockDocumentConfiguration $lockConfiguration,
         private CreateDocumentDraft $createDocument,
+        private UpdateQuoteDraft $updateDraft,
         private RecordDocumentCreated $recordCreated,
     ) {}
 
-    public function handle(Company $company, User $actor, string $creationKey): Document
-    {
+    public function handle(
+        Company $company,
+        User $actor,
+        string $creationKey,
+        ?QuoteDraftData $data = null,
+    ): Document {
         return $this->tenantContext->runForMember(
             $actor,
             $company->id,
             fn (): Document => DB::connection(config('database.tenant_connection'))->transaction(
-                fn (): Document => $this->create($company, $actor, $creationKey),
+                fn (): Document => $this->create($company, $actor, $creationKey, $data),
                 3,
             ),
         );
     }
 
-    private function create(Company $company, User $actor, string $creationKey): Document
-    {
+    private function create(
+        Company $company,
+        User $actor,
+        string $creationKey,
+        ?QuoteDraftData $data,
+    ): Document {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageQuotes);
         $existing = Document::query()
             ->where('kind', DocumentKind::Quote)
@@ -67,8 +77,18 @@ final readonly class CreateQuoteDraft
             ),
             'invoice_payment_term_days' => $created->settings->default_payment_term_days,
         ]);
-        $this->recordCreated->handle($actor, $created->document, $creationKey);
+        $document = $data === null
+            ? $created->document
+            : $this->updateDraft->update(
+                $company,
+                $actor,
+                $created->document->id,
+                $data,
+                recordAudit: false,
+                advanceVersions: false,
+            );
+        $this->recordCreated->handle($actor, $document, $creationKey);
 
-        return $created->document->refresh();
+        return $document->refresh();
     }
 }

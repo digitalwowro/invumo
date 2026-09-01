@@ -33,6 +33,9 @@ type Props = {
     labels: CatalogTranslations;
     cancelLabel: string;
     closeLabel: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    showTrigger?: boolean;
 };
 
 function initialData(product: ProductServiceRow): ProductServiceFormData {
@@ -49,10 +52,18 @@ function initialData(product: ProductServiceRow): ProductServiceFormData {
 }
 
 export function ProductServiceEditDialog(props: Props) {
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const open = props.open ?? internalOpen;
     const form = useForm<ProductServiceFormData>(initialData(props.product));
     const generalError = (form.errors as Record<string, string>)
         .product_service;
+    const setOpen = (next: boolean) => {
+        if (props.open === undefined) {
+            setInternalOpen(next);
+        }
+
+        props.onOpenChange?.(next);
+    };
     const changeOpen = (next: boolean) => {
         if (
             !next &&
@@ -82,9 +93,13 @@ export function ProductServiceEditDialog(props: Props) {
 
     return (
         <Dialog open={open} onOpenChange={changeOpen}>
-            <DialogTrigger asChild>
-                <Button variant="secondary">{props.labels.actions.edit}</Button>
-            </DialogTrigger>
+            {props.showTrigger !== false && (
+                <DialogTrigger asChild>
+                    <Button variant="secondary">
+                        {props.labels.actions.edit}
+                    </Button>
+                </DialogTrigger>
+            )}
             <DialogContent
                 closeLabel={props.closeLabel}
                 className="sm:max-w-3xl"

@@ -55,8 +55,15 @@ final readonly class UpdateInvoiceDraft
         );
     }
 
-    private function update(Company $company, User $actor, string $documentId, InvoiceDraftData $data): Document
-    {
+    /** Caller must own the tenant transaction when composing this inside another root Action. */
+    public function update(
+        Company $company,
+        User $actor,
+        string $documentId,
+        InvoiceDraftData $data,
+        bool $recordAudit = true,
+        bool $advanceVersions = true,
+    ): Document {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageInvoices);
         $prepared = $this->prepareDraft->handle(DocumentKind::Invoice, $documentId, $data);
         $document = $prepared->document;
@@ -104,7 +111,7 @@ final readonly class UpdateInvoiceDraft
                 document_invoice_due_date_integrity_trigger
             DEFERRED
             SQL);
-        $this->finalizeDraft->handle($document, $lines);
+        $this->finalizeDraft->handle($document, $lines, $advanceVersions);
         $invoice->update([
             'payment_term_days' => $data->paymentTermDays,
             'due_date' => $data->dueDate,
@@ -131,20 +138,22 @@ final readonly class UpdateInvoiceDraft
                 : $this->reminders->reconcileLedger($document, $invoice, $prepared->configuration->settings);
         }
 
-        $this->recordDraftUpdated->handle(
-            $actor,
-            $document,
-            match ($invoice->lifecycle) {
-                InvoiceLifecycle::Draft => 'company.invoice.draft_updated',
-                InvoiceLifecycle::Issued => 'company.invoice.issued_updated',
-                InvoiceLifecycle::Cancelled => 'company.invoice.cancelled_updated',
-            },
-            'Invoice',
-            count($data->lines),
-            $lines,
-            $selectionApplied,
-            $changedFields,
-        );
+        if ($recordAudit) {
+            $this->recordDraftUpdated->handle(
+                $actor,
+                $document,
+                match ($invoice->lifecycle) {
+                    InvoiceLifecycle::Draft => 'company.invoice.draft_updated',
+                    InvoiceLifecycle::Issued => 'company.invoice.issued_updated',
+                    InvoiceLifecycle::Cancelled => 'company.invoice.cancelled_updated',
+                },
+                'Invoice',
+                count($data->lines),
+                $lines,
+                $selectionApplied,
+                $changedFields,
+            );
+        }
 
         return $document->refresh();
     }

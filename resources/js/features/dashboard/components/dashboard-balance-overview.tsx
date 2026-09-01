@@ -30,7 +30,7 @@ export function DashboardBalanceOverview({
     const outstanding = Number(group.outstandingTotal);
 
     return (
-        <section className="bg-sidebar-background flex min-w-0 flex-col gap-5 rounded-xl p-5 text-foreground-inverse sm:p-6">
+        <section className="flex min-w-0 flex-col gap-5 rounded-xl bg-sidebar p-5 text-foreground-inverse sm:p-6">
             <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
                 <OverviewAmount
                     label={labels.overview.outstanding_total}

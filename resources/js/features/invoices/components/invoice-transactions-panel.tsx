@@ -2,6 +2,7 @@ import { ContentSection } from '@/components/app/content-section';
 import { Cluster } from '@/components/app/layout';
 import { MetricStrip } from '@/components/app/metric-strip';
 import { SystemMessage } from '@/components/app/system-message';
+import { MoneyValue } from '@/components/domain/money-value';
 import { InvoiceTransactionDialog } from '@/features/invoices/components/invoice-transaction-dialog';
 import { InvoiceTransactionTable } from '@/features/invoices/components/invoice-transaction-table';
 import type {
@@ -68,6 +69,9 @@ export function InvoiceTransactionsPanel(props: Props) {
                                 ? disabledDescription
                                 : props.labels.balance_notice
                         }
+                        triggerVariant={
+                            kind === 'PAYMENT' ? 'primary' : 'secondary'
+                        }
                     />
                 ),
             )}
@@ -109,6 +113,7 @@ export function InvoiceTransactionsPanel(props: Props) {
             title={props.labels.title}
             description={props.labels.description}
             headerActions={actions}
+            headerActionsPlacement="below"
         >
             {notices.length > 0 && (
                 <div className="flex flex-col gap-3 border-b border-divider p-5 sm:p-6">
@@ -118,16 +123,32 @@ export function InvoiceTransactionsPanel(props: Props) {
             <MetricStrip
                 ariaLabel={props.labels.title}
                 embedded
-                items={summaryKeys.map(([label, value]) => ({
-                    key: label,
-                    label: props.labels.summary[label],
-                    value: [
+                items={summaryKeys.map(([label, value]) => {
+                    const displayValue = [
                         props.transactions.summary[value],
                         props.currencyCode,
                     ]
                         .filter(Boolean)
-                        .join(' '),
-                }))}
+                        .join(' ');
+
+                    return {
+                        key: label,
+                        label: props.labels.summary[label],
+                        value: (
+                            <MoneyValue
+                                value={displayValue}
+                                emphasis="strong"
+                                tone={
+                                    value === 'netPaid'
+                                        ? 'positive'
+                                        : value === 'outstanding'
+                                          ? 'danger'
+                                          : 'default'
+                                }
+                            />
+                        ),
+                    };
+                })}
             />
             <InvoiceTransactionTable
                 transactions={props.transactions}

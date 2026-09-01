@@ -1,4 +1,5 @@
 import { Paperclip } from 'lucide-react';
+import { SubtleMessage } from '@/components/app/subtle-message';
 import { Badge } from '@/components/ui/badge';
 import { DocumentDeliveryRetryDialog } from '@/features/delivery/components/document-delivery-retry-dialog';
 import { cn } from '@/lib/utils';
@@ -23,11 +24,7 @@ export function DocumentDeliveryHistory({
     embedded = false,
 }: Props) {
     if (items.length === 0) {
-        return (
-            <p className="text-sm text-foreground-muted">
-                {labels.history.empty}
-            </p>
-        );
+        return <SubtleMessage>{labels.history.empty}</SubtleMessage>;
     }
 
     const date = (value: string | null) =>

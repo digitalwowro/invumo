@@ -5,6 +5,7 @@ import { FormActions, SubmitButton } from '@/components/app/form-actions';
 import { CheckboxField, TextField } from '@/components/app/form-field';
 import { Grid, Stack } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
+import { SubtleMessage } from '@/components/app/subtle-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -101,9 +102,7 @@ export function ReminderRuleForm({
                         )}
                         {embedded && actions}
                         {rules.length === 0 && (
-                            <p className="text-sm text-muted-foreground">
-                                {labels.empty}
-                            </p>
+                            <SubtleMessage>{labels.empty}</SubtleMessage>
                         )}
                         {rules.map((rule, index) => (
                             <div

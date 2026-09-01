@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
@@ -11,7 +11,9 @@ import {
     completeLine,
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
+import { useDocumentEditorReports } from '@/components/domain/documents/use-document-editor-reports';
 import { InvoiceDetailsSection } from '@/features/invoices/components/invoice-details-section';
+import type { InvoiceDraftEditorProps } from '@/features/invoices/components/invoice-draft-editor-props';
 import {
     applyInvoiceCustomerDefaults,
     applyInvoiceProductDefaults,
@@ -24,53 +26,14 @@ import {
 import { InvoiceEditorLifecycleActions } from '@/features/invoices/components/invoice-editor-lifecycle-actions';
 import { InvoiceSourceDialogs } from '@/features/invoices/components/invoice-source-dialogs';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
-import type { CatalogTranslations } from '@/types/catalog';
-import type { CustomerTranslations } from '@/types/customer';
 import type {
-    InvoiceCatalogFormOptions,
-    InvoiceCurrencyOption,
-    InvoiceCustomerFormOptions,
     InvoiceCustomerSelection,
     InvoiceDraft,
-    InvoiceLimits,
-    InvoiceLifecycleActions,
     InvoiceLine,
     InvoiceProductDefaults,
-    InvoiceSourceOption,
-    InvoiceSourceUrls,
-    InvoiceTranslations,
 } from '@/types/invoice';
 
-type Props = {
-    invoice: InvoiceDraft;
-    limits: InvoiceLimits;
-    updateUrl: string;
-    issueUrl: string;
-    lifecycleActions: InvoiceLifecycleActions;
-    sourceUrls: InvoiceSourceUrls;
-    inlineCustomerStoreUrl: string;
-    inlineProductStoreUrl: string;
-    inlineCreatedCustomer: InvoiceCustomerSelection | null;
-    inlineCreatedProduct: InvoiceProductDefaults | null;
-    sourceAbilities: { createCustomer: boolean; createProduct: boolean };
-    currencyOptions: InvoiceCurrencyOption[];
-    languageOptions: InvoiceSourceOption[];
-    bankAccountOptions: InvoiceSourceOption[];
-    customerForm: InvoiceCustomerFormOptions;
-    catalogForm: InvoiceCatalogFormOptions;
-    labels: InvoiceTranslations['edit'];
-    issueLabels: InvoiceTranslations['issue'];
-    lifecycleLabels: InvoiceTranslations['lifecycle'];
-    customerLabels: CustomerTranslations;
-    catalogLabels: CatalogTranslations;
-    onDirtyChange?: (dirty: boolean) => void;
-    onProcessingChange?: (processing: boolean) => void;
-    onLineCountChange?: (count: number) => void;
-    formId?: string;
-    showActions?: boolean;
-};
-
-export function InvoiceDraftEditor(props: Props) {
+export function InvoiceDraftEditor(props: InvoiceDraftEditorProps) {
     const { onDirtyChange, onProcessingChange, onLineCountChange } = props;
     const form = useForm(invoiceFormData(props.invoice));
     const [customer, setCustomer] = useState(
@@ -94,17 +57,14 @@ export function InvoiceDraftEditor(props: Props) {
                   precision,
               );
 
-    useEffect(() => {
-        onDirtyChange?.(form.isDirty);
-    }, [form.isDirty, onDirtyChange]);
-
-    useEffect(() => {
-        onProcessingChange?.(form.processing);
-    }, [form.processing, onProcessingChange]);
-
-    useEffect(() => {
-        onLineCountChange?.(form.data.lines.length);
-    }, [form.data.lines.length, onLineCountChange]);
+    useDocumentEditorReports({
+        dirty: form.isDirty,
+        processing: form.processing,
+        lineCount: form.data.lines.length,
+        onDirtyChange,
+        onProcessingChange,
+        onLineCountChange,
+    });
 
     const changeLines = (change: (lines: InvoiceLine[]) => InvoiceLine[]) => {
         form.setData((current) => ({
@@ -162,7 +122,17 @@ export function InvoiceDraftEditor(props: Props) {
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.transform(invoiceRequestData);
+        form.transform((data) => ({
+            ...invoiceRequestData(data),
+            ...(props.creation ? { creation_key: props.creation.key } : {}),
+        }));
+
+        if (props.creation) {
+            form.post(props.creation.url, { preserveScroll: true });
+
+            return;
+        }
+
         form.patch(props.updateUrl, {
             preserveScroll: true,
             onSuccess: (page) => {
@@ -255,19 +225,21 @@ export function InvoiceDraftEditor(props: Props) {
                         errors={errors}
                         onChange={changeDefault}
                     />
-                    {props.showActions !== false && (
-                        <InvoiceEditorLifecycleActions
-                            lifecycle={props.invoice.lifecycle}
-                            lifecycleActions={props.lifecycleActions}
-                            issueUrl={props.issueUrl}
-                            editVersion={form.data.editVersion}
-                            dirty={form.isDirty}
-                            processing={form.processing}
-                            saveLabel={props.labels.save}
-                            issueLabels={props.issueLabels}
-                            lifecycleLabels={props.lifecycleLabels}
-                        />
-                    )}
+                    {props.showActions !== false &&
+                        props.lifecycleActions &&
+                        props.issueUrl && (
+                            <InvoiceEditorLifecycleActions
+                                lifecycle={props.invoice.lifecycle}
+                                lifecycleActions={props.lifecycleActions}
+                                issueUrl={props.issueUrl}
+                                editVersion={form.data.editVersion}
+                                dirty={form.isDirty}
+                                processing={form.processing}
+                                saveLabel={props.labels.save}
+                                issueLabels={props.issueLabels}
+                                lifecycleLabels={props.lifecycleLabels}
+                            />
+                        )}
                 </Stack>
             </form>
             <InvoiceSourceDialogs

@@ -33,7 +33,7 @@ final readonly class RecordDocumentCreated
             after: AuditPayload::fromAllowedFields([
                 'assignment_source' => DocumentAssignmentSource::Automatic->value,
                 'has_currency' => $document->currency_code !== null,
-                'edit_version' => 1,
+                'edit_version' => $document->edit_version,
             ], ['assignment_source', 'has_currency', 'edit_version']),
         ));
 

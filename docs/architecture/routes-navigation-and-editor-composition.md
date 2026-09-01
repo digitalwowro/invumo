@@ -83,100 +83,101 @@ Route names use normal Laravel resource vocabulary. Exact controller/action clas
 
 ### 4.1 Identity, onboarding, and account routes
 
-| Method      | Route                                                                      | Responsibility                                                            |
-| ----------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| GET         | `/`                                                                        | Safe guest/authenticated redirect only                                    |
-| GET/POST    | Fortify identity routes                                                    | Registration, verification, sign-in/out, password reset, and confirmation |
-| GET         | `/companies`                                                               | Accessible Company chooser/management entry                               |
-| GET/POST    | `/companies/create`                                                        | Create the first or another Company                                       |
-| GET         | `/invitations/{token}`                                                    | Rate-limited invitation review without Company enumeration                |
-| POST        | `/invitations/{token}/accept`                                             | Accept after authentication, verification, and invited-email matching     |
-| GET/POST    | `/companies/{company}/settings/members`                                   | Authorized member directory and invitation creation                      |
-| PATCH/DELETE | `/companies/{company}/settings/members/{membership}`                      | Guarded non-Owner role change or removal                                  |
-| DELETE      | `/companies/{company}/settings/members/current`                            | Guarded Admin/Member self-leave                                            |
-| PATCH       | `/companies/{company}/settings/ownership`                                  | Reauthenticated Owner transfer to an existing Admin/Member                 |
-| POST/DELETE | `/companies/{company}/settings/members/invitations/{invitation}/*`        | Resend or revoke a Company-bound pending invitation                       |
-| GET/PATCH   | `/settings/profile`                                                      | User identity                                                             |
-| GET/PUT     | `/settings/security`                                                     | Password and secure-session controls in v1 scope                          |
-| GET/PATCH   | `/settings/preferences`                                                  | Application language and account-level preferences                        |
-| GET         | `/settings/plan`                                                         | Account Owner view of current plan/entitlements when implemented           |
+| Method       | Route                                                              | Responsibility                                                            |
+| ------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| GET          | `/`                                                                | Safe guest/authenticated redirect only                                    |
+| GET/POST     | Fortify identity routes                                            | Registration, verification, sign-in/out, password reset, and confirmation |
+| GET          | `/companies`                                                       | Accessible Company chooser/management entry                               |
+| GET/POST     | `/companies/create`                                                | Create the first or another Company                                       |
+| GET          | `/invitations/{token}`                                             | Rate-limited invitation review without Company enumeration                |
+| POST         | `/invitations/{token}/accept`                                      | Accept after authentication, verification, and invited-email matching     |
+| GET/POST     | `/companies/{company}/settings/members`                            | Authorized member directory and invitation creation                       |
+| PATCH/DELETE | `/companies/{company}/settings/members/{membership}`               | Guarded non-Owner role change or removal                                  |
+| DELETE       | `/companies/{company}/settings/members/current`                    | Guarded Admin/Member self-leave                                           |
+| PATCH        | `/companies/{company}/settings/ownership`                          | Reauthenticated Owner transfer to an existing Admin/Member                |
+| POST/DELETE  | `/companies/{company}/settings/members/invitations/{invitation}/*` | Resend or revoke a Company-bound pending invitation                       |
+| GET/PATCH    | `/settings/profile`                                                | User identity                                                             |
+| GET/PUT      | `/settings/security`                                               | Password and secure-session controls in v1 scope                          |
+| GET/PATCH    | `/settings/preferences`                                            | Application language and account-level preferences                        |
+| GET          | `/settings/plan`                                                   | Account Owner view of current plan/entitlements when implemented          |
 
 ### 4.1.1 Platform Operations routes
 
 These routes use a distinct platform shell, current operator revalidation, and the guards in the approved [Platform Operations contract](platform-operations.md).
 
-| Method | Route                                  | Responsibility                                                                      |
-| ------ | -------------------------------------- | ----------------------------------------------------------------------------------- |
-| GET    | `/platform`                            | Platform overview                                                                   |
-| GET    | `/platform/users`                      | Searchable User control-plane list                                                   |
-| GET    | `/platform/accounts`                   | Searchable Account and current plan-lifecycle list                                   |
-| GET    | `/platform/companies`                  | Searchable Company ownership/membership-count list                                   |
-| GET    | `/platform/plan-lifecycle`             | Active/trial/past-due/cancel-at-end/expired/upcoming-expiry operational views        |
-| GET    | `/platform/audit`                      | Reverse-chronological append-only platform audit                                     |
-| POST   | `/platform/users/{user}/impersonation` | Start throttled, recently reauthenticated full-action impersonation of a non-operator User |
-| DELETE | `/platform/impersonation`              | Exit impersonation and restore the still-authorized original Platform Owner           |
-| POST   | `/platform/users/{user}/suspension`    | Guarded User suspension                                                              |
-| DELETE | `/platform/users/{user}/suspension`    | Guarded User reactivation                                                            |
-| POST   | `/platform/accounts/{account}/suspension` | Guarded Account suspension                                                         |
-| DELETE | `/platform/accounts/{account}/suspension` | Guarded Account reactivation                                                       |
-| PATCH  | `/platform/accounts/{account}/plan`    | Guarded seeded-Plan and lifecycle update                                             |
+| Method | Route                                     | Responsibility                                                                             |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| GET    | `/platform`                               | Platform overview                                                                          |
+| GET    | `/platform/users`                         | Searchable User control-plane list                                                         |
+| GET    | `/platform/accounts`                      | Searchable Account and current plan-lifecycle list                                         |
+| GET    | `/platform/companies`                     | Searchable Company ownership/membership-count list                                         |
+| GET    | `/platform/plan-lifecycle`                | Active/trial/past-due/cancel-at-end/expired/upcoming-expiry operational views              |
+| GET    | `/platform/audit`                         | Reverse-chronological append-only platform audit                                           |
+| POST   | `/platform/users/{user}/impersonation`    | Start throttled, recently reauthenticated full-action impersonation of a non-operator User |
+| DELETE | `/platform/impersonation`                 | Exit impersonation and restore the still-authorized original Platform Owner                |
+| POST   | `/platform/users/{user}/suspension`       | Guarded User suspension                                                                    |
+| DELETE | `/platform/users/{user}/suspension`       | Guarded User reactivation                                                                  |
+| POST   | `/platform/accounts/{account}/suspension` | Guarded Account suspension                                                                 |
+| DELETE | `/platform/accounts/{account}/suspension` | Guarded Account reactivation                                                               |
+| PATCH  | `/platform/accounts/{account}/plan`       | Guarded seeded-Plan and lifecycle update                                                   |
 
 Platform Owner grant/revoke has no web route in v1. Non-operators receive no platform route/action props. Platform pages use the same shared page, operational-table, status, form, confirmation, accessibility, responsive, and localization components as the Company application without a second visual system. During impersonation, every application shell renders the shared persistent identity banner and exit action; this state is server-owned and may not be inferred or dismissed only in React.
 
 ### 4.2 Company shell and operational resources
 
-| Method | Route                                                           | Page/action                                                  |
-| ------ | --------------------------------------------------------------- | ------------------------------------------------------------ |
-| GET    | `/companies/{company}`                                          | Redirect to Company Dashboard                                |
-| GET    | `/companies/{company}/dashboard`                                | Dashboard                                                    |
-| GET    | `/companies/{company}/customers`                                | Customer operational list                                    |
-| GET    | `/companies/{company}/customers/create`                         | Standalone complete Customer form                            |
-| POST   | `/companies/{company}/customers`                                | Shared standalone/inline create action                       |
-| GET    | `/companies/{company}/customers/{customer}`                     | Customer workspace                                           |
-| PATCH  | `/companies/{company}/customers/{customer}`                     | Update Customer aggregate                                    |
-| POST   | `/companies/{company}/customers/{customer}/archive`             | Archive with dependency rules                                |
-| POST   | `/companies/{company}/customers/{customer}/restore`             | Restore archived Customer                                    |
-| DELETE | `/companies/{company}/customers/{customer}`                     | Owner/Admin-only dependency-guarded permanent deletion       |
-| GET    | `/companies/{company}/products`                                 | Product & Service operational list                           |
-| GET    | `/companies/{company}/products/create`                          | Standalone catalogue form                                    |
-| POST   | `/companies/{company}/products`                                 | Shared standalone/inline create action                       |
-| GET    | `/companies/{company}/products/{product}`                       | Product/Service workspace                                    |
-| PATCH  | `/companies/{company}/products/{product}`                       | Update catalogue entry                                       |
-| POST   | `/companies/{company}/products/{product}/archive`               | Archive entry                                                |
-| POST   | `/companies/{company}/products/{product}/restore`               | Restore entry                                                |
-| DELETE | `/companies/{company}/products/{product}`                       | Owner/Admin-only dependency-guarded permanent deletion       |
-| GET    | `/companies/{company}/quotes`                                   | Quote operational list                                       |
-| GET    | `/companies/{company}/quotes/create`                            | Side-effect-free numbered-Draft creation confirmation        |
-| POST   | `/companies/{company}/quotes`                                   | Persist a numbered Draft and redirect to its workspace       |
-| GET    | `/companies/{company}/quotes/{quote}`                           | Quote document workspace/editor                              |
-| PATCH  | `/companies/{company}/quotes/{quote}`                           | Version-checked aggregate save                               |
-| GET    | `/companies/{company}/document-sources/customers`                | Bounded literal Customer source search                       |
-| GET    | `/companies/{company}/document-sources/customers/{customer}`     | Customer/default snapshot preview and confirmation token     |
-| GET    | `/companies/{company}/document-sources/products`                 | Bounded literal active Product/Service source search         |
-| GET    | `/companies/{company}/document-sources/products/{product}`       | Detached Product/Service line defaults                       |
-| POST   | `/companies/{company}/quotes/{quote}/inline-customers`           | Shared Customer create Action with inline selection result   |
-| POST   | `/companies/{company}/quotes/{quote}/inline-products`            | Owner/Admin shared catalogue create Action with line defaults |
-| DELETE | `/companies/{company}/quotes/{quote}`                           | Guarded permanent deletion                                   |
-| POST   | `/companies/{company}/quotes/{quote}/invoices`                  | Guarded Quote-to-Invoice conversion                          |
-| POST   | `/companies/{company}/quotes/{quote}/invoices/{invoice}/unlink` | Owner/Admin-only eligible Draft unlink action                |
-| GET    | `/companies/{company}/invoices`                                 | Invoice operational list                                     |
-| POST   | `/companies/{company}/invoices`                                 | Persist a numbered Draft and redirect to its workspace       |
-| GET    | `/companies/{company}/invoices/{invoice}`                       | Invoice document workspace/editor                            |
-| PATCH  | `/companies/{company}/invoices/{invoice}`                       | Version-checked aggregate save                               |
-| DELETE | `/companies/{company}/invoices/{invoice}`                       | Strongly confirmed, guarded permanent deletion               |
-| POST   | `/companies/{company}/invoices/{invoice}/cancel`                | Guarded cancellation                                         |
-| POST   | `/companies/{company}/invoices/{invoice}/reopen`                | Guarded reopen                                               |
-| GET    | `/companies/{company}/recurring`                                | Recurring-template operational list                          |
-| GET    | `/companies/{company}/recurring/create`                         | Minimal creation form requiring the internal template name   |
-| POST   | `/companies/{company}/recurring`                                | Persist a valid Draft template and redirect to its workspace |
-| GET    | `/companies/{company}/recurring/{template}`                     | Recurring-template workspace/editor                          |
-| PATCH  | `/companies/{company}/recurring/{template}`                     | Version-checked future-template save                         |
-| POST   | `/companies/{company}/recurring/{template}/activate`            | Owner/Admin activation                                       |
-| POST   | `/companies/{company}/recurring/{template}/pause`               | Owner/Admin pause                                            |
-| POST   | `/companies/{company}/recurring/{template}/resume`              | Owner/Admin resume                                           |
-| POST   | `/companies/{company}/recurring/{template}/complete`            | Owner/Admin completion                                       |
-| POST   | `/companies/{company}/recurring/{template}/duplicate`           | Duplicate retained/Completed template into a Draft           |
-| GET    | `/companies/{company}/transactions`                             | Company transaction operational list                         |
+| Method | Route                                                           | Page/action                                                     |
+| ------ | --------------------------------------------------------------- | --------------------------------------------------------------- |
+| GET    | `/companies/{company}`                                          | Redirect to Company Dashboard                                   |
+| GET    | `/companies/{company}/dashboard`                                | Dashboard                                                       |
+| GET    | `/companies/{company}/customers`                                | Customer operational list                                       |
+| GET    | `/companies/{company}/customers/create`                         | Standalone complete Customer form                               |
+| POST   | `/companies/{company}/customers`                                | Shared standalone/inline create action                          |
+| GET    | `/companies/{company}/customers/{customer}`                     | Customer workspace                                              |
+| PATCH  | `/companies/{company}/customers/{customer}`                     | Update Customer aggregate                                       |
+| POST   | `/companies/{company}/customers/{customer}/archive`             | Archive with dependency rules                                   |
+| POST   | `/companies/{company}/customers/{customer}/restore`             | Restore archived Customer                                       |
+| DELETE | `/companies/{company}/customers/{customer}`                     | Owner/Admin-only dependency-guarded permanent deletion          |
+| GET    | `/companies/{company}/products`                                 | Product & Service operational list                              |
+| GET    | `/companies/{company}/products/create`                          | Standalone catalogue form                                       |
+| POST   | `/companies/{company}/products`                                 | Shared standalone/inline create action                          |
+| GET    | `/companies/{company}/products/{product}`                       | Product/Service workspace                                       |
+| PATCH  | `/companies/{company}/products/{product}`                       | Update catalogue entry                                          |
+| POST   | `/companies/{company}/products/{product}/archive`               | Archive entry                                                   |
+| POST   | `/companies/{company}/products/{product}/restore`               | Restore entry                                                   |
+| DELETE | `/companies/{company}/products/{product}`                       | Owner/Admin-only dependency-guarded permanent deletion          |
+| GET    | `/companies/{company}/quotes`                                   | Quote operational list                                          |
+| GET    | `/companies/{company}/quotes/create`                            | Complete unsaved Quote editor; no write or number allocation    |
+| POST   | `/companies/{company}/quotes`                                   | First Save: persist the aggregate and redirect to its workspace |
+| GET    | `/companies/{company}/quotes/{quote}`                           | Quote document workspace/editor                                 |
+| PATCH  | `/companies/{company}/quotes/{quote}`                           | Version-checked aggregate save                                  |
+| GET    | `/companies/{company}/document-sources/customers`               | Bounded literal Customer source search                          |
+| GET    | `/companies/{company}/document-sources/customers/{customer}`    | Customer/default snapshot preview and confirmation token        |
+| GET    | `/companies/{company}/document-sources/products`                | Bounded literal active Product/Service source search            |
+| GET    | `/companies/{company}/document-sources/products/{product}`      | Detached Product/Service line defaults                          |
+| POST   | `/companies/{company}/quotes/{quote}/inline-customers`          | Shared Customer create Action with inline selection result      |
+| POST   | `/companies/{company}/quotes/{quote}/inline-products`           | Owner/Admin shared catalogue create Action with line defaults   |
+| DELETE | `/companies/{company}/quotes/{quote}`                           | Guarded permanent deletion                                      |
+| POST   | `/companies/{company}/quotes/{quote}/invoices`                  | Guarded Quote-to-Invoice conversion                             |
+| POST   | `/companies/{company}/quotes/{quote}/invoices/{invoice}/unlink` | Owner/Admin-only eligible Draft unlink action                   |
+| GET    | `/companies/{company}/invoices`                                 | Invoice operational list                                        |
+| GET    | `/companies/{company}/invoices/create`                          | Complete unsaved Invoice editor; no write or number allocation  |
+| POST   | `/companies/{company}/invoices`                                 | First Save: persist the aggregate and redirect to its workspace |
+| GET    | `/companies/{company}/invoices/{invoice}`                       | Invoice document workspace/editor                               |
+| PATCH  | `/companies/{company}/invoices/{invoice}`                       | Version-checked aggregate save                                  |
+| DELETE | `/companies/{company}/invoices/{invoice}`                       | Strongly confirmed, guarded permanent deletion                  |
+| POST   | `/companies/{company}/invoices/{invoice}/cancel`                | Guarded cancellation                                            |
+| POST   | `/companies/{company}/invoices/{invoice}/reopen`                | Guarded reopen                                                  |
+| GET    | `/companies/{company}/recurring`                                | Recurring-template operational list                             |
+| GET    | `/companies/{company}/recurring/create`                         | Minimal creation form requiring the internal template name      |
+| POST   | `/companies/{company}/recurring`                                | Persist a valid Draft template and redirect to its workspace    |
+| GET    | `/companies/{company}/recurring/{template}`                     | Recurring-template workspace/editor                             |
+| PATCH  | `/companies/{company}/recurring/{template}`                     | Version-checked future-template save                            |
+| POST   | `/companies/{company}/recurring/{template}/activate`            | Owner/Admin activation                                          |
+| POST   | `/companies/{company}/recurring/{template}/pause`               | Owner/Admin pause                                               |
+| POST   | `/companies/{company}/recurring/{template}/resume`              | Owner/Admin resume                                              |
+| POST   | `/companies/{company}/recurring/{template}/complete`            | Owner/Admin completion                                          |
+| POST   | `/companies/{company}/recurring/{template}/duplicate`           | Duplicate retained/Completed template into a Draft              |
+| GET    | `/companies/{company}/transactions`                             | Company transaction operational list                            |
 
 Payment, Refund, and Adjustment mutations are nested under the Invoice aggregate because every ledger change locks and recalculates that Invoice. They may have stable transaction identifiers for edit/audit links, but no mutation bypasses the Invoice workflow:
 
@@ -307,7 +308,10 @@ On wide screens, the editable content is the flexible main column and the totals
 
 ### 6.3 Draft creation and saving
 
-- **New quote** and **New invoice** submit POST actions that allocate and persist a Draft exactly once, then redirect to its canonical workspace. GET requests never allocate numbers or mutate data.
+- **New quote** and **New invoice** open their complete unsaved editors with GET. Opening, refreshing, closing, or abandoning those editors never creates a Document, allocates a number, advances a counter, or writes audit history.
+- The first successful **Save** submits the complete aggregate command. Its root Action validates and persists the Draft, allocates its assigned number, advances the counter, and records creation in one transaction before redirecting to the canonical workspace.
+- One opaque creation key is generated when the editor opens and remains stable for first-Save retries. A repeated successful command returns the same Draft rather than allocating another number.
+- Document-scoped lifecycle, delivery, public-link, and inline-create actions become available only after the first Save has produced a canonical Document identifier.
 - A recurring-template create form first collects its required internal name, then persists the Draft and opens its workspace; Invumo never invents a customer-visible or internal name merely to allocate an empty row.
 - The editor keeps interaction state in a local reducer. Laravel receives one aggregate command, recalculates authoritatively, and returns persisted string decimals and the next edit version.
 - Every save carries the aggregate edit version. A stale save is rejected into the shared reload/review flow rather than silently replacing newer work.

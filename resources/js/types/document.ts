@@ -7,6 +7,11 @@ import type { CustomerFieldLimits, CustomerOption } from '@/types/customer';
 
 export type DocumentPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
 
+export type DocumentDraftCreation = {
+    url: string;
+    key: string;
+};
+
 export type DocumentLineDraft = {
     key: string;
     id: string | null;

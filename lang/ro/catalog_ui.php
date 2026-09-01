@@ -2,9 +2,10 @@
 
 return [
     'index' => [
-        'head_title' => 'Produse și servicii',
-        'title' => 'Produse și servicii',
+        'head_title' => 'Produse',
+        'title' => 'Produse',
         'description' => 'Administrează valorile reutilizabile pentru liniile ofertelor, facturilor și facturilor recurente.',
+        'create' => 'Produs nou',
         'search_label' => 'Caută',
         'search_placeholder' => 'Caută după nume, cod sau descriere',
         'status_label' => 'Stare',
@@ -25,6 +26,12 @@ return [
         'error_title' => 'Produsele și serviciile nu au putut fi încărcate',
         'error_description' => 'Încearcă din nou.',
         'status_options' => ['active' => 'Active', 'archived' => 'Arhivate', 'all' => 'Toate'],
+        'summary' => [
+            'aria_label' => 'Prezentarea produselor',
+            'all' => 'Toate produsele',
+            'active' => 'Active',
+            'archived' => 'Arhivate',
+        ],
         'sort_options' => ['recent' => 'Actualizate recent', 'name_asc' => 'Nume A–Z', 'name_desc' => 'Nume Z–A'],
         'columns' => [
             'entry' => 'Produs sau serviciu',
@@ -35,7 +42,7 @@ return [
         ],
     ],
     'form' => [
-        'create_title' => 'Adaugă un produs sau serviciu',
+        'create_title' => 'Produs nou',
         'create_description' => 'Salvează valori reutilizabile fără a limita editarea ulterioară a documentelor.',
         'edit_title' => 'Editează produsul sau serviciul',
         'edit_description' => 'Modificările se aplică doar selecțiilor viitoare, niciodată liniilor deja salvate.',
@@ -65,7 +72,7 @@ return [
         'edit' => 'Editează',
         'archive' => 'Arhivează',
         'restore' => 'Restaurează',
-        'delete' => 'Șterge definitiv',
+        'delete' => 'Șterge',
         'archive_title' => 'Arhivezi această înregistrare?',
         'archive_description' => 'Liniile documentelor existente rămân neschimbate. Înregistrarea nu va mai putea fi selectată.',
         'restore_title' => 'Restaurezi această înregistrare?',

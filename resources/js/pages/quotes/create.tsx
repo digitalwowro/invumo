@@ -1,63 +1,76 @@
-import { Form, Head } from '@inertiajs/react';
-import { FilePlus2 } from 'lucide-react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
-import { FormSection } from '@/components/app/form-section';
+import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import { ActionLink } from '@/components/app/action-link';
+import { SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
-import { SystemMessage } from '@/components/app/system-message';
+import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
+import type { QuoteDraftEditorProps } from '@/features/quotes/components/quote-draft-editor-props';
+import type { CatalogTranslations } from '@/types/catalog';
+import type { CustomerTranslations } from '@/types/customer';
+import type { DocumentDraftCreation } from '@/types/document';
 import type { QuoteTranslations } from '@/types/quote';
 
-type Props = {
-    storeUrl: string;
-    creationKey: string;
+const FORM_ID = 'new-quote-editor';
+
+type Props = Omit<
+    QuoteDraftEditorProps,
+    | 'updateUrl'
+    | 'creation'
+    | 'labels'
+    | 'customerLabels'
+    | 'catalogLabels'
+    | 'conversion'
+    | 'conversionLabels'
+> & {
+    creation: DocumentDraftCreation;
+    indexUrl: string;
     translations: QuoteTranslations;
+    customerTranslations: CustomerTranslations;
+    catalogTranslations: CatalogTranslations;
 };
 
-export default function CreateQuote({
-    storeUrl,
-    creationKey,
-    translations,
-}: Props) {
+export default function CreateQuote(props: Props) {
+    const [processing, setProcessing] = useState(false);
+
     return (
         <>
-            <Head title={translations.create.head_title} />
+            <Head title={props.translations.create.head_title} />
             <PageFrame width="full">
                 <Stack gap="2xl">
                     <PageHeader
-                        title={translations.create.title}
-                        subtitle={translations.create.description}
+                        title={props.translations.create.title}
+                        subtitle={props.translations.create.description}
+                        actions={
+                            <>
+                                <ActionLink
+                                    href={props.indexUrl}
+                                    variant="secondary"
+                                >
+                                    {props.translations.edit.cancel}
+                                </ActionLink>
+                                <SubmitButton
+                                    form={FORM_ID}
+                                    processing={processing}
+                                >
+                                    {props.translations.create.submit}
+                                </SubmitButton>
+                            </>
+                        }
                     />
-                    <Form action={storeUrl} method="post">
-                        {({ errors, processing }) => (
-                            <FormSection
-                                title={translations.create.section_title}
-                                description={
-                                    translations.create.section_description
-                                }
-                                actions={
-                                    <FormActions>
-                                        <SubmitButton processing={processing}>
-                                            <FilePlus2 aria-hidden="true" />
-                                            {translations.create.submit}
-                                        </SubmitButton>
-                                    </FormActions>
-                                }
-                            >
-                                <input
-                                    type="hidden"
-                                    name="creation_key"
-                                    value={creationKey}
-                                />
-                                {errors.quote && (
-                                    <SystemMessage
-                                        title={errors.quote}
-                                        tone="error"
-                                    />
-                                )}
-                            </FormSection>
-                        )}
-                    </Form>
+                    <QuoteDraftEditor
+                        {...props}
+                        updateUrl=""
+                        creation={props.creation}
+                        labels={props.translations.edit}
+                        customerLabels={props.customerTranslations}
+                        catalogLabels={props.catalogTranslations}
+                        conversionLabels={props.translations.conversion}
+                        formId={FORM_ID}
+                        showActions={false}
+                        onProcessingChange={setProcessing}
+                    />
                 </Stack>
             </PageFrame>
         </>

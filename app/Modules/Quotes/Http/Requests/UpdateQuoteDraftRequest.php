@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 
-final class UpdateQuoteDraftRequest extends FormRequest
+class UpdateQuoteDraftRequest extends FormRequest
 {
     public function authorize(): bool
     {

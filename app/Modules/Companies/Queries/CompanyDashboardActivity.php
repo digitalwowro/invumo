@@ -32,11 +32,12 @@ final readonly class CompanyDashboardActivity
         CarbonImmutable $localDate,
         bool $includeQuotes,
         bool $includeRecurring,
+        bool $canManageInvoices,
     ): array {
         $activity = [];
 
         foreach (['all', 'unpaid', 'drafts'] as $scope) {
-            foreach ($this->recentInvoices($company, $localDate, $scope) as $currency => $rows) {
+            foreach ($this->recentInvoices($company, $localDate, $scope, $canManageInvoices) as $currency => $rows) {
                 $activity[$currency]['recentInvoices'][$scope] = $rows;
             }
         }
@@ -59,8 +60,12 @@ final readonly class CompanyDashboardActivity
     }
 
     /** @return array<string, list<array<string, mixed>>> */
-    private function recentInvoices(Company $company, CarbonImmutable $localDate, string $scope): array
-    {
+    private function recentInvoices(
+        Company $company,
+        CarbonImmutable $localDate,
+        string $scope,
+        bool $canManageInvoices,
+    ): array {
         $source = $this->invoiceBase()
             ->leftJoin('document_customer_snapshots as customer', function ($join): void {
                 $join->on('customer.company_id', '=', 'documents.company_id')
@@ -68,12 +73,13 @@ final readonly class CompanyDashboardActivity
             })
             ->whereNotNull('documents.currency_code')
             ->select([
-                'documents.id', 'documents.rendered_number', 'documents.issue_date',
+                'documents.id', 'documents.rendered_number', 'documents.customer_reference', 'documents.issue_date',
                 'documents.currency_code', 'documents.currency_precision', 'documents.total',
                 'documents.updated_at', 'invoices.lifecycle', 'invoices.due_date',
             ])
             ->selectRaw('COALESCE(ledger.net_paid, 0) AS net_paid')
             ->selectRaw(self::CUSTOMER_NAME.' AS customer_name')
+            ->selectRaw('customer.email AS customer_email')
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY documents.currency_code ORDER BY documents.updated_at DESC, documents.id DESC) AS dashboard_rank');
 
         if ($scope === 'unpaid') {
@@ -89,7 +95,12 @@ final readonly class CompanyDashboardActivity
             ->get()
             ->groupBy('currency_code')
             ->mapWithKeys(fn ($rows, mixed $currency): array => [(string) $currency => array_values($rows
-                ->map(fn (stdClass $row): array => $this->invoiceRow($company, $row, $localDate))
+                ->map(fn (stdClass $row): array => $this->invoiceRow(
+                    $company,
+                    $row,
+                    $localDate,
+                    $canManageInvoices,
+                ))
                 ->values()
                 ->all())])
             ->all();
@@ -167,8 +178,12 @@ final readonly class CompanyDashboardActivity
     }
 
     /** @return array<string, mixed> */
-    private function invoiceRow(Company $company, stdClass $row, CarbonImmutable $localDate): array
-    {
+    private function invoiceRow(
+        Company $company,
+        stdClass $row,
+        CarbonImmutable $localDate,
+        bool $canManageInvoices,
+    ): array {
         $precision = DecimalRules::currencyPrecision((int) $row->currency_precision);
         $lifecycle = InvoiceLifecycle::from((string) $row->lifecycle);
         $state = ResolvedInvoiceState::resolve(
@@ -183,6 +198,8 @@ final readonly class CompanyDashboardActivity
             'id' => (string) $row->id,
             'number' => (string) $row->rendered_number,
             'customerName' => $row->customer_name,
+            'customerEmail' => $row->customer_email,
+            'customerReference' => $row->customer_reference,
             'issueDate' => $row->issue_date,
             'dueDate' => $row->due_date,
             'lifecycle' => $lifecycle->value,
@@ -193,7 +210,10 @@ final readonly class CompanyDashboardActivity
                 ->minus(DecimalRules::moneySource((string) $row->net_paid))
                 ->toScale($precision),
             'currencyCode' => (string) $row->currency_code,
-            'viewUrl' => route('invoices.edit', [$company, $row->id], false),
+            'editUrl' => $canManageInvoices
+                ? route('invoices.edit', [$company, $row->id], false)
+                : null,
+            'viewUrl' => route('invoices.current.show', [$company, $row->id], false),
         ];
     }
 }

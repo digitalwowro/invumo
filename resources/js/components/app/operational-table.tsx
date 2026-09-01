@@ -21,6 +21,8 @@ type OperationalColumn<Row> = {
     key: string;
     label: string;
     kind?: ColumnKind;
+    headClassName?: string;
+    cellClassName?: string;
     render: (row: Row) => ReactNode;
 };
 
@@ -45,8 +47,10 @@ type OperationalTableProps<Row> = {
     footer?: ReactNode;
     stateAction?: ReactNode;
     onRowActivate?: (row: Row) => void;
+    canActivateRow?: (row: Row) => boolean;
     rowLabel?: (row: Row) => string;
     embedded?: boolean;
+    tableClassName?: string;
 };
 
 const cellClasses: Record<ColumnKind, string> = {
@@ -113,8 +117,10 @@ export function OperationalTable<Row>({
     footer,
     stateAction,
     onRowActivate,
+    canActivateRow,
     rowLabel,
     embedded = false,
+    tableClassName,
 }: OperationalTableProps<Row>) {
     const activateFromKeyboard = (
         event: KeyboardEvent<HTMLTableRowElement>,
@@ -140,13 +146,16 @@ export function OperationalTable<Row>({
                 <div className="border-b border-divider p-4">{toolbar}</div>
             )}
 
-            <Table aria-label={ariaLabel}>
+            <Table aria-label={ariaLabel} className={tableClassName}>
                 <TableHeader>
                     <TableRow>
                         {columns.map((column) => (
                             <TableHead
                                 key={column.key}
-                                className={headClasses[column.kind ?? 'text']}
+                                className={cn(
+                                    headClasses[column.kind ?? 'text'],
+                                    column.headClassName,
+                                )}
                             >
                                 <MetaLabel>{column.label}</MetaLabel>
                             </TableHead>
@@ -155,35 +164,58 @@ export function OperationalTable<Row>({
                 </TableHeader>
                 <TableBody>
                     {state === 'ready' ? (
-                        rows.map((row) => (
-                            <TableRow
-                                key={rowKey(row)}
-                                role={onRowActivate ? 'link' : undefined}
-                                tabIndex={onRowActivate ? 0 : undefined}
-                                aria-label={rowLabel?.(row)}
-                                onClick={() => onRowActivate?.(row)}
-                                onKeyDown={(event) =>
-                                    activateFromKeyboard(event, row)
-                                }
-                            >
-                                {columns.map((column) => (
-                                    <TableCell
-                                        key={column.key}
-                                        className={
-                                            cellClasses[column.kind ?? 'text']
-                                        }
-                                    >
-                                        {column.kind === 'actions' ? (
-                                            <div className="ml-auto w-max">
-                                                {column.render(row)}
-                                            </div>
-                                        ) : (
-                                            column.render(row)
-                                        )}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        ))
+                        rows.map((row) => {
+                            const activatable =
+                                onRowActivate !== undefined &&
+                                (canActivateRow?.(row) ?? true);
+
+                            return (
+                                <TableRow
+                                    key={rowKey(row)}
+                                    role={activatable ? 'link' : undefined}
+                                    tabIndex={activatable ? 0 : undefined}
+                                    aria-label={
+                                        activatable
+                                            ? rowLabel?.(row)
+                                            : undefined
+                                    }
+                                    onClick={
+                                        activatable
+                                            ? () => onRowActivate(row)
+                                            : undefined
+                                    }
+                                    onKeyDown={
+                                        activatable
+                                            ? (event) =>
+                                                  activateFromKeyboard(
+                                                      event,
+                                                      row,
+                                                  )
+                                            : undefined
+                                    }
+                                >
+                                    {columns.map((column) => (
+                                        <TableCell
+                                            key={column.key}
+                                            className={cn(
+                                                cellClasses[
+                                                    column.kind ?? 'text'
+                                                ],
+                                                column.cellClassName,
+                                            )}
+                                        >
+                                            {column.kind === 'actions' ? (
+                                                <div className="ml-auto flex max-w-full justify-end">
+                                                    {column.render(row)}
+                                                </div>
+                                            ) : (
+                                                column.render(row)
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            );
+                        })
                     ) : (
                         <TableRow>
                             <TableCell colSpan={columns.length}>

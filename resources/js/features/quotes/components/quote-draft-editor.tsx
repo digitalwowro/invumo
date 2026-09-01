@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
@@ -12,6 +12,7 @@ import {
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
 import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
+import { useDocumentEditorReports } from '@/components/domain/documents/use-document-editor-reports';
 import { QuoteDetailsSection } from '@/features/quotes/components/quote-details-section';
 import type { QuoteDraftEditorProps } from '@/features/quotes/components/quote-draft-editor-props';
 import {
@@ -21,6 +22,7 @@ import {
     changeQuoteDetail,
     customerFromQuote,
     quoteFormData,
+    quoteRequestData,
 } from '@/features/quotes/components/quote-draft-form-data';
 import { QuoteDraftSummary } from '@/features/quotes/components/quote-draft-summary';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
@@ -32,7 +34,7 @@ import type {
 } from '@/types/quote';
 
 export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
-    const { onDirtyChange } = props;
+    const { onDirtyChange, onProcessingChange, onLineCountChange } = props;
     const form = useForm(quoteFormData(props.quote));
     const [customer, setCustomer] = useState(customerFromQuote(props.quote));
     const [precision, setPrecision] = useState(props.quote.currencyPrecision);
@@ -42,6 +44,11 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
     const [productCreator, setProductCreator] = useState(false);
     const [lineIndex, setLineIndex] = useState<number | null>(null);
     const errors = form.errors as Record<string, string>;
+    const editorError =
+        errors.lines ??
+        errors.edit_version ??
+        errors.customer_id ??
+        errors.quote;
     const calculated = form.data.lines.map((line) =>
         calculateDocumentLine(line, precision),
     );
@@ -53,9 +60,14 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                   precision,
               );
 
-    useEffect(() => {
-        onDirtyChange?.(form.isDirty);
-    }, [form.isDirty, onDirtyChange]);
+    useDocumentEditorReports({
+        dirty: form.isDirty,
+        processing: form.processing,
+        lineCount: form.data.lines.length,
+        onDirtyChange,
+        onProcessingChange,
+        onLineCountChange,
+    });
 
     const changeLines = (change: (lines: QuoteLine[]) => QuoteLine[]) => {
         form.setData((current) => ({
@@ -112,35 +124,16 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.transform((data) => ({
-            edit_version: data.editVersion,
-            customer_id: data.customerId,
-            customer_confirmation_token: data.customerConfirmationToken,
-            currency_code: data.currencyCode,
-            document_language: data.documentLanguage,
-            issue_date: data.issueDate || null,
-            validity_days:
-                data.validityDays === '' ? null : Number(data.validityDays),
-            valid_until: data.validUntil || null,
-            customer_reference: data.customerReference || null,
-            bank_account_id: data.bankAccountId,
-            terms_and_conditions: data.termsAndConditions,
-            notes: data.notes,
-            lines: data.lines.map((line) => ({
-                id: line.id,
-                product_service_id: line.productServiceId,
-                description: line.description,
-                item_price: line.itemPrice,
-                quantity: line.quantity,
-                unit: line.unit,
-                period_unit: line.periodUnit,
-                period_quantity: line.periodQuantity,
-                discount_percentage: line.discountPercentage,
-                tax_name: line.taxName,
-                tax_percentage: line.taxPercentage,
-                tax_preset_id: line.taxPresetId,
-                source_applied: line.sourceApplied ?? false,
-            })),
+            ...quoteRequestData(data),
+            ...(props.creation ? { creation_key: props.creation.key } : {}),
         }));
+
+        if (props.creation) {
+            form.post(props.creation.url, { preserveScroll: true });
+
+            return;
+        }
+
         form.patch(props.updateUrl, {
             preserveScroll: true,
             onSuccess: (page) => {
@@ -156,7 +149,7 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
 
     return (
         <>
-            <form onSubmit={submit}>
+            <form id={props.formId} onSubmit={submit}>
                 <Stack gap="xl">
                     <UnsavedChangesGuard
                         active={
@@ -167,17 +160,8 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                         }
                         message={props.labels.unsaved_warning}
                     />
-                    {(errors.lines ||
-                        errors.edit_version ||
-                        errors.customer_id) && (
-                        <SystemMessage
-                            title={
-                                errors.lines ??
-                                errors.edit_version ??
-                                errors.customer_id
-                            }
-                            tone="error"
-                        />
+                    {editorError && (
+                        <SystemMessage title={editorError} tone="error" />
                     )}
                     <DocumentCustomerControls
                         customer={customer}
@@ -231,16 +215,18 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                         errors={errors}
                         onChange={changeDefault}
                     />
-                    <QuoteDraftSummary
-                        processing={form.processing}
-                        dirty={form.isDirty}
-                        currencyCode={props.quote.currencyCode}
-                        conversionUrl={props.conversion.url}
-                        conversionKey={props.conversion.creationKey}
-                        allocation={props.conversion.allocation}
-                        saveLabel={props.labels.save}
-                        conversionLabels={props.conversionLabels}
-                    />
+                    {props.showActions !== false && props.conversion && (
+                        <QuoteDraftSummary
+                            processing={form.processing}
+                            dirty={form.isDirty}
+                            currencyCode={props.quote.currencyCode}
+                            conversionUrl={props.conversion.url}
+                            conversionKey={props.conversion.creationKey}
+                            allocation={props.conversion.allocation}
+                            saveLabel={props.labels.save}
+                            conversionLabels={props.conversionLabels}
+                        />
+                    )}
                 </Stack>
             </form>
             <DocumentSourceDialogs

@@ -72,8 +72,8 @@ return [
         'error_title' => 'Facturile nu au putut fi încărcate',
         'error_description' => 'Încearcă din nou.',
         'columns' => [
-            'invoice' => 'Factură',
-            'customer' => 'Client',
+            'invoice' => 'Factură / Client',
+            'reference' => 'Referință client',
             'dates' => 'Emitere / scadență',
             'total' => 'Total / de încasat',
             'status' => 'Stare',
@@ -83,6 +83,7 @@ return [
         'open' => ':amount de încasat',
         'settled' => 'achitată',
         'not_issued' => 'neemisă',
+        'edit' => 'Deschide',
         'view' => 'Vezi',
         'view_all' => 'Vezi toate facturile',
     ],

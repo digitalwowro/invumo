@@ -8,6 +8,7 @@ use App\Modules\Documents\Data\DocumentDraftFailure;
 use App\Modules\Documents\Data\DocumentLineFailure;
 use App\Modules\Documents\Data\DocumentNumberAllocationException;
 use App\Modules\Documents\Data\DocumentSourceFailure;
+use App\Modules\Documents\Queries\DocumentDraftCreationPage;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
 use App\Modules\Quotes\Actions\UpdateQuoteDraft;
 use App\Modules\Quotes\Exceptions\QuoteDraftException;
@@ -30,12 +31,16 @@ final class QuoteDraftController extends Controller
     public function create(
         Request $request,
         Company $company,
-        QuoteDraftPage $page,
+        DocumentDraftCreationPage $page,
         QuotesUiTranslationBag $translations,
+        CustomersUiTranslationBag $customerTranslations,
+        CatalogUiTranslationBag $catalogTranslations,
     ): Response {
         return Inertia::render('quotes/create', [
-            ...$page->create($company, $request->user()),
+            ...$page->quote($company, $request->user(), app()->getLocale()),
             'translations' => $translations->toArray(),
+            'customerTranslations' => $customerTranslations->toArray(),
+            'catalogTranslations' => $catalogTranslations->toArray(),
         ]);
     }
 
@@ -45,14 +50,29 @@ final class QuoteDraftController extends Controller
         CreateQuoteDraft $create,
     ): RedirectResponse {
         try {
-            $quote = $create->handle($company, $request->user(), $request->creationKey());
-        } catch (QuoteDraftException|DocumentDraftFailure|DocumentNumberAllocationException $exception) {
+            $quote = $create->handle(
+                $company,
+                $request->user(),
+                $request->creationKey(),
+                $request->draft(),
+            );
+        } catch (QuoteDraftException|DocumentDraftFailure|DocumentNumberAllocationException|DocumentSourceFailure|DocumentLineFailure $exception) {
+            $field = match ($exception->reason()) {
+                'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
+                'currency_unavailable', 'currency_linked' => 'currency_code',
+                'bank_unavailable' => 'bank_account_id',
+                'details_invalid' => 'valid_until',
+                default => 'quote',
+            };
+
             throw ValidationException::withMessages([
-                'quote' => __("quotes_ui.errors.{$exception->reason()}"),
+                $field => __("quotes_ui.errors.{$exception->reason()}"),
             ]);
         }
 
-        return redirect()->route('quotes.edit', [$company, $quote]);
+        return redirect()
+            ->route('quotes.edit', [$company, $quote])
+            ->with('status', __('quotes_ui.feedback.saved'));
     }
 
     public function edit(

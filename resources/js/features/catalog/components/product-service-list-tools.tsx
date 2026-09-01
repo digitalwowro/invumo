@@ -1,23 +1,43 @@
-import { Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { TextField } from '@/components/app/form-field';
-import { Grid } from '@/components/app/layout';
-import { SelectField } from '@/components/app/select-field';
-import { Button } from '@/components/ui/button';
+import {
+    OperationalActiveFilters,
+    OperationalFilterChoiceRow,
+    OperationalFilterPanel,
+} from '@/components/app/operational-filter-panel';
+import { OperationalListToolbar } from '@/components/app/operational-list-toolbar';
+import {
+    countProductServiceFilters,
+    productServiceFiltersEqual,
+    productServiceListQuery,
+} from '@/features/catalog/lib/product-service-list-query';
 import type { CatalogFilters, CatalogTranslations } from '@/types/catalog';
+import type { OperationalListTranslations } from '@/types/localization';
 
 type Props = {
     action: string;
     filters: CatalogFilters;
     labels: CatalogTranslations['index'];
+    commonLabels: OperationalListTranslations;
 };
 
-export function ProductServiceListTools({ action, filters, labels }: Props) {
-    const [query, setQuery] = useState(filters.q);
-    const [status, setStatus] = useState(filters.status);
-    const [sort, setSort] = useState(filters.sort);
-    const [perPage, setPerPage] = useState(String(filters.perPage));
+export function ProductServiceListTools(props: Props) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <ProductServiceListToolsState
+            key={JSON.stringify(props.filters)}
+            {...props}
+            open={open}
+            onOpenChange={setOpen}
+        />
+    );
+}
+
+function ProductServiceListToolsState(
+    props: Props & { open: boolean; onOpenChange: (open: boolean) => void },
+) {
+    const [values, setValues] = useState(props.filters);
     const mounted = useRef(false);
 
     useEffect(() => {
@@ -27,83 +47,75 @@ export function ProductServiceListTools({ action, filters, labels }: Props) {
             return;
         }
 
+        if (productServiceFiltersEqual(values, props.filters)) {
+            return;
+        }
+
         const timeout = window.setTimeout(() => {
-            router.get(
-                action,
-                {
-                    ...(query ? { q: query } : {}),
-                    status,
-                    sort,
-                    per_page: perPage,
-                },
-                {
-                    preserveScroll: true,
-                    preserveState: true,
-                    replace: true,
-                    only: ['products', 'filters'],
-                },
-            );
+            router.get(props.action, productServiceListQuery(values), {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                only: ['products', 'filters'],
+            });
         }, 350);
 
         return () => window.clearTimeout(timeout);
-    }, [action, perPage, query, sort, status]);
+    }, [props.action, props.filters, values]);
+
+    const change = (changes: Partial<CatalogFilters>) =>
+        setValues((current) => ({ ...current, ...changes }));
+    const active = [
+        values.q
+            ? {
+                  key: 'q',
+                  label: `${props.commonLabels.search_label}: ${values.q}`,
+                  onRemove: () => change({ q: '' }),
+              }
+            : null,
+        values.status !== 'active'
+            ? {
+                  key: 'status',
+                  label: props.labels.status_options[values.status],
+                  onRemove: () => change({ status: 'active' }),
+              }
+            : null,
+    ].filter((value) => value !== null);
 
     return (
-        <div className="space-y-3">
-            <Grid columns={3} gap="md">
-                <TextField
-                    label={labels.search_label}
-                    input={{
-                        value: query,
-                        placeholder: labels.search_placeholder,
-                        maxLength: 120,
-                        onChange: (event) => setQuery(event.target.value),
-                    }}
-                    labelAction={
-                        <Search
-                            aria-hidden="true"
-                            className="size-4 text-foreground-muted"
-                        />
-                    }
-                />
-                <SelectField
-                    name="status"
-                    label={labels.status_label}
-                    value={status}
-                    onValueChange={(value) =>
-                        setStatus(value as CatalogFilters['status'])
-                    }
-                    options={Object.entries(labels.status_options).map(
+        <OperationalListToolbar
+            open={props.open}
+            onOpenChange={props.onOpenChange}
+            searchValue={values.q}
+            searchPlaceholder={props.labels.search_placeholder}
+            onSearchChange={(q) => change({ q })}
+            filterCount={countProductServiceFilters(values)}
+            sortValue={values.sort}
+            sortOptions={Object.entries(props.labels.sort_options).map(
+                ([value, label]) => ({ value, label }),
+            )}
+            onSortChange={(sort) =>
+                change({ sort: sort as CatalogFilters['sort'] })
+            }
+            labels={props.commonLabels}
+        >
+            <OperationalFilterPanel>
+                <OperationalFilterChoiceRow
+                    label={props.labels.status_label}
+                    value={values.status}
+                    options={Object.entries(props.labels.status_options).map(
                         ([value, label]) => ({ value, label }),
                     )}
-                />
-                <SelectField
-                    name="sort"
-                    label={labels.sort_label}
-                    value={sort}
-                    onValueChange={(value) =>
-                        setSort(value as CatalogFilters['sort'])
+                    onChange={(status) =>
+                        change({ status: status as CatalogFilters['status'] })
                     }
-                    options={Object.entries(labels.sort_options).map(
-                        ([value, label]) => ({ value, label }),
-                    )}
                 />
-            </Grid>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <SelectField
-                    name="per_page"
-                    label={labels.per_page_label}
-                    value={perPage}
-                    onValueChange={setPerPage}
-                    options={['25', '50', '100'].map((value) => ({
-                        value,
-                        label: value,
-                    }))}
+                <OperationalActiveFilters
+                    filters={active}
+                    labels={props.commonLabels}
+                    onClear={() => change({ q: '', status: 'active' })}
                 />
-                <Button asChild type="button" variant="ghost">
-                    <Link href={action}>{labels.clear}</Link>
-                </Button>
-            </div>
-        </div>
+            </OperationalFilterPanel>
+        </OperationalListToolbar>
     );
 }

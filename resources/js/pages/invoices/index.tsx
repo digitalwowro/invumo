@@ -26,7 +26,8 @@ type Props = {
 };
 
 export default function InvoiceIndex(props: Props) {
-    const commonLabels = usePage().props.i18n.common.operational_list;
+    const { errors, i18n } = usePage().props;
+    const commonLabels = i18n.common.operational_list;
 
     return (
         <>
@@ -47,6 +48,9 @@ export default function InvoiceIndex(props: Props) {
                     />
                     {props.status && (
                         <SystemMessage title={props.status} tone="money" />
+                    )}
+                    {errors.invoice && (
+                        <SystemMessage title={errors.invoice} tone="error" />
                     )}
                     <InvoiceTable
                         page={props.invoices}

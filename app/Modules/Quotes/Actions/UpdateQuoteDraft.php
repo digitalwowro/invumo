@@ -49,8 +49,15 @@ final readonly class UpdateQuoteDraft
         );
     }
 
-    private function update(Company $company, User $actor, string $documentId, QuoteDraftData $data): Document
-    {
+    /** Caller must own the tenant transaction when composing this inside another root Action. */
+    public function update(
+        Company $company,
+        User $actor,
+        string $documentId,
+        QuoteDraftData $data,
+        bool $recordAudit = true,
+        bool $advanceVersions = true,
+    ): Document {
         $this->authorizer->authorize($actor, $company, CompanyAbility::ManageQuotes);
         $prepared = $this->prepareDraft->handle(DocumentKind::Quote, $documentId, $data);
         $document = $prepared->document;
@@ -90,7 +97,7 @@ final readonly class UpdateQuoteDraft
                 document_quote_validity_integrity_trigger
             DEFERRED
             SQL);
-        $this->finalizeDraft->handle($document, $lines);
+        $this->finalizeDraft->handle($document, $lines, $advanceVersions);
         $quote->update([
             'validity_days' => $data->validityDays,
             'valid_until' => $data->validUntil,
@@ -105,16 +112,18 @@ final readonly class UpdateQuoteDraft
             IMMEDIATE
             SQL);
 
-        $this->recordDraftUpdated->handle(
-            $actor,
-            $document,
-            'company.quote.draft_updated',
-            'Quote',
-            count($data->lines),
-            $lines,
-            $selectionApplied,
-            $changedFields,
-        );
+        if ($recordAudit) {
+            $this->recordDraftUpdated->handle(
+                $actor,
+                $document,
+                'company.quote.draft_updated',
+                'Quote',
+                count($data->lines),
+                $lines,
+                $selectionApplied,
+                $changedFields,
+            );
+        }
 
         return $document->refresh();
     }

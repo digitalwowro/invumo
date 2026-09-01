@@ -2,9 +2,10 @@
 
 return [
     'index' => [
-        'head_title' => 'Products & Services',
-        'title' => 'Products & Services',
+        'head_title' => 'Products',
+        'title' => 'Products',
         'description' => 'Manage reusable line defaults for quotes, invoices, and recurring invoices.',
+        'create' => 'New Product',
         'search_label' => 'Search',
         'search_placeholder' => 'Search by name, code, or description',
         'status_label' => 'Status',
@@ -25,6 +26,12 @@ return [
         'error_title' => 'Products & Services could not be loaded',
         'error_description' => 'Try again.',
         'status_options' => ['active' => 'Active', 'archived' => 'Archived', 'all' => 'All'],
+        'summary' => [
+            'aria_label' => 'Product overview',
+            'all' => 'All Products',
+            'active' => 'Active',
+            'archived' => 'Archived',
+        ],
         'sort_options' => ['recent' => 'Recently updated', 'name_asc' => 'Name A–Z', 'name_desc' => 'Name Z–A'],
         'columns' => [
             'entry' => 'Product or service',
@@ -35,7 +42,7 @@ return [
         ],
     ],
     'form' => [
-        'create_title' => 'Add a Product or Service',
+        'create_title' => 'New Product',
         'create_description' => 'Save reusable defaults without restricting later document edits.',
         'edit_title' => 'Edit Product or Service',
         'edit_description' => 'Changes apply only to future selections, never existing document lines.',
@@ -65,7 +72,7 @@ return [
         'edit' => 'Edit',
         'archive' => 'Archive',
         'restore' => 'Restore',
-        'delete' => 'Delete permanently',
+        'delete' => 'Delete',
         'archive_title' => 'Archive this entry?',
         'archive_description' => 'Existing document lines stay unchanged. This entry will no longer be selectable.',
         'restore_title' => 'Restore this entry?',

@@ -34,7 +34,6 @@ use App\Modules\Recurring\Queries\RecurringInvoiceAutomationState;
 use App\Modules\Transactions\Queries\InvoiceTransactionsForInvoice;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Str;
 
 final readonly class InvoiceDraftPage
 {
@@ -54,17 +53,6 @@ final readonly class InvoiceDraftPage
         private DocumentCustomerSnapshotPage $customerSnapshotPage,
         private DocumentDraftLinesPage $draftLinesPage,
     ) {}
-
-    /** @return array<string, mixed> */
-    public function create(Company $company, User $actor): array
-    {
-        $this->authorize($company, $actor);
-
-        return [
-            'storeUrl' => route('invoices.store', $company, false),
-            'creationKey' => (string) Str::uuid7(),
-        ];
-    }
 
     /** @return array<string, mixed> */
     public function edit(

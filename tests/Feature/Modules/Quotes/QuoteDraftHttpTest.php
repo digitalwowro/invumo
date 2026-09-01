@@ -27,7 +27,7 @@ final class QuoteDraftHttpTest extends TestCase
 {
     use DatabaseMigrations;
 
-    public function test_member_creates_an_idempotent_numbered_quote_and_saves_authoritative_lines(): void
+    public function test_member_opens_an_unsaved_editor_then_first_save_creates_one_numbered_quote(): void
     {
         $owner = User::factory()->create();
         $member = User::factory()->create();
@@ -36,12 +36,29 @@ final class QuoteDraftHttpTest extends TestCase
         $key = (string) Str::uuid7();
         $this->actingAs($member);
 
+        $this->get(route('quotes.index', $company))->assertInertia(fn (Assert $page) => $page
+            ->component('quotes/index')
+            ->where('createUrl', route('quotes.create', $company, false)));
         $this->get(route('quotes.create', $company))->assertInertia(fn (Assert $page) => $page
             ->component('quotes/create')
-            ->where('translations.create.title', 'New quote'));
-        $first = $this->post(route('quotes.store', $company), ['creation_key' => $key]);
+            ->where('creation.url', route('quotes.store', $company, false))
+            ->where('quote.number', '')
+            ->where('quote.lines', []));
+        $this->tenant($company, function (): void {
+            $this->assertSame(0, Document::query()->count());
+            $this->assertSame(0, NumberCounter::query()->count());
+            $this->assertSame(0, DocumentNumberEvent::query()->count());
+        });
+
+        $payload = [
+            ...$this->draftDefaults(),
+            'creation_key' => $key,
+            'edit_version' => 1,
+            'lines' => [$this->line('Consulting', '100', '2', '10', 'TVA', '19')],
+        ];
+        $first = $this->post(route('quotes.store', $company), $payload);
         $first->assertRedirect();
-        $this->post(route('quotes.store', $company), ['creation_key' => $key])
+        $this->post(route('quotes.store', $company), $payload)
             ->assertRedirect($first->headers->get('Location'));
 
         $quote = $this->tenant($company, fn (): Document => Document::query()->sole());
@@ -50,6 +67,8 @@ final class QuoteDraftHttpTest extends TestCase
             $this->assertSame(1, NumberCounter::query()->count());
             $this->assertSame(2, NumberCounter::query()->sole()->next_value);
             $this->assertSame(1, DocumentNumberEvent::query()->count());
+            $this->assertSame('214.20000000', Document::query()->sole()->total);
+            $this->assertSame('214.20000000', DocumentLine::query()->sole()->final_line_total);
         });
 
         $this->get(route('quotes.edit', [$company, $quote]))
@@ -58,7 +77,9 @@ final class QuoteDraftHttpTest extends TestCase
                 ->where('quote.number', 'Q-2026-0001')
                 ->where('quote.currencyCode', 'RON')
                 ->where('quote.currencyPrecision', 2)
-                ->where('quote.editVersion', 1));
+                ->where('quote.editVersion', 1)
+                ->where('translations.workspace.build_tab', 'Build document')
+                ->where('translations.workspace.invoices_tab', 'Invoices'));
 
         $this->patch(route('quotes.update', [$company, $quote]), [
             ...$this->draftDefaults(),
@@ -152,6 +173,11 @@ final class QuoteDraftHttpTest extends TestCase
             'lines' => [[...$this->line('Invalid', '-1'), 'id' => $foreignLine->id]],
         ])->assertSessionHasErrors(['lines.0.item_price']);
         $this->assertStringContainsString('zecimală nenegativă', $response->getSession()->get('errors')->first('lines.0.item_price'));
+
+        $this->get(route('quotes.edit', [$company, $quote]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('translations.workspace.build_tab', 'Construiește documentul')
+                ->where('translations.workspace.sharing_tab', 'Partajare și livrare'));
 
         $this->get(route('quotes.edit', [$other, $otherQuote]))->assertNotFound();
         $this->patch(route('quotes.update', [$company, $quote]), [

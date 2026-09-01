@@ -47,7 +47,7 @@ export function CustomerForm({
             onSuccess={onSuccess}
         >
             {({ errors, isDirty, processing }) => (
-                <Stack gap="2xl">
+                <Stack gap="xl">
                     <UnsavedChangesGuard
                         active={!disabled && isDirty && !processing}
                         message={unsavedWarning}

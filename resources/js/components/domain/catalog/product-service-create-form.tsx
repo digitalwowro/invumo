@@ -6,6 +6,7 @@ import { FormSection } from '@/components/app/form-section';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { ProductServiceFormFields } from '@/components/domain/catalog/product-service-form-fields';
+import { Button } from '@/components/ui/button';
 import type {
     CatalogCurrencyOption,
     CatalogLimits,
@@ -32,6 +33,8 @@ type Props = {
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
     labels: CatalogTranslations['form'];
+    cancelLabel?: string;
+    onCancel?: () => void;
     onSuccess?: (page: Page) => void;
 };
 
@@ -39,6 +42,19 @@ export function ProductServiceCreateForm(props: Props) {
     const form = useForm<ProductServiceFormData>(emptyForm);
     const generalError = (form.errors as Record<string, string>)
         .product_service;
+    const cancel = () => {
+        if (
+            form.isDirty &&
+            !form.processing &&
+            !window.confirm(props.labels.unsaved_warning)
+        ) {
+            return;
+        }
+
+        form.reset();
+        form.clearErrors();
+        props.onCancel?.();
+    };
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -58,6 +74,15 @@ export function ProductServiceCreateForm(props: Props) {
                 description={props.labels.create_description}
                 actions={
                     <FormActions>
+                        {props.onCancel && props.cancelLabel && (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={cancel}
+                            >
+                                {props.cancelLabel}
+                            </Button>
+                        )}
                         <SubmitButton processing={form.processing}>
                             {props.labels.create}
                         </SubmitButton>

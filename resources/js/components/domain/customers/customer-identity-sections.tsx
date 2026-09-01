@@ -36,69 +36,75 @@ export function CustomerIdentitySections({
             <FormSection
                 title={labels.identity_title}
                 description={labels.identity_description}
+                headerActions={
+                    <ChoiceField
+                        id="customer-type"
+                        name="type"
+                        label={field.type}
+                        defaultValue={customer.type}
+                        onValueChange={(value) =>
+                            setType(value as CustomerType)
+                        }
+                        options={customerTypeOptions}
+                        error={errors.type}
+                        required
+                        disabled={disabled}
+                    />
+                }
             >
-                <ChoiceField
-                    id="customer-type"
-                    name="type"
-                    label={field.type}
-                    defaultValue={customer.type}
-                    onValueChange={(value) => setType(value as CustomerType)}
-                    options={customerTypeOptions}
-                    error={errors.type}
-                    required
-                    disabled={disabled}
-                />
-                {type === 'INDIVIDUAL' ? (
-                    <Grid>
+                <Grid>
+                    {type === 'INDIVIDUAL' ? (
+                        <>
+                            <TextField
+                                label={field.first_name}
+                                error={errors.first_name}
+                                input={{
+                                    name: 'first_name',
+                                    defaultValue: customer.firstName ?? '',
+                                    maxLength: limits.name,
+                                    required: true,
+                                    disabled,
+                                    autoComplete: 'given-name',
+                                }}
+                            />
+                            <TextField
+                                label={field.last_name}
+                                error={errors.last_name}
+                                input={{
+                                    name: 'last_name',
+                                    defaultValue: customer.lastName ?? '',
+                                    maxLength: limits.name,
+                                    required: true,
+                                    disabled,
+                                    autoComplete: 'family-name',
+                                }}
+                            />
+                        </>
+                    ) : (
                         <TextField
-                            label={field.first_name}
-                            error={errors.first_name}
+                            label={field.legal_name}
+                            error={errors.legal_name}
                             input={{
-                                name: 'first_name',
-                                defaultValue: customer.firstName ?? '',
+                                name: 'legal_name',
+                                defaultValue: customer.legalName ?? '',
                                 maxLength: limits.name,
                                 required: true,
                                 disabled,
-                                autoComplete: 'given-name',
+                                autoComplete: 'organization',
                             }}
                         />
-                        <TextField
-                            label={field.last_name}
-                            error={errors.last_name}
-                            input={{
-                                name: 'last_name',
-                                defaultValue: customer.lastName ?? '',
-                                maxLength: limits.name,
-                                required: true,
-                                disabled,
-                                autoComplete: 'family-name',
-                            }}
-                        />
-                    </Grid>
-                ) : (
+                    )}
                     <TextField
-                        label={field.legal_name}
-                        error={errors.legal_name}
+                        label={field.external_reference}
+                        error={errors.external_reference}
                         input={{
-                            name: 'legal_name',
-                            defaultValue: customer.legalName ?? '',
-                            maxLength: limits.name,
-                            required: true,
+                            name: 'external_reference',
+                            defaultValue: customer.externalReference ?? '',
+                            maxLength: limits.externalReference,
                             disabled,
-                            autoComplete: 'organization',
                         }}
                     />
-                )}
-                <TextField
-                    label={field.external_reference}
-                    error={errors.external_reference}
-                    input={{
-                        name: 'external_reference',
-                        defaultValue: customer.externalReference ?? '',
-                        maxLength: limits.externalReference,
-                        disabled,
-                    }}
-                />
+                </Grid>
             </FormSection>
 
             <FormSection

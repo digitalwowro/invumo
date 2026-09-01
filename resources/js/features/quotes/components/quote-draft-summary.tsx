@@ -11,11 +11,20 @@ type Props = {
     allocation: QuoteInvoiceAllocation;
     saveLabel: string;
     conversionLabels: QuoteTranslations['conversion'];
+    formId?: string;
+    separated?: boolean;
 };
 
 export function QuoteDraftSummary(props: Props) {
     return (
-        <FormActions separated>
+        <FormActions separated={props.separated ?? true}>
+            <SubmitButton
+                processing={props.processing}
+                testId="save-quote"
+                form={props.formId}
+            >
+                {props.saveLabel}
+            </SubmitButton>
             <QuoteConversionDialog
                 url={props.conversionUrl}
                 creationKey={props.conversionKey}
@@ -24,9 +33,6 @@ export function QuoteDraftSummary(props: Props) {
                 dirty={props.dirty}
                 labels={props.conversionLabels}
             />
-            <SubmitButton processing={props.processing} testId="save-quote">
-                {props.saveLabel}
-            </SubmitButton>
         </FormActions>
     );
 }

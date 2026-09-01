@@ -87,9 +87,9 @@ const labels: DashboardTranslations = {
         error_title: 'Error',
         error_description: 'Try again.',
         columns: {
-            invoice: 'Invoice',
-            customer: 'Customer',
-            dates: 'Issue / due',
+            invoice: 'Invoice / Customer',
+            reference: 'Customer reference',
+            dates: 'Issue / due date',
             total: 'Total / outstanding',
             status: 'Status',
             actions: 'Actions',
@@ -98,6 +98,7 @@ const labels: DashboardTranslations = {
         open: ':amount open',
         settled: 'settled',
         not_issued: 'not issued',
+        edit: 'Open',
         view: 'View',
         view_all: 'View all invoices',
     },
@@ -130,6 +131,8 @@ const invoice = {
     id: 'invoice-id',
     number: 'I-2026-0001',
     customerName: 'Client SRL',
+    customerEmail: 'billing@client.example',
+    customerReference: 'PO-123',
     issueDate: '2026-08-01',
     dueDate: '2026-08-20',
     lifecycle: 'ISSUED' as const,
@@ -138,7 +141,8 @@ const invoice = {
     total: '100.00',
     outstanding: '75.00',
     currencyCode: 'EUR',
-    viewUrl: '/invoices/invoice-id',
+    editUrl: '/invoices/invoice-id/edit',
+    viewUrl: '/invoices/invoice-id/view',
 };
 
 function group(
@@ -189,7 +193,7 @@ function dashboard(groups: DashboardCurrencyGroup[]): DashboardData {
         monthLabel: 'August 2026',
         currencyGroups: groups,
         invoicesUrl: '/invoices',
-        createInvoiceUrl: '/invoices/create',
+        createInvoiceUrl: '/invoices',
         transactionsUrl: '/transactions',
         quotesUrl: '/quotes',
         recurringUrl: '/recurring',
@@ -198,7 +202,7 @@ function dashboard(groups: DashboardCurrencyGroup[]): DashboardData {
 
 describe('DashboardContent', () => {
     it('keeps currencies separate and changes the full dashboard context', () => {
-        render(
+        const { container } = render(
             <DashboardContent
                 dashboard={dashboard([
                     group('EUR', '25.00'),
@@ -215,7 +219,42 @@ describe('DashboardContent', () => {
         expect(
             screen.getByRole('table', { name: 'Recent invoices' }),
         ).toBeInTheDocument();
-        expect(screen.getByText('I-2026-0001')).toBeInTheDocument();
+        expect(screen.getByText(/I-2026-0001/)).toBeInTheDocument();
+        expect(screen.getByText('billing@client.example')).toBeInTheDocument();
+        expect(screen.getByText('PO-123')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute(
+            'href',
+            '/invoices/invoice-id/edit',
+        );
+        expect(screen.getByRole('link', { name: 'View' })).toHaveAttribute(
+            'href',
+            '/invoices/invoice-id/view',
+        );
+        expect(
+            screen.getByRole('link', { name: 'View all invoices' })
+                .parentElement,
+        ).toHaveClass('bg-surface-subtle', 'text-center');
+        expect(
+            screen.getByRole('columnheader', {
+                name: 'Invoice / Customer',
+            }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Outstanding total').closest('section'),
+        ).toHaveClass('bg-sidebar');
+        expect(
+            screen
+                .getByText('Unpaid invoices')
+                .closest('dt')
+                ?.querySelector('.bg-foreground-subtle'),
+        ).toBeInTheDocument();
+        expect(
+            screen
+                .getByText('Overdue invoices')
+                .closest('dt')
+                ?.querySelector('.bg-danger-fill'),
+        ).toBeInTheDocument();
+        expect(container.querySelector('.bg-money-fill')).toBeInTheDocument();
     });
 
     it('renders a localized empty state without inventing totals', () => {

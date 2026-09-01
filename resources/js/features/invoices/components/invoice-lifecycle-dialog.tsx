@@ -1,9 +1,9 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { FormDialog } from '@/components/app/form-dialog';
 import { CheckboxField, TextareaField } from '@/components/app/form-field';
 import { Stack } from '@/components/app/layout';
-import { FormDialog } from '@/components/app/responsive-dialog';
 import { SystemMessage } from '@/components/app/system-message';
 import type {
     InvoiceLifecycleActions,

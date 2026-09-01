@@ -26,7 +26,8 @@ type Props = {
 };
 
 export default function QuoteIndex(props: Props) {
-    const commonLabels = usePage().props.i18n.common.operational_list;
+    const { errors, i18n } = usePage().props;
+    const commonLabels = i18n.common.operational_list;
 
     return (
         <>
@@ -45,6 +46,9 @@ export default function QuoteIndex(props: Props) {
                     />
                     {props.status && (
                         <SystemMessage title={props.status} tone="money" />
+                    )}
+                    {errors.quote && (
+                        <SystemMessage title={errors.quote} tone="error" />
                     )}
                     <QuoteTable
                         page={props.quotes}

@@ -1,4 +1,5 @@
 import type { DependencyGuard } from '@/types/dependency-guard';
+import type { OperationalListSummaryItem } from '@/types/operational-list';
 
 export type CatalogPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
 
@@ -51,6 +52,11 @@ export type ProductServiceCursorPage = {
     nextUrl: string | null;
 };
 
+export type ProductServiceListSummary = Record<
+    'all' | 'active' | 'archived',
+    OperationalListSummaryItem
+>;
+
 export type CatalogFilters = {
     q: string;
     status: 'active' | 'archived' | 'all';
@@ -68,6 +74,7 @@ export type CatalogLimits = {
 export type CatalogTranslations = {
     index: Record<string, string> & {
         columns: Record<string, string>;
+        summary: Record<'aria_label' | 'all' | 'active' | 'archived', string>;
         status_options: Record<string, string>;
         sort_options: Record<string, string>;
     };

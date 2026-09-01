@@ -7,10 +7,10 @@ return [
     'create' => [
         'head_title' => 'Factură nouă',
         'title' => 'Factură nouă',
-        'description' => 'Începe o ciornă numerotată a Companiei, apoi adaugă liniile manuale.',
-        'section_title' => 'Creează ciorna',
-        'section_description' => 'Invumo alocă atomic următorul număr de Factură. Reîmprospătarea sau reîncercarea nu poate crea aceeași solicitare de două ori.',
-        'submit' => 'Creează ciorna facturii',
+        'description' => 'Construiește mai întâi factura. Invumo salvează ciorna și îi alocă numărul doar când alegi Salvare.',
+        'section_title' => 'Factură nesalvată',
+        'section_description' => 'Nu există nicio ciornă și niciun număr până la prima salvare reușită.',
+        'submit' => 'Salvează factura',
     ],
     'edit' => array_replace_recursive($quotes['edit'], [
         'head_title' => 'Factură',

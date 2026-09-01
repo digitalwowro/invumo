@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 
-final class UpdateInvoiceDraftRequest extends FormRequest
+class UpdateInvoiceDraftRequest extends FormRequest
 {
     public function authorize(): bool
     {

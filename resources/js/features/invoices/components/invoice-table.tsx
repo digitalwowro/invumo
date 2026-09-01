@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Cluster, Stack } from '@/components/app/layout';
+import { Inline, Stack } from '@/components/app/layout';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
     OperationalColumn,
@@ -217,7 +217,7 @@ function InvoiceActions(props: {
 
     return (
         <div onClick={stop} onKeyDown={stopKeyboard}>
-            <Cluster gap="sm">
+            <Inline gap="sm">
                 {props.invoice.editUrl && (
                     <Button asChild variant="secondary">
                         <Link href={props.invoice.editUrl}>
@@ -230,7 +230,7 @@ function InvoiceActions(props: {
                         {props.labels.representation.view}
                     </Link>
                 </Button>
-            </Cluster>
+            </Inline>
         </div>
     );
 }

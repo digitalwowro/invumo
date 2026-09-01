@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { FormDialog } from '@/components/app/responsive-dialog';
+import { FormDialog } from '@/components/app/form-dialog';
 import { SystemMessage } from '@/components/app/system-message';
 import type { InvoiceTranslations } from '@/types/invoice';
 

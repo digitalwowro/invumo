@@ -102,16 +102,15 @@ function openInvoiceCreate(User $owner, Company $company, bool $mobile = false):
         ->type('Email address', $owner->email)
         ->type('Password', 'password')
         ->click('Log in')
-        ->navigate(route('invoices.create', $company, false));
+        ->navigate(route('invoices.index', $company, false));
 }
 
 it('creates calculates and renders an Invoice Draft without viewport overflow', function () {
     [$owner, $company] = companyForInvoiceBrowser();
 
     openInvoiceCreate($owner, $company)
+        ->click('New invoice')
         ->assertSee('New invoice')
-        ->click('Create invoice draft')
-        ->assertSee('I-'.now('Europe/Bucharest')->year.'-0001')
         ->assertValue('@invoice-payment-term-days', '30')
         ->click('@document-customer-select')
         ->type('Customer search', 'Browser Invoice Customer')
@@ -119,17 +118,17 @@ it('creates calculates and renders an Invoice Draft without viewport overflow', 
         ->click('@document-customer-result')
         ->click('@document-customer-confirm')
         ->assertSee('Browser Invoice Customer SRL')
-        ->click('Add line')
+        ->click('Add product or service')
         ->type('Description', 'Browser invoice consulting')
         ->type('Item price', '100')
         ->type('Quantity', '2')
         ->type('Tax name', 'VAT')
         ->type('Tax %', '19')
-        ->type('Customer reference / PO number', 'PO-INVOICE-42')
+        ->type('Reference / PO', 'PO-INVOICE-42')
         ->assertSee('238.00')
-        ->assertScript("document.querySelector('[data-testid=invoice-issue-trigger]')?.disabled === true")
         ->click('Save invoice')
         ->assertSee('Invoice saved.')
+        ->assertSee('I-'.now('Europe/Bucharest')->year.'-0001')
         ->assertScript("document.querySelector('[data-testid=invoice-issue-trigger]')?.disabled === false")
         ->click('@invoice-issue-trigger')
         ->assertSee('Issue this invoice?')
@@ -181,20 +180,20 @@ it('keeps the Romanian Invoice Draft and current view usable on mobile', functio
     [$owner, $company] = companyForInvoiceBrowser('ro');
 
     openInvoiceCreate($owner, $company, mobile: true)
+        ->click('Factură nouă')
         ->assertSee('Factură nouă')
-        ->click('Creează ciorna facturii')
-        ->assertSee('Adaugă linie')
         ->click('@document-customer-select')
         ->type('Căutare client', 'Browser Invoice Customer')
         ->click('@document-customer-search')
         ->click('@document-customer-result')
         ->click('@document-customer-confirm')
-        ->click('Adaugă linie')
+        ->click('Adaugă produs sau serviciu')
         ->assertSee('Data scadenței')
         ->type('Preț unitar', '100')
         ->type('Cantitate', '1')
         ->click('Salvează factura')
         ->assertSee('Factura a fost salvată.')
+        ->assertSee('I-'.now('Europe/Bucharest')->year.'-0001')
         ->click('@invoice-issue-trigger')
         ->click('@invoice-issue-confirm')
         ->assertSee('Factura a fost emisă.')

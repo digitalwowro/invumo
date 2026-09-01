@@ -1,7 +1,8 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { FormDialog } from '@/components/app/form-dialog';
+import type { DialogTriggerSize } from '@/components/app/form-dialog';
 import { Stack } from '@/components/app/layout';
-import { FormDialog } from '@/components/app/responsive-dialog';
 import { SystemMessage } from '@/components/app/system-message';
 import type {
     InvoiceTransactionRow,
@@ -13,6 +14,7 @@ type Props = {
     labels: InvoiceTransactionTranslations;
     disabled: boolean;
     disabledDescription?: string;
+    triggerSize?: DialogTriggerSize;
 };
 
 export function PaymentReceivedDialog(props: Props) {
@@ -71,6 +73,7 @@ export function PaymentReceivedDialog(props: Props) {
             processing={form.processing}
             triggerDisabled={props.disabled}
             triggerDisabledDescription={props.disabledDescription}
+            triggerSize={props.triggerSize}
             onConfirm={send}
         >
             <Stack gap="md">

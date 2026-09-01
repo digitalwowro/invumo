@@ -220,6 +220,36 @@ export type QuoteTranslations = {
         | 'back',
         string
     >;
+    workspace: Record<
+        | 'unsaved'
+        | 'build_tab'
+        | 'invoices_tab'
+        | 'sharing_tab'
+        | 'line_count'
+        | 'line_count_one'
+        | 'invoice_count'
+        | 'invoice_count_one'
+        | 'send_email'
+        | 'send_requires_save'
+        | 'quote_summary'
+        | 'total'
+        | 'document_facts'
+        | 'sharing_facts'
+        | 'customer'
+        | 'issue_date'
+        | 'valid_until'
+        | 'validity'
+        | 'days'
+        | 'reference'
+        | 'language'
+        | 'bank_account'
+        | 'public_link'
+        | 'email_delivery'
+        | 'not_queued'
+        | 'open_sharing'
+        | 'not_available',
+        string
+    >;
     lifecycle: Record<string, string>;
     deletion: Record<string, string>;
     conversion: Record<string, string>;

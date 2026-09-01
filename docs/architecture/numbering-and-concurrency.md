@@ -40,17 +40,19 @@ Document numbers intentionally do not have an unconditional unique constraint be
 
 ## Automatic allocation
 
-Clicking New Quote or New Invoice creates and persists a Draft immediately. The number displayed in its editor is already assigned; it is not an unreserved browser-only preview.
+Opening New Quote or New Invoice renders an unsaved editor without inserting a Document, allocating a number, or advancing a counter. The first successful Save validates the complete aggregate, persists the Draft, and allocates its assigned number in one PostgreSQL transaction. Closing or abandoning the unsaved editor consumes no number.
+
+The editor generates one opaque creation key when it opens. A retried first Save uses that same key and returns the already-created Draft instead of allocating a second number. The browser never previews or reserves a document number before persistence.
 
 Automatic allocation runs in one PostgreSQL transaction:
 
-1. Validate the company, permission, document type, initial issue date, and idempotent creation key.
+1. Validate the company, permission, complete Draft command, initial issue date, and idempotent creation key on the first Save.
 2. Resolve the series and period key.
 3. Ensure the period counter exists using an atomic insert protected by the unique constraint.
 4. Load the counter using `SELECT ... FOR UPDATE`.
 5. Render the candidate from the locked `next_value`.
 6. If the exact rendered number is already used by a non-deleted document because of a manual override, advance and render again until an unused automatic candidate is found.
-7. Insert the Draft and its audit event.
+7. Insert the complete Draft aggregate and its audit event.
 8. Advance the counter to one more than the allocated numeric value.
 9. Commit.
 
@@ -58,7 +60,7 @@ Concurrent allocators for the same company, document type, and period wait on th
 
 Do not use a PostgreSQL advisory lock for normal numbering. The counter row is persisted business state and a row lock is easier to inspect, repair, constrain, and test.
 
-If the transaction fails, both Draft creation and counter advancement roll back. Transaction-level deadlock or serialization failures are retried a small bounded number of times using the same creation key.
+If the transaction fails, aggregate persistence, Draft creation, and counter advancement all roll back. Transaction-level deadlock or serialization failures are retried a small bounded number of times using the same creation key.
 
 Phase 5 implements this boundary through the Quote root creation Action. The Action locks and revalidates Company authority, resolves the Company-local date and active configuration, then calls a transaction-neutral allocator which locks the active series and period counter before rendering. The persisted rendered-number envelope is derived from the approved 120-character pattern and a signed-bigint sequence: replacing the eight-character `{NUMBER}` token with at most 19 digits yields a maximum of 131 characters rather than a new user-facing format limit.
 

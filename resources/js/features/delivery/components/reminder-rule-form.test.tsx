@@ -86,6 +86,8 @@ describe('ReminderRuleForm', () => {
             />,
         );
 
-        expect(screen.getByText('No reminders.')).toBeInTheDocument();
+        expect(screen.getByText('No reminders.')).toHaveClass(
+            'bg-surface-subtle',
+        );
     });
 });

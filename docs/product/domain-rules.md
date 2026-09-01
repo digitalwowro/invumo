@@ -228,8 +228,9 @@ Quotes and Invoices carry a monotonically increasing edit version. Saving from a
 - Each Company may customize separate Quote and Invoice patterns. Defaults are `Q-{YEAR}-{NUMBER}` and `I-{YEAR}-{NUMBER}`; `{NUMBER}` is mandatory exactly once, `{YEAR}` is optional at most once and resolves automatically to the current four-digit Company-local year, padding is separately configurable from 1–12 with a default of 4, and the pattern is bounded to 120 characters without control characters or unknown braces.
 - Reset policy is explicit, defaults to never, and may instead use the Company-local calendar year. `{YEAR}` does not imply annual reset, while annual reset requires `{YEAR}` so rendered numbers remain distinct across reset periods.
 - Settings previews use the server-resolved Company timezone and must not fall back to the browser timezone or UTC. Persisted assigned numbers never change merely because the year changes.
-- Clicking New creates a persisted Draft. Automatic allocation and Draft insertion share one transaction and one idempotent creation key.
-- Lock the relevant company/document-type/period counter row using `SELECT ... FOR UPDATE`, allocate the next unoccupied automatic candidate, insert the Draft, advance the counter, and commit.
+- Clicking New opens the complete unsaved editor and performs no write or number allocation. The first successful Save persists the Draft aggregate.
+- Automatic allocation and first-save Draft insertion share one transaction and one idempotent creation key generated when the editor opens. Lock the relevant company/document-type/period counter row using `SELECT ... FOR UPDATE`, allocate the next unoccupied automatic candidate, insert the complete Draft, advance the counter, and commit.
+- Closing or abandoning the unsaved editor consumes no number. The browser never previews or reserves a document number.
 - Manual duplicates remain possible after explicit warning. Manual numbering, renumbering, and deletion do not change the counter automatically.
 - Counter continuation/realignment is an explicit authorized action under the same lock. Moving backwards requires a reuse warning and audit event.
 - A manual override must not silently move a sequence backwards.

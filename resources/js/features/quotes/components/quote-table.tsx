@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Cluster, Stack } from '@/components/app/layout';
+import { Inline, Stack } from '@/components/app/layout';
 import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalTable } from '@/components/app/operational-table';
 import type {
@@ -189,7 +189,7 @@ function QuoteActions(props: { quote: QuoteRow; labels: QuoteTranslations }) {
 
     return (
         <div onClick={stop} onKeyDown={stopKeyboard}>
-            <Cluster gap="sm">
+            <Inline gap="sm">
                 <Button asChild variant="secondary">
                     <Link href={props.quote.editUrl}>
                         {props.labels.index.columns.open}
@@ -209,7 +209,7 @@ function QuoteActions(props: { quote: QuoteRow; labels: QuoteTranslations }) {
                         labels={props.labels.deletion}
                     />
                 )}
-            </Cluster>
+            </Inline>
         </div>
     );
 }

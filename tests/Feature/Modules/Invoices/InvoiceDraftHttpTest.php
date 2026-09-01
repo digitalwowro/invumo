@@ -16,6 +16,7 @@ use App\Modules\Customers\Queries\ResolveDocumentCustomer;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentCustomerSnapshot;
 use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Documents\Models\NumberCounter;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
 use App\Modules\Invoices\Actions\CreateInvoiceDraft;
@@ -43,7 +44,7 @@ final class InvoiceDraftHttpTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_member_creates_an_idempotent_invoice_and_saves_authoritative_lines(): void
+    public function test_member_opens_an_unsaved_editor_then_first_save_creates_one_numbered_invoice(): void
     {
         $owner = User::factory()->create();
         $member = User::factory()->create();
@@ -52,12 +53,30 @@ final class InvoiceDraftHttpTest extends TestCase
         $key = (string) Str::uuid7();
         $this->actingAs($member);
 
+        $this->get(route('invoices.index', $company))->assertInertia(fn (Assert $page) => $page
+            ->component('invoices/index')
+            ->where('createUrl', route('invoices.create', $company, false)));
         $this->get(route('invoices.create', $company))->assertInertia(fn (Assert $page) => $page
             ->component('invoices/create')
-            ->where('translations.create.title', 'New invoice'));
-        $first = $this->post(route('invoices.store', $company), ['creation_key' => $key]);
+            ->where('creation.url', route('invoices.store', $company, false))
+            ->where('invoice.number', '')
+            ->where('invoice.lines', []));
+        $this->tenant($company, function (): void {
+            $this->assertSame(0, Document::query()->count());
+            $this->assertSame(0, Invoice::query()->count());
+            $this->assertSame(0, NumberCounter::query()->count());
+        });
+
+        $payload = [
+            ...$this->defaults(),
+            'creation_key' => $key,
+            'edit_version' => 1,
+            'customer_reference' => '50%',
+            'lines' => [$this->line('Consulting', '100', '2', '10', 'TVA', '19')],
+        ];
+        $first = $this->post(route('invoices.store', $company), $payload);
         $first->assertRedirect();
-        $this->post(route('invoices.store', $company), ['creation_key' => $key])
+        $this->post(route('invoices.store', $company), $payload)
             ->assertRedirect($first->headers->get('Location'));
 
         $invoice = $this->tenant($company, fn (): Document => Document::query()->sole());

@@ -124,7 +124,9 @@ describe('DocumentDeliveryPanel', () => {
     it('opens the localized editable composer with final-state warning', () => {
         render(<DocumentDeliveryPanel delivery={delivery} labels={labels} />);
 
-        expect(screen.getByText('No deliveries.')).toBeInTheDocument();
+        expect(screen.getByText('No deliveries.')).toHaveClass(
+            'bg-surface-subtle',
+        );
         fireEvent.click(screen.getByRole('button', { name: 'Send email' }));
         const dialog = screen.getByRole('dialog');
         expect(within(dialog).getByLabelText('Subject')).toHaveValue(

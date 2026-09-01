@@ -91,7 +91,7 @@ export function DashboardBalanceOverview({
                                         bucketClasses[bucket.key],
                                     )}
                                 />
-                                <MetaLabel>
+                                <MetaLabel tone="inverse">
                                     {labels.aging[bucket.key]}
                                 </MetaLabel>
                             </dt>
@@ -131,7 +131,7 @@ function OverviewAmount({
 }) {
     return (
         <div className="flex min-w-0 flex-col gap-1.5 lg:last:items-end lg:last:text-right">
-            <MetaLabel>{label}</MetaLabel>
+            <MetaLabel tone="inverse">{label}</MetaLabel>
             <div className="flex min-w-0 items-baseline gap-2">
                 {currency && (
                     <span className="font-data text-sm font-bold text-sidebar-muted">

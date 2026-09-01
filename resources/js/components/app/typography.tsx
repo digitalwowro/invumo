@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType } from 'react';
+import { cn } from '@/lib/utils';
 
 type TextProps<T extends ElementType> = Omit<
     ComponentPropsWithoutRef<T>,
@@ -75,11 +76,20 @@ export function SecondaryText(props: TextProps<'p'>) {
     );
 }
 
-export function MetaLabel(props: TextProps<'span'>) {
+type MetaLabelProps = TextProps<'span'> & {
+    tone?: 'default' | 'inverse';
+};
+
+export function MetaLabel({ tone = 'default', ...props }: MetaLabelProps) {
     return (
         <span
             data-slot="meta-label"
-            className="font-data text-[11px] leading-4 font-bold tracking-[0.1em] text-foreground-mid uppercase"
+            className={cn(
+                'font-data text-[11px] leading-4 font-bold tracking-[0.1em] uppercase',
+                tone === 'inverse'
+                    ? 'text-sidebar-muted'
+                    : 'text-foreground-mid',
+            )}
             {...props}
         />
     );

@@ -242,6 +242,12 @@ describe('DashboardContent', () => {
         expect(
             screen.getByText('Outstanding total').closest('section'),
         ).toHaveClass('bg-sidebar');
+        expect(screen.getByText('Outstanding total')).toHaveClass(
+            'text-sidebar-muted',
+        );
+        expect(
+            screen.getByText('Settled').parentElement?.parentElement?.tagName,
+        ).toBe('DL');
         expect(
             screen
                 .getByText('Unpaid invoices')

@@ -57,8 +57,8 @@ it('renders the operational dashboard and recent invoices without overflow', fun
     [$owner, $company, $invoice] = companyForDashboardBrowser('en');
 
     openCompanyDashboard($owner, $company)
-        ->assertSee('Current invoicing and collection activity.')
-        ->assertSee('No invoice activity yet')
+        ->assertSee('Invoicing and collection activity as of')
+        ->assertSee('Nothing is overdue or due this week in RON.')
         ->assertSee('Recent invoices')
         ->assertSee($invoice->rendered_number)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
@@ -70,8 +70,8 @@ it('keeps the Romanian dashboard usable on a narrow viewport', function () {
     [$owner, $company, $invoice] = companyForDashboardBrowser('ro');
 
     openCompanyDashboard($owner, $company, mobile: true)
-        ->assertSee('Activitatea curentă de facturare și încasare.')
-        ->assertSee('Nu există încă activitate de facturare')
+        ->assertSee('Activitatea de facturare și încasare la data de')
+        ->assertSee('Nimic restant sau scadent săptămâna aceasta în RON.')
         ->assertSee('Facturi recente')
         ->assertSee($invoice->rendered_number)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')

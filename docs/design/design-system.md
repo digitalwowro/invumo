@@ -295,6 +295,8 @@ Pages consume named components/roles, not font classes:
 
 Only `MetaLabel`, table/column labels, compact financial codes where explicitly specified, and `StatusLabel` use uppercase. Interface text must not be uppercased for decoration.
 
+`MetaLabel` uses `foreground-mid` by default and its explicit inverse tone uses `sidebar-muted` on dark application surfaces. Do not rely on inherited foreground color for either context.
+
 Do not skip levels to make a local section look important. A page has one `PageTitle`; regions use `SectionTitle`; bounded components use `SurfaceTitle`.
 
 ### 7.3 Typography verification

@@ -49,16 +49,20 @@ export function DashboardHealthGrid({
                 <SurfaceTitle>{labels.health.title}</SurfaceTitle>
                 <dl className="flex flex-col gap-3">
                     {health.map((item) => (
-                        <div key={item.key} className="flex flex-col gap-1.5">
-                            <div className="flex items-baseline justify-between gap-3">
-                                <dt className="text-xs text-foreground-muted">
-                                    {item.label}
-                                </dt>
-                                <dd className="font-data text-xs font-bold tabular-nums">
-                                    {item.value}
-                                </dd>
-                            </div>
-                            <div className="h-1 overflow-hidden rounded-full bg-rule">
+                        <div
+                            key={item.key}
+                            className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1.5"
+                        >
+                            <dt className="min-w-0 text-xs text-foreground-muted">
+                                {item.label}
+                            </dt>
+                            <dd className="font-data text-xs font-bold tabular-nums">
+                                {item.value}
+                            </dd>
+                            <div
+                                aria-hidden="true"
+                                className="col-span-2 h-1 overflow-hidden rounded-full bg-rule"
+                            >
                                 <div
                                     className={`h-full rounded-full ${item.className}`}
                                     style={{ width: `${item.width}%` }}

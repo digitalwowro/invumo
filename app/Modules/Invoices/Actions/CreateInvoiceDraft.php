@@ -29,7 +29,7 @@ final readonly class CreateInvoiceDraft
         private LockCompanyReminderRules $lockReminderRules,
         private CreateDocumentDraft $createDocument,
         private CopyCompanyReminderRules $copyReminderRules,
-        private UpdateInvoiceDraft $updateDraft,
+        private ApplyInvoiceDraftChanges $applyDraft,
         private RecordDocumentCreated $recordCreated,
     ) {}
 
@@ -85,17 +85,21 @@ final readonly class CreateInvoiceDraft
                 ),
         ]);
         $this->copyReminderRules->handle($created->document->id, $reminderRules);
-        $document = $data === null
-            ? $created->document
-            : $this->updateDraft->update(
+        $initialDraft = null;
+        $document = $created->document;
+
+        if ($data !== null) {
+            $initialDraft = $this->applyDraft->handle(
                 $company,
                 $actor,
                 $created->document->id,
                 $data,
-                recordAudit: false,
                 advanceVersions: false,
             );
-        $this->recordCreated->handle($actor, $document, $creationKey);
+            $document = $initialDraft->document;
+        }
+
+        $this->recordCreated->handle($actor, $document, $creationKey, $initialDraft);
 
         return $document->refresh();
     }

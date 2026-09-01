@@ -309,7 +309,7 @@ On wide screens, the editable content is the flexible main column and the totals
 ### 6.3 Draft creation and saving
 
 - **New quote** and **New invoice** open their complete unsaved editors with GET. Opening, refreshing, closing, or abandoning those editors never creates a Document, allocates a number, advances a counter, or writes audit history.
-- The first successful **Save** submits the complete aggregate command. Its root Action validates and persists the Draft, allocates its assigned number, advances the counter, and records creation in one transaction before redirecting to the canonical workspace.
+- The first successful **Save** submits the complete aggregate command. Its root Action validates and persists the Draft, allocates its assigned number, advances the counter, and records creation in one transaction before redirecting to the canonical workspace. The creation event includes only bounded structural metadata about the submitted aggregate: line counts, whether a confirmed Customer selection was applied, and changed field names. It never includes line contents, amounts, Customer identity values, or other private field values.
 - One opaque creation key is generated when the editor opens and remains stable for first-Save retries. A repeated successful command returns the same Draft rather than allocating another number.
 - Document-scoped lifecycle, delivery, public-link, and inline-create actions become available only after the first Save has produced a canonical Document identifier.
 - A recurring-template create form first collects its required internal name, then persists the Draft and opens its workspace; Invumo never invents a customer-visible or internal name merely to allocate an empty row.

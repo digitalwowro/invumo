@@ -81,6 +81,19 @@ final class InvoiceDraftHttpTest extends TestCase
 
         $invoice = $this->tenant($company, fn (): Document => Document::query()->sole());
         $this->assertSame('I-2026-0001', $invoice->rendered_number);
+        $this->tenant($company, function (): void {
+            $audit = AuditEvent::query()->where('action', 'company.invoice.created')->sole();
+            $this->assertSame(1, $audit->after['line_count']);
+            $this->assertSame(1, $audit->after['complete_line_count']);
+            $this->assertFalse($audit->after['customer_selection_applied']);
+            $this->assertContains('lines', $audit->after['changed_fields']);
+            $encoded = json_encode($audit->after, JSON_THROW_ON_ERROR);
+            $this->assertStringNotContainsString('Consulting', $encoded);
+            $this->assertStringNotContainsString('214.2', $encoded);
+            $this->assertSame(0, AuditEvent::query()
+                ->where('action', 'company.invoice.draft_updated')
+                ->count());
+        });
         $this->get(route('invoices.edit', [$company, $invoice]))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('invoices/edit')

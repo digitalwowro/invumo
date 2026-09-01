@@ -25,7 +25,7 @@ final readonly class CreateQuoteDraft
         private AuthorizesCompanyActions $authorizer,
         private LockDocumentConfiguration $lockConfiguration,
         private CreateDocumentDraft $createDocument,
-        private UpdateQuoteDraft $updateDraft,
+        private ApplyQuoteDraftChanges $applyDraft,
         private RecordDocumentCreated $recordCreated,
     ) {}
 
@@ -77,17 +77,21 @@ final readonly class CreateQuoteDraft
             ),
             'invoice_payment_term_days' => $created->settings->default_payment_term_days,
         ]);
-        $document = $data === null
-            ? $created->document
-            : $this->updateDraft->update(
+        $initialDraft = null;
+        $document = $created->document;
+
+        if ($data !== null) {
+            $initialDraft = $this->applyDraft->handle(
                 $company,
                 $actor,
                 $created->document->id,
                 $data,
-                recordAudit: false,
                 advanceVersions: false,
             );
-        $this->recordCreated->handle($actor, $document, $creationKey);
+            $document = $initialDraft->document;
+        }
+
+        $this->recordCreated->handle($actor, $document, $creationKey, $initialDraft);
 
         return $document->refresh();
     }

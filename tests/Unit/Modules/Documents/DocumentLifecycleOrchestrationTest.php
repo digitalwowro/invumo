@@ -10,9 +10,11 @@ use App\Modules\Documents\Actions\PrepareDocumentDraftUpdate;
 use App\Modules\Documents\Actions\RecordDocumentCreated;
 use App\Modules\Documents\Actions\RecordDocumentDraftUpdated;
 use App\Modules\Documents\Contracts\DeletesDocumentResources;
+use App\Modules\Invoices\Actions\ApplyInvoiceDraftChanges;
 use App\Modules\Invoices\Actions\CreateInvoiceDraft;
 use App\Modules\Invoices\Actions\DeleteInvoice;
 use App\Modules\Invoices\Actions\UpdateInvoiceDraft;
+use App\Modules\Quotes\Actions\ApplyQuoteDraftChanges;
 use App\Modules\Quotes\Actions\CreateQuoteDraft;
 use App\Modules\Quotes\Actions\DeleteQuote;
 use App\Modules\Quotes\Actions\UpdateQuoteDraft;
@@ -49,19 +51,27 @@ final class DocumentLifecycleOrchestrationTest extends TestCase
     /** @return iterable<string, array{class-string, list<class-string>}> */
     public static function documentRootActions(): iterable
     {
-        $create = [CreateDocumentDraft::class, RecordDocumentCreated::class];
-        $update = [
+        $apply = [
             PrepareDocumentDraftUpdate::class,
             PersistDocumentDraft::class,
             FinalizeDocumentDraftUpdate::class,
-            RecordDocumentDraftUpdated::class,
         ];
         $delete = [DeletesDocumentResources::class, FinalizeDocumentDeletion::class];
 
-        yield 'create Quote' => [CreateQuoteDraft::class, $create];
-        yield 'create Invoice' => [CreateInvoiceDraft::class, $create];
-        yield 'update Quote' => [UpdateQuoteDraft::class, $update];
-        yield 'update Invoice' => [UpdateInvoiceDraft::class, $update];
+        yield 'create Quote' => [CreateQuoteDraft::class, [
+            CreateDocumentDraft::class, ApplyQuoteDraftChanges::class, RecordDocumentCreated::class,
+        ]];
+        yield 'create Invoice' => [CreateInvoiceDraft::class, [
+            CreateDocumentDraft::class, ApplyInvoiceDraftChanges::class, RecordDocumentCreated::class,
+        ]];
+        yield 'update Quote' => [UpdateQuoteDraft::class, [
+            ApplyQuoteDraftChanges::class, RecordDocumentDraftUpdated::class,
+        ]];
+        yield 'update Invoice' => [UpdateInvoiceDraft::class, [
+            ApplyInvoiceDraftChanges::class, RecordDocumentDraftUpdated::class,
+        ]];
+        yield 'apply Quote Draft changes' => [ApplyQuoteDraftChanges::class, $apply];
+        yield 'apply Invoice Draft changes' => [ApplyInvoiceDraftChanges::class, $apply];
         yield 'delete Quote' => [DeleteQuote::class, $delete];
         yield 'delete Invoice' => [DeleteInvoice::class, $delete];
     }

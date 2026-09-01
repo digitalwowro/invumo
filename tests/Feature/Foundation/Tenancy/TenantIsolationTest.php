@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use LogicException;
 use Tests\TestCase;
 
 class TenantIsolationTest extends TestCase
@@ -119,6 +120,28 @@ class TenantIsolationTest extends TestCase
             app(RecordAuditEvent::class)->handle($this->event($company));
 
             $this->assertSame(2, AuditEvent::query()->count());
+        });
+    }
+
+    public function test_active_tenant_transaction_assertion_requires_the_matching_company(): void
+    {
+        $companyA = $this->company('Alpha SRL');
+        $companyB = $this->company('Beta SRL');
+        $context = app(TenantContext::class);
+
+        try {
+            $context->assertActiveFor($companyA->id);
+            $this->fail('An operation outside tenant context must be rejected.');
+        } catch (LogicException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $context->runAsSystem($companyA->id, function () use ($companyA, $companyB, $context): void {
+            $context->assertActiveFor($companyA->id);
+            $this->addToAssertionCount(1);
+
+            $this->expectException(LogicException::class);
+            $context->assertActiveFor($companyB->id);
         });
     }
 

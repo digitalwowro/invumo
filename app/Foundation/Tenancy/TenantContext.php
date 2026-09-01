@@ -25,6 +25,13 @@ final class TenantContext
         return $this->companyId;
     }
 
+    public function assertActiveFor(string $companyId): void
+    {
+        if ($this->companyId !== $companyId || $this->connection()->transactionLevel() === 0) {
+            throw new LogicException('This operation requires the owning Company tenant transaction.');
+        }
+    }
+
     /**
      * @template TReturn
      *

@@ -14,7 +14,6 @@ import {
 } from '@/components/app/typography';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
-import { RecurringTemplateDeleteDialog } from '@/features/recurring/components/recurring-template-delete-dialog';
 import { RecurringTemplateListSummaryCards } from '@/features/recurring/components/recurring-template-list-summary';
 import { RecurringTemplateListTools } from '@/features/recurring/components/recurring-template-list-tools';
 import {
@@ -217,20 +216,11 @@ function TemplateActions(props: {
                     </Link>
                 </Button>
                 {props.template.lastInvoiceUrl && (
-                    <Button asChild variant="ghost">
+                    <Button asChild variant="secondary">
                         <Link href={props.template.lastInvoiceUrl}>
                             {props.labels.index.columns.open_invoice}
                         </Link>
                     </Button>
-                )}
-                {props.template.canDelete && (
-                    <RecurringTemplateDeleteDialog
-                        url={props.template.deleteUrl}
-                        highRisk={props.template.deletion.highRisk}
-                        stateVersion={props.template.deletion.stateVersion}
-                        guard={props.template.deletion.guard}
-                        labels={props.labels.deletion}
-                    />
                 )}
             </Cluster>
         </div>

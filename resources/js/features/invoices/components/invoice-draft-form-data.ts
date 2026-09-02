@@ -1,4 +1,11 @@
-import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    editableDocumentLineContent,
+    storedDocumentLineDescription,
+} from '@/components/domain/documents/document-draft-lines';
+import {
+    initializeLineTaxInheritance,
+    updateInheritedLineTaxes,
+} from '@/components/domain/documents/document-tax-options';
 import {
     compactDecimal,
     compactDocumentLineDecimals,
@@ -7,7 +14,6 @@ import type {
     InvoiceCustomerSelection,
     InvoiceDraft,
     InvoiceLine,
-    InvoiceProductDefaults,
     InvoiceTaxDefault,
 } from '@/types/invoice';
 
@@ -15,6 +21,7 @@ export type InvoiceEditorData = {
     editVersion: number;
     customerId: string | null;
     customerConfirmationToken: string | null;
+    taxDefaultPresetId: string | null;
     currencyCode: string | null;
     documentLanguage: string | null;
     issueDate: string;
@@ -34,7 +41,7 @@ export const blankInvoiceLine = (
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
-    productServiceName: null,
+    productServiceName: '',
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -45,6 +52,7 @@ export const blankInvoiceLine = (
     taxName: tax?.name ?? '',
     taxPercentage: compactDecimal(tax?.percentage ?? '0'),
     taxPresetId: tax?.id ?? null,
+    usesDocumentTaxDefault: true,
     priceStatus: null,
     finalLineTotal: null,
     isCustomized: true,
@@ -55,6 +63,7 @@ export const invoiceFormData = (invoice: InvoiceDraft): InvoiceEditorData => ({
     editVersion: invoice.editVersion,
     customerId: invoice.customer?.id ?? null,
     customerConfirmationToken: null,
+    taxDefaultPresetId: invoice.taxDefault?.id ?? null,
     currencyCode: invoice.currencyCode,
     documentLanguage: invoice.documentLanguage,
     issueDate: invoice.issueDate ?? '',
@@ -67,23 +76,26 @@ export const invoiceFormData = (invoice: InvoiceDraft): InvoiceEditorData => ({
     notes: invoice.notes ?? '',
     defaultsCustomized: invoice.defaultsCustomized,
     lines: invoice.lines.map((line) =>
-        compactDocumentLineDecimals(
-            {
-                ...line,
-                key: line.id ?? crypto.randomUUID(),
-                description: detachedLineDescription(
-                    line.description,
-                    line.productServiceName,
-                ),
-                itemPrice: line.itemPrice ?? '',
-                quantity: line.quantity ?? '',
-                unit: line.unit ?? '',
-                periodQuantity: line.periodQuantity ?? '',
-                taxName: line.taxName ?? '',
-                priceStatus: null,
-                sourceApplied: false,
-            },
-            invoice.currencyPrecision,
+        initializeLineTaxInheritance(
+            compactDocumentLineDecimals(
+                {
+                    ...line,
+                    key: line.id ?? crypto.randomUUID(),
+                    ...editableDocumentLineContent(
+                        line.description,
+                        line.productServiceName,
+                    ),
+                    itemPrice: line.itemPrice ?? '',
+                    quantity: line.quantity ?? '',
+                    unit: line.unit ?? '',
+                    periodQuantity: line.periodQuantity ?? '',
+                    taxName: line.taxName ?? '',
+                    priceStatus: null,
+                    sourceApplied: false,
+                },
+                invoice.currencyPrecision,
+            ),
+            invoice.taxDefault,
         ),
     ),
 });
@@ -92,6 +104,7 @@ export const invoiceRequestData = (data: InvoiceEditorData) => ({
     edit_version: data.editVersion,
     customer_id: data.customerId,
     customer_confirmation_token: data.customerConfirmationToken,
+    tax_default_preset_id: data.taxDefaultPresetId,
     currency_code: data.currencyCode,
     document_language: data.documentLanguage,
     issue_date: data.issueDate || null,
@@ -105,7 +118,7 @@ export const invoiceRequestData = (data: InvoiceEditorData) => ({
     lines: data.lines.map((line) => ({
         id: line.id,
         product_service_id: line.productServiceId,
-        description: line.description,
+        description: storedDocumentLineDescription(line),
         item_price: line.itemPrice,
         quantity: line.quantity,
         unit: line.unit,
@@ -148,48 +161,14 @@ export const applyInvoiceCustomerDefaults = (
         ...current,
         customerId: selection.customerId,
         customerConfirmationToken: selection.confirmationToken,
+        taxDefaultPresetId: selection.taxDefault?.id ?? null,
         currencyCode: selection.currencyCode,
         documentLanguage: selection.documentLanguage,
         paymentTermDays,
         dueDate: addCalendarDays(current.issueDate, paymentTermDays),
+        lines: updateInheritedLineTaxes(current.lines, selection.taxDefault),
     };
 };
-
-export const applyInvoiceProductDefaults = (
-    lines: InvoiceLine[],
-    index: number,
-    defaults: InvoiceProductDefaults,
-    fallbackTax: InvoiceTaxDefault | null,
-    currencyPrecision: number | null,
-): InvoiceLine[] =>
-    lines.map((line, itemIndex) =>
-        itemIndex === index
-            ? compactDocumentLineDecimals(
-                  {
-                      ...line,
-                      productServiceId: defaults.sourceProductServiceId,
-                      productServiceName: defaults.name ?? null,
-                      description: defaults.description,
-                      itemPrice: defaults.unitPrice ?? '',
-                      unit: defaults.unit ?? '',
-                      periodUnit: defaults.periodUnit,
-                      taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
-                      taxPercentage:
-                          defaults.tax?.percentage ??
-                          fallbackTax?.percentage ??
-                          '0',
-                      taxPresetId:
-                          defaults.tax?.sourceTaxPresetId ??
-                          fallbackTax?.id ??
-                          null,
-                      priceStatus: defaults.priceStatus,
-                      isCustomized: false,
-                      sourceApplied: true,
-                  },
-                  currencyPrecision,
-              )
-            : line,
-    );
 
 export function addCalendarDays(issueDate: string, days: string): string {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(issueDate) || !/^\d+$/.test(days)) {

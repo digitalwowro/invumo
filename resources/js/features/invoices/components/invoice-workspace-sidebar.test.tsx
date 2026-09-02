@@ -52,12 +52,17 @@ const transactions = {
 } satisfies InvoiceTransactions;
 
 const labels = {
+    edit: {
+        subtotal: 'Subtotal',
+        tax_total: 'Tax',
+    },
     workspace: {
         balance: 'Balance',
         outstanding: 'outstanding',
         document_facts: 'Document',
         sharing_facts: 'Sharing & delivery',
         open_sharing: 'Open sharing & reminders',
+        not_available: 'Not available',
     },
     index: { statuses: {} },
     transactions: {

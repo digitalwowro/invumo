@@ -81,7 +81,7 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
     const triggerVariant = tone === 'destructive' ? 'destructive' : 'secondary';
     const confirmVariant =
-        tone === 'destructive' ? 'destructive-confirm' : 'primary';
+        tone === 'destructive' ? 'destructive-confirm' : 'secondary';
 
     return (
         <ResponsiveDialog
@@ -104,6 +104,7 @@ export function ConfirmationDialog({
                         <Button
                             type="button"
                             variant={confirmVariant}
+                            data-testid="confirmation-dialog-confirm"
                             onClick={onConfirm}
                         >
                             {confirmLabel}

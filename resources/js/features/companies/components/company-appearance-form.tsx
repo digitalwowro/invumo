@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FileUpload } from '@/components/app/file-upload';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { FormSection } from '@/components/app/form-section';
 import { Stack } from '@/components/app/layout';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
@@ -182,9 +182,9 @@ export function CompanyAppearanceForm({
                     />
                 </FormSection>
                 <FormActions>
-                    <SubmitButton processing={processing}>
+                    <SaveButton processing={processing} dirty={isDirty}>
                         {labels.save}
-                    </SubmitButton>
+                    </SaveButton>
                 </FormActions>
             </Stack>
         </form>

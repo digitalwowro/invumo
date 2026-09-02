@@ -224,6 +224,7 @@ final class InvoiceLifecycleHttpTest extends TestCase
             'edit_version' => $editVersion,
             'customer_id' => $document->customer_id,
             'customer_confirmation_token' => null,
+            'tax_default_preset_id' => null,
             'currency_code' => 'RON',
             'document_language' => 'en',
             'issue_date' => '2026-08-26',

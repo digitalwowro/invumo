@@ -1,7 +1,10 @@
+import type { DocumentAmounts } from '@/lib/money/document-calculation';
+import type { LineAmounts } from '@/lib/money/line-calculation';
 import type {
     CatalogCurrencyOption,
     CatalogLimits,
     CatalogOption,
+    CatalogTaxOption,
 } from '@/types/catalog';
 import type { CustomerFieldLimits, CustomerOption } from '@/types/customer';
 
@@ -28,6 +31,7 @@ export type DocumentLineDraft = {
     taxPercentage: string;
     taxPresetId: string | null;
     taxMode?: 'INHERIT_CUSTOMER' | 'EXPLICIT' | 'NONE';
+    usesDocumentTaxDefault?: boolean;
     priceStatus?: 'COPIED' | 'ENTER_MANUALLY' | 'CURRENCY_MISMATCH' | null;
     finalLineTotal: string | null;
     isCustomized?: boolean;
@@ -43,7 +47,15 @@ export type DocumentLineLimits = {
 export type DocumentLineLabels = {
     line: string;
     product_or_service: string;
+    product_search_label: string;
+    product_search_placeholder: string;
+    no_product_results: string;
+    use_custom_product: string;
+    search: string;
+    source_error: string;
     select_product: string;
+    edit_line: string;
+    close_line: string;
     move_up: string;
     move_down: string;
     remove_line: string;
@@ -51,6 +63,8 @@ export type DocumentLineLabels = {
     incomplete: string;
     subtotal: string;
     tax_total: string;
+    document_default: string;
+    no_tax: string;
     provenance_default: string;
     provenance_customized: string;
     fields: Record<string, string>;
@@ -141,9 +155,18 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     add_line: string;
     products_services_section: string;
     products_services_description: string;
+    products_services_summary: string;
+    products_services_summary_one: string;
     total: string;
     save: string;
     unsaved_warning: string;
+    discard_changes: string;
+    discard_changes_title: string;
+    discard_changes_description: string;
+    clear_draft: string;
+    clear_draft_title: string;
+    clear_draft_description: string;
+    keep_editing: string;
     currency_required: string;
     customer_section: string;
     customer_description: string;
@@ -174,6 +197,7 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     product_search_label: string;
     product_search_placeholder: string;
     no_product_results: string;
+    use_custom_product: string;
     defaults_section: string;
     defaults_description: string;
     no_customer: string;
@@ -183,6 +207,7 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     currency: string;
     language: string;
     tax_default: string;
+    tax_default_description: string;
     billing_contact: string;
     tax_identifier: string;
     recipients: string;
@@ -197,6 +222,17 @@ export type DocumentEditorTranslations = DocumentLineLabels & {
     close: string;
 };
 
+export type DocumentResetLabels = Pick<
+    DocumentEditorTranslations,
+    | 'discard_changes'
+    | 'discard_changes_title'
+    | 'discard_changes_description'
+    | 'clear_draft'
+    | 'clear_draft_title'
+    | 'clear_draft_description'
+    | 'keep_editing'
+>;
+
 export type DocumentCustomerFormOptions = {
     countryOptions: CustomerOption[];
     customerTypeOptions: CustomerOption[];
@@ -205,7 +241,16 @@ export type DocumentCustomerFormOptions = {
 
 export type DocumentCatalogFormOptions = {
     currencyOptions: CatalogCurrencyOption[];
-    taxPresetOptions: CatalogOption[];
+    taxPresetOptions: CatalogTaxOption[];
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
+};
+
+export type DocumentEditorFinancials = {
+    calculated: Array<LineAmounts | null>;
+    totals: DocumentAmounts | null;
+    lines: DocumentLineDraft[];
+    currencyCode: string | null;
+    currencyPrecision: number | null;
+    dirty: boolean;
 };

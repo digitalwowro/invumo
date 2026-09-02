@@ -21,6 +21,11 @@ final class DocumentSourceFailure extends DomainException
         return new self('bank_unavailable');
     }
 
+    public static function taxDefaultUnavailable(): self
+    {
+        return new self('tax_default_unavailable');
+    }
+
     public function reason(): string
     {
         return $this->getMessage();

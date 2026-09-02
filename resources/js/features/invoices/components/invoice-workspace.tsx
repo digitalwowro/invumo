@@ -21,7 +21,7 @@ export function InvoiceWorkspace(props: InvoiceWorkspaceComposedProps) {
     const [dirty, setDirty] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [lineCount, setLineCount] = useState(props.invoice.lines.length);
-    const [tab, setTab] = useState<InvoiceWorkspaceTab>('build');
+    const [tab, setTab] = useState<InvoiceWorkspaceTab>(props.initialTab);
     const labels = props.translations;
     const workspace = labels.workspace;
     const moneyPill = isZero(props.transactions.summary.outstanding)
@@ -101,6 +101,7 @@ export function InvoiceWorkspace(props: InvoiceWorkspaceComposedProps) {
                                     formId={INVOICE_FORM_ID}
                                     separated={false}
                                     showStateMessage={false}
+                                    resetLabels={labels.edit}
                                 />
                                 <Button
                                     type="button"
@@ -153,6 +154,7 @@ export function InvoiceWorkspace(props: InvoiceWorkspaceComposedProps) {
                     />
                     <InvoiceWorkspaceContent
                         {...props}
+                        tab={tab}
                         dirty={dirty}
                         setDirty={setDirty}
                         setProcessing={setProcessing}

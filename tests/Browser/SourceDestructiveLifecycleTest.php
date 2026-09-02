@@ -14,7 +14,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 uses(DatabaseMigrations::class);
 
-/** @return array{User, Company, Customer} */
+/** @return array{User, Company, Customer, ProductService} */
 function sourceLifecycleBrowserCompany(): array
 {
     $owner = User::factory()->create([
@@ -26,13 +26,13 @@ function sourceLifecycleBrowserCompany(): array
         'plan_id' => Plan::query()->where('code', 'free')->firstOrFail()->id,
     ]);
     $company = app(CreateCompany::class)->handle($account, $owner, 'Lifecycle Browser SRL');
-    $customer = app(TenantContext::class)->runAsSystem(
+    [$customer, $product] = app(TenantContext::class)->runAsSystem(
         $company->id,
-        function (): Customer {
+        function (): array {
             $customer = Customer::query()->create([
                 'type' => 'COMPANY', 'legal_name' => 'Disposable Customer SRL',
             ]);
-            ProductService::query()->create(['name' => 'Disposable Service']);
+            $product = ProductService::query()->create(['name' => 'Disposable Service']);
             TaxPreset::query()->create([
                 'name' => 'Disposable VAT', 'percentage' => '19', 'archived_at' => now(),
             ]);
@@ -43,11 +43,11 @@ function sourceLifecycleBrowserCompany(): array
                 'swift_bic' => null, 'archived_at' => now(),
             ]);
 
-            return $customer;
+            return [$customer, $product];
         },
     );
 
-    return [$owner, $company, $customer];
+    return [$owner, $company, $customer, $product];
 }
 
 function openSourceLifecyclePage(User $owner): mixed
@@ -63,21 +63,21 @@ it('deletes an unreferenced Customer on desktop', function () {
 
     openSourceLifecyclePage($owner)
         ->navigate(route('customers.show', [$company, $customer], false))
-        ->click('Delete permanently')
+        ->click('Delete')
         ->assertSee('Permanently delete this customer?')
-        ->click('Confirm permanent deletion')
+        ->click('@guarded-action-confirm')
         ->assertSee('Customer permanently deleted.')
         ->assertNoJavaScriptErrors();
 });
 
 it('deletes an unreferenced Product or Service on desktop', function () {
-    [$owner, $company] = sourceLifecycleBrowserCompany();
+    [$owner, $company, , $product] = sourceLifecycleBrowserCompany();
 
     openSourceLifecyclePage($owner)
-        ->navigate(route('catalog.index', $company, false))
-        ->click('Delete permanently')
+        ->navigate(route('catalog.show', [$company, $product], false))
+        ->click('Delete')
         ->assertSee('Delete this entry permanently?')
-        ->click('Delete entry permanently')
+        ->click('@guarded-action-confirm')
         ->assertSee('Product or Service deleted.')
         ->assertNoJavaScriptErrors();
 });
@@ -89,10 +89,10 @@ it('restores and deletes an unreferenced tax preset on desktop', function () {
         ->navigate(route('company-tax-presets.index', $company, false))
         ->click('Restore')
         ->assertSee('Restore tax preset?')
-        ->click('Restore tax preset')
+        ->click('@confirmation-dialog-confirm')
         ->assertSee('Tax preset restored.')
-        ->click('Delete permanently')
-        ->click('Delete tax preset permanently')
+        ->click('Delete')
+        ->click('@guarded-action-confirm')
         ->assertSee('Tax preset deleted.')
         ->assertNoJavaScriptErrors();
 });
@@ -104,10 +104,10 @@ it('restores and deletes an unreferenced bank account on desktop', function () {
         ->navigate(route('company-bank-accounts.index', $company, false))
         ->click('Restore')
         ->assertSee('Restore bank account?')
-        ->click('Restore bank account')
+        ->click('@confirmation-dialog-confirm')
         ->assertSee('Bank account restored.')
-        ->click('Delete permanently')
-        ->click('Delete bank account permanently')
+        ->click('Delete')
+        ->click('@guarded-action-confirm')
         ->assertSee('Bank account deleted.')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors();

@@ -225,7 +225,7 @@ function InvoiceActions(props: {
                         </Link>
                     </Button>
                 )}
-                <Button asChild variant="ghost">
+                <Button asChild variant="secondary">
                     <Link href={props.invoice.viewUrl}>
                         {props.labels.representation.view}
                     </Link>

@@ -19,6 +19,7 @@ type Props = {
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
     labels: CatalogTranslations['form'];
+    disabled?: boolean;
     onChange: <K extends keyof ProductServiceFormData>(
         field: K,
         value: ProductServiceFormData[K],
@@ -33,10 +34,11 @@ export function ProductServiceFormFields({
     periodOptions,
     limits,
     labels,
+    disabled = false,
     onChange,
 }: Props) {
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
             <Grid columns={2} gap="lg">
                 <TextField
                     label={labels.fields.name}
@@ -44,6 +46,7 @@ export function ProductServiceFormFields({
                     input={{
                         value: data.name,
                         required: true,
+                        disabled,
                         maxLength: limits.name,
                         onChange: (event) =>
                             onChange('name', event.target.value),
@@ -55,6 +58,7 @@ export function ProductServiceFormFields({
                     input={{
                         value: data.internal_code,
                         maxLength: limits.code,
+                        disabled,
                         onChange: (event) =>
                             onChange('internal_code', event.target.value),
                     }}
@@ -67,6 +71,7 @@ export function ProductServiceFormFields({
                 textarea={{
                     value: data.description,
                     maxLength: limits.description,
+                    disabled,
                     rows: 3,
                     onChange: (event) =>
                         onChange('description', event.target.value),
@@ -80,6 +85,7 @@ export function ProductServiceFormFields({
                     input={{
                         value: data.unit_price,
                         inputMode: 'decimal',
+                        disabled,
                         onChange: (event) =>
                             onChange('unit_price', event.target.value),
                     }}
@@ -89,6 +95,7 @@ export function ProductServiceFormFields({
                     label={labels.fields.currency_id}
                     description={labels.descriptions.currency_id}
                     error={errors.currency_id}
+                    disabled={disabled}
                     value={data.currency_id || UNSET}
                     onValueChange={(value) =>
                         onChange('currency_id', value === UNSET ? '' : value)
@@ -104,6 +111,7 @@ export function ProductServiceFormFields({
                     input={{
                         value: data.unit,
                         maxLength: limits.unit,
+                        disabled,
                         onChange: (event) =>
                             onChange('unit', event.target.value),
                     }}
@@ -112,6 +120,7 @@ export function ProductServiceFormFields({
                     name="period_unit"
                     label={labels.fields.period_unit}
                     error={errors.period_unit}
+                    disabled={disabled}
                     value={data.period_unit}
                     onValueChange={(value) =>
                         onChange(
@@ -126,6 +135,7 @@ export function ProductServiceFormFields({
                 name="tax_preset_id"
                 label={labels.fields.tax_preset_id}
                 error={errors.tax_preset_id}
+                disabled={disabled}
                 value={data.tax_preset_id || UNSET}
                 onValueChange={(value) =>
                     onChange('tax_preset_id', value === UNSET ? '' : value)

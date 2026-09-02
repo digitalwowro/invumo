@@ -71,7 +71,7 @@ it('manages bank accounts without overflowing the viewport', function () {
         ->click('Cancel')
         ->click('Archive')
         ->assertSee('Archive bank account?')
-        ->click('Archive bank account')
+        ->click('@confirmation-dialog-confirm')
         ->assertSee('Bank account archived.')
         ->assertSee('Archived')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')

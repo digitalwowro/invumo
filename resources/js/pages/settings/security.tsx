@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { PasswordField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import type { SettingsUiTranslations } from '@/types';
@@ -39,18 +39,19 @@ export default function Security({ passwordRules, translations }: Props) {
                     }
                 }}
             >
-                {({ errors, processing }) => (
+                {({ errors, processing, isDirty }) => (
                     <FormSection
                         title={page.title}
                         description={page.description}
                         actions={
                             <FormActions>
-                                <SubmitButton
+                                <SaveButton
                                     processing={processing}
+                                    dirty={isDirty}
                                     testId="update-password-button"
                                 >
                                     {shared.save}
-                                </SubmitButton>
+                                </SaveButton>
                             </FormActions>
                         }
                     >

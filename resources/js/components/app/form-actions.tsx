@@ -56,3 +56,11 @@ export function SubmitButton({
         </Button>
     );
 }
+
+type SaveButtonProps = SubmitButtonProps & {
+    dirty: boolean;
+};
+
+export function SaveButton({ dirty, disabled, ...props }: SaveButtonProps) {
+    return <SubmitButton {...props} disabled={disabled || !dirty} />;
+}

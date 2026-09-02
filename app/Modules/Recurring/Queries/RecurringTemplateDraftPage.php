@@ -45,6 +45,7 @@ final readonly class RecurringTemplateDraftPage
 
         return [
             'storeUrl' => route('recurring.store', $company, false),
+            'indexUrl' => route('recurring.index', $company, false),
             'creationKey' => (string) Str::uuid7(),
             'sourceUrls' => $this->sourceUrls($company),
             'inlineCustomerStoreUrl' => route('recurring.inline-customers.store', $company, false),

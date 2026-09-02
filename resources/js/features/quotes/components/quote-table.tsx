@@ -14,7 +14,6 @@ import {
 } from '@/components/domain/documents/document-list-cells';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { Button } from '@/components/ui/button';
-import { QuoteDeleteDialog } from '@/features/quotes/components/quote-delete-dialog';
 import { QuoteListSummaryCards } from '@/features/quotes/components/quote-list-summary';
 import { QuoteListTools } from '@/features/quotes/components/quote-list-tools';
 import {
@@ -195,20 +194,11 @@ function QuoteActions(props: { quote: QuoteRow; labels: QuoteTranslations }) {
                         {props.labels.index.columns.open}
                     </Link>
                 </Button>
-                <Button asChild variant="ghost">
+                <Button asChild variant="secondary">
                     <Link href={props.quote.viewUrl}>
                         {props.labels.representation.view}
                     </Link>
                 </Button>
-                {props.quote.canDelete && (
-                    <QuoteDeleteDialog
-                        url={props.quote.deleteUrl}
-                        highRisk={props.quote.deletion.highRisk}
-                        stateVersion={props.quote.deletion.stateVersion}
-                        guard={props.quote.deletion.guard}
-                        labels={props.labels.deletion}
-                    />
-                )}
             </Inline>
         </div>
     );

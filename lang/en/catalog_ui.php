@@ -5,7 +5,7 @@ return [
         'head_title' => 'Products',
         'title' => 'Products',
         'description' => 'Manage reusable line defaults for quotes, invoices, and recurring invoices.',
-        'create' => 'New Product',
+        'create' => 'New product',
         'search_label' => 'Search',
         'search_placeholder' => 'Search by name, code, or description',
         'status_label' => 'Status',
@@ -25,6 +25,7 @@ return [
         'no_results_description' => 'Change or clear the filters to see more entries.',
         'error_title' => 'Products & Services could not be loaded',
         'error_description' => 'Try again.',
+        'open_product' => 'Open :name',
         'status_options' => ['active' => 'Active', 'archived' => 'Archived', 'all' => 'All'],
         'summary' => [
             'aria_label' => 'Product overview',
@@ -41,10 +42,18 @@ return [
             'actions' => 'Actions',
         ],
     ],
+    'workspace' => [
+        'head_title' => ':name — Product or Service',
+        'description' => 'Keep this reusable Product or Service entry accurate for future document selections.',
+        'back' => 'Back to Products',
+        'active' => 'Active',
+        'archived' => 'Archived',
+        'archived_notice' => 'This Product or Service is archived. Restore it before editing.',
+    ],
     'form' => [
         'create_title' => 'New Product',
         'create_description' => 'Save reusable defaults without restricting later document edits.',
-        'edit_title' => 'Edit Product or Service',
+        'edit_title' => 'Product or Service details',
         'edit_description' => 'Changes apply only to future selections, never existing document lines.',
         'fields' => [
             'name' => 'Name',
@@ -69,7 +78,7 @@ return [
         'unsaved_warning' => 'You have unsaved Product or Service changes. Leave without saving?',
     ],
     'actions' => [
-        'edit' => 'Edit',
+        'open' => 'Open',
         'archive' => 'Archive',
         'restore' => 'Restore',
         'delete' => 'Delete',
@@ -81,9 +90,9 @@ return [
         'delete_description' => 'Deletion succeeds only when no document or template line references this entry.',
         'dependency_warning_title' => 'Permanent deletion is blocked',
         'delete_dependency_description' => 'Blocking references: document lines — :documents; recurring-template lines — :templates. Remove those dependencies or keep this entry archived.',
-        'confirm_archive' => 'Archive entry',
-        'confirm_restore' => 'Restore entry',
-        'confirm_delete' => 'Delete entry permanently',
+        'confirm_archive' => 'Archive',
+        'confirm_restore' => 'Restore',
+        'confirm_delete' => 'Delete',
     ],
     'feedback' => [
         'created' => 'Product or Service added.',

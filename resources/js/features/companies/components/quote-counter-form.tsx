@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import {
     CheckboxField,
     TextareaField,
@@ -52,9 +52,12 @@ export function QuoteCounterForm({ counter, labels }: Props) {
                 description={labels.counter_description}
                 actions={
                     <FormActions>
-                        <SubmitButton processing={form.processing}>
+                        <SaveButton
+                            processing={form.processing}
+                            dirty={form.isDirty}
+                        >
                             {labels.counter_save}
-                        </SubmitButton>
+                        </SaveButton>
                     </FormActions>
                 }
             >

@@ -1,4 +1,4 @@
-import { Grid } from '@/components/app/layout';
+import { compactDocumentLineDecimals } from '@/domain/documents/document-line-decimals';
 import type { calculateDocumentAmounts } from '@/lib/money/document-calculation';
 import { calculateLineAmounts } from '@/lib/money/line-calculation';
 import type { LineAmounts } from '@/lib/money/line-calculation';
@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import type {
     DocumentEditorTranslations,
     DocumentLineDraft,
+    DocumentProductDefaults,
+    DocumentTaxDefault,
 } from '@/types/document';
 
 export const completeLine = (
@@ -54,8 +56,9 @@ export function normalizeEditedLine(
         isCustomized: customized ? true : next.isCustomized,
         sourceApplied: customized ? false : next.sourceApplied,
         taxPresetId:
-            previous.taxName !== next.taxName ||
-            previous.taxPercentage !== next.taxPercentage
+            (previous.taxName !== next.taxName ||
+                previous.taxPercentage !== next.taxPercentage) &&
+            previous.taxPresetId === next.taxPresetId
                 ? null
                 : next.taxPresetId,
         priceStatus:
@@ -65,8 +68,50 @@ export function normalizeEditedLine(
     };
 }
 
+export function applyDocumentProductDefaults(
+    line: DocumentLineDraft,
+    product: DocumentProductDefaults,
+    fallbackTax: DocumentTaxDefault | null,
+    currencyPrecision: number | null,
+): DocumentLineDraft {
+    const recurring = line.taxMode !== undefined;
+    const tax = product.tax ?? fallbackTax;
+
+    return compactDocumentLineDecimals(
+        {
+            ...line,
+            productServiceId: product.sourceProductServiceId,
+            productServiceName: product.name ?? null,
+            description: product.description,
+            itemPrice: product.unitPrice ?? '',
+            unit: product.unit ?? '',
+            periodUnit: product.periodUnit,
+            periodQuantity:
+                product.periodUnit === 'NONE' ? '' : line.periodQuantity,
+            taxName: tax?.name ?? '',
+            taxPercentage: tax?.percentage ?? '0',
+            taxPresetId: recurring
+                ? (product.tax?.sourceTaxPresetId ?? null)
+                : (product.tax?.sourceTaxPresetId ?? fallbackTax?.id ?? null),
+            taxMode: recurring
+                ? product.tax
+                    ? 'EXPLICIT'
+                    : 'INHERIT_CUSTOMER'
+                : line.taxMode,
+            usesDocumentTaxDefault: recurring
+                ? line.usesDocumentTaxDefault
+                : !product.tax,
+            priceStatus: product.priceStatus,
+            isCustomized: false,
+            sourceApplied: true,
+        },
+        currencyPrecision,
+    );
+}
+
 const EDITABLE_LINE_FIELDS = [
     'productServiceId',
+    'productServiceName',
     'description',
     'itemPrice',
     'quantity',
@@ -78,6 +123,7 @@ const EDITABLE_LINE_FIELDS = [
     'taxPercentage',
     'taxPresetId',
     'taxMode',
+    'usesDocumentTaxDefault',
 ] as const satisfies ReadonlyArray<keyof DocumentLineDraft>;
 
 export function detachedLineDescription(
@@ -95,6 +141,46 @@ export function detachedLineDescription(
         : value.startsWith(`${productServiceName}\n`)
           ? value.slice(productServiceName.length + 1)
           : value;
+}
+
+export function editableDocumentLineContent(
+    storedDescription: string | null,
+    sourceProductServiceName: string | null | undefined,
+) {
+    const value = storedDescription ?? '';
+
+    if (sourceProductServiceName) {
+        return {
+            productServiceName: sourceProductServiceName,
+            description: detachedLineDescription(
+                value,
+                sourceProductServiceName,
+            ),
+        };
+    }
+
+    const separator = value.indexOf('\n');
+
+    return separator === -1
+        ? { productServiceName: value, description: '' }
+        : {
+              productServiceName: value.slice(0, separator),
+              description: value.slice(separator + 1),
+          };
+}
+
+export function storedDocumentLineDescription(line: DocumentLineDraft) {
+    const name = line.productServiceName ?? '';
+
+    if (!name) {
+        return line.description;
+    }
+
+    if (!line.description) {
+        return name;
+    }
+
+    return `${name}\n${line.description}`;
 }
 
 export function moveDocumentLine(
@@ -130,7 +216,7 @@ export function DocumentTotals({
                 embedded && 'border-t border-divider',
             )}
         >
-            <Grid columns={3} gap="lg">
+            <div className="ml-auto flex w-full max-w-sm flex-col gap-3">
                 <Total label={labels.subtotal} value={totals?.grand_subtotal} />
                 <Total label={labels.tax_total} value={totals?.tax_amount} />
                 <Total
@@ -138,7 +224,7 @@ export function DocumentTotals({
                     value={totals?.final_total}
                     strong
                 />
-            </Grid>
+            </div>
         </div>
     );
 }
@@ -153,12 +239,22 @@ function Total({
     strong?: boolean;
 }) {
     return (
-        <div className="flex flex-col gap-1">
-            <p className="font-data text-[11px] font-bold tracking-[0.09em] text-foreground-muted uppercase">
+        <div
+            className={`font-data flex items-baseline justify-between gap-6 tabular-nums ${strong ? 'border-t border-divider pt-3' : ''}`}
+        >
+            <p
+                className={
+                    strong
+                        ? 'text-sm font-bold'
+                        : 'text-sm text-foreground-muted'
+                }
+            >
                 {label}
             </p>
             <p
-                className={`font-mono tabular-nums ${strong ? 'text-xl font-semibold' : 'text-base'}`}
+                className={
+                    strong ? 'text-2xl font-bold' : 'text-base font-semibold'
+                }
             >
                 {value ?? '—'}
             </p>

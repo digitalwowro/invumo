@@ -100,6 +100,7 @@ export function TaxPresetTable({
                             )}
                             {preset.archiveUrl && (
                                 <GuardedActionDialog
+                                    tone="default"
                                     triggerLabel={labels.archive}
                                     title={labels.archive_title}
                                     description={interpolate(

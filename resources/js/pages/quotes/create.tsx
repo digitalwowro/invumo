@@ -1,13 +1,15 @@
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
-import { ActionLink } from '@/components/app/action-link';
+import { DiscardChangesDialog } from '@/components/app/discard-changes-dialog';
 import { SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { QuoteDraftEditor } from '@/features/quotes/components/quote-draft-editor';
 import type { QuoteDraftEditorProps } from '@/features/quotes/components/quote-draft-editor-props';
-import type { CatalogTranslations } from '@/types/catalog';
+import { QuoteSummaryCard } from '@/features/quotes/components/quote-workspace-sidebar';
 import type { CustomerTranslations } from '@/types/customer';
 import type { DocumentDraftCreation } from '@/types/document';
 import type { QuoteTranslations } from '@/types/quote';
@@ -20,7 +22,6 @@ type Props = Omit<
     | 'creation'
     | 'labels'
     | 'customerLabels'
-    | 'catalogLabels'
     | 'conversion'
     | 'conversionLabels'
 > & {
@@ -28,28 +29,39 @@ type Props = Omit<
     indexUrl: string;
     translations: QuoteTranslations;
     customerTranslations: CustomerTranslations;
-    catalogTranslations: CatalogTranslations;
 };
 
 export default function CreateQuote(props: Props) {
+    const [dirty, setDirty] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     return (
         <>
             <Head title={props.translations.create.head_title} />
-            <PageFrame width="full">
+            <ResourceWorkspace>
                 <Stack gap="2xl">
-                    <PageHeader
+                    <ResourceWorkspaceHeader
+                        breadcrumbs={[
+                            {
+                                title: props.translations.index.title,
+                                href: props.indexUrl,
+                            },
+                            {
+                                title: props.translations.create.title,
+                                href: props.indexUrl,
+                            },
+                        ]}
                         title={props.translations.create.title}
-                        subtitle={props.translations.create.description}
+                        description={props.translations.create.description}
                         actions={
                             <>
-                                <ActionLink
-                                    href={props.indexUrl}
-                                    variant="secondary"
-                                >
-                                    {props.translations.edit.cancel}
-                                </ActionLink>
+                                <DiscardChangesDialog
+                                    dirty={dirty}
+                                    processing={processing}
+                                    form={FORM_ID}
+                                    mode="clear"
+                                    labels={props.translations.edit}
+                                />
                                 <SubmitButton
                                     form={FORM_ID}
                                     processing={processing}
@@ -65,14 +77,21 @@ export default function CreateQuote(props: Props) {
                         creation={props.creation}
                         labels={props.translations.edit}
                         customerLabels={props.customerTranslations}
-                        catalogLabels={props.catalogTranslations}
                         conversionLabels={props.translations.conversion}
                         formId={FORM_ID}
                         showActions={false}
+                        onDirtyChange={setDirty}
                         onProcessingChange={setProcessing}
+                        workspaceAside={(financials) => (
+                            <QuoteSummaryCard
+                                quote={props.quote}
+                                labels={props.translations}
+                                financials={financials}
+                            />
+                        )}
                     />
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

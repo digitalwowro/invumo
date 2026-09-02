@@ -2,6 +2,7 @@ import type {
     CatalogCurrencyOption,
     CatalogLimits,
     CatalogOption,
+    CatalogTaxOption,
     CatalogTranslations,
 } from '@/types/catalog';
 import type {
@@ -161,7 +162,7 @@ export type QuoteCustomerFormOptions = {
 
 export type QuoteCatalogFormOptions = {
     currencyOptions: CatalogCurrencyOption[];
-    taxPresetOptions: CatalogOption[];
+    taxPresetOptions: CatalogTaxOption[];
     periodOptions: CatalogOption[];
     limits: CatalogLimits;
 };
@@ -233,6 +234,10 @@ export type QuoteTranslations = {
         | 'send_requires_save'
         | 'quote_summary'
         | 'total'
+        | 'gross'
+        | 'discount'
+        | 'taxable_base'
+        | 'tax'
         | 'document_facts'
         | 'sharing_facts'
         | 'customer'

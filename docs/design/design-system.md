@@ -399,6 +399,8 @@ The web application is responsive, not a native-mobile or mobile-first redesign.
 | `AppShell`                           | Sidebar, narrow-screen navigation, main workspace, skip link, global boundaries      |
 | `AppSidebar`                         | Product identity slot, Company switcher, authorized navigation, user/settings region |
 | `PageHeader`                         | Optional breadcrumb, one page title, subtitle/summary, primary and secondary actions |
+| `ResourceWorkspace`                  | Neutral-grey record canvas and full-width page rhythm                                |
+| `ResourceWorkspaceHeader`            | Record identity, status, actions, and optional section navigation                    |
 | `DocumentWorkspaceHeader`            | Dense document identity, status, actions, and section navigation                     |
 | `PageSection`                        | Consistent vertical separation and optional section divider                          |
 | `SectionHeader`                      | Section title, supporting copy, and a restrained action region                       |
@@ -407,13 +409,16 @@ The web application is responsive, not a native-mobile or mobile-first redesign.
 | `FormSection`                        | Standard form heading, description, fields, and action placement                     |
 | `DetailPanel`                        | Definition-list presentation for identity/settings details                           |
 
-Every authenticated page uses `AppShell` and normally uses `PageHeader`. Dense document editors use the shared `DocumentWorkspaceHeader` variant so identity, saved-state feedback, document actions, and editor section navigation remain reachable together. A page may omit visible breadcrumbs when the route is already obvious, but it must not recreate either header locally. The shared page header stays visually open and uses the page stack for separation; it does not add a bottom divider or local bottom padding.
+Every authenticated page uses `AppShell` and normally uses `PageHeader`. Canonical record and new-resource pages use the neutral-grey `ResourceWorkspace` canvas; dense document editors use `DocumentWorkspaceHeader` so identity, saved-state feedback, document actions, and editor section navigation remain reachable together. These workspace pages use the shared compact breadcrumb treatment established by Quote and Invoice. Breadcrumbs replace header-level **Back to …** actions. The shared headers stay visually open and use the page stack for separation; they do not add a bottom divider or local bottom padding.
+
+Record-workspace and new-resource actions sit on their own row directly below the title, status, and supporting identity. Collection-page creation actions for Quotes, Invoices, Customers, recurring templates, and Products occupy the page header's upper-right action region on wide screens and flow below the title on narrow screens. Pages do not move the same action set to a bottom footer. Independent embedded forms may retain their own local submit action because they are separate mutations, not duplicates of the workspace action row. Creation pages keep their fields in one continuous surface and add tabs only after a persisted record has multiple meaningful task groups.
 
 ### 10.2 Buttons and actions
 
 | Variant               | Treatment                            | Use                                                |
 | --------------------- | ------------------------------------ | -------------------------------------------------- |
 | `primary`             | Ink fill, white text                 | The main forward action in an action region        |
+| `money`               | Lime fill, dark text                 | Money collection actions such as Record payment    |
 | `secondary`           | White fill, ink text, neutral border | Important alternative action                       |
 | `ghost`               | Transparent, ink text                | Low-emphasis action                                |
 | `destructive`         | White, danger text, danger border    | Destructive entry point outside confirmation       |
@@ -427,8 +432,14 @@ Rules:
 - Rare actions belong in a shared overflow menu.
 - Send-with-options uses the shared split-button pattern.
 - Disabled and loading states preserve button width; loading composes the shared Spinner and disables repeat submission.
+- Save and Update actions for existing values are disabled until their owning form changes, then remain disabled while processing. Create, Add, Send, and lifecycle actions follow their own validity and authorization rules instead of this dirty-state rule.
+- Invoice, Quote, and recurring editors pair Save with one disabled-until-dirty recovery action. Existing records use **Discard changes** to restore the complete last-saved client baseline; unsaved creation forms use **Clear draft** to restore their initial values. Both require an `AlertDialog` confirmation with **Keep editing** as the safe exit. **Reset**, **Rollback**, and **Cancel** are not used for this interaction because they conflict with defaults, history restoration, and Invoice lifecycle language.
 - Icons use the configured single icon library, inherit `currentColor`, and follow Button sizing. Do not mix icon families.
 - Icon-only buttons require an accessible name and Tooltip.
+- Use **Open** to enter a canonical routed record workspace. Reserve **Edit** for an explicit edit-only dialog or mode.
+- Table **Open** actions use the bordered `secondary` treatment. Canonical record tables do not expose **Delete**; destructive lifecycle actions live in the record workspace.
+- Lifecycle triggers use the exact labels **Archive**, **Restore**, and **Delete**. Archive and Restore use `secondary`; Delete uses `destructive`. Confirmation titles and descriptions, rather than the trigger label, explain permanent deletion and any stronger acknowledgement.
+- Actions with the same name use the same variant in every workspace. Save/Create is primary; Record payment is money; Open is secondary; Archive/Restore is secondary; Delete is destructive.
 - Collapsible filter controls use the shared filter-toggle button: the collapsed control is secondary with an ink count badge, while the expanded control is primary with a lime count badge. Pages do not restyle this state locally.
 
 Permanent deletion of an issued, sent, or publicly shared document uses `DestructiveActionDialog` with the stronger confirmation mode required by the financial-state specification. Pages do not improvise this friction.
@@ -487,7 +498,7 @@ Forms use the shared shadcn Field composition and Invumo form patterns:
 - inherited/default values use the inset surface and a source caption such as `Net 30 · from customer`;
 - forms do not clear valid input after a server validation error.
 
-Use the shared searchable Combobox for Customers and Products & Services. Inline creation uses the shared scrollable creation dialog, preserves the parent editor, retains invalid modal values, and selects the new record after a successful save.
+Use the shared searchable Combobox for Customers. In document lines, Product or Service uses an inline searchable/manual-entry Combobox: typing remains a valid manual line, while choosing an active catalogue result copies its detached defaults directly into the row. When no active catalogue entry matches, the control presents neutral **No catalogue match** copy plus an explicit **Use “…” as a custom product or service** action; `Enter` accepts that manual value, while `Tab`, `Escape`, and outside click dismiss the result surface without losing the typed name. Adding a line never opens a pre-choice modal. Customer inline creation uses the shared scrollable creation dialog, preserves the parent editor, retains invalid modal values, and selects the new record after a successful save.
 
 The shared Combobox interaction contract is behavioral, not page-specific:
 
@@ -499,6 +510,8 @@ The shared Combobox interaction contract is behavioral, not page-specific:
 - listbox/option, active-descendant, accessible-name, and multiselect semantics must match the actual mode.
 
 Short, static option sets use the shared non-searchable Select behavior, including arrow-key navigation, `Enter` selection, `Escape` dismissal, and first-character typeahead supplied by the approved primitive. Pages do not recreate either selector family.
+
+Wide Invoice, Quote, and recurring line tables read as data first: complete rows suppress persistent input chrome and reveal the shared border/focus treatment on hover or focus. A newly appended or financially incomplete row keeps its controls visibly outlined until its essential line values are complete. Compact/mobile cards retain explicit bordered controls throughout. Column allocation deliberately prioritizes Product or Service plus description, item price, and line total; fixed or short quantity, unit, period, period quantity, discount, tax, and remove controls receive the remaining bounded tracks. The wide table is used only when at least 1120px is available inside the section; narrower sections switch to compact cards rather than requiring an 11-column scrollbar.
 
 Dates use one `DateField`/Calendar composition with locale-aware display, direct keyboard entry where supported, clear validation, and the same four-digit-year bounds as the domain. Currency, tax, language, timezone, Country, and other option lists use shared Select/Combobox behavior rather than individually styled controls.
 

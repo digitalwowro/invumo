@@ -13,10 +13,12 @@ vi.stubGlobal(
     },
 );
 
+let formDirty = false;
+
 vi.mock('@inertiajs/react', () => ({
     Form: ({ children }: { children: (state: object) => ReactNode }) => (
         <form>
-            {children({ errors: {}, isDirty: false, processing: false })}
+            {children({ errors: {}, isDirty: formDirty, processing: false })}
         </form>
     ),
     router: { on: vi.fn(() => vi.fn()) },
@@ -37,6 +39,7 @@ const labels: ReminderRuleLabels = {
 
 describe('ReminderRuleForm', () => {
     it('adds bounded editable rules with localized controls', () => {
+        formDirty = false;
         render(
             <ReminderRuleForm
                 rules={[
@@ -61,6 +64,10 @@ describe('ReminderRuleForm', () => {
 
         expect(screen.getByLabelText('Days from due date')).toHaveValue(3);
         expect(screen.getByLabelText('Enabled')).toBeChecked();
+        expect(
+            screen.getByRole('button', { name: 'Save reminder rules' }),
+        ).toBeDisabled();
+        formDirty = true;
         fireEvent.click(screen.getByRole('button', { name: 'Add reminder' }));
         expect(screen.getAllByLabelText('Days from due date')).toHaveLength(2);
         expect(
@@ -75,6 +82,7 @@ describe('ReminderRuleForm', () => {
     });
 
     it('shows the localized empty state', () => {
+        formDirty = false;
         render(
             <ReminderRuleForm
                 rules={[]}

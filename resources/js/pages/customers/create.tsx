@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
-import { ActionLink } from '@/components/app/action-link';
-import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { CustomerForm } from '@/components/domain/customers/customer-form';
 import type {
     CustomerFieldLimits,
@@ -55,31 +54,35 @@ export default function CreateCustomer({
     return (
         <>
             <Head title={labels.head_title} />
-            <PageFrame>
-                <Stack gap="2xl">
-                    <PageHeader
-                        title={labels.title}
-                        subtitle={labels.description}
-                        actions={
-                            <ActionLink href={indexUrl} variant="secondary">
-                                <ArrowLeft aria-hidden="true" />
-                                {labels.cancel}
-                            </ActionLink>
-                        }
-                    />
-                    <CustomerForm
-                        customer={emptyCustomer}
-                        actionUrl={storeUrl}
-                        method="post"
-                        submitLabel={labels.submit}
-                        countryOptions={countryOptions}
-                        customerTypeOptions={customerTypeOptions}
-                        limits={limits}
-                        labels={translations.form}
-                        unsavedWarning={translations.form.unsaved_warning}
-                    />
-                </Stack>
-            </PageFrame>
+            <ResourceWorkspace>
+                <CustomerForm
+                    customer={emptyCustomer}
+                    actionUrl={storeUrl}
+                    method="post"
+                    submitLabel={labels.submit}
+                    countryOptions={countryOptions}
+                    customerTypeOptions={customerTypeOptions}
+                    limits={limits}
+                    labels={translations.form}
+                    unsavedWarning={translations.form.unsaved_warning}
+                    formId="new-customer-form"
+                    showActions={false}
+                    renderHeader={(submitAction) => (
+                        <ResourceWorkspaceHeader
+                            breadcrumbs={[
+                                {
+                                    title: translations.index.title,
+                                    href: indexUrl,
+                                },
+                                { title: labels.title, href: indexUrl },
+                            ]}
+                            title={labels.title}
+                            description={labels.description}
+                            actions={submitAction}
+                        />
+                    )}
+                />
+            </ResourceWorkspace>
         </>
     );
 }

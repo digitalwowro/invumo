@@ -12,6 +12,7 @@ const buttonVariants = cva(
             variant: {
                 primary:
                     'bg-primary text-primary-foreground hover:bg-foreground-mid',
+                money: 'bg-money-fill text-money-fill-foreground hover:bg-money-fill/90',
                 secondary:
                     'border-border bg-secondary text-secondary-foreground hover:bg-accent',
                 ghost: 'text-foreground hover:bg-accent',

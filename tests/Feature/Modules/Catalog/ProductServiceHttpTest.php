@@ -35,13 +35,33 @@ final class ProductServiceHttpTest extends TestCase
             ->has('products.items', 0)
             ->where('summary.active.count', 0)
             ->where('translations.index.title', 'Products')
-            ->where('limits.description', 5000));
+            ->where('createUrl', route('catalog.create', $company, false)));
 
-        $this->post(route('catalog.store', $company), $this->payload($currency, $tax))
-            ->assertRedirect()->assertSessionHas('status');
+        $this->get(route('catalog.create', $company))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('catalog/create')
+                ->where('indexUrl', route('catalog.index', $company, false))
+                ->where('storeUrl', route('catalog.store', $company, false))
+                ->where('limits.description', 5000));
+
+        $response = $this->post(
+            route('catalog.store', $company),
+            $this->payload($currency, $tax),
+        );
         $product = $this->tenant($company, fn (): ProductService => ProductService::query()->sole());
+        $response->assertRedirect(route('catalog.show', [$company, $product]))
+            ->assertSessionHas('status');
 
         $this->assertSame('120.50', $this->displayPrice($product, $currency));
+        $this->get(route('catalog.show', [$company, $product]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('catalog/show')
+                ->where('product.name', 'Consulting')
+                ->where('product.unitPrice', '120.50')
+                ->where('product.archived', false)
+                ->where('workspaceUrl', route('catalog.show', [$company, $product], false))
+                ->where('updateUrl', route('catalog.update', [$company, $product], false))
+                ->where('translations.actions.open', 'Open'));
         $this->patch(route('catalog.update', [$company, $product]), [
             ...$this->payload($currency, $tax),
             'name' => 'Consulting Plus',
@@ -50,10 +70,17 @@ final class ProductServiceHttpTest extends TestCase
 
         $this->post(route('catalog.archive', [$company, $product]))
             ->assertRedirect()->assertSessionHas('status');
+        $this->get(route('catalog.show', [$company, $product]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('product.archived', true)
+                ->where('updateUrl', null)
+                ->where('archiveUrl', null)
+                ->where('restoreUrl', route('catalog.restore', [$company, $product], false)));
         $this->post(route('catalog.restore', [$company, $product]))
             ->assertRedirect()->assertSessionHas('status');
         $this->delete(route('catalog.destroy', [$company, $product]))
-            ->assertRedirect()->assertSessionHas('status');
+            ->assertRedirect(route('catalog.index', $company))
+            ->assertSessionHas('status');
 
         $this->tenant($company, function (): void {
             $this->assertSame(0, ProductService::query()->count());
@@ -115,12 +142,15 @@ final class ProductServiceHttpTest extends TestCase
             'name' => 'Admin entry', 'period_unit' => 'NONE',
         ])->assertRedirect();
         $this->actingAs($member)->get(route('catalog.index', $company))->assertForbidden();
+        $this->get(route('catalog.create', $company))->assertForbidden();
+        $this->get(route('catalog.show', [$company, $otherProduct]))->assertForbidden();
         $this->post(route('catalog.store', $company), [
             'name' => 'Forbidden', 'period_unit' => 'NONE',
         ])->assertForbidden();
         $this->actingAs($owner)->patch(route('catalog.update', [$company, $otherProduct]), [
             'name' => 'Cross Company', 'period_unit' => 'NONE',
         ])->assertNotFound();
+        $this->get(route('catalog.show', [$company, $otherProduct]))->assertNotFound();
         $this->get(route('catalog.index', $other))->assertNotFound();
     }
 

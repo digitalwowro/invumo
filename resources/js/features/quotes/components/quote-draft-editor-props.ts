@@ -1,6 +1,9 @@
-import type { CatalogTranslations } from '@/types/catalog';
+import type { ReactNode } from 'react';
 import type { CustomerTranslations } from '@/types/customer';
-import type { DocumentDraftCreation } from '@/types/document';
+import type {
+    DocumentDraftCreation,
+    DocumentEditorFinancials,
+} from '@/types/document';
 import type {
     QuoteCatalogFormOptions,
     QuoteConversionControl,
@@ -9,7 +12,6 @@ import type {
     QuoteCustomerSelection,
     QuoteDraft,
     QuoteLimits,
-    QuoteProductDefaults,
     QuoteSourceOption,
     QuoteSourceUrls,
     QuoteTranslations,
@@ -22,9 +24,7 @@ export type QuoteDraftEditorProps = {
     creation?: DocumentDraftCreation;
     sourceUrls: QuoteSourceUrls;
     inlineCustomerStoreUrl: string;
-    inlineProductStoreUrl: string;
     inlineCreatedCustomer: QuoteCustomerSelection | null;
-    inlineCreatedProduct: QuoteProductDefaults | null;
     sourceAbilities: { createCustomer: boolean; createProduct: boolean };
     currencyOptions: QuoteCurrencyOption[];
     languageOptions: QuoteSourceOption[];
@@ -33,7 +33,6 @@ export type QuoteDraftEditorProps = {
     catalogForm: QuoteCatalogFormOptions;
     labels: QuoteTranslations['edit'];
     customerLabels: CustomerTranslations;
-    catalogLabels: CatalogTranslations;
     conversion?: QuoteConversionControl;
     conversionLabels: QuoteTranslations['conversion'];
     onDirtyChange?: (dirty: boolean) => void;
@@ -41,4 +40,5 @@ export type QuoteDraftEditorProps = {
     onLineCountChange?: (count: number) => void;
     formId?: string;
     showActions?: boolean;
+    workspaceAside?: (financials: DocumentEditorFinancials) => ReactNode;
 };

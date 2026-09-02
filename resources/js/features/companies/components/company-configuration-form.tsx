@@ -52,6 +52,7 @@ export function CompanyConfigurationForm({
                         errors={errors}
                         labels={labels}
                         processing={processing}
+                        dirty={isDirty}
                     />
                 </Stack>
             )}

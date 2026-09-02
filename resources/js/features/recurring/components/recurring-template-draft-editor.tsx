@@ -1,7 +1,8 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { DiscardChangesDialog } from '@/components/app/discard-changes-dialog';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid, Stack } from '@/components/app/layout';
@@ -16,19 +17,16 @@ import { DocumentLineEditor } from '@/components/domain/documents/document-line-
 import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
 import {
     applyRecurringCustomer,
-    applyRecurringProduct,
     blankRecurringLine,
     recurringTemplateFormData,
     recurringTemplatePayload,
 } from '@/features/recurring/components/recurring-template-form-data';
 import { RecurringTemplateOverrideSections } from '@/features/recurring/components/recurring-template-override-sections';
 import { calculateDocumentAmounts } from '@/lib/money/document-calculation';
-import type { CatalogTranslations } from '@/types/catalog';
 import type { CustomerTranslations } from '@/types/customer';
 import type {
     DocumentCustomerSelection,
     DocumentLineDraft,
-    DocumentProductDefaults,
 } from '@/types/document';
 import type {
     RecurringSourceProps,
@@ -45,8 +43,9 @@ type Props = RecurringSourceProps &
         updateUrl: string;
         labels: RecurringTranslations['editor'];
         customerLabels: CustomerTranslations;
-        catalogLabels: CatalogTranslations;
     };
+
+const FORM_ID = 'recurring-template-draft-editor';
 
 export function RecurringTemplateDraftEditor(props: Props) {
     const form = useForm(
@@ -56,11 +55,12 @@ export function RecurringTemplateDraftEditor(props: Props) {
     const [precision, setPrecision] = useState(
         props.template.currencyPrecision,
     );
+    const savedSources = useRef({
+        customer: props.template.customer,
+        precision: props.template.currencyPrecision,
+    });
     const [customerSelector, setCustomerSelector] = useState(false);
     const [customerCreator, setCustomerCreator] = useState(false);
-    const [productSelector, setProductSelector] = useState(false);
-    const [productCreator, setProductCreator] = useState(false);
-    const [lineIndex, setLineIndex] = useState<number | null>(null);
     const errors = form.errors as Record<string, string>;
     const calculated = form.data.lines.map((line) =>
         calculateDocumentLine(line, precision),
@@ -89,18 +89,6 @@ export function RecurringTemplateDraftEditor(props: Props) {
         form.setData(next);
     };
 
-    const applyProduct = (index: number, product: DocumentProductDefaults) => {
-        changeLines((lines) =>
-            applyRecurringProduct(
-                lines,
-                index,
-                product,
-                customer.taxDefault,
-                precision,
-            ),
-        );
-    };
-
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.transform(recurringTemplatePayload);
@@ -116,22 +104,39 @@ export function RecurringTemplateDraftEditor(props: Props) {
                 );
                 form.setData(next);
                 form.setDefaults(next);
+                savedSources.current = {
+                    customer: updated.customer,
+                    precision: updatedInheritance.currencyPrecision,
+                };
                 setCustomer(updated.customer);
                 setPrecision(updatedInheritance.currencyPrecision);
             },
         });
     };
 
+    const resetDraft = () => {
+        form.reset();
+        form.clearErrors();
+        setCustomer(savedSources.current.customer);
+        setPrecision(savedSources.current.precision);
+        setCustomerSelector(false);
+        setCustomerCreator(false);
+    };
+
     return (
         <>
-            <form onSubmit={submit}>
+            <form
+                id={FORM_ID}
+                onSubmit={submit}
+                onReset={(event) => {
+                    event.preventDefault();
+                    resetDraft();
+                }}
+            >
                 <Stack gap="xl">
                     <UnsavedChangesGuard
                         active={
-                            form.isDirty &&
-                            !form.processing &&
-                            !customerCreator &&
-                            !productCreator
+                            form.isDirty && !form.processing && !customerCreator
                         }
                         message={props.labels.unsaved_warning}
                     />
@@ -211,46 +216,46 @@ export function RecurringTemplateDraftEditor(props: Props) {
                         calculated={calculated}
                         totals={totals}
                         taxDefault={customer.taxDefault}
+                        taxPresetOptions={props.catalogForm.taxPresetOptions}
+                        currencyCode={customer.currencyCode}
+                        currencyPrecision={precision}
+                        productSearchUrl={props.sourceUrls.productSearch}
                         limits={props.limits}
                         labels={props.labels}
                         errors={errors}
                         onChange={changeLines}
                         onAdd={blankRecurringLine}
-                        onSelectProduct={(index) => {
-                            setLineIndex(index);
-                            setProductSelector(true);
-                        }}
                     />
                     <FormActions separated>
-                        <SubmitButton
+                        <DiscardChangesDialog
+                            dirty={form.isDirty}
                             processing={form.processing}
+                            form={FORM_ID}
+                            mode="discard"
+                            labels={props.labels}
+                        />
+                        <SaveButton
+                            processing={form.processing}
+                            dirty={form.isDirty}
                             testId="save-recurring-template"
                         >
                             {props.labels.save}
-                        </SubmitButton>
+                        </SaveButton>
                     </FormActions>
                 </Stack>
             </form>
             <DocumentSourceDialogs
                 customerOpen={customerSelector}
                 customerCreatorOpen={customerCreator}
-                productOpen={productSelector}
-                productCreatorOpen={productCreator}
-                currencyCode={customer.currencyCode}
                 sourceUrls={props.sourceUrls}
                 inlineCustomerStoreUrl={props.inlineCustomerStoreUrl}
-                inlineProductStoreUrl={props.inlineProductStoreUrl}
                 customerForm={props.customerForm}
-                catalogForm={props.catalogForm}
                 abilities={props.sourceAbilities}
                 allowCompanyDefaults={false}
                 labels={props.labels}
                 customerLabels={props.customerLabels}
-                catalogLabels={props.catalogLabels}
                 onCustomerOpenChange={setCustomerSelector}
                 onCustomerCreatorOpenChange={setCustomerCreator}
-                onProductOpenChange={setProductSelector}
-                onProductCreatorOpenChange={setProductCreator}
                 onCustomerSelected={applyCustomer}
                 onCustomerCreated={(page) => {
                     const created = page.props
@@ -259,18 +264,6 @@ export function RecurringTemplateDraftEditor(props: Props) {
                     if (created !== null) {
                         setCustomerCreator(false);
                         applyCustomer(created);
-                    }
-                }}
-                onProductSelected={(product) =>
-                    lineIndex !== null && applyProduct(lineIndex, product)
-                }
-                onProductCreated={(page) => {
-                    const created = page.props
-                        .inlineCreatedProduct as DocumentProductDefaults | null;
-
-                    if (created !== null && lineIndex !== null) {
-                        setProductCreator(false);
-                        applyProduct(lineIndex, created);
                     }
                 }}
             />

@@ -62,6 +62,7 @@ final class InvoiceDraftController extends Controller
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
                 'currency_unavailable', 'invoice_currency_locked_by_transactions' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
+                'tax_default_unavailable' => 'tax_default_preset_id',
                 'invoice_total_below_net_paid', 'issue_incomplete' => 'invoice',
                 'details_invalid' => 'due_date',
                 default => 'invoice',
@@ -88,6 +89,10 @@ final class InvoiceDraftController extends Controller
         PublicDocumentsTranslationBag $publicDocumentTranslations,
         DocumentDeliveryTranslationBag $deliveryTranslations,
     ): Response {
+        $initialTab = in_array($request->query('tab'), ['build', 'money', 'sharing'], true)
+            ? $request->query('tab')
+            : 'build';
+
         return Inertia::render('invoices/edit', [
             ...$page->edit(
                 $company,
@@ -97,6 +102,7 @@ final class InvoiceDraftController extends Controller
                 $request->session()->pull('inline_customer_id'),
                 $request->session()->pull('inline_product_id'),
             ),
+            'initialTab' => $initialTab,
             'status' => $request->session()->get('status'),
             'translations' => $translations->toArray(),
             'customerTranslations' => $customerTranslations->toArray(),
@@ -121,6 +127,7 @@ final class InvoiceDraftController extends Controller
                 'currency_unavailable' => 'currency_code',
                 'invoice_currency_locked_by_transactions' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
+                'tax_default_unavailable' => 'tax_default_preset_id',
                 'invoice_total_below_net_paid' => 'invoice',
                 'details_invalid' => 'due_date',
                 'issue_incomplete' => 'invoice',

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { normalizeEditedLine } from '@/components/domain/documents/document-draft-lines';
 import {
     addCalendarDays,
-    applyProductDefaults,
     blankQuoteLine,
     changeQuoteDetail,
     customerFromQuote,
     quoteFormData,
+    quoteRequestData,
 } from '@/features/quotes/components/quote-draft-form-data';
 import type { QuoteDraft } from '@/types/quote';
 
@@ -50,6 +50,7 @@ describe('Quote Draft source form data', () => {
         expect(form).toMatchObject({
             customerId: 'customer-1',
             customerConfirmationToken: null,
+            taxDefaultPresetId: 'tax-1',
             currencyCode: 'RON',
             bankAccountId: 'bank-1',
             termsAndConditions: 'Terms',
@@ -62,6 +63,7 @@ describe('Quote Draft source form data', () => {
             productServiceId: null,
             taxPresetId: 'tax-1',
             taxPercentage: '19',
+            usesDocumentTaxDefault: true,
             isCustomized: true,
             sourceApplied: false,
         });
@@ -92,26 +94,37 @@ describe('Quote Draft source form data', () => {
         });
     });
 
-    it('marks a freshly applied catalog source as default', () => {
+    it('stores and restores a manually entered name and description', () => {
+        const line = {
+            ...blankQuoteLine(quote.taxDefault),
+            productServiceName: 'Implementation',
+            description: 'Migration and setup',
+        };
+
         expect(
-            applyProductDefaults(
-                [blankQuoteLine(quote.taxDefault)],
-                0,
-                {
-                    sourceProductServiceId: 'product-1',
-                    name: 'Consulting',
-                    description: 'Work',
-                    unitPrice: '100',
-                    priceStatus: 'COPIED',
-                    sourceCurrencyCode: 'RON',
-                    unit: 'hour',
-                    periodUnit: 'NONE',
-                    tax: null,
-                },
-                quote.taxDefault,
-                quote.currencyPrecision,
-            )[0],
-        ).toMatchObject({ isCustomized: false, sourceApplied: true });
+            quoteRequestData({
+                ...quoteFormData(quote),
+                lines: [line],
+            }).lines[0],
+        ).toMatchObject({
+            product_service_id: null,
+            description: 'Implementation\nMigration and setup',
+        });
+        expect(
+            quoteFormData({
+                ...quote,
+                lines: [
+                    {
+                        ...line,
+                        productServiceName: null,
+                        description: 'Implementation\nMigration and setup',
+                    },
+                ],
+            }).lines[0],
+        ).toMatchObject({
+            productServiceName: 'Implementation',
+            description: 'Migration and setup',
+        });
     });
 
     it('derives calendar validity without crossing the supported year range', () => {

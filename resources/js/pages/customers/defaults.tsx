@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
+import { ResourceWorkspace } from '@/components/app/resource-workspace';
 import { SystemMessage } from '@/components/app/system-message';
 import { CustomerDefaultsForm } from '@/features/customers/components/customer-defaults-form';
 import { CustomerResolvedDefaults } from '@/features/customers/components/customer-resolved-defaults';
@@ -59,7 +59,7 @@ export default function CustomerDefaults({
                     name: customer.displayName,
                 })}
             />
-            <PageFrame>
+            <ResourceWorkspace>
                 <Stack gap="xl">
                     <CustomerWorkspaceNavigation
                         active="defaults"
@@ -71,7 +71,6 @@ export default function CustomerDefaults({
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
                         defaultsUrl={defaultsUrl}
-                        backLabel={workspace.back}
                         statusLabels={{
                             active: workspace.active,
                             archived: workspace.archived,
@@ -104,7 +103,7 @@ export default function CustomerDefaults({
                         labels={labels}
                     />
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

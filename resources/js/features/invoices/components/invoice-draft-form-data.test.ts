@@ -3,7 +3,6 @@ import { normalizeEditedLine } from '@/components/domain/documents/document-draf
 import {
     addCalendarDays,
     applyInvoiceCustomerDefaults,
-    applyInvoiceProductDefaults,
     blankInvoiceLine,
     changeInvoiceDetail,
     customerFromInvoice,
@@ -50,6 +49,7 @@ describe('Invoice Draft form data', () => {
         expect(invoiceFormData(invoice)).toMatchObject({
             customerId: 'customer-1',
             customerConfirmationToken: null,
+            taxDefaultPresetId: 'tax-1',
             paymentTermDays: '30',
             dueDate: '2026-09-25',
         });
@@ -60,6 +60,7 @@ describe('Invoice Draft form data', () => {
         expect(blankInvoiceLine(invoice.taxDefault)).toMatchObject({
             taxPresetId: 'tax-1',
             taxPercentage: '19',
+            usesDocumentTaxDefault: true,
             isCustomized: true,
             sourceApplied: false,
         });
@@ -69,6 +70,7 @@ describe('Invoice Draft form data', () => {
         expect(invoiceRequestData(invoiceFormData(invoice))).toMatchObject({
             edit_version: 3,
             customer_id: 'customer-1',
+            tax_default_preset_id: 'tax-1',
             issue_date: '2026-08-26',
             payment_term_days: 30,
             customer_reference: 'PO-42',
@@ -76,35 +78,37 @@ describe('Invoice Draft form data', () => {
         });
     });
 
-    it('marks a reapplied catalog source as default until it is edited', () => {
-        const applied = applyInvoiceProductDefaults(
-            [blankInvoiceLine(invoice.taxDefault)],
-            0,
-            {
-                sourceProductServiceId: 'product-1',
-                name: 'Consulting',
-                description: 'Work',
-                unitPrice: '100',
-                priceStatus: 'COPIED',
-                sourceCurrencyCode: 'RON',
-                unit: 'hour',
-                periodUnit: 'NONE',
-                tax: null,
-            },
-            invoice.taxDefault,
-            invoice.currencyPrecision,
-        )[0];
+    it('stores and restores a manually entered name and description', () => {
+        const line = {
+            ...blankInvoiceLine(invoice.taxDefault),
+            productServiceName: 'VMS Enterprise',
+            description: 'Managed platform',
+        };
 
-        expect(applied).toMatchObject({
-            isCustomized: false,
-            sourceApplied: true,
-        });
         expect(
             invoiceRequestData({
                 ...invoiceFormData(invoice),
-                lines: [applied],
+                lines: [line],
             }).lines[0],
-        ).toMatchObject({ source_applied: true });
+        ).toMatchObject({
+            product_service_id: null,
+            description: 'VMS Enterprise\nManaged platform',
+        });
+        expect(
+            invoiceFormData({
+                ...invoice,
+                lines: [
+                    {
+                        ...line,
+                        productServiceName: null,
+                        description: 'VMS Enterprise\nManaged platform',
+                    },
+                ],
+            }).lines[0],
+        ).toMatchObject({
+            productServiceName: 'VMS Enterprise',
+            description: 'Managed platform',
+        });
     });
 
     it('separates a legacy catalog name prefix from the line description', () => {
@@ -132,18 +136,51 @@ describe('Invoice Draft form data', () => {
     });
 
     it('applies confirmed Customer payment terms and derives the due date', () => {
+        const inherited = blankInvoiceLine(invoice.taxDefault);
+        const overridden = {
+            ...blankInvoiceLine(invoice.taxDefault),
+            key: 'override',
+            taxPresetId: 'tax-2',
+            taxName: 'Reduced',
+            taxPercentage: '9',
+            usesDocumentTaxDefault: false,
+        };
         expect(
-            applyInvoiceCustomerDefaults(invoiceFormData(invoice), {
-                ...customerFromInvoice(invoice),
-                customerId: 'customer-2',
-                paymentTermDays: 14,
-                confirmationToken: 'token',
-            }),
+            applyInvoiceCustomerDefaults(
+                {
+                    ...invoiceFormData(invoice),
+                    lines: [inherited, overridden],
+                },
+                {
+                    ...customerFromInvoice(invoice),
+                    customerId: 'customer-2',
+                    paymentTermDays: 14,
+                    taxDefault: {
+                        id: 'tax-3',
+                        name: 'Standard',
+                        percentage: '21',
+                    },
+                    confirmationToken: 'token',
+                },
+            ),
         ).toMatchObject({
             customerId: 'customer-2',
+            taxDefaultPresetId: 'tax-3',
             paymentTermDays: '14',
             dueDate: '2026-09-09',
             customerConfirmationToken: 'token',
+            lines: [
+                {
+                    taxPresetId: 'tax-3',
+                    taxName: 'Standard',
+                    taxPercentage: '21',
+                },
+                {
+                    taxPresetId: 'tax-2',
+                    taxName: 'Reduced',
+                    taxPercentage: '9',
+                },
+            ],
         });
     });
 

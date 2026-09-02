@@ -61,6 +61,7 @@ final class QuoteDraftController extends Controller
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
                 'currency_unavailable', 'currency_linked' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
+                'tax_default_unavailable' => 'tax_default_preset_id',
                 'details_invalid' => 'valid_until',
                 default => 'quote',
             };
@@ -118,6 +119,7 @@ final class QuoteDraftController extends Controller
                 'customer_confirmation_required', 'customer_defaults_changed' => 'customer_id',
                 'currency_unavailable', 'currency_linked' => 'currency_code',
                 'bank_unavailable' => 'bank_account_id',
+                'tax_default_unavailable' => 'tax_default_preset_id',
                 'details_invalid' => 'valid_until',
                 default => 'lines',
             };

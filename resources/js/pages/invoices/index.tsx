@@ -37,10 +37,14 @@ export default function InvoiceIndex(props: Props) {
                     <PageHeader
                         title={props.translations.index.title}
                         subtitle={props.translations.index.description}
+                        actionsPlacement="top-right"
                         actions={
                             props.createUrl ? (
                                 <ActionLink href={props.createUrl}>
-                                    <Plus aria-hidden="true" />
+                                    <Plus
+                                        aria-hidden="true"
+                                        data-icon="inline-start"
+                                    />
                                     {props.translations.index.create}
                                 </ActionLink>
                             ) : undefined

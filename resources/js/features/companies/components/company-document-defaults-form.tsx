@@ -60,6 +60,7 @@ export function CompanyDocumentDefaultsForm({
                         errors={errors}
                         labels={labels}
                         processing={processing}
+                        dirty={isDirty}
                     />
                 </Stack>
             )}

@@ -1,7 +1,9 @@
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { DiscardChangesDialog } from '@/components/app/discard-changes-dialog';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { SystemMessage } from '@/components/app/system-message';
 import { InvoiceIssueDialog } from '@/features/invoices/components/invoice-issue-dialog';
 import { InvoiceLifecycleDialog } from '@/features/invoices/components/invoice-lifecycle-dialog';
+import type { DocumentResetLabels } from '@/types/document';
 import type {
     InvoiceLifecycleActions,
     InvoiceTranslations,
@@ -20,6 +22,7 @@ type Props = {
     formId?: string;
     separated?: boolean;
     showStateMessage?: boolean;
+    resetLabels?: DocumentResetLabels;
 };
 
 export function InvoiceEditorLifecycleActions(props: Props) {
@@ -37,13 +40,23 @@ export function InvoiceEditorLifecycleActions(props: Props) {
                     />
                 )}
             <FormActions separated={props.separated ?? true}>
-                <SubmitButton
+                {props.formId && props.resetLabels ? (
+                    <DiscardChangesDialog
+                        dirty={props.dirty}
+                        processing={props.processing}
+                        form={props.formId}
+                        mode="discard"
+                        labels={props.resetLabels}
+                    />
+                ) : null}
+                <SaveButton
                     processing={props.processing}
+                    dirty={props.dirty}
                     testId="save-invoice"
                     form={props.formId}
                 >
                     {props.saveLabel}
-                </SubmitButton>
+                </SaveButton>
                 {props.lifecycle === 'DRAFT' && (
                     <InvoiceIssueDialog
                         key={props.editVersion}

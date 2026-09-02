@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { TextareaField, TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Stack } from '@/components/app/layout';
@@ -181,9 +181,9 @@ export function CompanyEmailTemplateEditor({
                             >
                                 {labels.preview}
                             </Button>
-                            <SubmitButton processing={processing}>
+                            <SaveButton processing={processing} dirty={dirty}>
                                 {labels.save}
-                            </SubmitButton>
+                            </SaveButton>
                         </FormActions>
                     </FormSection>
                 </form>

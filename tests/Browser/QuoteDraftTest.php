@@ -2,7 +2,6 @@
 
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
-use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
@@ -49,21 +48,16 @@ function companyForQuoteBrowser(string $language = 'en'): array
             'timezone' => 'Europe/Bucharest',
             'default_document_language' => $language,
         ]);
-        $currency = CompanyCurrency::query()->create([
+        CompanyCurrency::query()->create([
             'currency_code' => 'RON', 'currency_precision' => 2,
             'is_default' => true, 'active' => true,
         ]);
-        $tax = TaxPreset::query()->create([
+        TaxPreset::query()->create([
             'name' => 'TVA', 'percentage' => '19', 'is_default' => true,
         ]);
         Customer::query()->create([
             'type' => 'COMPANY', 'legal_name' => 'Browser Customer SRL',
             'document_language' => $language,
-        ]);
-        ProductService::query()->create([
-            'name' => 'Browser Consulting', 'unit_price' => '100',
-            'currency_id' => $currency->id, 'unit' => 'hour',
-            'period_unit' => 'NONE', 'tax_preset_id' => $tax->id,
         ]);
     });
 
@@ -110,8 +104,13 @@ it('creates and calculates a manual Quote Draft without viewport overflow', func
     [$owner, $company] = companyForQuoteBrowser();
 
     openQuoteCreate($owner, $company)
+        ->assertScript("document.querySelector('[data-slot=page-header]')?.classList.contains('sm:flex-row') === true")
         ->click('New quote')
         ->assertSee('New quote')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
+        ->type('Reference / PO', 'CLEAR ME')->click('@clear-document-draft')
+        ->assertSee('Clear this draft?')->click('@confirm-document-reset')
+        ->assertValue('Reference / PO', '')
         ->click('@document-customer-select')
         ->type('Customer search', 'Browser Customer')
         ->click('@document-customer-search')
@@ -120,23 +119,27 @@ it('creates and calculates a manual Quote Draft without viewport overflow', func
         ->click('@document-customer-confirm')
         ->assertSee('Browser Customer SRL')
         ->click('Add product or service')
-        ->click('@document-product-select-0')
-        ->type('Product or Service search', 'Browser Consulting')
-        ->click('@document-product-search')
-        ->click('@document-product-result')
-        ->click('@document-product-confirm')
-        ->assertValue('Product or Service', 'Browser Consulting')
+        ->type('@document-line-product-service-0', 'Browser Consulting')
+        ->wait(0.3)
+        ->assertSee('No catalogue match.')
+        ->screenshot(false, 'implementation-custom-product-choice.png')
+        ->click('@document-product-custom')
+        ->assertDontSee('No catalogue match.')
+        ->assertValue('@document-line-product-service-0', 'Browser Consulting')
         ->assertValue('Description', '')
-        ->type('Description', 'Browser Consulting')
+        ->type('Description', 'Implementation and support')
+        ->type('Item price', '100')
         ->type('Quantity', '2')
         ->type('Discount %', '10')
         ->assertSee('214.20')
         ->type('Reference / PO', 'PO-BROWSER-42')
         ->type('@quote-validity-days', '45')
-        ->type('Item price', '100')
         ->click('Save quote')
         ->assertSee('Quote saved.')
         ->assertSee('Q-'.now('Europe/Bucharest')->year.'-0001')
+        ->type('Reference / PO', 'DISCARD ME')->type('Description', 'DISCARD LINE')->click('@discard-document-changes')
+        ->assertSee('Discard unsaved changes?')->screenshot(false, 'implementation-discard-changes-dialog.png')
+        ->click('@confirm-document-reset')->assertValue('Reference / PO', 'PO-BROWSER-42')->assertValue('Description', 'Implementation and support')
         ->type('Description', 'Unsaved Quote sentinel')
         ->click('@document-customer-select')
         ->click('@document-inline-customer')
@@ -146,13 +149,9 @@ it('creates and calculates a manual Quote Draft without viewport overflow', func
         ->assertValue('Description', 'Unsaved Quote sentinel')
         ->assertSee('Inline Customer')
         ->assertValue('Description', 'Unsaved Quote sentinel')
-        ->click('@document-product-select-0')
-        ->click('@document-inline-product')
-        ->type('Name', 'Inline Browser Product')
-        ->click('Add entry')
-        ->assertValue('Product or Service', 'Inline Browser Product')
-        ->assertValue('Description', '')
-        ->type('Description', 'Inline Browser Product')
+        ->type('@document-line-product-service-0', 'Inline Browser Product')
+        ->assertValue('@document-line-product-service-0', 'Inline Browser Product')
+        ->type('Description', 'Inline Browser Product details')
         ->type('Item price', '100')
         ->assertSee('Inline Customer')
         ->click('Save quote draft')
@@ -163,6 +162,7 @@ it('creates and calculates a manual Quote Draft without viewport overflow', func
         ->assertNoAccessibilityIssues()
         ->click('View')
         ->assertSee('Current quote')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
         ->assertSee('PO-BROWSER-42')
         ->assertSee('Inline Customer')
         ->assertSee('214.20')
@@ -191,9 +191,13 @@ it('keeps the Romanian Quote Draft editor usable on a narrow viewport', function
     openQuoteCreate($owner, $company, mobile: true)
         ->click('Ofertă nouă')
         ->assertSee('Ofertă nouă')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
         ->click('Adaugă produs sau serviciu')
         ->assertSee('Descriere')
         ->assertSee('Preț unitar')
+        ->type('@document-line-product-service-0', 'Consultanță')
+        ->type('Preț unitar', '100')
+        ->type('Cantitate', '1')
         ->assertSee('Salvează oferta')
         ->click('Salvează oferta')
         ->assertSee('Oferta a fost salvată.')

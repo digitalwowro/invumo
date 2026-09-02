@@ -52,7 +52,7 @@ it('manages tax presets without leaking table content outside the viewport', fun
         ->assertSee('19.125%')
         ->click('Archive')
         ->assertSee('Archive tax preset?')
-        ->click('Archive tax preset')
+        ->click('@guarded-action-confirm')
         ->assertSee('Tax preset archived.')
         ->assertSee('Archived')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')

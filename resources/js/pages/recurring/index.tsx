@@ -34,6 +34,7 @@ export default function RecurringIndex(props: Props) {
                     <PageHeader
                         title={props.translations.index.title}
                         subtitle={props.translations.index.description}
+                        actionsPlacement="top-right"
                         actions={
                             <ActionLink href={props.createUrl}>
                                 <Plus

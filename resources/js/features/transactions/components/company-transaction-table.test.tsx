@@ -142,7 +142,7 @@ describe('CompanyTransactionTable', () => {
                             reference: 'CORRECTION-42',
                             invoiceNumber: 'I-2026-0042',
                             customerName: 'Client SRL',
-                            invoiceUrl: '/invoices/invoice-id',
+                            invoiceUrl: '/invoices/invoice-id?tab=money',
                         },
                     ],
                     previousUrl: null,
@@ -173,7 +173,7 @@ describe('CompanyTransactionTable', () => {
         expect(screen.getByText('Decrease paid')).toBeInTheDocument();
         expect(
             screen.getByRole('link', { name: 'Open Invoice' }),
-        ).toHaveAttribute('href', '/invoices/invoice-id');
+        ).toHaveAttribute('href', '/invoices/invoice-id?tab=money');
     });
 
     it('renders the localized empty state', () => {

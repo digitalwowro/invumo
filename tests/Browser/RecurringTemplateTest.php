@@ -2,7 +2,6 @@
 
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
-use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Actions\CreateCompany;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
@@ -32,13 +31,13 @@ function companyForRecurringBrowser(string $language = 'en'): array
             'timezone' => 'Europe/Bucharest',
             'default_document_language' => $language,
         ]);
-        $currency = CompanyCurrency::query()->create([
+        CompanyCurrency::query()->create([
             'currency_code' => 'RON',
             'currency_precision' => 2,
             'is_default' => true,
             'active' => true,
         ]);
-        $tax = TaxPreset::query()->create([
+        TaxPreset::query()->create([
             'name' => 'TVA',
             'percentage' => '19',
             'is_default' => true,
@@ -47,14 +46,6 @@ function companyForRecurringBrowser(string $language = 'en'): array
             'type' => 'COMPANY',
             'legal_name' => 'Recurring Customer SRL',
             'document_language' => $language,
-        ]);
-        ProductService::query()->create([
-            'name' => 'Recurring Support',
-            'unit_price' => '100',
-            'currency_id' => $currency->id,
-            'unit' => 'month',
-            'period_unit' => 'NONE',
-            'tax_preset_id' => $tax->id,
         ]);
     });
 
@@ -78,6 +69,12 @@ it('creates and calculates a recurring Draft without viewport overflow', functio
 
     openRecurringCreate($owner, $company)
         ->assertSee('New recurring template')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
+        ->type('Internal name', 'Clear me')
+        ->click('@clear-document-draft')
+        ->assertSee('Clear this draft?')
+        ->click('@confirm-document-reset')
+        ->assertValue('Internal name', '')
         ->type('Internal name', 'Monthly support plan')
         ->click('@document-customer-select')
         ->type('Customer search', 'Recurring Customer')
@@ -86,17 +83,22 @@ it('creates and calculates a recurring Draft without viewport overflow', functio
         ->click('@document-customer-confirm')
         ->click('@create-recurring-template')
         ->assertSee('Monthly support plan')
-        ->click('Add line')
-        ->click('@document-product-select-0')
-        ->type('Product or Service search', 'Recurring Support')
-        ->click('@document-product-search')
-        ->click('@document-product-result')
-        ->click('@document-product-confirm')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
+        ->click('@document-line-add')
+        ->type('@document-line-product-service-0', 'Recurring Support')
+        ->type('Description', 'Priority monthly assistance')
+        ->type('Item price', '100')
+        ->type('Unit', 'month')
         ->type('Quantity', '2')
         ->assertSee('238.00')
-        ->type('Customer reference / PO number', 'PO-RECURRING-42')
+        ->type('Reference / PO', 'PO-RECURRING-42')
         ->click('@save-recurring-template')
         ->assertSee('Recurring template saved.')
+        ->type('Reference / PO', 'DISCARD ME')
+        ->click('@discard-document-changes')
+        ->assertSee('Discard unsaved changes?')
+        ->click('@confirm-document-reset')
+        ->assertValue('Reference / PO', 'PO-RECURRING-42')
         ->type('Start date', '2026-09-01')
         ->click('Save schedule')
         ->assertSee('Recurring schedule saved.')
@@ -108,6 +110,7 @@ it('creates and calculates a recurring Draft without viewport overflow', functio
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues()
         ->navigate(route('recurring.index', $company, false))
+        ->assertScript("document.querySelector('[data-slot=page-header]')?.classList.contains('sm:flex-row') === true")
         ->assertSee('Monthly support plan')
         ->assertSee('PO-RECURRING-42')
         ->assertNoJavaScriptErrors()
@@ -119,6 +122,7 @@ it('keeps the Romanian recurring editor usable on a narrow viewport', function (
 
     openRecurringCreate($owner, $company, mobile: true)
         ->assertSee('Șablon recurent nou')
+        ->assertScript("document.querySelector('[data-slot=resource-workspace]')?.classList.contains('bg-page') === true")
         ->type('Nume intern', 'Abonament lunar')
         ->click('@document-customer-select')
         ->type('Căutare client', 'Recurring Customer')
@@ -127,7 +131,10 @@ it('keeps the Romanian recurring editor usable on a narrow viewport', function (
         ->click('@document-customer-confirm')
         ->click('@create-recurring-template')
         ->assertSee('Abonament lunar')
-        ->click('Adaugă linie')
+        ->click('@document-line-add')
+        ->type('@document-line-product-service-0', 'Asistență recurentă')
+        ->type('Preț unitar', '100')
+        ->type('Cantitate', '1')
         ->click('@save-recurring-template')
         ->assertSee('Șablonul recurent a fost salvat.')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')

@@ -79,6 +79,7 @@ final class CompanyTransactionListHttpTest extends TestCase
                     ->where('transactions.items.0.invoiceNumber', $invoice->rendered_number)
                     ->where('transactions.items.0.customerName', 'Operational Customer SRL')
                     ->where('transactions.items.0.amount', '10.00')
+                    ->where('transactions.items.0.invoiceUrl', route('invoices.edit', [$company, $invoice, 'tab' => 'money'], false))
                     ->where('summary.all.count', 1)
                     ->where('summary.payments.count', 1)
                     ->where('summary.payments.amounts.0.currencyCode', 'RON')

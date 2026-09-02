@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Stack } from '@/components/app/layout';
 import { SystemMessage } from '@/components/app/system-message';
@@ -12,12 +12,13 @@ import {
 } from '@/components/domain/documents/document-draft-lines';
 import { DocumentLineEditor } from '@/components/domain/documents/document-line-editor';
 import { DocumentSourceDialogs } from '@/components/domain/documents/document-source-dialogs';
+import { DocumentSourceLayout } from '@/components/domain/documents/document-source-layout';
+import { documentTaxDefaultChange } from '@/components/domain/documents/document-tax-options';
 import { useDocumentEditorReports } from '@/components/domain/documents/use-document-editor-reports';
 import { QuoteDetailsSection } from '@/features/quotes/components/quote-details-section';
 import type { QuoteDraftEditorProps } from '@/features/quotes/components/quote-draft-editor-props';
 import {
     applyCustomerDefaults,
-    applyProductDefaults,
     blankQuoteLine,
     changeQuoteDetail,
     customerFromQuote,
@@ -30,19 +31,20 @@ import type {
     QuoteCustomerSelection,
     QuoteDraft,
     QuoteLine,
-    QuoteProductDefaults,
 } from '@/types/quote';
 
 export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
-    const { onDirtyChange, onProcessingChange, onLineCountChange } = props;
     const form = useForm(quoteFormData(props.quote));
     const [customer, setCustomer] = useState(customerFromQuote(props.quote));
+    const [taxDefault, setTaxDefault] = useState(props.quote.taxDefault);
     const [precision, setPrecision] = useState(props.quote.currencyPrecision);
+    const savedSources = useRef({
+        customer: customerFromQuote(props.quote),
+        taxDefault: props.quote.taxDefault,
+        precision: props.quote.currencyPrecision,
+    });
     const [customerSelector, setCustomerSelector] = useState(false);
     const [customerCreator, setCustomerCreator] = useState(false);
-    const [productSelector, setProductSelector] = useState(false);
-    const [productCreator, setProductCreator] = useState(false);
-    const [lineIndex, setLineIndex] = useState<number | null>(null);
     const errors = form.errors as Record<string, string>;
     const editorError =
         errors.lines ??
@@ -64,9 +66,9 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
         dirty: form.isDirty,
         processing: form.processing,
         lineCount: form.data.lines.length,
-        onDirtyChange,
-        onProcessingChange,
-        onLineCountChange,
+        onDirtyChange: props.onDirtyChange,
+        onProcessingChange: props.onProcessingChange,
+        onLineCountChange: props.onLineCountChange,
     });
 
     const changeLines = (change: (lines: QuoteLine[]) => QuoteLine[]) => {
@@ -78,20 +80,19 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
 
     const applyCustomer = (selection: QuoteCustomerSelection) => {
         setCustomer(selection);
+        setTaxDefault(selection.taxDefault);
         setPrecision(selection.currencyPrecision);
         form.setData((current) => applyCustomerDefaults(current, selection));
     };
 
-    const applyProduct = (index: number, defaults: QuoteProductDefaults) => {
-        changeLines((lines) =>
-            applyProductDefaults(
-                lines,
-                index,
-                defaults,
-                customer.taxDefault,
-                precision,
-            ),
+    const changeTaxDefault = (value: string) => {
+        const change = documentTaxDefaultChange(
+            value,
+            props.catalogForm.taxPresetOptions,
+            taxDefault,
         );
+        setTaxDefault(change.taxDefault);
+        form.setData(change.update);
     };
 
     const changeDefault = (field: string, value: string | null) => {
@@ -121,6 +122,16 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
         );
     };
 
+    const resetDraft = () => {
+        form.reset();
+        form.clearErrors();
+        setCustomer(savedSources.current.customer);
+        setTaxDefault(savedSources.current.taxDefault);
+        setPrecision(savedSources.current.precision);
+        setCustomerSelector(false);
+        setCustomerCreator(false);
+    };
+
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.transform((data) => ({
@@ -141,72 +152,90 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                 const next = quoteFormData(updated);
                 form.setData(next);
                 form.setDefaults(next);
-                setCustomer(customerFromQuote(updated));
+                const nextCustomer = customerFromQuote(updated);
+                savedSources.current = {
+                    customer: nextCustomer,
+                    taxDefault: updated.taxDefault,
+                    precision: updated.currencyPrecision,
+                };
+                setCustomer(nextCustomer);
+                setTaxDefault(updated.taxDefault);
                 setPrecision(updated.currencyPrecision);
             },
         });
     };
+    const sourceSections = (
+        <>
+            <DocumentCustomerControls
+                customer={customer}
+                labels={props.labels}
+                onSelect={() => setCustomerSelector(true)}
+            />
+            <QuoteDetailsSection
+                {...form.data}
+                currencyOptions={props.currencyOptions}
+                taxDefault={taxDefault}
+                taxPresetOptions={props.catalogForm.taxPresetOptions}
+                limits={props.limits}
+                labels={props.labels}
+                errors={errors}
+                onChange={changeDetail}
+                onDefaultChange={changeDefault}
+                onTaxDefaultChange={changeTaxDefault}
+            />
+        </>
+    );
 
     return (
         <>
-            <form id={props.formId} onSubmit={submit}>
+            <form
+                id={props.formId}
+                onSubmit={submit}
+                onReset={(event) => {
+                    event.preventDefault();
+                    resetDraft();
+                }}
+            >
                 <Stack gap="xl">
                     <UnsavedChangesGuard
                         active={
-                            form.isDirty &&
-                            !form.processing &&
-                            !customerCreator &&
-                            !productCreator
+                            form.isDirty && !form.processing && !customerCreator
                         }
                         message={props.labels.unsaved_warning}
                     />
                     {editorError && (
                         <SystemMessage title={editorError} tone="error" />
                     )}
-                    <DocumentCustomerControls
-                        customer={customer}
-                        labels={props.labels}
-                        onSelect={() => setCustomerSelector(true)}
-                    />
-                    <QuoteDetailsSection
-                        issueDate={form.data.issueDate}
-                        validityDays={form.data.validityDays}
-                        validUntil={form.data.validUntil}
-                        customerReference={form.data.customerReference}
-                        limits={props.limits}
-                        labels={props.labels}
-                        errors={errors}
-                        onChange={changeDetail}
-                    />
+                    <DocumentSourceLayout
+                        aside={props.workspaceAside?.({
+                            calculated,
+                            totals,
+                            lines: form.data.lines,
+                            currencyCode: form.data.currencyCode,
+                            currencyPrecision: precision,
+                            dirty: form.isDirty,
+                        })}
+                    >
+                        {sourceSections}
+                    </DocumentSourceLayout>
                     <DocumentLineEditor
                         lines={form.data.lines}
                         calculated={calculated}
                         totals={totals}
-                        taxDefault={customer.taxDefault}
+                        taxDefault={taxDefault}
+                        taxPresetOptions={props.catalogForm.taxPresetOptions}
+                        currencyCode={form.data.currencyCode}
+                        currencyPrecision={precision}
+                        productSearchUrl={props.sourceUrls.productSearch}
                         limits={props.limits}
                         labels={props.labels}
                         errors={errors}
                         onChange={changeLines}
                         onAdd={blankQuoteLine}
-                        onSelectProduct={(index) => {
-                            setLineIndex(index);
-                            setProductSelector(true);
-                        }}
                     />
                     <DocumentDefaultsSection
-                        currencyCode={form.data.currencyCode}
-                        documentLanguage={form.data.documentLanguage}
-                        bankAccountId={form.data.bankAccountId}
-                        bankAccountLabel={
-                            props.quote.bankAccount?.label ?? null
-                        }
-                        taxDefault={customer.taxDefault}
-                        recipientCount={customer.recipientCount}
-                        emailAttachmentMode={customer.emailAttachmentMode}
-                        termsAndConditions={form.data.termsAndConditions}
-                        notes={form.data.notes}
+                        {...form.data}
                         isCustomized={form.data.defaultsCustomized}
-                        currencyOptions={props.currencyOptions}
                         languageOptions={props.languageOptions}
                         bankAccountOptions={props.bankAccountOptions}
                         termsLimit={props.limits.termsAndConditions}
@@ -225,6 +254,8 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
                             allocation={props.conversion.allocation}
                             saveLabel={props.labels.save}
                             conversionLabels={props.conversionLabels}
+                            resetLabels={props.labels}
+                            formId={props.formId}
                         />
                     )}
                 </Stack>
@@ -232,22 +263,14 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
             <DocumentSourceDialogs
                 customerOpen={customerSelector}
                 customerCreatorOpen={customerCreator}
-                productOpen={productSelector}
-                productCreatorOpen={productCreator}
-                currencyCode={form.data.currencyCode}
                 sourceUrls={props.sourceUrls}
                 inlineCustomerStoreUrl={props.inlineCustomerStoreUrl}
-                inlineProductStoreUrl={props.inlineProductStoreUrl}
                 customerForm={props.customerForm}
-                catalogForm={props.catalogForm}
                 abilities={props.sourceAbilities}
                 labels={props.labels}
                 customerLabels={props.customerLabels}
-                catalogLabels={props.catalogLabels}
                 onCustomerOpenChange={setCustomerSelector}
                 onCustomerCreatorOpenChange={setCustomerCreator}
-                onProductOpenChange={setProductSelector}
-                onProductCreatorOpenChange={setProductCreator}
                 onCustomerSelected={applyCustomer}
                 onCustomerCreated={(page) => {
                     const created = page.props
@@ -259,20 +282,6 @@ export function QuoteDraftEditor(props: QuoteDraftEditorProps) {
 
                     setCustomerCreator(false);
                     applyCustomer(created);
-                }}
-                onProductSelected={(defaults) =>
-                    lineIndex !== null && applyProduct(lineIndex, defaults)
-                }
-                onProductCreated={(page) => {
-                    const created = page.props
-                        .inlineCreatedProduct as QuoteProductDefaults | null;
-
-                    if (created === null || lineIndex === null) {
-                        return;
-                    }
-
-                    applyProduct(lineIndex, created);
-                    setProductCreator(false);
                 }}
             />
         </>

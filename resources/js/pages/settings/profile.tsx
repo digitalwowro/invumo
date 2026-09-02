@@ -1,6 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Stack } from '@/components/app/layout';
@@ -40,18 +40,19 @@ export default function Profile({
                     {...ProfileController.update.form()}
                     options={{ preserveScroll: true }}
                 >
-                    {({ processing, errors }) => (
+                    {({ processing, errors, isDirty }) => (
                         <FormSection
                             title={page.title}
                             description={page.description}
                             actions={
                                 <FormActions>
-                                    <SubmitButton
+                                    <SaveButton
                                         processing={processing}
+                                        dirty={isDirty}
                                         testId="update-profile-button"
                                     >
                                         {shared.save}
-                                    </SubmitButton>
+                                    </SaveButton>
                                 </FormActions>
                             }
                         >

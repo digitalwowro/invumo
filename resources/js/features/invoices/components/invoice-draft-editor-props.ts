@@ -1,6 +1,9 @@
-import type { CatalogTranslations } from '@/types/catalog';
+import type { ReactNode } from 'react';
 import type { CustomerTranslations } from '@/types/customer';
-import type { DocumentDraftCreation } from '@/types/document';
+import type {
+    DocumentDraftCreation,
+    DocumentEditorFinancials,
+} from '@/types/document';
 import type {
     InvoiceCatalogFormOptions,
     InvoiceCurrencyOption,
@@ -9,7 +12,6 @@ import type {
     InvoiceDraft,
     InvoiceLifecycleActions,
     InvoiceLimits,
-    InvoiceProductDefaults,
     InvoiceSourceOption,
     InvoiceSourceUrls,
     InvoiceTranslations,
@@ -24,9 +26,7 @@ export type InvoiceDraftEditorProps = {
     lifecycleActions?: InvoiceLifecycleActions;
     sourceUrls: InvoiceSourceUrls;
     inlineCustomerStoreUrl: string;
-    inlineProductStoreUrl: string;
     inlineCreatedCustomer: InvoiceCustomerSelection | null;
-    inlineCreatedProduct: InvoiceProductDefaults | null;
     sourceAbilities: { createCustomer: boolean; createProduct: boolean };
     currencyOptions: InvoiceCurrencyOption[];
     languageOptions: InvoiceSourceOption[];
@@ -37,10 +37,10 @@ export type InvoiceDraftEditorProps = {
     issueLabels: InvoiceTranslations['issue'];
     lifecycleLabels: InvoiceTranslations['lifecycle'];
     customerLabels: CustomerTranslations;
-    catalogLabels: CatalogTranslations;
     onDirtyChange?: (dirty: boolean) => void;
     onProcessingChange?: (processing: boolean) => void;
     onLineCountChange?: (count: number) => void;
     formId?: string;
     showActions?: boolean;
+    workspaceAside?: (financials: DocumentEditorFinancials) => ReactNode;
 };

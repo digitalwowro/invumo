@@ -93,6 +93,7 @@ final class QuoteConfigurationLockOrderTest extends TestCase
                 $quoteId,
                 new QuoteDraftData(
                     editVersion: 1, customerId: null, customerConfirmationToken: null,
+                    taxDefaultPresetId: null,
                     currencyCode: 'RON', documentLanguage: 'en', issueDate: '2026-08-26',
                     validityDays: 30, validUntil: '2026-09-25', customerReference: null,
                     bankAccountId: null, termsAndConditions: null, notes: null, lines: [],

@@ -1,6 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { CompanyNumberSeriesFields } from '@/features/companies/components/company-number-series-fields';
@@ -67,9 +67,9 @@ export function CompanyNumberSeriesForm({
                         labels={labels}
                     />
                     <FormActions>
-                        <SubmitButton processing={processing}>
+                        <SaveButton processing={processing} dirty={isDirty}>
                             {labels.save}
-                        </SubmitButton>
+                        </SaveButton>
                     </FormActions>
                 </Stack>
             )}

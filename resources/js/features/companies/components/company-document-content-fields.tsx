@@ -1,4 +1,4 @@
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { TextareaField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid, Stack } from '@/components/app/layout';
@@ -14,6 +14,7 @@ type Props = {
     errors: Record<string, string>;
     labels: CompanyDocumentDefaultsTranslations;
     processing: boolean;
+    dirty: boolean;
 };
 
 export function CompanyDocumentContentFields({
@@ -22,6 +23,7 @@ export function CompanyDocumentContentFields({
     errors,
     labels,
     processing,
+    dirty,
 }: Props) {
     return (
         <FormSection
@@ -29,9 +31,9 @@ export function CompanyDocumentContentFields({
             description={labels.content_description}
             actions={
                 <FormActions>
-                    <SubmitButton processing={processing}>
+                    <SaveButton processing={processing} dirty={dirty}>
                         {labels.save}
-                    </SubmitButton>
+                    </SaveButton>
                 </FormActions>
             }
         >

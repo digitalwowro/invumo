@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { CheckboxField, TextField } from '@/components/app/form-field';
 import { Grid, Stack } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
@@ -81,9 +81,9 @@ export function ReminderRuleForm({
                             <Plus data-icon="inline-start" aria-hidden="true" />
                             {labels.add}
                         </Button>
-                        <SubmitButton processing={processing}>
+                        <SaveButton processing={processing} dirty={isDirty}>
                             {labels.save}
-                        </SubmitButton>
+                        </SaveButton>
                     </FormActions>
                 );
 

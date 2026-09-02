@@ -1,4 +1,3 @@
-import type { DependencyGuard } from '@/types/dependency-guard';
 import type { OperationalListSummaryItem } from '@/types/operational-list';
 
 export type CatalogPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
@@ -6,6 +5,10 @@ export type CatalogPeriodUnit = 'NONE' | 'MONTH' | 'YEAR';
 export type CatalogOption = {
     value: string;
     label: string;
+};
+
+export type CatalogTaxOption = CatalogOption & {
+    percentage: string;
 };
 
 export type CatalogCurrencyOption = CatalogOption & {
@@ -27,6 +30,19 @@ export type ProductServiceFormData = {
 export type ProductServiceRow = {
     id: string;
     name: string;
+    internalCode: string | null;
+    unitPrice: string | null;
+    currencyCode: string | null;
+    unit: string | null;
+    periodLabel: string;
+    taxPresetName: string | null;
+    archived: boolean;
+    workspaceUrl: string;
+};
+
+export type ProductServiceRecord = {
+    id: string;
+    name: string;
     description: string | null;
     internalCode: string | null;
     unitPrice: string | null;
@@ -38,12 +54,6 @@ export type ProductServiceRow = {
     taxPresetId: string | null;
     taxPresetName: string | null;
     archived: boolean;
-    updatedAt: string | null;
-    updateUrl: string;
-    archiveUrl: string;
-    restoreUrl: string;
-    deleteUrl: string;
-    deleteGuard: DependencyGuard;
 };
 
 export type ProductServiceCursorPage = {
@@ -78,6 +88,15 @@ export type CatalogTranslations = {
         status_options: Record<string, string>;
         sort_options: Record<string, string>;
     };
+    workspace: Record<
+        | 'head_title'
+        | 'description'
+        | 'back'
+        | 'active'
+        | 'archived'
+        | 'archived_notice',
+        string
+    >;
     form: {
         create_title: string;
         create_description: string;

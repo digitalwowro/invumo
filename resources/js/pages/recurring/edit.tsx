@@ -1,7 +1,9 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { SystemMessage } from '@/components/app/system-message';
 import { StatusBadge } from '@/components/domain/status-badge';
 import { RecurringAutomaticEmailForm } from '@/features/recurring/components/recurring-automatic-email-form';
@@ -62,27 +64,39 @@ export default function EditRecurringTemplate(props: Props) {
             <Head
                 title={`${props.translations.editor.head_title} ${props.template.internalName}`}
             />
-            <PageFrame width="full">
+            <ResourceWorkspace>
                 <Stack gap="2xl">
-                    <PageHeader
+                    <ResourceWorkspaceHeader
+                        breadcrumbs={[
+                            {
+                                title: props.translations.index.title,
+                                href: props.indexUrl,
+                            },
+                            {
+                                title: props.template.internalName,
+                                href: props.indexUrl,
+                            },
+                        ]}
                         title={props.template.internalName}
-                        subtitle={props.translations.editor.description}
+                        description={props.translations.editor.description}
+                        status={
+                            <StatusBadge
+                                status={
+                                    props.template.state.toLowerCase() as
+                                        | 'draft'
+                                        | 'active'
+                                        | 'paused'
+                                        | 'completed'
+                                }
+                                label={
+                                    props.translations.index.states[
+                                        props.template.state
+                                    ]
+                                }
+                            />
+                        }
                         actions={
                             <>
-                                <StatusBadge
-                                    status={
-                                        props.template.state.toLowerCase() as
-                                            | 'draft'
-                                            | 'active'
-                                            | 'paused'
-                                            | 'completed'
-                                    }
-                                    label={
-                                        props.translations.index.states[
-                                            props.template.state
-                                        ]
-                                    }
-                                />
                                 <RecurringTemplateLifecycleActions
                                     state={props.template.state}
                                     editVersion={props.template.editVersion}
@@ -143,7 +157,6 @@ export default function EditRecurringTemplate(props: Props) {
                             {...props}
                             labels={props.translations.editor}
                             customerLabels={props.customerTranslations}
-                            catalogLabels={props.catalogTranslations}
                         />
                     ) : (
                         <SystemMessage
@@ -152,7 +165,7 @@ export default function EditRecurringTemplate(props: Props) {
                         />
                     )}
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

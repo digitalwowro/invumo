@@ -1,18 +1,13 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { ActionLink } from '@/components/app/action-link';
 import { Stack } from '@/components/app/layout';
 import { PageFrame } from '@/components/app/page-frame';
 import { PageHeader } from '@/components/app/page-header';
 import { SystemMessage } from '@/components/app/system-message';
-import { ProductServiceCreateForm } from '@/components/domain/catalog/product-service-create-form';
-import { Button } from '@/components/ui/button';
 import { ProductServiceTable } from '@/features/catalog/components/product-service-table';
 import type {
-    CatalogCurrencyOption,
     CatalogFilters,
-    CatalogLimits,
-    CatalogOption,
     CatalogTranslations,
     ProductServiceCursorPage,
     ProductServiceListSummary,
@@ -22,19 +17,14 @@ type Props = {
     products: ProductServiceCursorPage;
     filters: CatalogFilters;
     summary: ProductServiceListSummary;
-    currencyOptions: CatalogCurrencyOption[];
-    taxPresetOptions: CatalogOption[];
-    periodOptions: CatalogOption[];
-    limits: CatalogLimits;
     indexUrl: string;
-    storeUrl: string;
+    createUrl: string;
     status?: string;
     translations: CatalogTranslations;
 };
 
 export default function CatalogIndex(props: Props) {
     const { errors, i18n } = usePage().props;
-    const [creating, setCreating] = useState(false);
 
     return (
         <>
@@ -44,15 +34,15 @@ export default function CatalogIndex(props: Props) {
                     <PageHeader
                         title={props.translations.index.title}
                         subtitle={props.translations.index.description}
+                        actionsPlacement="top-right"
                         actions={
-                            <Button
-                                type="button"
-                                disabled={creating}
-                                onClick={() => setCreating(true)}
-                            >
-                                <Plus aria-hidden="true" />
+                            <ActionLink href={props.createUrl}>
+                                <Plus
+                                    aria-hidden="true"
+                                    data-icon="inline-start"
+                                />
                                 {props.translations.index.create}
-                            </Button>
+                            </ActionLink>
                         }
                     />
                     {props.status && (
@@ -64,23 +54,12 @@ export default function CatalogIndex(props: Props) {
                             tone="error"
                         />
                     )}
-                    {creating && (
-                        <ProductServiceCreateForm
-                            {...props}
-                            labels={props.translations.form}
-                            cancelLabel={i18n.common.actions.cancel}
-                            onCancel={() => setCreating(false)}
-                            onSuccess={() => setCreating(false)}
-                        />
-                    )}
-                    {!creating && (
-                        <ProductServiceTable
-                            {...props}
-                            labels={props.translations}
-                            page={props.products}
-                            commonLabels={i18n.common.operational_list}
-                        />
-                    )}
+                    <ProductServiceTable
+                        {...props}
+                        labels={props.translations}
+                        page={props.products}
+                        commonLabels={i18n.common.operational_list}
+                    />
                 </Stack>
             </PageFrame>
         </>

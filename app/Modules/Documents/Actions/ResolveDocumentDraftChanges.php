@@ -4,6 +4,7 @@ namespace App\Modules\Documents\Actions;
 
 use App\Modules\Documents\Data\DocumentDraftData;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentTaxDefault;
 
 final class ResolveDocumentDraftChanges
 {
@@ -17,8 +18,12 @@ final class ResolveDocumentDraftChanges
         bool $customerSelectionApplied,
         array $kindChanges,
     ): array {
+        $taxDefaultPresetId = DocumentTaxDefault::query()
+            ->where('document_id', $document->id)
+            ->value('tax_preset_id');
         $changed = [
             'customer_id' => $customerSelectionApplied,
+            'tax_default' => $taxDefaultPresetId !== $data->taxDefaultPresetId,
             'currency_code' => $document->currency_code !== $data->currencyCode,
             'document_language' => $document->document_language !== $data->documentLanguage,
             'issue_date' => $document->issue_date?->toDateString() !== $data->issueDate,

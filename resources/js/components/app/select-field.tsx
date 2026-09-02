@@ -30,6 +30,7 @@ type SelectFieldProps = {
     onValueChange?: (value: string) => void;
     required?: boolean;
     disabled?: boolean;
+    testId?: string;
     options: SelectOption[];
 };
 
@@ -46,6 +47,7 @@ export function SelectField({
     onValueChange,
     required,
     disabled,
+    testId,
     options,
 }: SelectFieldProps) {
     const generatedId = useId();
@@ -71,6 +73,7 @@ export function SelectField({
                     className="w-full"
                     aria-invalid={Boolean(error)}
                     aria-describedby={describedBy || undefined}
+                    data-testid={testId}
                 >
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>

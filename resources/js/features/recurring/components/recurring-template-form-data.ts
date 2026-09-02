@@ -1,4 +1,7 @@
-import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    editableDocumentLineContent,
+    storedDocumentLineDescription,
+} from '@/components/domain/documents/document-draft-lines';
 import {
     compactDecimal,
     compactDocumentLineDecimals,
@@ -6,7 +9,6 @@ import {
 import type {
     DocumentCustomerSelection,
     DocumentLineDraft,
-    DocumentProductDefaults,
     DocumentTaxDefault,
 } from '@/types/document';
 import type {
@@ -31,7 +33,7 @@ export const blankRecurringLine = (
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
-    productServiceName: null,
+    productServiceName: '',
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -61,7 +63,7 @@ export const recurringTemplateFormData = (
             {
                 ...line,
                 key: line.id ?? crypto.randomUUID(),
-                description: detachedLineDescription(
+                ...editableDocumentLineContent(
                     line.description,
                     line.productServiceName,
                 ),
@@ -138,38 +140,6 @@ export const applyRecurringCustomer = (
     };
 };
 
-export const applyRecurringProduct = (
-    lines: DocumentLineDraft[],
-    index: number,
-    product: DocumentProductDefaults,
-    fallbackTax: DocumentTaxDefault | null,
-    currencyPrecision: number | null,
-): DocumentLineDraft[] =>
-    lines.map((line, lineIndex) =>
-        lineIndex === index
-            ? compactDocumentLineDecimals(
-                  {
-                      ...line,
-                      productServiceId: product.sourceProductServiceId,
-                      productServiceName: product.name ?? null,
-                      description: product.description,
-                      itemPrice: product.unitPrice ?? '',
-                      unit: product.unit ?? '',
-                      periodUnit: product.periodUnit,
-                      taxName: product.tax?.name ?? fallbackTax?.name ?? '',
-                      taxPercentage:
-                          product.tax?.percentage ??
-                          fallbackTax?.percentage ??
-                          '0',
-                      taxPresetId: product.tax?.sourceTaxPresetId ?? null,
-                      taxMode: product.tax ? 'EXPLICIT' : 'INHERIT_CUSTOMER',
-                      priceStatus: product.priceStatus,
-                  },
-                  currencyPrecision,
-              )
-            : line,
-    );
-
 export const recurringTemplatePayload = (
     data: RecurringTemplateEditorData,
 ) => ({
@@ -181,7 +151,7 @@ export const recurringTemplatePayload = (
     lines: data.lines.map((line) => ({
         id: line.id,
         product_service_id: line.productServiceId,
-        description: line.description,
+        description: storedDocumentLineDescription(line),
         item_price: line.itemPrice,
         quantity: line.quantity,
         unit: line.unit,

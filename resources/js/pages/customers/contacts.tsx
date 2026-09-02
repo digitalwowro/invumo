@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
+import { ResourceWorkspace } from '@/components/app/resource-workspace';
 import { SectionHeader } from '@/components/app/section-header';
 import { SystemMessage } from '@/components/app/system-message';
 import { CustomerContactCreateForm } from '@/features/customers/components/customer-contact-create-form';
@@ -70,7 +70,7 @@ export default function CustomerContacts({
                     name: customer.displayName,
                 })}
             />
-            <PageFrame>
+            <ResourceWorkspace>
                 <Stack gap="xl">
                     <CustomerWorkspaceNavigation
                         active="contacts"
@@ -82,7 +82,6 @@ export default function CustomerContacts({
                         overviewUrl={overviewUrl}
                         contactsUrl={contactsUrl}
                         defaultsUrl={defaultsUrl}
-                        backLabel={workspace.back}
                         statusLabels={{
                             active: workspace.active,
                             archived: workspace.archived,
@@ -134,7 +133,7 @@ export default function CustomerContacts({
                         labels={translations.delivery}
                     />
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

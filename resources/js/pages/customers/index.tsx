@@ -48,10 +48,14 @@ export default function CustomersIndex({
                     <PageHeader
                         title={labels.title}
                         subtitle={labels.description}
+                        actionsPlacement="top-right"
                         actions={
                             abilities.create ? (
                                 <ActionLink href={createUrl}>
-                                    <Plus aria-hidden="true" />
+                                    <Plus
+                                        aria-hidden="true"
+                                        data-icon="inline-start"
+                                    />
                                     {labels.create}
                                 </ActionLink>
                             ) : undefined

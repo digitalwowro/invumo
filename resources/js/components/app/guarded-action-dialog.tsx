@@ -41,7 +41,7 @@ export function GuardedActionDialog({
 }: Props) {
     const triggerVariant = tone === 'destructive' ? 'destructive' : 'secondary';
     const confirmVariant =
-        tone === 'destructive' ? 'destructive-confirm' : 'primary';
+        tone === 'destructive' ? 'destructive-confirm' : 'secondary';
 
     return (
         <Dialog>
@@ -79,6 +79,7 @@ export function GuardedActionDialog({
                         <Button
                             type="button"
                             variant={confirmVariant}
+                            data-testid="guarded-action-confirm"
                             onClick={onConfirm}
                         >
                             {confirmLabel}

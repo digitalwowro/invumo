@@ -193,6 +193,8 @@ PATCH  /companies/{company}/invoices/{invoice}/adjustments/{adjustment}
 DELETE /companies/{company}/invoices/{invoice}/adjustments/{adjustment}
 ```
 
+Opening a Company transaction routes to its owning Invoice workspace with **Payments & adjustments** active. It does not open the document-building section.
+
 The permission matrix controls each mutation. Members may manage Payments and Refunds but not Adjustments.
 
 ### 4.3 Company settings routes
@@ -278,13 +280,23 @@ Amounts in different currencies are never added into one list total. Any summary
 
 An operational row opens one canonical resource workspace; Invumo does not maintain competing view and edit pages for the same current record.
 
+The record-entry action is labelled **Open** because it enters that canonical workspace. **Edit** is reserved for an explicit edit-only dialog or mode; it is not a second name for opening an editable workspace.
+
 - Customer workspace: Overview, contacts/delivery/defaults, documents, and permitted activity.
 - Product/Service workspace: catalogue defaults, use/dependency summary, and permitted activity.
 - Quote workspace: Document, Delivery/decision history, related Invoices, and permitted activity.
 - Invoice workspace: Document, Transactions, Delivery/reminders, and permitted activity.
 - Recurring workspace: Template, Schedule/occurrences, Delivery/reminders, and permitted activity.
 
-The tabs/sections are configurations of shared workspace components. A record with only one meaningful region does not show decorative tabs. The primary creation/editing path always opens on Document or Template.
+The tabs/sections are configurations of shared workspace components on the shared neutral-grey canvas with a consistent identity header, content surfaces, breadcrumbs, and action placement. Breadcrumbs provide the route back to the collection; record headers do not duplicate that navigation with a **Back to …** action. Authorized record actions sit in one row directly below the title and supporting identity, never in a page-bottom action bar. Collection-page **New …** actions are the deliberate exception: Quotes, Invoices, Customers, recurring templates, and Products place that single action in the page header's upper-right region on wide screens.
+
+New-resource routes use the same workspace canvas, header hierarchy, breadcrumbs, and action placement as their canonical record workspaces. Creation keeps all required fields in one continuous page and does not add decorative tabs. Existing records show tabs only when they separate meaningful task groups. The primary creation/editing path always opens on Document or Template.
+
+Canonical collection tables expose a bordered **Open** action and do not expose destructive record actions. **Archive**, **Restore**, and **Delete** belong to the record workspace; confirmation copy communicates whether deletion is permanent and any stronger acknowledgement required by the financial-state contract.
+
+Existing-value forms use the shared dirty-aware Save control: Save or Update remains disabled until that form changes and while its request is processing. Creation, addition, delivery, and lifecycle commands keep their own completeness, authorization, and state rules.
+
+Invoice, Quote, and recurring document forms expose an explicit local recovery command beside Save. **Discard changes** on a persisted record restores the full last-saved form baseline, including derived Customer/tax/currency state and added, removed, reordered, or edited lines. **Clear draft** on an unsaved creation route restores the server-provided initial values. Both commands are disabled while clean or processing and require confirmation. They perform no request, audit write, version transition, or historical restore; restoring a previously persisted version would be a separate **Restore this version** capability.
 
 ### 6.2 `DocumentEditorShell`
 
@@ -320,17 +332,18 @@ On wide screens, the editable content is the flexible main column and the totals
 
 ### 6.4 Lines and inline creation
 
-`DocumentLinesEditor` is shared by all three editors. It owns manual lines, searchable active Product/Service selection, snapshot copying, complete post-selection editing, add/remove/reorder, quantity, unit, period, description, unit price, discount, tax, and preview totals.
+`DocumentLinesEditor` is shared by all three editors. It owns manual lines, searchable active Product/Service selection, snapshot copying, complete post-selection editing, add/remove/reorder, quantity, unit, period, description, unit price, discount, tax, and preview totals. **Add product or service** appends a blank row immediately. Its Product or Service cell accepts manual text and searches the active catalogue in the same control; choosing a result copies detached defaults into the row, while continued manual entry remains valid and safely detaches prior catalogue provenance. A query with no match offers one explicit custom-product action using the typed name. `Enter` confirms that manual value, while `Tab`, `Escape`, and outside click dismiss the search surface and retain the text. No pre-choice or picker-first modal interrupts line creation.
 
-Line add/remove/reorder and unsaved undo remain local reducer changes until the editor sends one complete aggregate command with the current version. The server locks and reconciles the full owned line set through the approved PostgreSQL-safe atomic mechanism; the browser never sends sequential position writes, and v1 has no separate persisted line-reorder or line-undo endpoint.
+Wide complete rows use quiet, borderless-at-rest controls and reserve the most space for Product/description, item price, and line total. Hover and focus restore normal edit affordances. Blank or financially incomplete rows remain visibly editable, and compact/mobile cards keep explicit controls. The editor selects the wide 11-column table only when its own container provides at least 1120px; otherwise it uses the compact card editor rather than introducing an internal horizontal-scroll workflow.
 
-Customer and Product/Service inline creation use the same actions and form components as standalone creation:
+Line add/remove/reorder and full-form discard remain local reducer changes until the editor sends one complete aggregate command with the current version. The server locks and reconciles the full owned line set through the approved PostgreSQL-safe atomic mechanism; the browser never sends sequential position writes, and v1 has no separate persisted line-reorder, line-undo, or historical-restore endpoint.
+
+Customer inline creation uses the same action and form components as standalone creation:
 
 - the parent editor remains mounted and retains all local values;
 - the dialog body scrolls vertically while its title and actions remain reachable;
 - validation errors keep both editor and modal values;
 - a successful create returns the minimum new option data, closes the dialog, and selects the new record;
-- Product/Service inline creation is absent for Members because catalogue management is Owner/Admin-only;
 - selecting a Customer or Product/Service never creates a live link that can silently rewrite an existing document line/snapshot.
 
 Customer selection previews return an opaque HMAC over only the currently resolved source/default content that would be copied. The aggregate save locks and re-resolves those sources, compares the HMAC in constant time, and rejects a stale preview before changing the Draft. The token contains no clear source values, is not persisted or audited, and therefore does not become an alternate Customer-data store. Product/Service selection remains a detached preview; saving locks referenced Tax presets, then Products/Services, then existing lines in stable UUID order before accepting provenance or copied values.

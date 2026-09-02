@@ -148,6 +148,7 @@ function ContactActions({
             )}
             {contact.archiveUrl && (
                 <ConfirmationDialog
+                    tone="default"
                     triggerLabel={labels.archive}
                     title={labels.archive_title}
                     description={labels.archive_description}

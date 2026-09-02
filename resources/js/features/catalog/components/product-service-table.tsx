@@ -1,8 +1,5 @@
-import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import type { KeyboardEvent, MouseEvent } from 'react';
-import { GuardedActionDialog } from '@/components/app/guarded-action-dialog';
-import { Inline, Stack } from '@/components/app/layout';
+import { Link, router } from '@inertiajs/react';
+import { Stack } from '@/components/app/layout';
 import { OperationalListPagination } from '@/components/app/operational-list-pagination';
 import { OperationalListSummary } from '@/components/app/operational-list-summary';
 import { OperationalTable } from '@/components/app/operational-table';
@@ -10,7 +7,6 @@ import type {
     OperationalColumn,
     OperationalTableStateCopy,
 } from '@/components/app/operational-table';
-import { ConfirmationDialog } from '@/components/app/responsive-dialog';
 import {
     BodyStrong,
     SecondaryText,
@@ -18,18 +14,16 @@ import {
     TableValue,
 } from '@/components/app/typography';
 import { StatusBadge } from '@/components/domain/status-badge';
-import { ProductServiceEditDialog } from '@/features/catalog/components/product-service-edit-dialog';
+import { Button } from '@/components/ui/button';
 import { ProductServiceListTools } from '@/features/catalog/components/product-service-list-tools';
 import {
     countProductServiceFilters,
     productServiceListQuery,
     productServiceListUrl,
 } from '@/features/catalog/lib/product-service-list-query';
+import { interpolate } from '@/lib/translations';
 import type {
-    CatalogCurrencyOption,
     CatalogFilters,
-    CatalogLimits,
-    CatalogOption,
     CatalogTranslations,
     ProductServiceCursorPage,
     ProductServiceListSummary,
@@ -42,18 +36,11 @@ type Props = {
     filters: CatalogFilters;
     summary: ProductServiceListSummary;
     indexUrl: string;
-    currencyOptions: CatalogCurrencyOption[];
-    taxPresetOptions: CatalogOption[];
-    periodOptions: CatalogOption[];
-    limits: CatalogLimits;
     labels: CatalogTranslations;
     commonLabels: OperationalListTranslations;
 };
 
 export function ProductServiceTable(props: Props) {
-    const { i18n } = usePage().props;
-    const [editingProduct, setEditingProduct] =
-        useState<ProductServiceRow | null>(null);
     const labels = props.labels.index;
     const columns: OperationalColumn<ProductServiceRow>[] = [
         {
@@ -114,7 +101,11 @@ export function ProductServiceTable(props: Props) {
             label: props.commonLabels.columns.actions,
             kind: 'actions',
             render: (product) => (
-                <ProductActions product={product} {...props} />
+                <Button asChild variant="secondary">
+                    <Link href={product.workspaceUrl}>
+                        {props.labels.actions.open}
+                    </Link>
+                </Button>
             ),
         },
     ];
@@ -164,10 +155,9 @@ export function ProductServiceTable(props: Props) {
                 rows={props.page.items}
                 rowKey={(product) => product.id}
                 rowLabel={(product) =>
-                    `${props.labels.actions.edit}: ${product.name}`
+                    interpolate(labels.open_product, { name: product.name })
                 }
-                onRowActivate={setEditingProduct}
-                canActivateRow={(product) => !product.archived}
+                onRowActivate={(product) => router.visit(product.workspaceUrl)}
                 state={state}
                 stateCopy={stateCopy}
                 toolbar={
@@ -198,94 +188,6 @@ export function ProductServiceTable(props: Props) {
                     />
                 }
             />
-            {editingProduct && (
-                <ProductServiceEditDialog
-                    product={editingProduct}
-                    {...props}
-                    cancelLabel={i18n.common.actions.cancel}
-                    closeLabel={i18n.common.accessibility.close_navigation}
-                    open
-                    showTrigger={false}
-                    onOpenChange={(open) => {
-                        if (!open) {
-                            setEditingProduct(null);
-                        }
-                    }}
-                />
-            )}
         </Stack>
-    );
-}
-
-function ProductActions({
-    product,
-    ...props
-}: Props & { product: ProductServiceRow }) {
-    const { i18n } = usePage().props;
-    const labels = props.labels.actions;
-    const request = (url: string, method: 'post' | 'delete') =>
-        method === 'post'
-            ? router.post(url, {}, { preserveScroll: true })
-            : router.delete(url, { preserveScroll: true });
-    const stop = (event: MouseEvent<HTMLDivElement>) => event.stopPropagation();
-    const stopKeyboard = (event: KeyboardEvent<HTMLDivElement>) =>
-        event.stopPropagation();
-
-    return (
-        <div onClick={stop} onKeyDown={stopKeyboard}>
-            <Inline gap="sm">
-                {!product.archived && (
-                    <ProductServiceEditDialog
-                        product={product}
-                        {...props}
-                        cancelLabel={i18n.common.actions.cancel}
-                        closeLabel={i18n.common.accessibility.close_navigation}
-                    />
-                )}
-                <ConfirmationDialog
-                    tone="default"
-                    triggerLabel={
-                        product.archived ? labels.restore : labels.archive
-                    }
-                    title={
-                        product.archived
-                            ? labels.restore_title
-                            : labels.archive_title
-                    }
-                    description={
-                        product.archived
-                            ? labels.restore_description
-                            : labels.archive_description
-                    }
-                    confirmLabel={
-                        product.archived
-                            ? labels.confirm_restore
-                            : labels.confirm_archive
-                    }
-                    cancelLabel={i18n.common.actions.cancel}
-                    closeLabel={i18n.common.accessibility.close_navigation}
-                    onConfirm={() =>
-                        request(
-                            product.archived
-                                ? product.restoreUrl
-                                : product.archiveUrl,
-                            'post',
-                        )
-                    }
-                />
-                <GuardedActionDialog
-                    triggerLabel={labels.delete}
-                    title={labels.delete_title}
-                    description={labels.delete_description}
-                    confirmLabel={labels.confirm_delete}
-                    cancelLabel={i18n.common.actions.cancel}
-                    closeLabel={i18n.common.accessibility.close_navigation}
-                    warningTitle={labels.dependency_warning_title}
-                    guard={product.deleteGuard}
-                    tone="destructive"
-                    onConfirm={() => request(product.deleteUrl, 'delete')}
-                />
-            </Inline>
-        </div>
     );
 }

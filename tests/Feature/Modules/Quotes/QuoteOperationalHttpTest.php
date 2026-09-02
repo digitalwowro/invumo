@@ -239,6 +239,7 @@ final class QuoteOperationalHttpTest extends TestCase
     {
         return [...[
             'edit_version' => 1, 'customer_id' => null, 'customer_confirmation_token' => null,
+            'tax_default_preset_id' => null,
             'currency_code' => 'RON', 'document_language' => 'en',
             'issue_date' => '2026-08-26', 'validity_days' => 30,
             'valid_until' => '2026-09-25', 'customer_reference' => null,

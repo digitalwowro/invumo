@@ -48,9 +48,7 @@ describe('ComponentStateGallery', () => {
         );
 
         expect(screen.getByRole('dialog')).toBeInTheDocument();
-        expect(
-            screen.getByRole('button', { name: 'Șterge ciorna' }),
-        ).toBeEnabled();
+        expect(screen.getByRole('button', { name: 'Șterge' })).toBeEnabled();
         expect(
             screen.getByRole('button', { name: 'Închide fereastra' }),
         ).toBeEnabled();

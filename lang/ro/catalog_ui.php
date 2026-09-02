@@ -25,6 +25,7 @@ return [
         'no_results_description' => 'Modifică sau șterge filtrele pentru a vedea mai multe înregistrări.',
         'error_title' => 'Produsele și serviciile nu au putut fi încărcate',
         'error_description' => 'Încearcă din nou.',
+        'open_product' => 'Deschide :name',
         'status_options' => ['active' => 'Active', 'archived' => 'Arhivate', 'all' => 'Toate'],
         'summary' => [
             'aria_label' => 'Prezentarea produselor',
@@ -41,10 +42,18 @@ return [
             'actions' => 'Acțiuni',
         ],
     ],
+    'workspace' => [
+        'head_title' => ':name — Produs sau serviciu',
+        'description' => 'Păstrează corectă această înregistrare reutilizabilă pentru selecțiile viitoare din documente.',
+        'back' => 'Înapoi la produse',
+        'active' => 'Activ',
+        'archived' => 'Arhivat',
+        'archived_notice' => 'Acest produs sau serviciu este arhivat. Restaurează-l înainte de editare.',
+    ],
     'form' => [
         'create_title' => 'Produs nou',
         'create_description' => 'Salvează valori reutilizabile fără a limita editarea ulterioară a documentelor.',
-        'edit_title' => 'Editează produsul sau serviciul',
+        'edit_title' => 'Detaliile produsului sau serviciului',
         'edit_description' => 'Modificările se aplică doar selecțiilor viitoare, niciodată liniilor deja salvate.',
         'fields' => [
             'name' => 'Nume',
@@ -69,7 +78,7 @@ return [
         'unsaved_warning' => 'Ai modificări nesalvate pentru produs sau serviciu. Pleci fără să salvezi?',
     ],
     'actions' => [
-        'edit' => 'Editează',
+        'open' => 'Deschide',
         'archive' => 'Arhivează',
         'restore' => 'Restaurează',
         'delete' => 'Șterge',
@@ -81,9 +90,9 @@ return [
         'delete_description' => 'Ștergerea reușește doar dacă niciun document sau șablon nu face referire la înregistrare.',
         'dependency_warning_title' => 'Ștergerea definitivă este blocată',
         'delete_dependency_description' => 'Referințe care blochează: rânduri de document — :documents; rânduri de șablon recurent — :templates. Elimină dependențele sau păstrează înregistrarea arhivată.',
-        'confirm_archive' => 'Arhivează înregistrarea',
-        'confirm_restore' => 'Restaurează înregistrarea',
-        'confirm_delete' => 'Șterge definitiv înregistrarea',
+        'confirm_archive' => 'Arhivează',
+        'confirm_restore' => 'Restaurează',
+        'confirm_delete' => 'Șterge',
     ],
     'feedback' => [
         'created' => 'Produsul sau serviciul a fost adăugat.',

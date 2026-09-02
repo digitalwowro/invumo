@@ -30,6 +30,7 @@ class UpdateInvoiceDraftRequest extends FormRequest
             'edit_version' => ['required', 'integer', 'min:1'],
             'customer_id' => ['present', 'nullable', 'uuid'],
             'customer_confirmation_token' => ['present', 'nullable', 'string', 'size:64', 'regex:/^[0-9a-f]{64}$/'],
+            'tax_default_preset_id' => ['present', 'nullable', 'uuid'],
             'currency_code' => ['present', 'nullable', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
             'document_language' => ['present', 'nullable', 'string', Rule::in(SupportedLocales::all())],
             'issue_date' => ['present', 'nullable', 'date_format:Y-m-d'],
@@ -75,6 +76,7 @@ class UpdateInvoiceDraftRequest extends FormRequest
             editVersion: (int) $this->validated('edit_version'),
             customerId: $this->stringOrNull($this->validated('customer_id')),
             customerConfirmationToken: $this->stringOrNull($this->validated('customer_confirmation_token')),
+            taxDefaultPresetId: $this->stringOrNull($this->validated('tax_default_preset_id')),
             currencyCode: $this->stringOrNull($this->validated('currency_code')),
             documentLanguage: $this->stringOrNull($this->validated('document_language')),
             issueDate: $this->stringOrNull($this->validated('issue_date')),
@@ -110,6 +112,7 @@ class UpdateInvoiceDraftRequest extends FormRequest
         $this->merge([
             'customer_id' => $this->nullableInput('customer_id'),
             'customer_confirmation_token' => $this->nullableInput('customer_confirmation_token'),
+            'tax_default_preset_id' => $this->nullableInput('tax_default_preset_id'),
             'currency_code' => $this->uppercaseInput('currency_code'),
             'document_language' => $this->nullableInput('document_language'),
             'issue_date' => $this->nullableInput('issue_date'),

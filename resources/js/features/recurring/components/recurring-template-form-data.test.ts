@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
     applyRecurringCustomer,
-    applyRecurringProduct,
     blankRecurringLine,
     recurringTemplateFormData,
+    recurringTemplatePayload,
 } from '@/features/recurring/components/recurring-template-form-data';
 import type { DocumentCustomerSelection } from '@/types/document';
 import type {
@@ -108,36 +108,38 @@ describe('Recurring-template Draft form data', () => {
         });
     });
 
-    it('copies fixed line inputs with explicit tax provenance', () => {
-        const [applied] = applyRecurringProduct(
-            [blankRecurringLine(customer.taxDefault)],
-            0,
-            {
-                sourceProductServiceId: 'product-1',
-                description: 'Consulting',
-                unitPrice: '100',
-                priceStatus: 'COPIED',
-                sourceCurrencyCode: 'RON',
-                unit: 'hour',
-                periodUnit: 'NONE',
-                tax: {
-                    sourceTaxPresetId: 'tax-2',
-                    name: 'Reduced TVA',
-                    percentage: '9',
-                },
-            },
-            customer.taxDefault,
-            customer.currencyPrecision,
-        );
+    it('stores and restores a manually entered name and description', () => {
+        const line = {
+            ...blankRecurringLine(customer.taxDefault),
+            productServiceName: 'Monthly support',
+            description: 'Priority assistance',
+        };
+        const data = {
+            ...recurringTemplateFormData(template, inheritance),
+            lines: [line],
+        };
 
-        expect(applied).toMatchObject({
-            productServiceId: 'product-1',
-            description: 'Consulting',
-            itemPrice: '100.00',
-            taxName: 'Reduced TVA',
-            taxPercentage: '9',
-            taxPresetId: 'tax-2',
-            taxMode: 'EXPLICIT',
+        expect(recurringTemplatePayload(data).lines[0]).toMatchObject({
+            product_service_id: null,
+            description: 'Monthly support\nPriority assistance',
+        });
+        expect(
+            recurringTemplateFormData(
+                {
+                    ...template,
+                    lines: [
+                        {
+                            ...line,
+                            productServiceName: null,
+                            description: 'Monthly support\nPriority assistance',
+                        },
+                    ],
+                },
+                inheritance,
+            ).lines[0],
+        ).toMatchObject({
+            productServiceName: 'Monthly support',
+            description: 'Priority assistance',
         });
     });
 

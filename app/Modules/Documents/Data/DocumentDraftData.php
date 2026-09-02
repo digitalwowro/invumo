@@ -9,6 +9,7 @@ abstract readonly class DocumentDraftData
         public int $editVersion,
         public ?string $customerId,
         public ?string $customerConfirmationToken,
+        public ?string $taxDefaultPresetId,
         public ?string $currencyCode,
         public ?string $documentLanguage,
         public ?string $issueDate,

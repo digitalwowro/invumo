@@ -11,7 +11,9 @@ use App\Modules\Catalog\Actions\UpdateProductService;
 use App\Modules\Catalog\Exceptions\ProductServiceException;
 use App\Modules\Catalog\Http\Requests\ProductServiceListRequest;
 use App\Modules\Catalog\Http\Requests\SaveProductServiceRequest;
+use App\Modules\Catalog\Queries\ProductServiceCreatePage;
 use App\Modules\Catalog\Queries\ProductServiceListPage;
+use App\Modules\Catalog\Queries\ProductServiceWorkspacePage;
 use App\Modules\Companies\Models\Company;
 use App\Support\Inertia\CatalogUiTranslationBag;
 use Illuminate\Http\RedirectResponse;
@@ -41,12 +43,39 @@ final class ProductServiceController extends Controller
         CreateProductService $create,
     ): RedirectResponse {
         try {
-            $create->handle($company, $request->user(), $request->product());
+            $product = $create->handle($company, $request->user(), $request->product());
         } catch (ProductServiceException $exception) {
             $this->validationError($exception);
         }
 
-        return back()->with('status', __('catalog_ui.feedback.created'));
+        return redirect()->route('catalog.show', [$company, $product])
+            ->with('status', __('catalog_ui.feedback.created'));
+    }
+
+    public function create(
+        Request $request,
+        Company $company,
+        ProductServiceCreatePage $page,
+        CatalogUiTranslationBag $translations,
+    ): Response {
+        return Inertia::render('catalog/create', [
+            ...$page->for($company, $request->user()),
+            'translations' => $translations->toArray(),
+        ]);
+    }
+
+    public function show(
+        Request $request,
+        Company $company,
+        string $productService,
+        ProductServiceWorkspacePage $page,
+        CatalogUiTranslationBag $translations,
+    ): Response {
+        return Inertia::render('catalog/show', [
+            ...$page->for($company, $request->user(), $productService),
+            'status' => $request->session()->get('status'),
+            'translations' => $translations->toArray(),
+        ]);
     }
 
     public function update(
@@ -94,7 +123,8 @@ final class ProductServiceController extends Controller
             $this->validationError($exception);
         }
 
-        return back()->with('status', __('catalog_ui.feedback.deleted'));
+        return redirect()->route('catalog.index', $company)
+            ->with('status', __('catalog_ui.feedback.deleted'));
     }
 
     private function validationError(ProductServiceException $exception): never

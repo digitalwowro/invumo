@@ -11,8 +11,6 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Companies\Queries\CompanyAbilityCheck;
-use App\Modules\Documents\Models\DocumentLine;
-use App\Modules\Recurring\Models\RecurringTemplateLine;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,10 +19,7 @@ final readonly class ProductServiceListPage
 {
     private const SEARCH_EXPRESSION = "coalesce(name, '') || ' ' || coalesce(internal_code, '') || ' ' || coalesce(description, '')";
 
-    public function __construct(
-        private CompanyAbilityCheck $abilities,
-        private CatalogFormOptions $options,
-    ) {}
+    public function __construct(private CompanyAbilityCheck $abilities) {}
 
     /** @return array<string, mixed> */
     public function for(Company $company, User $actor, ProductServiceListRequest $request): array
@@ -34,16 +29,7 @@ final readonly class ProductServiceListPage
         }
 
         $filters = $request->filters();
-        $query = ProductService::query()
-            ->select('products_services.*')
-            ->addSelect([
-                'document_reference_count' => DocumentLine::query()
-                    ->selectRaw('count(*)')
-                    ->whereColumn('document_lines.product_service_id', 'products_services.id'),
-                'template_reference_count' => RecurringTemplateLine::query()
-                    ->selectRaw('count(*)')
-                    ->whereColumn('recurring_template_lines.product_service_id', 'products_services.id'),
-            ]);
+        $query = ProductService::query();
         $this->applyFilters($query, $filters);
         $this->applySort($query, $filters['sort']);
         $page = $query->cursorPaginate($filters['perPage'])->withQueryString();
@@ -62,8 +48,7 @@ final readonly class ProductServiceListPage
             'filters' => $filters,
             'summary' => $this->summary(),
             'indexUrl' => route('catalog.index', $company, false),
-            'storeUrl' => route('catalog.store', $company, false),
-            ...$this->options->for(),
+            'createUrl' => route('catalog.create', $company, false),
         ];
     }
 
@@ -125,40 +110,21 @@ final readonly class ProductServiceListPage
     ): array {
         $currency = $product->currency_id === null ? null : $currencies->get($product->currency_id);
         $taxPreset = $product->tax_preset_id === null ? null : $taxPresets->get($product->tax_preset_id);
-        $documentCount = (int) $product->getAttribute('document_reference_count');
-        $templateCount = (int) $product->getAttribute('template_reference_count');
 
         return [
             'id' => $product->id,
             'name' => $product->name,
-            'description' => $product->description,
             'internalCode' => $product->internal_code,
             'unitPrice' => $product->unit_price === null || ! $currency instanceof CompanyCurrency
                 ? null
                 : (string) DecimalRules::moneySource($product->unit_price)
                     ->toScale(DecimalRules::currencyPrecision($currency->currency_precision)),
-            'currencyId' => $product->currency_id,
             'currencyCode' => $currency?->currency_code,
             'unit' => $product->unit,
-            'periodUnit' => $product->period_unit->value,
             'periodLabel' => __("catalog_ui.form.periods.{$product->period_unit->value}"),
-            'taxPresetId' => $product->tax_preset_id,
             'taxPresetName' => $taxPreset?->name,
             'archived' => $product->archived_at !== null,
-            'updatedAt' => $product->updated_at?->toISOString(),
-            'updateUrl' => route('catalog.update', [$company, $product], false),
-            'archiveUrl' => route('catalog.archive', [$company, $product], false),
-            'restoreUrl' => route('catalog.restore', [$company, $product], false),
-            'deleteUrl' => route('catalog.destroy', [$company, $product], false),
-            'deleteGuard' => [
-                'blocked' => $documentCount + $templateCount > 0,
-                'description' => $documentCount + $templateCount > 0
-                    ? __('catalog_ui.actions.delete_dependency_description', [
-                        'documents' => $documentCount,
-                        'templates' => $templateCount,
-                    ])
-                    : null,
-            ],
+            'workspaceUrl' => route('catalog.show', [$company, $product], false),
         ];
     }
 }

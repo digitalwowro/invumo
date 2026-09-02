@@ -70,7 +70,7 @@ export function InvoiceTransactionsPanel(props: Props) {
                                 : props.labels.balance_notice
                         }
                         triggerVariant={
-                            kind === 'PAYMENT' ? 'primary' : 'secondary'
+                            kind === 'PAYMENT' ? 'money' : 'secondary'
                         }
                     />
                 ),

@@ -1,4 +1,11 @@
-import { detachedLineDescription } from '@/components/domain/documents/document-draft-lines';
+import {
+    editableDocumentLineContent,
+    storedDocumentLineDescription,
+} from '@/components/domain/documents/document-draft-lines';
+import {
+    initializeLineTaxInheritance,
+    updateInheritedLineTaxes,
+} from '@/components/domain/documents/document-tax-options';
 import {
     compactDecimal,
     compactDocumentLineDecimals,
@@ -7,7 +14,6 @@ import type {
     QuoteCustomerSelection,
     QuoteDraft,
     QuoteLine,
-    QuoteProductDefaults,
     QuoteTaxDefault,
 } from '@/types/quote';
 
@@ -15,6 +21,7 @@ export type QuoteEditorData = {
     editVersion: number;
     customerId: string | null;
     customerConfirmationToken: string | null;
+    taxDefaultPresetId: string | null;
     currencyCode: string | null;
     documentLanguage: string | null;
     issueDate: string;
@@ -32,7 +39,7 @@ export const blankQuoteLine = (tax: QuoteTaxDefault | null): QuoteLine => ({
     key: crypto.randomUUID(),
     id: null,
     productServiceId: null,
-    productServiceName: null,
+    productServiceName: '',
     description: '',
     itemPrice: '',
     quantity: '1',
@@ -43,6 +50,7 @@ export const blankQuoteLine = (tax: QuoteTaxDefault | null): QuoteLine => ({
     taxName: tax?.name ?? '',
     taxPercentage: compactDecimal(tax?.percentage ?? '0'),
     taxPresetId: tax?.id ?? null,
+    usesDocumentTaxDefault: true,
     priceStatus: null,
     finalLineTotal: null,
     isCustomized: true,
@@ -53,6 +61,7 @@ export const quoteFormData = (quote: QuoteDraft): QuoteEditorData => ({
     editVersion: quote.editVersion,
     customerId: quote.customer?.id ?? null,
     customerConfirmationToken: null,
+    taxDefaultPresetId: quote.taxDefault?.id ?? null,
     currencyCode: quote.currencyCode,
     documentLanguage: quote.documentLanguage,
     issueDate: quote.issueDate ?? '',
@@ -64,23 +73,26 @@ export const quoteFormData = (quote: QuoteDraft): QuoteEditorData => ({
     notes: quote.notes ?? '',
     defaultsCustomized: quote.defaultsCustomized,
     lines: quote.lines.map((line) =>
-        compactDocumentLineDecimals(
-            {
-                ...line,
-                key: line.id ?? crypto.randomUUID(),
-                description: detachedLineDescription(
-                    line.description,
-                    line.productServiceName,
-                ),
-                itemPrice: line.itemPrice ?? '',
-                quantity: line.quantity ?? '',
-                unit: line.unit ?? '',
-                periodQuantity: line.periodQuantity ?? '',
-                taxName: line.taxName ?? '',
-                priceStatus: null,
-                sourceApplied: false,
-            },
-            quote.currencyPrecision,
+        initializeLineTaxInheritance(
+            compactDocumentLineDecimals(
+                {
+                    ...line,
+                    key: line.id ?? crypto.randomUUID(),
+                    ...editableDocumentLineContent(
+                        line.description,
+                        line.productServiceName,
+                    ),
+                    itemPrice: line.itemPrice ?? '',
+                    quantity: line.quantity ?? '',
+                    unit: line.unit ?? '',
+                    periodQuantity: line.periodQuantity ?? '',
+                    taxName: line.taxName ?? '',
+                    priceStatus: null,
+                    sourceApplied: false,
+                },
+                quote.currencyPrecision,
+            ),
+            quote.taxDefault,
         ),
     ),
 });
@@ -89,6 +101,7 @@ export const quoteRequestData = (data: QuoteEditorData) => ({
     edit_version: data.editVersion,
     customer_id: data.customerId,
     customer_confirmation_token: data.customerConfirmationToken,
+    tax_default_preset_id: data.taxDefaultPresetId,
     currency_code: data.currencyCode,
     document_language: data.documentLanguage,
     issue_date: data.issueDate || null,
@@ -101,7 +114,7 @@ export const quoteRequestData = (data: QuoteEditorData) => ({
     lines: data.lines.map((line) => ({
         id: line.id,
         product_service_id: line.productServiceId,
-        description: line.description,
+        description: storedDocumentLineDescription(line),
         item_price: line.itemPrice,
         quantity: line.quantity,
         unit: line.unit,
@@ -138,45 +151,11 @@ export const applyCustomerDefaults = (
     ...current,
     customerId: selection.customerId,
     customerConfirmationToken: selection.confirmationToken,
+    taxDefaultPresetId: selection.taxDefault?.id ?? null,
     currencyCode: selection.currencyCode,
     documentLanguage: selection.documentLanguage,
+    lines: updateInheritedLineTaxes(current.lines, selection.taxDefault),
 });
-
-export const applyProductDefaults = (
-    lines: QuoteLine[],
-    index: number,
-    defaults: QuoteProductDefaults,
-    fallbackTax: QuoteTaxDefault | null,
-    currencyPrecision: number | null,
-): QuoteLine[] =>
-    lines.map((line, itemIndex) =>
-        itemIndex === index
-            ? compactDocumentLineDecimals(
-                  {
-                      ...line,
-                      productServiceId: defaults.sourceProductServiceId,
-                      productServiceName: defaults.name ?? null,
-                      description: defaults.description,
-                      itemPrice: defaults.unitPrice ?? '',
-                      unit: defaults.unit ?? '',
-                      periodUnit: defaults.periodUnit,
-                      taxName: defaults.tax?.name ?? fallbackTax?.name ?? '',
-                      taxPercentage:
-                          defaults.tax?.percentage ??
-                          fallbackTax?.percentage ??
-                          '0',
-                      taxPresetId:
-                          defaults.tax?.sourceTaxPresetId ??
-                          fallbackTax?.id ??
-                          null,
-                      priceStatus: defaults.priceStatus,
-                      isCustomized: false,
-                      sourceApplied: true,
-                  },
-                  currencyPrecision,
-              )
-            : line,
-    );
 
 export function addCalendarDays(issueDate: string, days: string): string {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(issueDate) || !/^\d+$/.test(days)) {

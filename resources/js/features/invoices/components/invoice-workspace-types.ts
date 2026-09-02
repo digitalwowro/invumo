@@ -31,6 +31,7 @@ export type InvoiceWorkspaceTab = 'build' | 'money' | 'sharing';
 export const INVOICE_FORM_ID = 'invoice-draft-editor';
 
 export type InvoiceEditPageProps = {
+    initialTab: InvoiceWorkspaceTab;
     invoice: InvoiceDraft;
     transactions: InvoiceTransactions;
     lifecycleActions: InvoiceLifecycleActions;

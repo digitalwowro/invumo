@@ -150,6 +150,7 @@ export function BankAccountTable({
                             )}
                             {account.archiveUrl && (
                                 <ConfirmationDialog
+                                    tone="default"
                                     triggerLabel={labels.archive}
                                     title={labels.archive_title}
                                     description={interpolate(

@@ -160,7 +160,7 @@ function InvoiceActions({
                         <Link href={invoice.editUrl}>{labels.edit}</Link>
                     </Button>
                 )}
-                <Button asChild variant="ghost">
+                <Button asChild variant="secondary">
                     <Link href={invoice.viewUrl}>{labels.view}</Link>
                 </Button>
             </Inline>

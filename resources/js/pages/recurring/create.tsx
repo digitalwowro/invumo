@@ -1,14 +1,17 @@
 import type { Page } from '@inertiajs/core';
 import { Head, useForm } from '@inertiajs/react';
 import { FilePlus2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { DiscardChangesDialog } from '@/components/app/discard-changes-dialog';
+import { SubmitButton } from '@/components/app/form-actions';
 import { TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
 import { DocumentCustomerControls } from '@/components/domain/documents/document-customer-controls';
@@ -24,6 +27,7 @@ import type { RecurringTranslations } from '@/types/recurring-translations';
 
 type Props = {
     storeUrl: string;
+    indexUrl: string;
     creationKey: string;
     sourceUrls: DocumentSourceUrls;
     inlineCustomerStoreUrl: string;
@@ -48,10 +52,12 @@ const emptyCustomer: DocumentCustomerSelection = {
     confirmationToken: null,
 };
 
+const FORM_ID = 'new-recurring-template-form';
+
 export default function CreateRecurringTemplate(props: Props) {
-    const [customer, setCustomer] = useState(
-        props.inlineCreatedCustomer ?? emptyCustomer,
-    );
+    const startingCustomer = props.inlineCreatedCustomer ?? emptyCustomer;
+    const initialCustomer = useRef(startingCustomer);
+    const [customer, setCustomer] = useState(startingCustomer);
     const [selectorOpen, setSelectorOpen] = useState(false);
     const [creatorOpen, setCreatorOpen] = useState(false);
     const form = useForm({
@@ -82,16 +88,64 @@ export default function CreateRecurringTemplate(props: Props) {
         form.post(props.storeUrl);
     };
 
+    const clearDraft = () => {
+        form.reset();
+        form.clearErrors();
+        setCustomer(initialCustomer.current);
+        setSelectorOpen(false);
+        setCreatorOpen(false);
+    };
+
     return (
         <>
             <Head title={props.translations.create.head_title} />
-            <PageFrame width="full">
+            <ResourceWorkspace>
                 <Stack gap="2xl">
-                    <PageHeader
+                    <ResourceWorkspaceHeader
+                        breadcrumbs={[
+                            {
+                                title: props.translations.index.title,
+                                href: props.indexUrl,
+                            },
+                            {
+                                title: props.translations.create.title,
+                                href: props.indexUrl,
+                            },
+                        ]}
                         title={props.translations.create.title}
-                        subtitle={props.translations.create.description}
+                        description={props.translations.create.description}
+                        actions={
+                            <>
+                                <DiscardChangesDialog
+                                    dirty={form.isDirty}
+                                    processing={form.processing}
+                                    form={FORM_ID}
+                                    mode="clear"
+                                    labels={labels}
+                                />
+                                <SubmitButton
+                                    form={FORM_ID}
+                                    processing={form.processing}
+                                    disabled={customer.customerId === null}
+                                    testId="create-recurring-template"
+                                >
+                                    <FilePlus2
+                                        aria-hidden="true"
+                                        data-icon="inline-start"
+                                    />
+                                    {props.translations.create.submit}
+                                </SubmitButton>
+                            </>
+                        }
                     />
-                    <form onSubmit={submit}>
+                    <form
+                        id={FORM_ID}
+                        onSubmit={submit}
+                        onReset={(event) => {
+                            event.preventDefault();
+                            clearDraft();
+                        }}
+                    >
                         <Stack gap="xl">
                             <UnsavedChangesGuard
                                 active={
@@ -144,23 +198,10 @@ export default function CreateRecurringTemplate(props: Props) {
                                     tone="error"
                                 />
                             )}
-                            <FormActions separated>
-                                <SubmitButton
-                                    processing={form.processing}
-                                    disabled={customer.customerId === null}
-                                    testId="create-recurring-template"
-                                >
-                                    <FilePlus2
-                                        aria-hidden="true"
-                                        data-icon="inline-start"
-                                    />
-                                    {props.translations.create.submit}
-                                </SubmitButton>
-                            </FormActions>
                         </Stack>
                     </form>
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
             <DocumentCustomerSelector
                 open={selectorOpen}
                 searchUrl={props.sourceUrls.customerSearch}

@@ -11,6 +11,7 @@ final readonly class PersistDocumentDraft
 {
     public function __construct(
         private ApplyDocumentCustomer $applyCustomer,
+        private ApplyDocumentTaxDefault $applyTaxDefault,
         private ApplyDocumentDraftSources $applyDraftSources,
         private LockDocumentLineSources $sourceGuard,
         private PersistDocumentLines $persistLines,
@@ -30,6 +31,12 @@ final readonly class PersistDocumentDraft
         if ($prepared->customerSelection instanceof ResolvedDocumentCustomer) {
             $this->applyCustomer->handle($document, $prepared->customerSelection);
         }
+
+        $this->applyTaxDefault->handle(
+            $document,
+            $data->taxDefaultPresetId,
+            $prepared->configuration,
+        );
 
         $this->applyDraftSources->handle(
             $document,

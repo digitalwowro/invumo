@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { CheckboxField, TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid, Stack } from '@/components/app/layout';
@@ -219,9 +219,12 @@ export function RecurringTemplateScheduleForm(props: Props) {
                         )}
                         {props.canManage && (
                             <FormActions separated>
-                                <SubmitButton processing={form.processing}>
+                                <SaveButton
+                                    processing={form.processing}
+                                    dirty={form.isDirty}
+                                >
                                     {props.labels.save}
-                                </SubmitButton>
+                                </SaveButton>
                             </FormActions>
                         )}
                     </Stack>

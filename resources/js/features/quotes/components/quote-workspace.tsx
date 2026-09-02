@@ -106,6 +106,7 @@ export function QuoteWorkspace(props: QuoteWorkspaceComposedProps) {
                                     conversionLabels={labels.conversion}
                                     formId={QUOTE_FORM_ID}
                                     separated={false}
+                                    resetLabels={labels.edit}
                                 />
                                 <Button
                                     type="button"
@@ -164,6 +165,7 @@ export function QuoteWorkspace(props: QuoteWorkspaceComposedProps) {
                     />
                     <QuoteWorkspaceContent
                         {...props}
+                        tab={tab}
                         dirty={dirty}
                         setDirty={setDirty}
                         setProcessing={setProcessing}

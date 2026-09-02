@@ -10,12 +10,14 @@ use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
+use App\Modules\Companies\Models\TaxPreset;
 use App\Modules\Customers\Data\CustomerType;
 use App\Modules\Customers\Models\Customer;
 use App\Modules\Customers\Queries\ResolveDocumentCustomer;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentCustomerSnapshot;
 use App\Modules\Documents\Models\DocumentLine;
+use App\Modules\Documents\Models\DocumentTaxDefault;
 use App\Modules\Documents\Models\NumberCounter;
 use App\Modules\Identity\Models\Account;
 use App\Modules\Identity\Models\Plan;
@@ -96,10 +98,12 @@ final class InvoiceDraftHttpTest extends TestCase
         });
         $this->get(route('invoices.edit', [$company, $invoice]))
             ->assertInertia(fn (Assert $page) => $page
-                ->component('invoices/edit')
+                ->component('invoices/edit')->where('initialTab', 'build')
                 ->where('invoice.paymentTermDays', 30)
                 ->where('invoice.dueDate', '2026-09-25')
                 ->where('invoice.currencyCode', 'RON'));
+        $this->get(route('invoices.edit', [$company, $invoice, 'tab' => 'money']))
+            ->assertInertia(fn (Assert $page) => $page->where('initialTab', 'money'));
 
         $this->patch(route('invoices.update', [$company, $invoice]), [
             ...$this->defaults(),
@@ -193,6 +197,58 @@ final class InvoiceDraftHttpTest extends TestCase
                 ->where('invoice.customer.snapshot.tax_registration_identifier', 'RO12345678'));
     }
 
+    public function test_document_tax_default_can_change_only_to_an_active_preset(): void
+    {
+        $owner = User::factory()->create();
+        $company = $this->company($owner);
+        [, $reduced, $archived] = $this->tenant($company, function (): array {
+            return [
+                TaxPreset::query()->create([
+                    'name' => 'Standard VAT', 'percentage' => '21', 'is_default' => true,
+                ]),
+                TaxPreset::query()->create([
+                    'name' => 'Reduced VAT', 'percentage' => '9', 'is_default' => false,
+                ]),
+                TaxPreset::query()->create([
+                    'name' => 'Legacy VAT', 'percentage' => '5', 'is_default' => false,
+                ]),
+            ];
+        });
+        $invoice = app(CreateInvoiceDraft::class)->handle(
+            $company,
+            $owner,
+            (string) Str::uuid7(),
+        );
+
+        $this->actingAs($owner)->patch(route('invoices.update', [$company, $invoice]), [
+            ...$this->defaults(),
+            'edit_version' => 1,
+            'tax_default_preset_id' => $reduced->id,
+            'lines' => [],
+        ])->assertRedirect()->assertSessionDoesntHaveErrors();
+
+        $this->tenant($company, function () use ($reduced): void {
+            $snapshot = DocumentTaxDefault::query()->sole();
+            $this->assertSame($reduced->id, $snapshot->tax_preset_id);
+            $this->assertSame('Reduced VAT', $snapshot->name);
+            $audit = AuditEvent::query()->where('action', 'company.invoice.draft_updated')->sole();
+            $this->assertContains('tax_default', $audit->after['changed_fields']);
+        });
+
+        $this->tenant($company, fn () => $archived->update(['archived_at' => now()]));
+        $this->actingAs($owner)->patch(route('invoices.update', [$company, $invoice]), [
+            ...$this->defaults(),
+            'edit_version' => 2,
+            'tax_default_preset_id' => $archived->id,
+            'lines' => [],
+        ])->assertSessionHasErrors('tax_default_preset_id');
+
+        $this->tenant($company, fn () => $this->assertSame(
+            $reduced->id,
+            DocumentTaxDefault::query()->sole()->tax_preset_id,
+        ));
+    }
+
     public function test_roles_localization_stale_writes_and_cross_company_access_fail_closed(): void
     {
         $owner = User::factory()->create(['language_code' => 'ro']);
@@ -234,6 +290,7 @@ final class InvoiceDraftHttpTest extends TestCase
         return [
             'customer_id' => null,
             'customer_confirmation_token' => null,
+            'tax_default_preset_id' => null,
             'currency_code' => 'RON',
             'document_language' => 'en',
             'issue_date' => '2026-08-26',

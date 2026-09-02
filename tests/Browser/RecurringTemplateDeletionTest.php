@@ -63,7 +63,7 @@ it('warns before permanently deleting active recurring automation', function () 
         ->navigate(route('recurring.edit', [$company, $template], false))
         ->click('Delete')
         ->assertSee('This template has left Draft state.')
-        ->click('Permanently delete')
+        ->click('@guarded-action-confirm')
         ->assertSee('Recurring template permanently deleted.')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors();

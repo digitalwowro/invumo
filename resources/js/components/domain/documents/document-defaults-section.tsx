@@ -1,30 +1,21 @@
-import { FactStrip } from '@/components/app/fact-strip';
 import { TextareaField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid } from '@/components/app/layout';
 import { SelectField } from '@/components/app/select-field';
 import { Badge } from '@/components/ui/badge';
 import type {
-    DocumentCurrencyOption,
     DocumentEditorTranslations,
     DocumentSourceOption,
-    DocumentTaxDefault,
 } from '@/types/document';
 
 const UNSET = '__UNSET__';
 
 type Props = {
-    currencyCode: string | null;
     documentLanguage: string | null;
     bankAccountId: string | null;
-    bankAccountLabel: string | null;
-    taxDefault: DocumentTaxDefault | null;
-    recipientCount: number;
-    emailAttachmentMode: 'SECURE_LINK_ONLY' | 'ATTACH_PDF';
     termsAndConditions: string;
     notes: string;
     isCustomized: boolean;
-    currencyOptions: DocumentCurrencyOption[];
     languageOptions: DocumentSourceOption[];
     bankAccountOptions: DocumentSourceOption[];
     termsLimit: number;
@@ -48,45 +39,8 @@ export function DocumentDefaultsSection(props: Props) {
                 </Badge>
             }
         >
-            <FactStrip
-                tone="subtle"
-                className="border-b border-divider"
-                facts={[
-                    {
-                        label: props.labels.tax_default,
-                        value: props.taxDefault?.name ?? props.labels.no_tax,
-                    },
-                    {
-                        label: props.labels.recipients,
-                        value: String(props.recipientCount),
-                    },
-                    {
-                        label: props.labels.delivery,
-                        value:
-                            props.emailAttachmentMode === 'ATTACH_PDF'
-                                ? props.labels.attach_pdf
-                                : props.labels.secure_link_only,
-                    },
-                ]}
-            />
             <div className="flex flex-col gap-6 p-5 sm:p-6">
-                <Grid columns={3} gap="lg">
-                    <SelectField
-                        name="currency_code"
-                        label={props.labels.currency}
-                        error={props.errors.currency_code}
-                        value={props.currencyCode ?? UNSET}
-                        onValueChange={(value) =>
-                            props.onChange(
-                                'currencyCode',
-                                value === UNSET ? null : value,
-                            )
-                        }
-                        options={[
-                            { value: UNSET, label: props.labels.not_available },
-                            ...props.currencyOptions,
-                        ]}
-                    />
+                <Grid columns={2} gap="lg">
                     <SelectField
                         name="document_language"
                         label={props.labels.language}
@@ -106,11 +60,6 @@ export function DocumentDefaultsSection(props: Props) {
                     <SelectField
                         name="bank_account_id"
                         label={props.labels.bank_account}
-                        description={
-                            props.bankAccountLabel
-                                ? `${props.labels.bank_account}: ${props.bankAccountLabel}`
-                                : undefined
-                        }
                         error={props.errors.bank_account_id}
                         value={props.bankAccountId ?? UNSET}
                         onValueChange={(value) =>

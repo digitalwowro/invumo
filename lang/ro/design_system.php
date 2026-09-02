@@ -112,7 +112,7 @@ return [
         'trigger' => 'Deschide confirmarea',
         'title' => 'Ștergi această ciornă?',
         'description' => 'Ciorna va fi ștearsă definitiv. Această acțiune nu poate fi anulată.',
-        'confirm' => 'Șterge ciorna',
+        'confirm' => 'Șterge',
         'cancel' => 'Păstrează ciorna',
         'close' => 'Închide fereastra',
     ],

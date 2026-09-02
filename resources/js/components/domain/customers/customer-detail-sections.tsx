@@ -19,6 +19,7 @@ type Props = {
     disabled: boolean;
     processing: boolean;
     submitLabel: string;
+    showActions?: boolean;
 };
 
 export function CustomerDetailSections({
@@ -30,6 +31,7 @@ export function CustomerDetailSections({
     disabled,
     processing,
     submitLabel,
+    showActions = true,
 }: Props) {
     const field = labels.fields;
 
@@ -162,7 +164,7 @@ export function CustomerDetailSections({
                 title={labels.notes_title}
                 description={labels.notes_description}
                 actions={
-                    !disabled ? (
+                    !disabled && showActions ? (
                         <FormActions>
                             <SubmitButton processing={processing}>
                                 {submitLabel}

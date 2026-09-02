@@ -1,13 +1,15 @@
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
-import { ActionLink } from '@/components/app/action-link';
+import { DiscardChangesDialog } from '@/components/app/discard-changes-dialog';
 import { SubmitButton } from '@/components/app/form-actions';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { InvoiceDraftEditor } from '@/features/invoices/components/invoice-draft-editor';
 import type { InvoiceDraftEditorProps } from '@/features/invoices/components/invoice-draft-editor-props';
-import type { CatalogTranslations } from '@/types/catalog';
+import { InvoiceBalanceCard } from '@/features/invoices/components/invoice-workspace-sidebar';
 import type { CustomerTranslations } from '@/types/customer';
 import type { DocumentDraftCreation } from '@/types/document';
 import type { InvoiceTranslations } from '@/types/invoice';
@@ -24,34 +26,44 @@ type Props = Omit<
     | 'issueLabels'
     | 'lifecycleLabels'
     | 'customerLabels'
-    | 'catalogLabels'
 > & {
     creation: DocumentDraftCreation;
     indexUrl: string;
     translations: InvoiceTranslations;
     customerTranslations: CustomerTranslations;
-    catalogTranslations: CatalogTranslations;
 };
 
 export default function CreateInvoice(props: Props) {
+    const [dirty, setDirty] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     return (
         <>
             <Head title={props.translations.create.head_title} />
-            <PageFrame width="full">
+            <ResourceWorkspace>
                 <Stack gap="2xl">
-                    <PageHeader
+                    <ResourceWorkspaceHeader
+                        breadcrumbs={[
+                            {
+                                title: props.translations.index.title,
+                                href: props.indexUrl,
+                            },
+                            {
+                                title: props.translations.create.title,
+                                href: props.indexUrl,
+                            },
+                        ]}
                         title={props.translations.create.title}
-                        subtitle={props.translations.create.description}
+                        description={props.translations.create.description}
                         actions={
                             <>
-                                <ActionLink
-                                    href={props.indexUrl}
-                                    variant="secondary"
-                                >
-                                    {props.translations.edit.cancel}
-                                </ActionLink>
+                                <DiscardChangesDialog
+                                    dirty={dirty}
+                                    processing={processing}
+                                    form={FORM_ID}
+                                    mode="clear"
+                                    labels={props.translations.edit}
+                                />
                                 <SubmitButton
                                     form={FORM_ID}
                                     processing={processing}
@@ -69,13 +81,21 @@ export default function CreateInvoice(props: Props) {
                         issueLabels={props.translations.issue}
                         lifecycleLabels={props.translations.lifecycle}
                         customerLabels={props.customerTranslations}
-                        catalogLabels={props.catalogTranslations}
                         formId={FORM_ID}
                         showActions={false}
+                        onDirtyChange={setDirty}
                         onProcessingChange={setProcessing}
+                        workspaceAside={(financials) => (
+                            <InvoiceBalanceCard
+                                invoice={props.invoice}
+                                invoiceDirty={financials.dirty}
+                                labels={props.translations}
+                                financials={financials}
+                            />
+                        )}
                     />
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

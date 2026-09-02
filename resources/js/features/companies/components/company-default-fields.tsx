@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChoiceField } from '@/components/app/choice-field';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { CheckboxField, TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid } from '@/components/app/layout';
@@ -16,6 +16,7 @@ type Props = {
     errors: Record<string, string>;
     labels: CompanySettingsTranslations['profile'];
     processing: boolean;
+    dirty: boolean;
 };
 
 export function CompanyDefaultFields({
@@ -26,6 +27,7 @@ export function CompanyDefaultFields({
     errors,
     labels,
     processing,
+    dirty,
 }: Props) {
     const [timezone, setTimezone] = useState(configuration.timezone ?? '');
     const [automationTime, setAutomationTime] = useState(
@@ -86,9 +88,9 @@ export function CompanyDefaultFields({
                 description={labels.currency_description}
                 actions={
                     <FormActions>
-                        <SubmitButton processing={processing}>
+                        <SaveButton processing={processing} dirty={dirty}>
                             {labels.save}
-                        </SubmitButton>
+                        </SaveButton>
                     </FormActions>
                 }
             >

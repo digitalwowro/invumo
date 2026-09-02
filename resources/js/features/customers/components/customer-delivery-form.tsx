@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { ChoiceField } from '@/components/app/choice-field';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { FormSection } from '@/components/app/form-section';
 import { SystemMessage } from '@/components/app/system-message';
 import { UnsavedChangesGuard } from '@/components/app/unsaved-changes-guard';
@@ -93,12 +93,9 @@ export function CustomerDeliveryForm({
                 actions={
                     updateUrl && (
                         <FormActions>
-                            <SubmitButton
-                                processing={processing}
-                                disabled={!isDirty}
-                            >
+                            <SaveButton processing={processing} dirty={isDirty}>
                                 {labels.save}
-                            </SubmitButton>
+                            </SaveButton>
                         </FormActions>
                     )
                 }

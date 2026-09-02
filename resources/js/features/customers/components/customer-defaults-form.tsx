@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { FormActions, SubmitButton } from '@/components/app/form-actions';
+import { FormActions, SaveButton } from '@/components/app/form-actions';
 import { TextField } from '@/components/app/form-field';
 import { FormSection } from '@/components/app/form-section';
 import { Grid } from '@/components/app/layout';
@@ -48,9 +48,12 @@ export function CustomerDefaultsForm({
                         actions={
                             !disabled ? (
                                 <FormActions>
-                                    <SubmitButton processing={processing}>
+                                    <SaveButton
+                                        processing={processing}
+                                        dirty={isDirty}
+                                    >
                                         {labels.save}
-                                    </SubmitButton>
+                                    </SaveButton>
                                 </FormActions>
                             ) : undefined
                         }

@@ -117,6 +117,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('companies/{company}/products', [ProductServiceController::class, 'index'])
                 ->name('catalog.index');
+            Route::get('companies/{company}/products/create', [ProductServiceController::class, 'create'])
+                ->name('catalog.create');
+            Route::get('companies/{company}/products/{productService}', [ProductServiceController::class, 'show'])
+                ->name('catalog.show');
             Route::post('companies/{company}/products', [ProductServiceController::class, 'store'])
                 ->middleware('throttle:20,1')
                 ->name('catalog.store');

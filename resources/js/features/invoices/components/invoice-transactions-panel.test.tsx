@@ -159,7 +159,7 @@ describe('InvoiceTransactionsPanel', () => {
 
         expect(
             screen.getByRole('button', { name: 'Record payment' }),
-        ).toHaveAttribute('data-variant', 'primary');
+        ).toHaveAttribute('data-variant', 'money');
         const paymentButton = screen.getByRole('button', {
             name: 'Record payment',
         });

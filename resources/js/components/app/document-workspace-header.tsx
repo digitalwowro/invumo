@@ -1,15 +1,7 @@
-import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { Breadcrumbs } from '@/components/app/breadcrumbs';
 import { PageSubtitle, PageTitle } from '@/components/app/typography';
 import { Badge } from '@/components/ui/badge';
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 
 type Props = {
     indexUrl: string;
@@ -33,23 +25,15 @@ export function DocumentWorkspaceHeader(props: Props) {
         >
             <div className="flex flex-col gap-4">
                 <div className="flex min-w-0 flex-col gap-1">
-                    <Breadcrumb>
-                        <BreadcrumbList className="font-data text-xs">
-                            <BreadcrumbItem>
-                                <BreadcrumbLink asChild>
-                                    <Link href={props.indexUrl}>
-                                        {props.indexLabel}
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="font-data">
-                                    {props.number}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
+                    <Breadcrumbs
+                        breadcrumbs={[
+                            {
+                                title: props.indexLabel,
+                                href: props.indexUrl,
+                            },
+                            { title: props.number, href: props.indexUrl },
+                        ]}
+                    />
                     <div className="flex min-w-0 flex-wrap items-center gap-3">
                         <PageTitle>
                             <span className="font-data">

@@ -100,7 +100,7 @@ export const romanianDesignSystemTranslations = {
         trigger: 'Deschide confirmarea',
         title: 'Ștergi ciorna?',
         description: 'Această acțiune nu poate fi anulată.',
-        confirm: 'Șterge ciorna',
+        confirm: 'Șterge',
         cancel: 'Păstrează ciorna',
         close: 'Închide fereastra',
     },

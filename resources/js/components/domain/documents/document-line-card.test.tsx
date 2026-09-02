@@ -6,7 +6,15 @@ import type { DocumentLineLabels } from '@/types/document';
 const labels = {
     line: 'Line',
     product_or_service: 'Product or Service',
+    product_search_label: 'Search products',
+    product_search_placeholder: 'Search products or type a name',
+    no_product_results: 'No products found',
+    use_custom_product: 'Use “:name” as a custom product or service',
+    search: 'Search',
+    source_error: 'Products could not be loaded',
     select_product: 'Select Product or Service',
+    edit_line: 'Edit line',
+    close_line: 'Close line',
     move_up: 'Move up',
     move_down: 'Move down',
     remove_line: 'Remove',
@@ -14,6 +22,8 @@ const labels = {
     incomplete: 'Incomplete',
     subtotal: 'Subtotal',
     tax_total: 'Tax',
+    document_default: 'Document default',
+    no_tax: 'No tax',
     fields: {
         description: 'Description',
         item_price: 'Item price',
@@ -33,7 +43,7 @@ const labels = {
 const line = {
     key: 'local-1',
     id: null,
-    productServiceId: null,
+    productServiceId: 'product-1',
     productServiceName: 'Consulting',
     description: '',
     itemPrice: '',
@@ -55,7 +65,6 @@ describe('QuoteLineCard', () => {
         const onChange = vi.fn();
         const onMove = vi.fn();
         const onRemove = vi.fn();
-        const onSelectProduct = vi.fn();
 
         render(
             <DocumentLineCard
@@ -69,35 +78,34 @@ describe('QuoteLineCard', () => {
                 }}
                 labels={labels}
                 errors={{}}
-                onSelectProduct={onSelectProduct}
+                taxPresetOptions={[]}
+                productSearchUrl="/products"
+                currencyCode="EUR"
+                currencyPrecision={2}
                 onChange={onChange}
+                onProductSelect={vi.fn()}
                 onMove={onMove}
                 onRemove={onRemove}
             />,
         );
 
-        fireEvent.change(screen.getByLabelText('Description'), {
-            target: { value: 'Consulting' },
+        fireEvent.change(screen.getByLabelText('Product or Service'), {
+            target: { value: 'Custom consulting' },
         });
         fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
         fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
-        fireEvent.click(
-            screen.getByRole('button', {
-                name: 'Select Product or Service',
-            }),
-        );
 
         expect(onChange).toHaveBeenCalledWith({
             ...line,
-            description: 'Consulting',
+            productServiceId: null,
+            productServiceName: 'Custom consulting',
         });
         expect(onMove).toHaveBeenCalledWith(-1);
         expect(onRemove).toHaveBeenCalledOnce();
-        expect(onSelectProduct).toHaveBeenCalledOnce();
         expect(screen.getByLabelText('Product or Service')).toHaveValue(
             'Consulting',
         );
-        expect(screen.getByLabelText('Product or Service')).toHaveAttribute(
+        expect(screen.getByLabelText('Product or Service')).not.toHaveAttribute(
             'readonly',
         );
         expect(screen.getByText(/Incomplete/)).toBeInTheDocument();

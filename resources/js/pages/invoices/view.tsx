@@ -1,10 +1,12 @@
 import { Head } from '@inertiajs/react';
-import { Download, Pencil } from 'lucide-react';
+import { Download, FolderOpen } from 'lucide-react';
 import { ActionLink } from '@/components/app/action-link';
 import { DownloadLink } from '@/components/app/download-link';
 import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
-import { PageHeader } from '@/components/app/page-header';
+import {
+    ResourceWorkspace,
+    ResourceWorkspaceHeader,
+} from '@/components/app/resource-workspace';
 import { OutwardDocument } from '@/components/domain/outward-document';
 import type { InvoiceTranslations } from '@/types/invoice';
 import type { OutwardDocument as OutwardDocumentData } from '@/types/outward-document';
@@ -23,11 +25,21 @@ export default function ViewInvoice(props: Props) {
     return (
         <>
             <Head title={`${labels.head_title} ${props.document.number}`} />
-            <PageFrame width="full">
+            <ResourceWorkspace>
                 <Stack gap="2xl">
-                    <PageHeader
+                    <ResourceWorkspaceHeader
+                        breadcrumbs={[
+                            {
+                                title: props.translations.index.title,
+                                href: props.indexUrl,
+                            },
+                            {
+                                title: props.document.number,
+                                href: props.indexUrl,
+                            },
+                        ]}
                         title={`${labels.title} ${props.document.number}`}
-                        subtitle={labels.description}
+                        description={labels.description}
                         actions={
                             <>
                                 <DownloadLink
@@ -39,7 +51,7 @@ export default function ViewInvoice(props: Props) {
                                 </DownloadLink>
                                 {props.editUrl && (
                                     <ActionLink href={props.editUrl}>
-                                        <Pencil aria-hidden="true" />
+                                        <FolderOpen aria-hidden="true" />
                                         {labels.edit}
                                     </ActionLink>
                                 )}
@@ -47,11 +59,8 @@ export default function ViewInvoice(props: Props) {
                         }
                     />
                     <OutwardDocument document={props.document} />
-                    <ActionLink href={props.indexUrl} variant="ghost">
-                        {labels.back}
-                    </ActionLink>
                 </Stack>
-            </PageFrame>
+            </ResourceWorkspace>
         </>
     );
 }

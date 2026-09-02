@@ -112,7 +112,7 @@ return [
         'trigger' => 'Open confirmation',
         'title' => 'Delete this draft?',
         'description' => 'This removes the draft permanently. This action cannot be undone.',
-        'confirm' => 'Delete draft',
+        'confirm' => 'Delete',
         'cancel' => 'Keep draft',
         'close' => 'Close dialog',
     ],

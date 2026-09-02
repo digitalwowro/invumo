@@ -1,7 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { FormActions } from '@/components/app/form-actions';
-import { Stack } from '@/components/app/layout';
-import { PageFrame } from '@/components/app/page-frame';
+import { ResourceWorkspace } from '@/components/app/resource-workspace';
 import { SystemMessage } from '@/components/app/system-message';
 import { CustomerForm } from '@/components/domain/customers/customer-form';
 import { CustomerLifecycleActions } from '@/features/customers/components/customer-lifecycle-actions';
@@ -67,64 +65,80 @@ export default function CustomerWorkspace({
                     name: customer.displayName,
                 })}
             />
-            <PageFrame>
-                <Stack gap="xl">
-                    <CustomerWorkspaceNavigation
-                        active="overview"
-                        customerName={customer.displayName}
-                        archived={customer.archived}
-                        description={labels.description}
-                        indexUrl={indexUrl}
-                        indexLabel={translations.index.title}
-                        overviewUrl={overviewUrl}
-                        contactsUrl={contactsUrl}
-                        defaultsUrl={defaultsUrl}
-                        backLabel={labels.back}
-                        statusLabels={{
-                            active: labels.active,
-                            archived: labels.archived,
-                        }}
-                        label={labels.navigation_label}
-                        labels={labels.navigation}
-                    />
-                    {status && <SystemMessage title={status} tone="money" />}
-                    {errors.customer && (
-                        <SystemMessage title={errors.customer} tone="error" />
-                    )}
-                    {customer.archived && (
-                        <SystemMessage
-                            title={labels.archived_notice}
-                            tone="warning"
-                        />
-                    )}
-                    <CustomerForm
-                        customer={customer}
-                        actionUrl={updateUrl ?? indexUrl}
-                        method="patch"
-                        submitLabel={labels.save}
-                        countryOptions={countryOptions}
-                        customerTypeOptions={customerTypeOptions}
-                        limits={limits}
-                        labels={translations.form}
-                        disabled={!updateUrl}
-                        unsavedWarning={translations.form.unsaved_warning}
-                    />
-                    <FormActions separated>
-                        <CustomerLifecycleActions
-                            archiveUrl={archiveUrl}
-                            restoreUrl={restoreUrl}
-                            deleteUrl={deleteUrl}
-                            deleteGuard={deleteGuard}
-                            publicDecisionIdentity={publicDecisionIdentity}
-                            labels={labels}
-                            cancelLabel={i18n.common.actions.cancel}
-                            closeLabel={
-                                i18n.common.accessibility.close_navigation
+            <ResourceWorkspace>
+                <CustomerForm
+                    customer={customer}
+                    actionUrl={updateUrl ?? indexUrl}
+                    method="patch"
+                    submitLabel={labels.save}
+                    countryOptions={countryOptions}
+                    customerTypeOptions={customerTypeOptions}
+                    limits={limits}
+                    labels={translations.form}
+                    disabled={!updateUrl}
+                    unsavedWarning={translations.form.unsaved_warning}
+                    formId="customer-overview-form"
+                    showActions={false}
+                    renderHeader={(saveAction) => (
+                        <CustomerWorkspaceNavigation
+                            active="overview"
+                            customerName={customer.displayName}
+                            archived={customer.archived}
+                            description={labels.description}
+                            indexUrl={indexUrl}
+                            indexLabel={translations.index.title}
+                            overviewUrl={overviewUrl}
+                            contactsUrl={contactsUrl}
+                            defaultsUrl={defaultsUrl}
+                            statusLabels={{
+                                active: labels.active,
+                                archived: labels.archived,
+                            }}
+                            label={labels.navigation_label}
+                            labels={labels.navigation}
+                            actions={
+                                <>
+                                    {saveAction}
+                                    <CustomerLifecycleActions
+                                        archiveUrl={archiveUrl}
+                                        restoreUrl={restoreUrl}
+                                        deleteUrl={deleteUrl}
+                                        deleteGuard={deleteGuard}
+                                        publicDecisionIdentity={
+                                            publicDecisionIdentity
+                                        }
+                                        labels={labels}
+                                        cancelLabel={i18n.common.actions.cancel}
+                                        closeLabel={
+                                            i18n.common.accessibility
+                                                .close_navigation
+                                        }
+                                    />
+                                </>
                             }
                         />
-                    </FormActions>
-                </Stack>
-            </PageFrame>
+                    )}
+                    messages={
+                        <>
+                            {status && (
+                                <SystemMessage title={status} tone="money" />
+                            )}
+                            {errors.customer && (
+                                <SystemMessage
+                                    title={errors.customer}
+                                    tone="error"
+                                />
+                            )}
+                            {customer.archived && (
+                                <SystemMessage
+                                    title={labels.archived_notice}
+                                    tone="warning"
+                                />
+                            )}
+                        </>
+                    }
+                />
+            </ResourceWorkspace>
         </>
     );
 }

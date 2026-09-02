@@ -35,6 +35,7 @@ class CompanyController extends Controller
     public function create(CompaniesUiTranslationBag $translations): Response
     {
         return Inertia::render('companies/create', [
+            'indexUrl' => route('companies.index', absolute: false),
             'translations' => $translations->toArray(),
         ]);
     }

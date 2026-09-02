@@ -145,7 +145,11 @@ final readonly class CompanyTransactionListPage
             'reference' => $row->reference,
             'invoiceNumber' => (string) $row->invoice_number,
             'customerName' => $row->customer_name,
-            'invoiceUrl' => route('invoices.edit', [$company, $row->invoice_id], false),
+            'invoiceUrl' => route('invoices.edit', [
+                'company' => $company,
+                'invoice' => $row->invoice_id,
+                'tab' => 'money',
+            ], false),
         ];
     }
 }

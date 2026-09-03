@@ -58,6 +58,7 @@ it('matches the dense Invoice reference with responsive working filters', functi
         ->click('@operational-filter-toggle')
         ->assertSee('Unpaid or partial')
         ->assertSee('Last 90 days')
+        ->screenshot(false, 'implementation-invoice-list-desktop.png')
         ->click('Due in 7 days')
         ->wait(0.5)
         ->assertSee('Upcoming Customer SRL')
@@ -94,6 +95,7 @@ it('keeps the dense Invoice filters usable on mobile', function () {
         ->wait(0.2)
         ->assertSee('Payment state')
         ->assertSee('Last 90 days')
+        ->screenshot(false, 'implementation-invoice-list-mobile.png')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();

@@ -1,0 +1,126 @@
+{
+    "version": 1,
+    "reviews": [
+        {
+            "id": "invoice-operational-list-2026-09-03",
+            "documentAnchor": "invoice-operational-list",
+            "reviewedOn": "2026-09-03",
+            "implementationCommit": "90a923f",
+            "causeCommits": ["9906b15", "90a923f"],
+            "screens": [
+                "English Invoice operational list with expanded filters at 1728 × 1117",
+                "English Invoice operational list with expanded filters on iPhone 15"
+            ],
+            "sourceArtifacts": [
+                {
+                    "path": "docs/development/design-qa-evidence/invoice-list-reference.html",
+                    "sha256": "ab5ec0cad807425f913ef9429f2da57d9781441e4d538d48c4dbbbc06e154814"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/invoice-list-reference.png",
+                    "sha256": "6e2f68167de3690b6d3bac6d2decdbd2fb27b3835e4d47a30dbbd8141879cbe3"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/invoice-list-reference-mobile.png",
+                    "sha256": "60983c28a2e313032801a99972d67164509c3698f0bcbe472372cf754b344e6d"
+                }
+            ],
+            "implementationArtifacts": [
+                {
+                    "path": "docs/development/design-qa-evidence/invoice-list-desktop.png",
+                    "sha256": "3e43fe8cb65ce621aaa739efad89cd62f6d34c65992c4dc3936fa56b0291cec9"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/invoice-list-mobile.png",
+                    "sha256": "ca1848e139e068a1d479bc17ead7b68b463d1e30816b9b8214298a9bc31ad590"
+                }
+            ],
+            "comparisonSummary": [
+                "Matched the supported summary, filter, sort, page-size, cursor-navigation, and row-action hierarchy",
+                "Retained responsive containment while intentionally omitting reference-only export, bulk, and numbered-pagination behavior"
+            ],
+            "tests": [
+                "composer test:browser -- tests/Browser/InvoiceListTest.php --stop-on-failure — 2 tests, 24 assertions"
+            ],
+            "renderingInspected": true,
+            "result": "passed"
+        },
+        {
+            "id": "document-line-editor-2026-09-03",
+            "documentAnchor": "document-line-editor",
+            "reviewedOn": "2026-09-03",
+            "implementationCommit": "90a923f",
+            "causeCommits": ["90a923f"],
+            "screens": [
+                "English new Invoice Build view at 1440 × 1100",
+                "English current Invoice Build view at 1440 × 817",
+                "Romanian expanded Invoice line editor on iPhone 15",
+                "English Quote custom-product choice at 1728 × 1117",
+                "English Quote discard-changes confirmation at 1728 × 1117"
+            ],
+            "sourceArtifacts": [
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-approved-simulation.png",
+                    "sha256": "c610d45d3789df7a324833409ed1f30f0bbd6d0c4bf263c02d996bbacd37973f"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-structural-reference.png",
+                    "sha256": "85432a67f443d6fc6c5b416cebf664944c6326e2e183b2e50d47dbfbb7776d3b"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-interaction-reference.html",
+                    "sha256": "3327e595ad635ab0b5f50b03be93cf07e1cc568bd67d3629dcc9f1e8a58195a5"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-interaction-reference.png",
+                    "sha256": "bfa517f2fd03afc0a9a20a1c20ebec4374cf15ab6e1256b6c49d64ae18de05df"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-quiet-controls-reference.png",
+                    "sha256": "c3c15bce6864b60b2138e895b97f1fe4450407f9da5d29703378cd33f4533f9f"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-no-match-reference.png",
+                    "sha256": "0cecec2b193153ac1860fdc74835f6bbd3918030fc1754644c21615bfb46ed73"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-incorrect-desktop-fallback.png",
+                    "sha256": "b0d8a82f8ee2e67403c0b61c0a39ae815e0fc0afdbda6c210623d613e4d4ff05"
+                }
+            ],
+            "implementationArtifacts": [
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-build.png",
+                    "sha256": "14bdf9393154071da6fe9faa4658500488f7efa4a946d962e28a537f1d4742e3"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-current-invoice.png",
+                    "sha256": "8efe6d45dce9c31211455a8ad24f4b6b58e3fc60a086268b385e59ef86bb06df"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-mobile.png",
+                    "sha256": "0c22829cf04113222e84da6bb4fb3b33a999aa1c4a25db5a61a3dce7d52dba80"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-custom-product-choice.png",
+                    "sha256": "82fa8e2864739d7dbbf8633ff2c4ab8d2f526ef5f0f627965f64eab5461efbdd"
+                },
+                {
+                    "path": "docs/development/design-qa-evidence/line-editor-discard-changes-dialog.png",
+                    "sha256": "22b33d8fd15b974daa4618c7be00c30080e95995867527da2b7df897f22520fb"
+                }
+            ],
+            "comparisonSummary": [
+                "Matched the approved wide-table hierarchy, financial summary, and priority allocation without copying the reference implementation",
+                "Retained the complete compact mobile editor without an eleven-column horizontal-scroll workflow",
+                "Verified inline catalogue-or-manual entry, custom no-match dismissal, tax inheritance, and unsaved-change recovery"
+            ],
+            "tests": [
+                "composer test:browser -- tests/Browser/InvoiceDraftTest.php --stop-on-failure — 5 tests, 104 assertions",
+                "composer test:browser -- tests/Browser/QuoteDraftTest.php --filter=creates-and-calculates-manual-Quote-Draft --stop-on-failure — 1 test, 44 assertions"
+            ],
+            "renderingInspected": true,
+            "result": "passed"
+        }
+    ]
+}

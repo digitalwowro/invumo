@@ -61,7 +61,25 @@ it('renders the operational dashboard and recent invoices without overflow', fun
         ->assertSee('Nothing is overdue or due this week in RON.')
         ->assertSee('Recent invoices')
         ->assertSee($invoice->rendered_number)
+        ->assertScript(<<<'JS'
+            (() => {
+                const header = document.querySelector('[data-slot="page-header"]');
+                const title = header?.querySelector('h1');
+                const actions = header?.querySelector('[data-slot="page-header-actions"]');
+
+                if (!header || !title || !actions) {
+                    return false;
+                }
+
+                const titleBox = title.getBoundingClientRect();
+                const actionsBox = actions.getBoundingClientRect();
+
+                return actionsBox.left > titleBox.right
+                    && Math.abs(actionsBox.top - titleBox.top) < 24;
+            })()
+            JS)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->screenshot(false, 'implementation-dashboard-header-actions-desktop.png')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });
@@ -74,7 +92,21 @@ it('keeps the Romanian dashboard usable on a narrow viewport', function () {
         ->assertSee('Nimic restant sau scadent săptămâna aceasta în RON.')
         ->assertSee('Facturi recente')
         ->assertSee($invoice->rendered_number)
+        ->assertScript(<<<'JS'
+            (() => {
+                const header = document.querySelector('[data-slot="page-header"]');
+                const title = header?.querySelector('h1');
+                const actions = header?.querySelector('[data-slot="page-header-actions"]');
+
+                if (!title || !actions) {
+                    return false;
+                }
+
+                return actions.getBoundingClientRect().top >= title.getBoundingClientRect().bottom;
+            })()
+            JS)
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
+        ->screenshot(false, 'implementation-dashboard-header-actions-mobile.png')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues();
 });

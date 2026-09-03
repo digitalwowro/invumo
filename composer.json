@@ -86,6 +86,7 @@
             "npm run format:check",
             "npm run design:check",
             "npm run visual-snapshots:check",
+            "npm run design-qa:check",
             "npm run lines:check",
             "npm run modules:check",
             "npm run test:tooling",

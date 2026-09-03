@@ -30,6 +30,8 @@ The complete quality gate rejects a missing entry, stale hash, untracked snapsho
 
 Never run snapshot-update mode repeatedly until CI becomes green. Failed comparison artifacts are evidence to inspect, not generated approval.
 
+Manual owner-reference comparisons are recorded separately in the canonical [`design-qa.md`](design-qa.md) log and its repository-carried hash-bound artifact registry. They provide durable design-review evidence but never authorize or replace a pinned-runner canonical snapshot update.
+
 ## Recorded table-layout review
 
 The English and Romanian desktop gallery baselines updated in `903295c` were caused by the shared content-driven table layout in `a989b0d`. The GitHub Ubuntu expected, actual, and difference images from run `32823698233` were inspected before the exact runner-produced actual PNGs were adopted. The visible change was limited to intended operational-table column allocation; the full gallery, both languages, semantic status treatments, actions, containment, and surrounding component states remained correct. Replacement run `32824332431` passed.

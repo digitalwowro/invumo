@@ -17,6 +17,8 @@ During implementation, run the smallest test set that proves the changed behavio
 
 Use `--stop-on-failure` during iteration. A passing focused test is not permission to omit a known affected tenant, authorization, audit, localization, responsive, or concurrency boundary.
 
+Manual reference comparisons use the single canonical [`design-qa.md`](design-qa.md) log. Every cited source and rendered implementation artifact must be committed under `design-qa-evidence/`, registered with its SHA-256 and review metadata in `tests/Browser/design-qa-reviews.json`, and pass `npm run design-qa:check`. Machine-local attachment and ignored browser-output paths are not durable evidence. This reference-comparison record is separate from, and never substitutes for, pinned-runner canonical visual snapshot review.
+
 ## Cross-phase invariant regression review
 
 Every feature batch has a named seam-review responsibility in addition to its local tests:

@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "design-qa:check": "node scripts/check-design-qa-evidence.mjs",
         "dev": "vite",
         "design:check": "node scripts/check-design-contract.mjs",
         "format": "prettier --write resources/",

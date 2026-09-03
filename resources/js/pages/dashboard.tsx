@@ -31,6 +31,7 @@ export default function Dashboard({
                             translations.subtitle,
                             { date: dashboard.asOfDate },
                         )}`}
+                        actionsPlacement="top-right"
                         actions={
                             <>
                                 <ActionLink

@@ -769,6 +769,7 @@ Phase 1 must establish automated guardrails proportionate to these rules:
 - the pinned GitHub Ubuntu runner owns byte-level visual-regression references because PNG font rasterization is operating-system dependent; local and other runners retain the same behavioral, accessibility, JavaScript, typography-selection, and responsive-state checks;
 - failed canonical visual comparisons retain a short-lived expected/actual/difference artifact for review before a reference is changed;
 - every canonical reference update follows the [visual snapshot baseline contract](../development/visual-snapshot-baselines.md), records hash-bound screen/cause/change/inspection evidence, and is rejected by CI when that evidence is absent or stale;
+- every manual owner-reference comparison follows the single [design-QA evidence contract](../development/design-qa.md), carries its source and implementation renderings in the repository, and is rejected when its registry hash or review metadata is missing or stale;
 - representative tests verify no Company brand colour leaks into authenticated application chrome.
 
 Do not add Storybook or another design-system runtime by default. The component gallery may be a test harness excluded from production routing and bundles unless later evidence justifies a separate tool.

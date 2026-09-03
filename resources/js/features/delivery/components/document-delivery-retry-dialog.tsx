@@ -35,7 +35,12 @@ export function DocumentDeliveryRetryDialog({
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button type="button" size="sm" variant="secondary">
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    data-testid="document-delivery-retry"
+                >
                     <RotateCcw data-icon="inline-start" />
                     {labels.retry}
                 </Button>
@@ -52,7 +57,11 @@ export function DocumentDeliveryRetryDialog({
                         <DialogFooter>
                             <input type="hidden" name="confirmed" value="1" />
                             <DialogClose asChild>
-                                <Button type="button" variant="secondary">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    data-testid="document-delivery-retry-cancel"
+                                >
                                     {labels.retry_cancel}
                                 </Button>
                             </DialogClose>

@@ -93,7 +93,7 @@ export function DocumentDeliveryComposer({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild data-testid="delivery-compose">
                 <Button type="button" disabled={disabled}>
                     <Send data-icon="inline-start" />
                     {labels.submit}

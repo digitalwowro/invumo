@@ -43,3 +43,7 @@ The English desktop, Romanian desktop, and narrow-navigation gallery baselines w
 ## Shared page-header review
 
 The English and Romanian desktop gallery baselines were updated from the exact GitHub Ubuntu actual PNGs produced by Phase 11 gate run `33302001641`. The expected, actual, and difference images were viewed at original resolution. The complete 25-pixel height reduction and corresponding vertical shift came from removing the shared page-header divider and reserved bottom padding in `9906b15`; both-language content, component states, table containment, and navigation remained correct.
+
+## Shared confirmation-overlay review
+
+The shared destructive-confirmation baseline was updated from the exact GitHub Ubuntu actual PNG produced by Phase 11 gate run `33742156170` for revision `5cad2d4`. The expected, actual, and difference images were viewed at original resolution. The visible differences were limited to the approved lime `INVUMO` wordmark introduced by `9075ca3` and the standardized **Delete** action introduced by `90a923f`; the backdrop, dialog hierarchy, surrounding gallery state, and confirmation behavior remained unchanged.

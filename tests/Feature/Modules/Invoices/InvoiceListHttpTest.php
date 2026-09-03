@@ -75,7 +75,9 @@ final class InvoiceListHttpTest extends TestCase
                     'email' => sprintf('billing%02d@example.com', $index),
                 ]);
                 Invoice::query()->whereKey($document->id)->update([
-                    'due_date' => sprintf('2026-09-%02d', $index + 1),
+                    'due_date' => $document->issue_date
+                        ->addDays($index + 1)
+                        ->toDateString(),
                 ]);
             }
         });

@@ -45,18 +45,19 @@
         },
         {
             "path": "tests/.pest/snapshots/Browser/DesignSystemGalleryTest/it_protects_the_shared_confirmation_overlay.snap",
-            "pngSha256": "8454b528135f42cbcb46a3193697759bbc11dc0851032fba2043eff731361db9",
-            "reviewedOn": "2026-08-25",
-            "causeCommit": "e15ac51",
-            "baselineCommit": "e15ac51",
+            "pngSha256": "34307ba35f497865a9803f53dc0d25025eacffeda6b1f6a96c0277ff98b7ed73",
+            "reviewedOn": "2026-09-03",
+            "causeCommit": "90a923f",
+            "baselineCommit": "5cad2d4",
             "screens": [
                 "English shared destructive confirmation overlay on desktop"
             ],
             "intendedChanges": [
-                "Retain the established confirmation-overlay baseline unchanged while bootstrapping the evidence registry"
+                "Replace the old neutral product mark with the approved lime INVUMO wordmark",
+                "Standardize the destructive confirmation action label from Delete draft to Delete while retaining the existing confirmation hierarchy"
             ],
             "renderingInspected": true,
-            "inspectionEvidence": "Decoded and viewed the current canonical PNG at original resolution during the evidence-registry bootstrap; confirmed the overlay, backdrop, dialog hierarchy, actions, and surrounding gallery state are intentional."
+            "inspectionEvidence": "Viewed the GitHub Ubuntu expected, actual, and difference PNGs from failed Phase 11 gate run 33742156170 at original resolution; confirmed the visible differences were limited to the approved lime product mark introduced by 9075ca3 and the standardized Delete action introduced by 90a923f, with the overlay, backdrop, dialog hierarchy, and surrounding gallery state unchanged."
         }
     ]
 }

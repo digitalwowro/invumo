@@ -87,10 +87,10 @@ final class SourceLifecycleCompletionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('deleteGuard.blocked', true)
                 ->where('deleteGuard.description', fn (mixed $value): bool => is_string($value) && str_contains($value, 'documents — 1')));
-        $this->get(route('catalog.index', $company))
+        $this->get(route('catalog.show', [$company, $product]))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('products.items.0.id', $product->id)
-                ->where('products.items.0.deleteGuard.blocked', true));
+                ->where('product.id', $product->id)
+                ->where('deleteGuard.blocked', true));
 
         $this->delete(route('customers.destroy', [$company, $customer]))
             ->assertSessionHasErrors('customer');

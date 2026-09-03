@@ -218,7 +218,10 @@ class PlatformOperationsWorkflowTest extends TestCase
     private function expiringAccount(string $email, CarbonImmutable $endsAt): Account
     {
         $account = $this->accountOwner($email)->account;
-        $account->forceFill(['access_ends_at' => $endsAt])->save();
+        $account->forceFill([
+            'plan_started_at' => CarbonImmutable::now(),
+            'access_ends_at' => $endsAt,
+        ])->save();
 
         return $account;
     }

@@ -41,11 +41,16 @@ const allocation = {
 const labels = {
     workspace: {
         quote_summary: 'Quote summary',
-        total: 'total',
+        total: 'Total',
+        gross: 'Gross',
+        discount: 'Discount',
+        taxable_base: 'Taxable base',
+        tax: 'Tax',
         document_facts: 'Document',
         sharing_facts: 'Sharing & delivery',
         open_sharing: 'Open sharing & delivery',
     },
+    edit: { total: 'Total' },
     allocation: {
         quoted: 'Quoted',
         invoiced: 'Invoiced',

@@ -45,10 +45,10 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dashboard')
                 ->where('translations.title', 'Panou de control')
-                ->where('translations.subtitle', 'Activitatea curentă de facturare și încasare.')
+                ->where('translations.subtitle', 'Activitatea de facturare și încasare la data de :date.')
                 ->where('translations.view_invoices', 'Vezi facturile')
                 ->has('dashboard.currencyGroups', 0)
-                ->has('dashboard.recentInvoices', 0)
+                ->where('dashboard.invoicesUrl', route('invoices.index', $company, false))
                 ->where('company.name', 'Exemplu SRL'));
     }
 }

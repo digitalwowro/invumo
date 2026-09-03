@@ -31,9 +31,10 @@ afterEach(function (): void {
 
 it('matches the dense Invoice reference with responsive working filters', function () {
     [$owner, $company] = invoiceListBrowserCompany();
-    $overdue = invoiceListBrowserInvoice($company, $owner, '450', '2026-08-29', 'Overdue Customer SRL');
-    $upcoming = invoiceListBrowserInvoice($company, $owner, '275', '2026-09-03', 'Upcoming Customer SRL');
-    invoiceListBrowserInvoice($company, $owner, '125', '2026-09-30', 'Draft Customer SRL');
+    $today = now('Europe/Bucharest');
+    $overdue = invoiceListBrowserInvoice($company, $owner, '450', $today->copy()->subDay()->toDateString(), 'Overdue Customer SRL');
+    $upcoming = invoiceListBrowserInvoice($company, $owner, '275', $today->copy()->addDays(6)->toDateString(), 'Upcoming Customer SRL');
+    invoiceListBrowserInvoice($company, $owner, '125', $today->copy()->addDays(30)->toDateString(), 'Draft Customer SRL');
 
     foreach ([$overdue, $upcoming] as $invoice) {
         app(IssueInvoice::class)->handle($company, $owner, $invoice->id, 1);
@@ -50,7 +51,10 @@ it('matches the dense Invoice reference with responsive working filters', functi
         ->assertSee('Draft Customer SRL')
         ->assertScript('!document.querySelector("[data-slot=page-header]").classList.contains("border-b")')
         ->click('Overdue')
-        ->wait(0.5)
+        ->waitForEvent('networkidle')
+        ->assertQueryStringHas('lifecycle', 'ISSUED')
+        ->assertQueryStringHas('payment', 'OUTSTANDING')
+        ->assertQueryStringHas('overdue', 'overdue')
         ->assertSee('Overdue Customer SRL')
         ->assertDontSee('Upcoming Customer SRL')
         ->assertDontSee('Payment state')
@@ -60,13 +64,16 @@ it('matches the dense Invoice reference with responsive working filters', functi
         ->assertSee('Last 90 days')
         ->screenshot(false, 'implementation-invoice-list-desktop.png')
         ->click('Due in 7 days')
-        ->wait(0.5)
+        ->waitForEvent('networkidle')
+        ->assertQueryStringHas('overdue', 'due_soon')
         ->assertSee('Upcoming Customer SRL')
         ->assertDontSee('Overdue Customer SRL')
         ->click('Clear filters')
-        ->wait(0.5)
+        ->waitForEvent('networkidle')
+        ->assertQueryStringMissing('overdue')
         ->type('Search', 'Overdue Customer')
-        ->wait(0.5)
+        ->waitForEvent('networkidle')
+        ->assertQueryStringHas('q', 'Overdue Customer')
         ->assertSee('Overdue Customer SRL')
         ->assertDontSee('Upcoming Customer SRL')
         ->assertScript('document.documentElement.scrollWidth === document.documentElement.clientWidth')
@@ -81,7 +88,7 @@ it('keeps the dense Invoice filters usable on mobile', function () {
         $company,
         $owner,
         '125',
-        '2026-09-30',
+        now('Europe/Bucharest')->addDays(30)->toDateString(),
         'Mobile Customer SRL',
     );
 
@@ -152,7 +159,7 @@ function invoiceListBrowserInvoice(
         ]);
         $document->update([
             'customer_id' => $customer->id,
-            'issue_date' => '2026-08-20',
+            'issue_date' => now('Europe/Bucharest')->subDays(15)->toDateString(),
             'currency_code' => 'RON',
             'currency_precision' => 2,
             'document_language' => 'en',

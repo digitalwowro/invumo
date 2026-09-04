@@ -1,7 +1,7 @@
 # Testing Strategy
 
 Status: Approved quality and execution contract  
-Last updated: 2026-08-29
+Last updated: 2026-09-04
 
 Invumo keeps strong coverage without treating every edit as a release candidate. Verification depth follows the change's actual risk, and the complete GitHub gate runs only when a phase closes.
 
@@ -16,6 +16,18 @@ During implementation, run the smallest test set that proves the changed behavio
 - shared components or cross-cutting foundations: every known consumer test that can be affected.
 
 Use `--stop-on-failure` during iteration. A passing focused test is not permission to omit a known affected tenant, authorization, audit, localization, responsive, or concurrency boundary.
+
+### UI impacted-consumer discovery
+
+Rendered UI, localization, and composition changes often have no compiler or static-analysis signal. Before selecting focused tests, enumerate impacted consumers explicitly. A test remains an impacted consumer even when that test file was not modified.
+
+1. For a page, feature, or workspace change, list every affected route and state. Run every browser journey that enters those routes when the change can alter what is visible, clickable, named, or positioned. Moving content behind a tab, disclosure, modal, or responsive branch makes every journey that reads or operates on that content an impacted consumer.
+2. For a shared component, hook, layout, or design-system change, search its direct and transitive imports through page entry points. Enumerate the corresponding Vitest coverage and browser journeys; a passing component test alone is insufficient when page composition or navigation changed.
+3. For a language-catalogue change, inspect the changed keys and their previous and new rendered values in every affected locale. Search `tests/Browser/` and frontend tests for the keys, values, related control labels, and page names, then run every journey for the consuming pages in each affected locale. A search with no match does not prove that there is no consumer; confirm the catalogue-to-page mapping.
+4. Before renaming or removing a visible label, role, or `data-testid`, search both its old and new forms across browser and frontend tests. Update and run every journey that relies on that interaction, including indirect journeys such as delivery, conversion, lifecycle, and recovery flows.
+5. When a change crosses several workflows or the consumer inventory cannot be bounded confidently, run the complete affected browser shard or shards locally. This is broadened focused verification; it does not authorize the complete local repository gate or a GitHub phase gate outside phase closeout.
+
+Record the affected routes, shared consumers, catalogues/locales, and resulting focused commands in the canonical development tracker before declaring verification complete. Use the changed-file list plus targeted `rg` searches as discovery evidence, not as a substitute for the inventory.
 
 Manual reference comparisons use the single canonical [`design-qa.md`](design-qa.md) log. Every cited source and rendered implementation artifact must be committed under `design-qa-evidence/`, registered with its SHA-256 and review metadata in `tests/Browser/design-qa-reviews.json`, and pass `npm run design-qa:check`. Machine-local attachment and ignored browser-output paths are not durable evidence. This reference-comparison record is separate from, and never substitutes for, pinned-runner canonical visual snapshot review.
 

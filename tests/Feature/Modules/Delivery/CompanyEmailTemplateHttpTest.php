@@ -37,7 +37,7 @@ final class CompanyEmailTemplateHttpTest extends TestCase
                 ->where('templates.0.subject', 'Quote {{document_number}} from {{company_name}}')
                 ->where('templates.1.languageCode', 'ro')
                 ->where('templates.1.subject', 'Oferta {{document_number}} de la {{company_name}}')
-                ->where('companySettingsNavigation.2.key', 'email_templates')
+                ->where('companySettingsNavigation.3.key', 'email_templates')
                 ->where('limits.subject', 500)
                 ->where('limits.body', 20000)
                 ->where('limits.buttonLabel', 80)

@@ -32,7 +32,7 @@ final class CompanyReminderRulesHttpTest extends TestCase
                 ->component('companies/settings/reminders')
                 ->has('rules', 0)
                 ->where('limits.rules', 20)
-                ->where('companySettingsNavigation.3.key', 'reminders'));
+                ->where('companySettingsNavigation.4.key', 'reminders'));
 
         $this->actingAs($admin)->put(route('company-reminder-rules.update', $company), [
             'rules' => [

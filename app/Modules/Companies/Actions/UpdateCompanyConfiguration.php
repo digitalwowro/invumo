@@ -2,14 +2,12 @@
 
 namespace App\Modules\Companies\Actions;
 
-use App\Foundation\Money\DecimalRules;
 use App\Foundation\Tenancy\TenantContext;
 use App\Models\User;
 use App\Modules\Audit\Actions\RecordAuditEvent;
 use App\Modules\Audit\Data\AuditActorType;
 use App\Modules\Audit\Data\AuditEventData;
 use App\Modules\Audit\Data\AuditPayload;
-use App\Modules\Catalog\Models\ProductService;
 use App\Modules\Companies\Data\CompanyAbility;
 use App\Modules\Companies\Data\CompanyConfigurationData;
 use App\Modules\Companies\Exceptions\CompanyConfigurationException;
@@ -17,12 +15,11 @@ use App\Modules\Companies\Models\Company;
 use App\Modules\Companies\Models\CompanyCurrency;
 use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Policies\CompanyActionAuthorizer;
+use App\Modules\Companies\Rules\CurrencyPrecisionCompatibility;
 use App\Modules\Delivery\Actions\RecalculateCompanyPendingReminders;
 use App\Modules\Recurring\Actions\RecalculateCompanyRecurringSchedules;
-use App\Modules\Recurring\Models\RecurringTemplateCustomerValue;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 final readonly class UpdateCompanyConfiguration
 {
@@ -37,6 +34,7 @@ final readonly class UpdateCompanyConfiguration
         private RecordAuditEvent $recordAuditEvent,
         private RecalculateCompanyRecurringSchedules $recalculateRecurringSchedules,
         private RecalculateCompanyPendingReminders $recalculateReminders,
+        private CurrencyPrecisionCompatibility $precisionCompatibility,
     ) {}
 
     public function handle(
@@ -114,26 +112,8 @@ final readonly class UpdateCompanyConfiguration
             return;
         }
 
-        $products = ProductService::query()
-            ->where('currency_id', $currency->id)
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get(['id', 'unit_price']);
-        // Explicit recurring currency rows are fixed code/precision snapshots. Locking
-        // serializes a concurrent template save; it intentionally does not reject or
-        // rewrite the retained snapshot when Company precision changes.
-        RecurringTemplateCustomerValue::query()
-            ->where('currency_id', $currency->id)
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get(['id']);
-
-        foreach ($products as $product) {
-            try {
-                DecimalRules::storedMoney((string) $product->unit_price, $data->currencyPrecision);
-            } catch (InvalidArgumentException) {
-                throw CompanyConfigurationException::currencyPrecisionDependency();
-            }
+        if (! $this->precisionCompatibility->allows($currency, $data->currencyPrecision)) {
+            throw CompanyConfigurationException::currencyPrecisionDependency();
         }
     }
 

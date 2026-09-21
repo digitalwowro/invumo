@@ -51,7 +51,12 @@ final class InvoiceRepresentationHttpTest extends TestCase
                 ->where('document.kind', 'Factură')
                 ->where('document.dueDate', '25 sept. 2026')
                 ->where('document.customerReference', 'PO-ȘȚ-42')
+                ->where('document.company.displayName', 'Marca Știință')
+                ->where('document.company.legalName', 'Compania Știință SRL')
+                ->where('document.theme.accentColor', '#1F5D42')
+                ->where('document.company.address.1', 'România')
                 ->where('document.customer.displayName', 'Client Știință SRL')
+                ->where('document.customer.address.1', 'România')
                 ->where('document.lines.0.total', "214,20\u{00A0}RON"));
 
         $response = $this->get(route('invoices.current.pdf', [$company, $invoice]))
@@ -65,7 +70,10 @@ final class InvoiceRepresentationHttpTest extends TestCase
         $this->assertStringContainsString('Factură', $text);
         $this->assertStringContainsString('DATA SCADENȚEI', $text);
         $this->assertStringContainsString('25 sept. 2026', $text);
+        $this->assertStringContainsString('Compania Știință SRL', $text);
+        $this->assertStringNotContainsString('Marca Știință', $text);
         $this->assertStringContainsString('Client Știință SRL', $text);
+        $this->assertStringContainsString('România', $text);
         $this->assertSame($before, $this->tenant($company, fn (): array => [
             Document::query()->count(),
             DocumentLine::query()->count(),
@@ -99,9 +107,11 @@ final class InvoiceRepresentationHttpTest extends TestCase
             'payment_term_days' => 30, 'due_date' => '2026-09-25',
         ]);
         DocumentCompanySnapshot::query()->where('document_id', $document->id)->update([
-            'legal_name' => 'Compania Știință SRL', 'city' => 'București',
+            'legal_name' => 'Compania Știință SRL', 'trading_name' => 'Marca Știință',
+            'city' => 'București',
             'country_code' => 'RO', 'currency_display_style' => 'SYMBOL',
         ]);
+        CompanySetting::query()->firstOrFail()->update(['primary_brand_color' => '#1F5D42']);
         DocumentCustomerSnapshot::query()->create([
             'document_id' => $document->id, 'type' => 'COMPANY',
             'legal_name' => 'Client Știință SRL', 'city' => 'Cluj-Napoca', 'country_code' => 'RO',

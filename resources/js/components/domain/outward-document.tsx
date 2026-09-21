@@ -63,20 +63,10 @@ function DocumentHeader({ document }: Props) {
                 {document.logoUrl ? (
                     <img
                         src={document.logoUrl}
-                        alt=""
-                        className="max-h-16 max-w-56 object-contain object-left"
+                        alt={document.company.displayName}
+                        className="max-h-20 max-w-72 object-contain object-left sm:max-h-24"
                     />
                 ) : null}
-                <div className="min-w-0">
-                    <p className="text-xl font-bold break-words text-(--outward-text)">
-                        {document.company.displayName}
-                    </p>
-                    {document.company.legalName ? (
-                        <p className="text-sm break-words text-muted-foreground">
-                            {document.company.legalName}
-                        </p>
-                    ) : null}
-                </div>
             </div>
             <div className="flex min-w-0 flex-col items-start gap-4 sm:items-end sm:text-right">
                 <h1 className="text-3xl font-bold text-(--outward-text)">
@@ -112,7 +102,7 @@ function MetaRow({ label, value }: { label: string; value: string | null }) {
     return value ? (
         <div className="grid min-w-0 gap-1 sm:grid-cols-[auto_minmax(0,1fr)]">
             <dt className="font-medium text-muted-foreground">{label}</dt>
-            <dd className="font-mono break-words tabular-nums">{value}</dd>
+            <dd className="break-words tabular-nums">{value}</dd>
         </div>
     ) : null;
 }
@@ -134,7 +124,7 @@ function Party({
             {party ? (
                 <div className="mt-3 flex min-w-0 flex-col gap-1">
                     <p className="font-bold break-words text-(--outward-text)">
-                        {party.displayName}
+                        {party.legalName ?? party.displayName}
                     </p>
                     <DetailLines values={party.contact ?? []} />
                     <DetailLines values={party.address} />

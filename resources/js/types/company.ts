@@ -84,6 +84,7 @@ export type CompaniesUiTranslations = {
 export type CompanyOption = {
     value: string;
     label: string;
+    testId?: string;
 };
 
 export type CurrencyDisplayStyle = 'CODE' | 'SYMBOL';

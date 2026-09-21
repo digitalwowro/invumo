@@ -21,6 +21,7 @@ final readonly class PublicDocumentResponseHeaders
             "img-src 'self' data:",
             "font-src 'self'",
             "style-src 'self'",
+            "style-src-attr 'unsafe-inline'",
             "script-src 'self'",
             "connect-src 'self'",
             "frame-ancestors 'none'",

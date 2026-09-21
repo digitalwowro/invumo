@@ -45,9 +45,9 @@ body {
 
 .document-logo {
     display: block;
-    max-width: 150pt;
-    max-height: 48pt;
-    margin-bottom: 10pt;
+    margin-top: 18pt;
+    max-width: 180pt;
+    max-height: 64pt;
 }
 
 .document-company-name,
@@ -70,11 +70,16 @@ body {
 
 .document-number {
     display: inline-block;
-    padding: 5pt 8pt;
+    padding: 0 9pt;
+    border-radius: 4pt;
     background: var(--document-accent);
     color: var(--document-on-accent);
     font-family: 'Atkinson Hyperlegible Mono', monospace;
+    font-size: 12pt;
     font-weight: 700;
+    line-height: 26pt;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
 .document-muted,
@@ -92,6 +97,10 @@ body {
 
 .document-meta-row {
     margin: 2pt 0;
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+    font-size: 9pt;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
 }
 
 .document-meta-label,
@@ -101,6 +110,22 @@ body {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+.document-meta-label,
+.document-meta-value {
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+    font-size: inherit;
+}
+
+.document-meta-label {
+    letter-spacing: 0.02em;
+}
+
+.document-meta-value {
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
 }
 
 .document-parties {
@@ -119,8 +144,13 @@ body {
 }
 
 .document-party-name {
-    margin: 3pt 0 5pt;
+    margin: 2pt 0;
     font-size: 12pt;
+}
+
+.document-party .document-detail {
+    margin: 0;
+    line-height: 1.08;
 }
 
 .document-lines {

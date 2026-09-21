@@ -1,7 +1,7 @@
 # Invumo Core Domain Rules
 
 Status: Approved product rules  
-Last updated: 2026-08-30
+Last updated: 2026-09-21
 
 This document is a concise implementation-facing companion to the [master build brief](master-build-brief.md). If a future implementation decision changes one of these rules, update both documents and record the decision in the memory repository.
 
@@ -74,6 +74,15 @@ Across the domain, unusual but internally valid workflows should remain possible
 - Store timestamps in UTC; interpret recurring schedules and other company-timed automation in the company timezone.
 - Canonical recurrence/reminder rules remain company-local calendar values; stored UTC run timestamps are derived execution indexes.
 - Document date formatting derives from the selected document language/locale. v1 has no separate manual date-format setting.
+
+## Company currencies
+
+- Owner/Admin manage a Company-scoped list of ISO currencies. A currency code is immutable after creation; its decimal precision is configurable from 0 through 8.
+- At most one active currency is the Company default. The first configured currency becomes the default automatically, changing the default affects future resolution only, and restoring an inactive currency never makes it the default automatically.
+- Currencies use active/inactive lifecycle rather than permanent deletion. The current default cannot be deactivated until another active currency becomes default.
+- A currency referenced by any Customer or Product/Service default cannot be deactivated until those references are changed or cleared. Laravel reports the exact dependency and the deferred PostgreSQL source-integrity trigger independently rejects direct or concurrent invalidation.
+- Reducing precision is rejected while any Product/Service price in that currency cannot be represented exactly. The workflow never rounds or rewrites a live catalog price silently.
+- Existing document and explicit recurring-template currency/precision snapshots remain unchanged by default, precision, deactivation, or restoration changes. Explicit recurring rows are locked during source mutation to close concurrent selection races but do not become live deactivation dependencies.
 
 ## Bank accounts
 
@@ -538,10 +547,11 @@ Recurring template
 
 - v1 supports a company logo and one primary brand color.
 - Company-logo files follow the approved raster validation, private Laravel storage, controlled serving, immutable replacement/cleanup, and local-to-S3 migration contract in [`../architecture/uploads-and-storage.md`](../architecture/uploads-and-storage.md).
+- Outward Quote/Invoice headers show the Company logo without a second visible Company name and remain empty on that side when no logo is available. The `From` party uses the Legal Name, so legal sender identity never depends on the header. Company and Customer country codes are rendered as full names in the document language.
 - New Companies default to neutral ink `#14181C`. The built-in shortcuts are Ink `#14181C`, Navy `#1E3A5F`, Forest `#1F5D42`, Burgundy `#7F1D1D`, and Violet `#5B3A8E`; these are UI conveniences rather than a closed Company-color enum.
 - Companies may instead save any custom color in canonical uppercase `#RRGGBB` notation. Adding or changing presets later requires no schema or data migration because the final hex value is persisted.
 - Provide a simple outward-facing document/public-page preview.
-- Apply the brand color to PDFs, public document pages, and restrained transactional email accents.
+- Apply the current Company brand color to current authenticated/public document pages and on-demand PDFs, including existing documents; immutable delivery artifacts retain the appearance rendered when they were created. Apply the brand color to restrained transactional email accents.
 - Do not apply company themes to the internal Invumo application.
 - The shared outward-theme resolver chooses black or white for the best contrast on a brand-color background. When the chosen color cannot meet the required contrast against white for outward text or rules, that context falls back to neutral ink while preserving the saved Company color.
 - v1 excludes custom fonts, print padding/scale/logo-size controls, custom favicons, Pay buttons, viewer-facing Share buttons, fixed-per-page footers, signature/stamp images, and Invumo-branding removal controls.

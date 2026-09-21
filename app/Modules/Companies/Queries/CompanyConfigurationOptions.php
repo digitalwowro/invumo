@@ -5,7 +5,6 @@ namespace App\Modules\Companies\Queries;
 use App\Modules\Companies\Data\CountryCode;
 use App\Modules\Companies\Data\CurrencyCode;
 use Collator;
-use Locale;
 
 final readonly class CompanyConfigurationOptions
 {
@@ -15,7 +14,7 @@ final readonly class CompanyConfigurationOptions
         $options = array_map(
             fn (string $code): array => [
                 'value' => $code,
-                'label' => $this->countryLabel($code, $locale),
+                'label' => CountryCode::label($code, $locale),
             ],
             CountryCode::all(),
         );
@@ -48,16 +47,5 @@ final readonly class CompanyConfigurationOptions
             fn (string $timezone): array => ['value' => $timezone, 'label' => $timezone],
             timezone_identifiers_list(),
         );
-    }
-
-    private function countryLabel(string $code, string $locale): string
-    {
-        if (! class_exists(Locale::class)) {
-            return $code;
-        }
-
-        $label = Locale::getDisplayRegion("und_{$code}", $locale);
-
-        return is_string($label) && $label !== '' ? $label : $code;
     }
 }

@@ -24,7 +24,7 @@ const labels = {
     subtotal: 'Subtotal',
     tax_total: 'Tax',
     document_default: 'Document default',
-    no_tax: 'No tax',
+    no_tax: 'None',
     fields: {
         description: 'Description',
         item_price: 'Item price',
@@ -32,7 +32,9 @@ const labels = {
         unit: 'Unit',
         period_unit: 'Period',
         period_quantity: 'Period quantity',
-        discount_percentage: 'Discount',
+        period_quantity_short: 'Count',
+        discount_percentage: 'Discount %',
+        discount_percentage_short: 'Disc. %',
         tax_name: 'Tax name',
         tax_percentage: 'Tax percentage',
     },
@@ -98,9 +100,39 @@ describe('DocumentLineTable', () => {
         expect(screen.getByLabelText('Product or Service')).toHaveClass(
             'border-transparent',
         );
+        expect(
+            screen.getByRole('columnheader', { name: 'Quantity' }),
+        ).toHaveClass('border-l', 'border-rule', 'text-center');
+        expect(screen.getByRole('columnheader', { name: 'Unit' })).toHaveClass(
+            'text-center',
+        );
+        expect(
+            screen.getByRole('columnheader', { name: 'Period' }),
+        ).toHaveClass('text-center');
+        expect(screen.getByRole('columnheader', { name: 'Count' })).toHaveClass(
+            'text-center',
+        );
+        expect(
+            screen.getByRole('columnheader', { name: 'Disc. %' }),
+        ).toHaveClass('text-right');
+        expect(screen.getByLabelText('Item price').closest('td')).toHaveClass(
+            'border-divider',
+        );
+        expect(screen.getByLabelText('Quantity')).toHaveClass('text-center');
+        expect(screen.getByLabelText('Unit')).toHaveClass('text-center');
+        expect(screen.getByLabelText('Period')).toHaveClass('text-center');
+        expect(screen.getByLabelText('Discount %')).toHaveClass('text-right');
+        expect(screen.getByLabelText('Unit')).toHaveAttribute(
+            'placeholder',
+            '—',
+        );
         const columns = table.querySelectorAll('col');
         expect(columns[1]).toHaveClass('w-[268px]');
         expect(columns[2]).toHaveClass('w-[110px]');
+        expect(columns[5]).toHaveClass('w-[108px]');
+        expect(columns[6]).toHaveClass('w-[72px]');
+        expect(columns[7]).toHaveClass('w-[80px]');
+        expect(columns[8]).toHaveClass('w-[122px]');
         expect(columns[9]).toHaveClass('w-[148px]');
 
         fireEvent.change(screen.getByLabelText('Item price'), {

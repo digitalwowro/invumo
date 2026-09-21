@@ -58,7 +58,7 @@ final class CompanyAuditHttpTest extends TestCase
             $response->assertInertia(fn (Assert $page) => $page
                 ->component('companies/settings/audit')
                 ->where('companyContext.abilities.view_audit', true)
-                ->where('companySettingsNavigation.9.key', 'audit')
+                ->where('companySettingsNavigation.10.key', 'audit')
                 ->where('audit.items.0.action', 'company.customer.updated')
                 ->where('audit.items.0.actorName', 'Audit Admin')
                 ->where('audit.items.0.supportAccess', true)

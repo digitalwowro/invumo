@@ -31,6 +31,7 @@ function companyForInvoiceBrowser(string $language = 'en'): array
             'timezone' => 'Europe/Bucharest',
             'default_document_language' => $language,
             'default_payment_term_days' => 30,
+            'trading_name' => 'Invoice Browser', 'country_code' => 'RO',
         ]);
         $currency = CompanyCurrency::query()->create([
             'currency_code' => 'RON', 'currency_precision' => 2,

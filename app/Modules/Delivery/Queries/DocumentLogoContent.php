@@ -3,6 +3,7 @@
 namespace App\Modules\Delivery\Queries;
 
 use App\Modules\Companies\Models\CompanyAsset;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemManager;
@@ -12,6 +13,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 final readonly class DocumentLogoContent
 {
     public function __construct(private FilesystemManager $filesystems) {}
+
+    public function exists(string $documentId): bool
+    {
+        return $this->asset($documentId) !== null;
+    }
 
     public function dataUri(string $documentId): ?string
     {
@@ -58,10 +64,17 @@ final readonly class DocumentLogoContent
             ->where('document_id', $documentId)
             ->firstOrFail();
 
-        return $snapshot->logo_asset_id === null
+        $assetId = $snapshot->logo_asset_id;
+
+        if ($assetId === null) {
+            $currentAssetId = CompanySetting::query()->value('logo_asset_id');
+            $assetId = is_string($currentAssetId) ? $currentAssetId : null;
+        }
+
+        return $assetId === null
             ? null
             : CompanyAsset::query()
-                ->whereKey($snapshot->logo_asset_id)
+                ->whereKey($assetId)
                 ->whereNull('deleted_at')
                 ->first();
     }

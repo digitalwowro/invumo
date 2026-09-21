@@ -3,6 +3,8 @@
 namespace App\Modules\Delivery\Queries;
 
 use App\Foundation\Money\DecimalRules;
+use App\Modules\Companies\Data\CountryCode;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Companies\Queries\ResolveOutwardBrandTheme;
 use App\Modules\Delivery\Data\OutwardDocument;
 use App\Modules\Delivery\Support\OutwardDocumentFormatter;
@@ -19,6 +21,7 @@ final readonly class OutwardDocumentProjection
     public function __construct(
         private ResolveOutwardBrandTheme $brandTheme,
         private OutwardDocumentFormatter $format,
+        private DocumentLogoContent $logo,
     ) {}
 
     public function build(
@@ -44,7 +47,7 @@ final readonly class OutwardDocumentProjection
         $locale = $document->document_language ?? 'en';
         $precision = $document->currency_precision ?? 2;
         $currency = $document->currency_code ?? '---';
-        $theme = $this->brandTheme->for($companySnapshot->primary_brand_color);
+        $theme = $this->brandTheme->for($this->currentBrandColor($companySnapshot));
 
         return new OutwardDocument(
             kind: $kind,
@@ -61,8 +64,8 @@ final readonly class OutwardDocumentProjection
                 'textColor' => $theme->textColor,
                 'ruleColor' => $theme->ruleColor,
             ],
-            company: $this->company($companySnapshot),
-            customer: $customerSnapshot === null ? null : $this->customer($customerSnapshot),
+            company: $this->company($companySnapshot, $locale),
+            customer: $customerSnapshot === null ? null : $this->customer($customerSnapshot, $locale),
             lines: $this->lines(array_values($lines->all()), $precision, $currency, $companySnapshot, $locale),
             subtotal: $this->format->money($document->subtotal, $precision, $currency, $companySnapshot->currency_display_style, $locale),
             taxTotal: $this->format->money($document->tax_total, $precision, $currency, $companySnapshot->currency_display_style, $locale),
@@ -70,20 +73,20 @@ final readonly class OutwardDocumentProjection
             bank: $this->bank($bankSnapshot, $locale),
             termsAndConditions: $document->terms_and_conditions,
             notes: $document->notes,
-            hasLogo: $companySnapshot->logo_asset_id !== null,
+            hasLogo: $this->logo->exists($document->id),
             labels: $this->labels($locale),
         );
     }
 
     /** @return array{displayName: string, legalName: string|null, address: list<string>, registrations: list<string>, contacts: list<string>} */
-    private function company(DocumentCompanySnapshot $snapshot): array
+    private function company(DocumentCompanySnapshot $snapshot, string $locale): array
     {
         $displayName = $snapshot->trading_name ?? $snapshot->legal_name;
 
         return [
             'displayName' => $displayName,
             'legalName' => $displayName === $snapshot->legal_name ? null : $snapshot->legal_name,
-            'address' => $this->address($snapshot),
+            'address' => $this->address($snapshot, $locale),
             'registrations' => array_values(array_filter([
                 $this->labelValue($snapshot->tax_registration_label, $snapshot->tax_registration_identifier),
                 $this->labelValue($snapshot->business_registration_label, $snapshot->business_registration_number),
@@ -93,14 +96,14 @@ final readonly class OutwardDocumentProjection
     }
 
     /** @return array{displayName: string, contact: list<string>, address: list<string>, registrations: list<string>, contacts: list<string>} */
-    private function customer(DocumentCustomerSnapshot $snapshot): array
+    private function customer(DocumentCustomerSnapshot $snapshot, string $locale): array
     {
         $displayName = $snapshot->legal_name ?? trim($snapshot->first_name.' '.$snapshot->last_name);
 
         return [
             'displayName' => $displayName,
             'contact' => array_values(array_filter([$snapshot->contact_name, $snapshot->contact_position_title])),
-            'address' => $this->address($snapshot),
+            'address' => $this->address($snapshot, $locale),
             'registrations' => array_values(array_filter([
                 $this->labelValue($snapshot->tax_registration_label, $snapshot->tax_registration_identifier),
                 $this->labelValue($snapshot->business_registration_label, $snapshot->business_registration_number),
@@ -110,16 +113,27 @@ final readonly class OutwardDocumentProjection
     }
 
     /** @return list<string> */
-    private function address(DocumentCompanySnapshot|DocumentCustomerSnapshot $snapshot): array
-    {
+    private function address(
+        DocumentCompanySnapshot|DocumentCustomerSnapshot $snapshot,
+        string $locale,
+    ): array {
         $locality = implode(', ', array_filter([$snapshot->postal_code, $snapshot->city, $snapshot->region]));
 
         return array_values(array_filter([
             $snapshot->address_line_1,
             $snapshot->address_line_2,
             $locality === '' ? null : $locality,
-            $snapshot->country_code,
+            $snapshot->country_code === null
+                ? null
+                : CountryCode::label($snapshot->country_code, $locale),
         ]));
+    }
+
+    private function currentBrandColor(DocumentCompanySnapshot $snapshot): string
+    {
+        $color = CompanySetting::query()->value('primary_brand_color');
+
+        return is_string($color) ? $color : $snapshot->primary_brand_color;
     }
 
     /** @return list<array{label: string, value: string}> */

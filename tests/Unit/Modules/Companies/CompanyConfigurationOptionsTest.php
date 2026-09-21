@@ -22,6 +22,13 @@ final class CompanyConfigurationOptionsTest extends TestCase
         }
     }
 
+    public function test_country_names_are_localized_for_outward_display(): void
+    {
+        $this->assertSame('United Arab Emirates', CountryCode::label('AE', 'en'));
+        $this->assertSame('Emiratele Arabe Unite', CountryCode::label('AE', 'ro'));
+        $this->assertSame('Qatar', CountryCode::label('QA', 'en'));
+    }
+
     public function test_currency_codes_use_the_current_selectable_iso_list(): void
     {
         $codes = CurrencyCode::all();

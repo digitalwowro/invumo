@@ -39,26 +39,22 @@
                 @if ($logoDataUri)
                     <img class="document-logo" src="{{ $logoDataUri }}" alt="">
                 @endif
-                <p class="document-company-name">{{ $document['company']['displayName'] }}</p>
-                @if ($document['company']['legalName'])
-                    <p class="document-detail">{{ $document['company']['legalName'] }}</p>
-                @endif
             </td>
             <td class="document-right">
                 <h1 class="document-title">{{ $document['kind'] }}</h1>
                 <span class="document-number">{{ $document['number'] }}</span>
                 <div class="document-meta">
                     @if ($document['issueDate'])
-                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['issue_date'] }}</span> {{ $document['issueDate'] }}</p>
+                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['issue_date'] }}</span> <span class="document-meta-value">{{ $document['issueDate'] }}</span></p>
                     @endif
                     @if ($document['validUntil'])
-                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['valid_until'] }}</span> {{ $document['validUntil'] }}</p>
+                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['valid_until'] }}</span> <span class="document-meta-value">{{ $document['validUntil'] }}</span></p>
                     @endif
                     @if ($document['dueDate'])
-                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['due_date'] }}</span> {{ $document['dueDate'] }}</p>
+                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['due_date'] }}</span> <span class="document-meta-value">{{ $document['dueDate'] }}</span></p>
                     @endif
                     @if ($document['customerReference'])
-                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['customer_reference'] }}</span> {{ $document['customerReference'] }}</p>
+                        <p class="document-meta-row"><span class="document-meta-label">{{ $document['labels']['customer_reference'] }}</span> <span class="document-meta-value">{{ $document['customerReference'] }}</span></p>
                     @endif
                 </div>
             </td>
@@ -69,6 +65,7 @@
         <tr>
             <td class="document-party">
                 <span class="document-label">{{ $document['labels']['from'] }}</span>
+                <p class="document-party-name">{{ $document['company']['legalName'] ?? $document['company']['displayName'] }}</p>
                 @foreach ([...$document['company']['address'], ...$document['company']['registrations'], ...$document['company']['contacts']] as $detail)
                     <p class="document-detail">{{ $detail }}</p>
                 @endforeach

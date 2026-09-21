@@ -59,7 +59,7 @@ final class CompanyDocumentDefaultsHttpTest extends TestCase
                     'documentLimits.notesCharacters',
                     DocumentFieldLimits::NOTES_CHARACTERS,
                 )
-                ->where('companySettingsNavigation.1.key', 'documents')
+                ->where('companySettingsNavigation.2.key', 'documents')
                 ->where('languageOptions.0.value', 'en')
                 ->where('languageOptions.0.label', 'English')
                 ->where('languageOptions.1.value', 'ro'));

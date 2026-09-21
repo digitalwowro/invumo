@@ -38,6 +38,8 @@ it('rejects a Romanian public Quote on mobile without overflow', function () {
         CompanySetting::query()->firstOrFail()->update([
             'timezone' => 'Europe/Bucharest',
             'default_document_language' => 'ro',
+            'trading_name' => 'Ofertă Publică',
+            'country_code' => 'RO',
         ]);
         CompanyCurrency::query()->create([
             'currency_code' => 'RON',
@@ -66,6 +68,9 @@ it('rejects a Romanian public Quote on mobile without overflow', function () {
     $page = visit(route('public-quotes.show', $link->token_ciphertext, false))
         ->on()->iPhone15()
         ->assertSee('Răspunde la această ofertă')
+        ->assertSee('Ofertă Publică SRL')
+        ->assertSee('România')
+        ->assertScript("document.querySelector('article header > div:first-child')?.textContent?.trim() === ''")
         ->assertScript("!window.location.pathname.includes('[redacted]')")
         ->type('Numele tău', 'Client Mobil')
         ->type('Adresa ta de e-mail', 'client@example.com')

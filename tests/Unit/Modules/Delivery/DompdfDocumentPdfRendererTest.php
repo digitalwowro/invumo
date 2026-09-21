@@ -41,7 +41,22 @@ it('proves the selected pure PHP renderer against the outward compatibility fixt
 
     expect($pdf)->toStartWith('%PDF-')
         ->and(count($parsed->getPages()))->toBeGreaterThanOrEqual(4)
-        ->and($text)->toContain('Ofertă', 'ședință, analiză și implementare', 'Linia 125', 'Termeni cu ă â î ș ț')
+        ->and($text)->toContain(
+            'Ofertă',
+            'Compania Știință SRL',
+            'România',
+            'ședință, analiză și implementare',
+            'Linia 125',
+            'Termeni cu ă â î ș ț',
+        )
+        ->and($text)->not->toContain('Marca Știință')
+        ->and(substr_count($html, 'Compania Știință SRL'))->toBe(1)
+        ->and(substr_count($html, 'class="document-meta-value"'))->toBe(3)
+        ->and($html)->toContain(
+            'margin-top: 18pt;',
+            'font-size: 9pt;',
+            'line-height: 1.08;',
+        )
         ->and(substr_count($text, 'DESCRIERE'))->toBeGreaterThan(1)
         ->and($pdf)->toContain('AtkinsonHyperlegibleNext', 'AtkinsonHyperlegibleMono', '/Subtype /Image')
         ->and($objectContent)->toContain('0.357 0.227 0.557');
@@ -86,8 +101,8 @@ function compatibilityDocument(array $lines): array
             'textColor' => '#14181C', 'ruleColor' => '#5B3A8E',
         ],
         'company' => [
-            'displayName' => 'Compania Știință SRL', 'legalName' => null,
-            'address' => ['Strada Întâi 1', 'București', 'RO'],
+            'displayName' => 'Marca Știință', 'legalName' => 'Compania Știință SRL',
+            'address' => ['Strada Întâi 1', 'București', 'România'],
             'registrations' => ['CUI: RO123456'], 'contacts' => ['office@example.com'],
         ],
         'customer' => [

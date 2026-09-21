@@ -52,7 +52,12 @@ final class QuoteRepresentationHttpTest extends TestCase
                 ->where('document.kind', 'Ofertă')
                 ->where('document.number', $quote->rendered_number)
                 ->where('document.customerReference', 'PO-ȘȚ-42')
+                ->where('document.company.displayName', 'Marca Știință')
+                ->where('document.company.legalName', 'Compania Știință SRL')
+                ->where('document.theme.accentColor', '#1F5D42')
+                ->where('document.company.address.2', 'România')
                 ->where('document.customer.displayName', 'Client Știință SRL')
+                ->where('document.customer.address.1', 'România')
                 ->where('document.lines.0.description', 'Consultanță și analiză')
                 ->where('document.lines.0.total', "214,20\u{00A0}RON")
                 ->where('document.total', "214,20\u{00A0}RON")
@@ -68,6 +73,9 @@ final class QuoteRepresentationHttpTest extends TestCase
 
         $this->assertStringContainsString('Ofertă', $text);
         $this->assertStringContainsString('PO-ȘȚ-42', $text);
+        $this->assertStringContainsString('Compania Știință SRL', $text);
+        $this->assertStringNotContainsString('Marca Știință', $text);
+        $this->assertStringContainsString('România', $text);
         $this->assertStringContainsString('Client Știință SRL', $text);
         $this->assertStringContainsString('Consultanță și analiză', $text);
         $this->assertStringContainsString("214,20\u{00A0}RON", $text);
@@ -113,11 +121,13 @@ final class QuoteRepresentationHttpTest extends TestCase
             'validity_days' => 30, 'valid_until' => '2026-09-25',
         ]);
         DocumentCompanySnapshot::query()->where('document_id', $document->id)->update([
-            'legal_name' => 'Compania Știință SRL', 'address_line_1' => 'Strada Întâi 1',
+            'legal_name' => 'Compania Știință SRL', 'trading_name' => 'Marca Știință',
+            'address_line_1' => 'Strada Întâi 1',
             'city' => 'București', 'country_code' => 'RO',
             'tax_registration_label' => 'CUI', 'tax_registration_identifier' => 'RO123456',
             'currency_display_style' => 'SYMBOL', 'primary_brand_color' => '#1E3A5F',
         ]);
+        CompanySetting::query()->firstOrFail()->update(['primary_brand_color' => '#1F5D42']);
         DocumentCustomerSnapshot::query()->create([
             'document_id' => $document->id, 'type' => 'COMPANY',
             'legal_name' => 'Client Știință SRL', 'city' => 'Cluj-Napoca', 'country_code' => 'RO',

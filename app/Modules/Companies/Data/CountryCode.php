@@ -2,6 +2,8 @@
 
 namespace App\Modules\Companies\Data;
 
+use Locale;
+
 final readonly class CountryCode
 {
     /** @return list<string> */
@@ -34,5 +36,16 @@ final readonly class CountryCode
             'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
             'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW',
         ];
+    }
+
+    public static function label(string $code, string $locale): string
+    {
+        if (! class_exists(Locale::class)) {
+            return $code;
+        }
+
+        $label = Locale::getDisplayRegion("und_{$code}", $locale);
+
+        return is_string($label) && $label !== '' ? $label : $code;
     }
 }

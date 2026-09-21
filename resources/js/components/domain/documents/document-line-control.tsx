@@ -55,6 +55,15 @@ export function lineDescriptionLimit(props: DocumentLineItemProps) {
     );
 }
 
+export function isCompleteDocumentLine(line: DocumentLineDraft) {
+    return (
+        Boolean(line.productServiceName || line.description) &&
+        Boolean(line.itemPrice.trim()) &&
+        Boolean(line.quantity.trim()) &&
+        (line.periodUnit === 'NONE' || Boolean(line.periodQuantity.trim()))
+    );
+}
+
 export function changeProductServiceName(
     props: DocumentLineItemProps,
     value: string,
@@ -83,6 +92,8 @@ export function fieldRequestName(value: string) {
 export function CompactInput(props: {
     label: string;
     value: string;
+    placeholder?: string;
+    alignment?: 'left' | 'center' | 'right';
     inputMode?: 'decimal';
     maxLength?: number;
     disabled?: boolean;
@@ -102,12 +113,17 @@ export function CompactInput(props: {
                 name={props.label}
                 className={cn(
                     'h-8 px-2 text-xs',
-                    props.inputMode === 'decimal' &&
-                        'font-data text-right tabular-nums',
+                    props.inputMode === 'decimal' && 'font-data tabular-nums',
+                    props.alignment === 'center' && 'text-center',
+                    props.alignment === 'right' && 'text-right',
+                    !props.alignment &&
+                        props.inputMode === 'decimal' &&
+                        'text-right',
                     props.quiet &&
                         'border-transparent bg-transparent shadow-none hover:border-input hover:bg-background disabled:bg-transparent',
                 )}
                 value={props.value}
+                placeholder={props.placeholder}
                 inputMode={props.inputMode}
                 maxLength={props.maxLength}
                 disabled={props.disabled}
@@ -171,6 +187,7 @@ export function CompactSelect(props: {
     label: string;
     value: string;
     options: Array<{ value: string; label: string }>;
+    alignment?: 'left' | 'center';
     error?: string;
     testId?: string;
     quiet?: boolean;
@@ -193,6 +210,8 @@ export function CompactSelect(props: {
                     size="sm"
                     className={cn(
                         'w-full px-2 text-xs',
+                        props.alignment === 'center' &&
+                            'relative justify-center px-6 text-center *:data-[slot=select-value]:justify-center [&>svg]:absolute [&>svg]:right-2',
                         props.quiet &&
                             'border-transparent bg-transparent shadow-none hover:border-input hover:bg-background',
                     )}

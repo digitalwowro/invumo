@@ -331,7 +331,7 @@ Common current representation:
 - positive monotonic `edit_version`
 - current-PDF invalidation/content version metadata
 
-`document_company_snapshots` also stores the resolved `CODE`/`SYMBOL` currency display style alongside the already-snapshotted currency code/precision, identity, logo, and brand colour. Later Company setting changes therefore cannot restyle or reformat an existing document's current representation.
+`document_company_snapshots` also stores the resolved `CODE`/`SYMBOL` currency display style alongside the already-snapshotted currency code/precision, identity, logo, and brand colour. Later Company setting changes cannot reformat an existing document's monetary representation or replace a non-null captured logo. Current authenticated/public pages and on-demand PDFs intentionally use the current Company brand colour so an appearance-setting change is visible consistently across the Company's documents; immutable delivery artifacts remain unchanged. When the saved snapshot has no logo reference, the current Company logo fills that otherwise-empty outward header. A non-null saved logo reference always wins, so replacement never rewrites an already-branded document.
 
 Rendered numbers have a non-unique lookup index `(company_id, kind, rendered_number)`. No soft-delete column is used: an authorized permanent document deletion removes the business aggregate and retains only the minimal audit tombstone defined below.
 

@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "vite build && node scripts/set-public-build-permissions.mjs",
         "design-qa:check": "node scripts/check-design-qa-evidence.mjs",
         "dev": "vite",
         "design:check": "node scripts/check-design-contract.mjs",

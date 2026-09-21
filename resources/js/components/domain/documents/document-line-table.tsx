@@ -5,6 +5,7 @@ import {
     CompactInput,
     CompactSelect,
     fieldRequestName,
+    isCompleteDocumentLine,
     lineDescriptionLimit,
     lineError,
 } from '@/components/domain/documents/document-line-control';
@@ -30,14 +31,36 @@ import type {
     DocumentLineLabels,
     DocumentPeriodUnit,
 } from '@/types/document';
-
 type Props = {
     rows: DocumentLineItemProps[];
     labels: DocumentLineLabels;
     ariaLabel: string;
 };
-
 export function DocumentLineTable({ rows, labels, ariaLabel }: Props) {
+    const headings = [
+        [labels.line, 'px-2 text-center'],
+        [labels.product_or_service, 'border-l border-rule px-2'],
+        [labels.fields.item_price, 'border-l border-divider px-2 text-right'],
+        [
+            labels.fields.quantity_short ?? labels.fields.quantity,
+            'border-l border-rule px-2 text-center',
+        ],
+        [labels.fields.unit, 'border-l border-rule px-2 text-center'],
+        [labels.fields.period_unit, 'border-l border-rule px-2 text-center'],
+        [
+            labels.fields.period_quantity_short ??
+                labels.fields.period_quantity,
+            'border-l border-rule px-2 text-center',
+        ],
+        [
+            labels.fields.discount_percentage_short ??
+                labels.fields.discount_percentage,
+            'border-l border-rule px-2 text-right',
+        ],
+        [labels.tax_total, 'border-l border-rule px-2'],
+        [labels.line_total, 'border-l border-divider px-2 text-right'],
+    ] as const;
+
     return (
         <Table aria-label={ariaLabel} className="min-w-[1120px] table-fixed">
             <colgroup>
@@ -46,43 +69,21 @@ export function DocumentLineTable({ rows, labels, ariaLabel }: Props) {
                 <col className="w-[110px]" />
                 <col className="w-[60px]" />
                 <col className="w-[68px]" />
-                <col className="w-[96px]" />
-                <col className="w-[88px]" />
-                <col className="w-[92px]" />
-                <col className="w-[106px]" />
+                <col className="w-[108px]" />
+                <col className="w-[72px]" />
+                <col className="w-[80px]" />
+                <col className="w-[122px]" />
                 <col className="w-[148px]" />
                 <col className="w-[40px]" />
             </colgroup>
             <TableHeader>
                 <TableRow>
-                    <TableHead className="px-2 text-center">
-                        {labels.line}
-                    </TableHead>
-                    <TableHead className="px-2">
-                        {labels.product_or_service}
-                    </TableHead>
-                    <TableHead className="px-2 text-right">
-                        {labels.fields.item_price}
-                    </TableHead>
-                    <TableHead className="px-2 text-right">
-                        {labels.fields.quantity_short ?? labels.fields.quantity}
-                    </TableHead>
-                    <TableHead className="px-2">{labels.fields.unit}</TableHead>
-                    <TableHead className="px-2">
-                        {labels.fields.period_unit}
-                    </TableHead>
-                    <TableHead className="px-2 text-right">
-                        {labels.fields.period_quantity_short ??
-                            labels.fields.period_quantity}
-                    </TableHead>
-                    <TableHead className="px-2 text-right">
-                        {labels.fields.discount_percentage}
-                    </TableHead>
-                    <TableHead className="px-2">{labels.tax_total}</TableHead>
-                    <TableHead className="px-2 text-right">
-                        {labels.line_total}
-                    </TableHead>
-                    <TableHead className="px-2">
+                    {headings.map(([label, className]) => (
+                        <TableHead key={label} className={className}>
+                            {label}
+                        </TableHead>
+                    ))}
+                    <TableHead className="border-l border-rule px-2">
                         <span className="sr-only">{labels.remove_line}</span>
                     </TableHead>
                 </TableRow>
@@ -95,9 +96,8 @@ export function DocumentLineTable({ rows, labels, ariaLabel }: Props) {
         </Table>
     );
 }
-
 function DocumentLineTableRow(props: DocumentLineItemProps) {
-    const quiet = isCompleteLine(props.line);
+    const quiet = isCompleteDocumentLine(props.line);
     const periodOptions = (
         ['NONE', 'MONTH', 'YEAR'] as DocumentPeriodUnit[]
     ).map((value) => ({ value, label: props.labels.periods[value] }));
@@ -109,7 +109,7 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
                     {props.index + 1}
                 </span>
             </TableCell>
-            <TableCell className="px-2 align-top">
+            <TableCell className="border-l border-rule px-2 align-top transition-colors focus-within:bg-surface-subtle hover:bg-surface-subtle">
                 <div className="flex min-w-0 flex-col gap-1">
                     <label
                         htmlFor={`document-line-name-${props.line.key}`}
@@ -165,25 +165,30 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
                 name="itemPrice"
                 inputMode="decimal"
                 quiet={quiet}
+                priority
             />
             <LineInputCell
                 props={props}
                 name="quantity"
                 inputMode="decimal"
                 quiet={quiet}
+                center
             />
             <LineInputCell
                 props={props}
                 name="unit"
                 maxLength={props.limits.unit}
                 quiet={quiet}
+                center
+                placeholder={quiet ? '—' : undefined}
             />
-            <TableCell className="px-2 align-top">
+            <TableCell className="border-l border-rule px-2 align-top transition-colors focus-within:bg-surface-subtle hover:bg-surface-subtle">
                 <CompactSelect
                     label={props.labels.fields.period_unit}
                     value={props.line.periodUnit}
                     options={periodOptions}
                     quiet={quiet}
+                    alignment="center"
                     onValueChange={(value) =>
                         props.onChange({
                             ...props.line,
@@ -202,6 +207,8 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
                 inputMode="decimal"
                 disabled={props.line.periodUnit === 'NONE'}
                 quiet={quiet}
+                center
+                placeholder={quiet ? '—' : undefined}
             />
             <LineInputCell
                 props={props}
@@ -209,7 +216,7 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
                 inputMode="decimal"
                 quiet={quiet}
             />
-            <TableCell className="px-2 align-top">
+            <TableCell className="border-l border-rule px-2 align-top transition-colors focus-within:bg-surface-subtle hover:bg-surface-subtle">
                 <div className="flex flex-col">
                     <CompactSelect
                         label={props.labels.tax_total}
@@ -241,10 +248,10 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
                     />
                 </div>
             </TableCell>
-            <TableCell className="font-data px-2 text-right align-top font-bold tabular-nums">
+            <TableCell className="font-data border-l border-divider px-2 text-right align-top font-bold tabular-nums">
                 {props.line.finalLineTotal ?? props.labels.incomplete}
             </TableCell>
-            <TableCell className="px-2 align-top">
+            <TableCell className="border-l border-rule px-2 align-top">
                 <div className="flex flex-wrap justify-end gap-1">
                     <DocumentLineRemoveAction {...props} />
                 </div>
@@ -252,7 +259,6 @@ function DocumentLineTableRow(props: DocumentLineItemProps) {
         </TableRow>
     );
 }
-
 function LineInputCell(props: {
     props: DocumentLineItemProps;
     name: keyof DocumentLineDraft;
@@ -260,11 +266,19 @@ function LineInputCell(props: {
     maxLength?: number;
     disabled?: boolean;
     quiet?: boolean;
+    priority?: boolean;
+    center?: boolean;
+    placeholder?: string;
 }) {
     const fieldName = fieldRequestName(props.name);
 
     return (
-        <TableCell className="px-2 align-top">
+        <TableCell
+            className={cn(
+                'border-l border-rule px-2 align-top transition-colors focus-within:bg-surface-subtle hover:bg-surface-subtle',
+                props.priority && 'border-divider',
+            )}
+        >
             <CompactInput
                 label={props.props.labels.fields[fieldName]}
                 value={String(props.props.line[props.name] ?? '')}
@@ -272,20 +286,13 @@ function LineInputCell(props: {
                 maxLength={props.maxLength}
                 disabled={props.disabled}
                 quiet={props.quiet}
+                alignment={props.center ? 'center' : undefined}
+                placeholder={props.placeholder}
                 error={lineError(props.props, fieldName)}
                 onChange={(value) =>
                     changeField(props.props, props.name, value)
                 }
             />
         </TableCell>
-    );
-}
-
-function isCompleteLine(line: DocumentLineDraft) {
-    return (
-        Boolean(line.productServiceName || line.description) &&
-        Boolean(line.itemPrice.trim()) &&
-        Boolean(line.quantity.trim()) &&
-        (line.periodUnit === 'NONE' || Boolean(line.periodQuantity.trim()))
     );
 }

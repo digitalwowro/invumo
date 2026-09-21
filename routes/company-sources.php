@@ -1,8 +1,27 @@
 <?php
 
 use App\Modules\Companies\Http\Controllers\CompanyBankAccountController;
+use App\Modules\Companies\Http\Controllers\CompanyCurrencyController;
 use App\Modules\Companies\Http\Controllers\CompanyTaxPresetController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('companies/{company}/settings/currencies', [CompanyCurrencyController::class, 'index'])
+    ->name('company-currencies.index');
+Route::post('companies/{company}/settings/currencies', [CompanyCurrencyController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('company-currencies.store');
+Route::patch('companies/{company}/settings/currencies/{currency}', [CompanyCurrencyController::class, 'update'])
+    ->middleware('throttle:20,1')
+    ->name('company-currencies.update');
+Route::patch('companies/{company}/settings/currencies/{currency}/default', [CompanyCurrencyController::class, 'setDefault'])
+    ->middleware('throttle:20,1')
+    ->name('company-currencies.default');
+Route::patch('companies/{company}/settings/currencies/{currency}/deactivate', [CompanyCurrencyController::class, 'deactivate'])
+    ->middleware('throttle:20,1')
+    ->name('company-currencies.deactivate');
+Route::patch('companies/{company}/settings/currencies/{currency}/restore', [CompanyCurrencyController::class, 'restore'])
+    ->middleware('throttle:20,1')
+    ->name('company-currencies.restore');
 
 Route::get('companies/{company}/settings/taxes', [CompanyTaxPresetController::class, 'index'])
     ->name('company-tax-presets.index');

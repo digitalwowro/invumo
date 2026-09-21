@@ -143,14 +143,15 @@ it('keeps document-default and line tax choices independent in the wide editor',
         ->assertSee('218.00')
         ->click('@document-line-tax-0')
         ->assertScript("Array.from(document.querySelectorAll('[role=option]')).some((option) => option.textContent?.includes('TVA 19%'))")
+        ->assertScript("Array.from(document.querySelectorAll('[role=option]')).some((option) => option.textContent?.trim() === 'None')")
         ->assertScript("Array.from(document.querySelectorAll('[role=option]')).every((option) => !option.textContent?.includes('Document default'))")
         ->assertScript("Array.from(document.querySelectorAll('[role=option]')).filter((option) => option.textContent?.includes('Reduced VAT 9%')).length === 1");
     $page->script("Array.from(document.querySelectorAll('[role=option]')).find((option) => option.textContent?.includes('TVA 19%'))?.click()");
     $page
         ->assertSee('238.00')
         ->click('@document-tax-default')
-        ->assertScript("Array.from(document.querySelectorAll('[role=option]')).some((option) => option.textContent?.includes('No tax preset'))");
-    $page->script("Array.from(document.querySelectorAll('[role=option]')).find((option) => option.textContent?.includes('No tax preset'))?.click()");
+        ->assertScript("Array.from(document.querySelectorAll('[role=option]')).some((option) => option.textContent?.trim() === 'None')");
+    $page->script("Array.from(document.querySelectorAll('[role=option]')).find((option) => option.textContent?.trim() === 'None')?.click()");
     $page
         ->assertSee('238.00')
         ->click('@document-tax-default')
@@ -235,11 +236,11 @@ it('renders a Romanian public Invoice link on a narrow viewport', function () {
         $invoice->id,
         DocumentKind::Invoice,
     );
-
     visit(route('public-invoices.show', $link->token_ciphertext, false))
         ->on()
         ->iPhone15()
         ->assertSee('Factură '.$invoice->rendered_number)
+        ->assertSee('Invoice Browser SRL')->assertSee('România')->assertScript("document.querySelector('article header > div:first-child')?.textContent?.trim() === ''")
         ->assertSee('Descarcă PDF-ul')
         ->assertSee('Partajat securizat cu Invumo')
         ->assertScript("document.querySelector('[data-testid=public-pdf-download]')?.tagName === 'A'")

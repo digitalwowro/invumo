@@ -1,6 +1,7 @@
 import type { CompanyAppearanceTranslations } from '@/types/company-appearance';
 import type { CompanyAuditTranslations } from '@/types/company-audit';
 import type { CompanyBankAccountTranslations } from '@/types/company-bank-account';
+import type { CompanyCurrencyTranslations } from '@/types/company-currency';
 import type { CompanyDocumentDefaultsTranslations } from '@/types/company-document-defaults';
 import type { CompanyEmailTemplateTranslations } from '@/types/company-email-template';
 import type { CompanyNumberSeriesTranslations } from '@/types/company-number-series';
@@ -10,6 +11,7 @@ import type { CompanyReminderTranslations } from '@/types/reminder';
 export type CompanySettingsNavigationItem = {
     key:
         | 'profile'
+        | 'currencies'
         | 'documents'
         | 'email_templates'
         | 'reminders'
@@ -53,6 +55,7 @@ export type CompanySettingsTranslations = {
         feedback: { saved: string };
         errors: { schedule_change_not_confirmed: string };
     };
+    currencies: CompanyCurrencyTranslations;
     documents: CompanyDocumentDefaultsTranslations;
     email_templates: CompanyEmailTemplateTranslations;
     reminders: CompanyReminderTranslations;

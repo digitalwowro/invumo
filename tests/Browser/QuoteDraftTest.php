@@ -46,7 +46,7 @@ function companyForQuoteBrowser(string $language = 'en'): array
     app(TenantContext::class)->runAsSystem($company->id, function () use ($language): void {
         CompanySetting::query()->firstOrFail()->update([
             'timezone' => 'Europe/Bucharest',
-            'default_document_language' => $language,
+            'default_document_language' => $language, 'country_code' => 'RO', 'trading_name' => 'Quote Browser',
         ]);
         CompanyCurrency::query()->create([
             'currency_code' => 'RON', 'currency_precision' => 2,
@@ -264,6 +264,7 @@ it('creates views and revokes a secure Quote link without desktop overflow', fun
 
     $page->navigate(route('public-quotes.show', $token, false))
         ->assertSee('Quote '.$quote->rendered_number)
+        ->assertSee('Quote Browser SRL')->assertSee('Romania')->assertScript("document.querySelector('article header > div:first-child')?.textContent?.trim() === ''")
         ->assertSee('Download PDF')
         ->assertSee('Respond to this quote')
         ->type('Your name', 'Browser Customer')

@@ -251,6 +251,8 @@ Company defaults include:
 - Default PDF email-delivery mode: secure link only or attach PDF; new Companies default to secure link only
 - Public-link defaults
 
+Company currencies are managed as an explicit active/inactive list. Currency codes are immutable after creation; decimal precision remains configurable from 0 through 8. Exactly one configured active currency may be the Company default, the first becomes default automatically, and an inactive currency never becomes default merely because it is restored. The default cannot be deactivated, and Customer or Product/Service references block deactivation until changed or cleared. Reducing precision is blocked when a referenced catalog price cannot be represented exactly. Existing document and explicit recurring-template snapshots never change, and v1 does not permanently delete Company currencies.
+
 ### Default resolution and snapshot timing
 
 Resolve available company defaults into stored draft fields when a quote, invoice, or recurring template is created, and resolve customer defaults when a customer is selected. Selecting a product/service resolves its defaults into the line at selection time. Later source edits never propagate silently to an existing ordinary quote or invoice.

@@ -7,15 +7,19 @@ use App\Models\User;
 use App\Modules\Audit\Models\AuditEvent;
 use App\Modules\Companies\Data\CompanyRole;
 use App\Modules\Companies\Models\Company;
+use App\Modules\Companies\Models\CompanySetting;
 use App\Modules\Delivery\Models\PublicDocumentLink;
+use App\Modules\Documents\Models\DocumentCompanySnapshot;
 use App\Modules\Documents\Models\DocumentDeliverySetting;
 use App\Modules\Invoices\Data\InvoiceLifecycle;
 use App\Modules\Invoices\Models\Invoice;
 use App\Modules\Quotes\Data\QuoteLifecycle;
 use App\Modules\Quotes\Models\Quote;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Testing\AssertableInertia as Assert;
 use Smalot\PdfParser\Parser;
@@ -26,6 +30,8 @@ final class PublicDocumentLinkHttpTest extends PublicDocumentTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake('company_assets_local');
+        config()->set('invumo.company_assets.disk', 'company_assets_local');
         Date::setTestNow('2026-08-27 12:00:00 Europe/Bucharest');
     }
 
@@ -49,9 +55,21 @@ final class PublicDocumentLinkHttpTest extends PublicDocumentTestCase
     public function test_member_creates_and_publicly_reads_a_quote_and_pdf_without_side_effects(): void
     {
         [$owner, $company] = $this->company();
+        $this->tenant($company, fn () => CompanySetting::query()->firstOrFail()->update([
+            'trading_name' => 'Public Trading',
+            'country_code' => 'AE',
+        ]));
+        $this->actingAs($owner)->post(route('company-appearance.update', $company), [
+            'primary_brand_color' => '#14181C',
+            'logo' => UploadedFile::fake()->image('public-brand.png', 8, 6),
+            'remove_logo' => false,
+        ])->assertRedirect()->assertSessionDoesntHaveErrors();
         $member = User::factory()->create();
         $company->memberships()->create(['user_id' => $member->id, 'role' => CompanyRole::Member]);
         $quote = $this->quote($company, $owner);
+        $this->tenant($company, fn () => CompanySetting::query()->firstOrFail()->update([
+            'primary_brand_color' => '#1F5D42',
+        ]));
         Queue::fake();
 
         $this->actingAs($member)
@@ -75,25 +93,67 @@ final class PublicDocumentLinkHttpTest extends PublicDocumentTestCase
                 ->component('public/document')
                 ->where('document.number', $quote->rendered_number)
                 ->where('document.kind', 'Quote')
+                ->where('document.company.displayName', 'Public Trading')
+                ->where('document.company.legalName', 'Public Documents Legal SRL')
+                ->where('document.company.address.0', 'United Arab Emirates')
+                ->where('document.theme.accentColor', '#1F5D42')
+                ->where('document.theme.textColor', '#1F5D42')
+                ->where('document.logoUrl', fn (mixed $value): bool => is_string($value)
+                    && str_starts_with($value, 'data:image/png;base64,'))
                 ->where('i18n.locale', 'en')
                 ->missing('auth')
                 ->missing('companyContext')
                 ->where('pdfUrl', route('public-quotes.pdf', $token, false)));
         $this->assertTrue($response->baseResponse->headers->hasCacheControlDirective('private'));
         $this->assertTrue($response->baseResponse->headers->hasCacheControlDirective('no-store'));
-        $this->assertStringContainsString("frame-ancestors 'none'", (string) $response->headers->get('Content-Security-Policy'));
+        $contentSecurityPolicy = (string) $response->headers->get('Content-Security-Policy');
+        $this->assertStringContainsString("frame-ancestors 'none'", $contentSecurityPolicy);
+        $this->assertStringContainsString("style-src-attr 'unsafe-inline'", $contentSecurityPolicy);
+        $this->assertSame('#14181C', $this->tenant(
+            $company,
+            fn (): string => DocumentCompanySnapshot::query()
+                ->where('document_id', $quote->id)
+                ->value('primary_brand_color'),
+        ));
 
         $pdf = $this->get(route('public-quotes.pdf', $token))
             ->assertOk()
             ->assertHeader('Content-Type', 'application/pdf')
             ->assertDownload($quote->rendered_number.'.pdf');
-        $this->assertStringContainsString('Quote', (new Parser)->parseContent($pdf->getContent())->getText());
+        $pdfText = (new Parser)->parseContent($pdf->getContent())->getText();
+        $this->assertStringContainsString('Quote', $pdfText);
+        $this->assertStringContainsString('Public Documents Legal SRL', $pdfText);
+        $this->assertStringNotContainsString('Public Trading', $pdfText);
+        $this->assertStringContainsString('United Arab Emirates', $pdfText);
+        $this->assertStringContainsString('/Subtype /Image', $pdf->getContent());
         $this->assertSame($before, $this->tenant($company, fn (): array => [
             PublicDocumentLink::query()->count(),
             AuditEvent::query()->count(),
         ]));
         Queue::assertNothingPushed();
         app(TenantContext::class)->assertClear();
+    }
+
+    public function test_document_without_a_captured_logo_uses_the_current_company_logo(): void
+    {
+        [$owner, $company] = $this->company();
+        $quote = $this->quote($company, $owner);
+        $this->actingAs($owner)->post(route('company-appearance.update', $company), [
+            'primary_brand_color' => '#14181C',
+            'logo' => UploadedFile::fake()->image('current-brand.png', 8, 6),
+            'remove_logo' => false,
+        ])->assertRedirect()->assertSessionDoesntHaveErrors();
+        $this->post(route('quotes.public-link.store', [$company, $quote]))->assertRedirect();
+        $token = $this->currentToken($company, $quote->id);
+
+        Inertia::flushShared();
+        $this->get(route('public-quotes.show', $token))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('document.logoUrl', fn (mixed $value): bool => is_string($value)
+                    && str_starts_with($value, 'data:image/png;base64,')));
+        $pdf = $this->get(route('public-quotes.pdf', $token))->assertOk();
+        $this->assertStringContainsString('/Subtype /Image', $pdf->getContent());
     }
 
     public function test_revocation_regeneration_expiry_and_wrong_kind_fail_closed(): void

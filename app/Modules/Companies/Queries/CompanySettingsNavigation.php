@@ -33,6 +33,10 @@ final readonly class CompanySettingsNavigation
                 'href' => route('company-settings.profile.edit', $company, false),
             ];
             $items[] = [
+                'key' => 'currencies',
+                'href' => route('company-currencies.index', $company, false),
+            ];
+            $items[] = [
                 'key' => 'documents',
                 'href' => route('company-document-defaults.edit', $company, false),
             ];
